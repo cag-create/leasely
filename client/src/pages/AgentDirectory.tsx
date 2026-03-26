@@ -1,0 +1,161 @@
+import { useState } from "react";
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { trpc } from "@/lib/trpc";
+import Navbar from "@/components/Navbar";
+import { Star, Search, MapPin, Phone, Mail, Award, ChevronRight, Users } from "lucide-react";
+
+export default function AgentDirectory() {
+  const [search, setSearch] = useState("");
+
+  const { data: agents, isLoading } = trpc.cremeAgent.getApproved.useQuery();
+
+  const filtered = (agents ?? []).filter(a =>
+    !search ||
+    a.name?.toLowerCase().includes(search.toLowerCase()) ||
+    (a.serviceAreas as string[])?.some(area =>
+      area.toLowerCase().includes(search.toLowerCase())
+    )
+  );
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+
+      {/* Hero */}
+      <div className="bg-[#1B2B5E] text-white py-16 px-4">
+        <div className="max-w-4xl mx-auto text-center space-y-4">
+          <Badge className="bg-[#00C896]/20 text-[#00C896] border-[#00C896]/30 text-xs">
+            Creme Agent Network
+          </Badge>
+          <h1 className="text-4xl font-black">Find a Trusted Agent</h1>
+          <p className="text-blue-100 text-lg max-w-2xl mx-auto">
+            Connect with verified Leasely agents who specialize in your area. Every Creme Agent is background-checked and community-reviewed.
+          </p>
+          <div className="relative max-w-lg mx-auto mt-6">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search by name or area..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-10 h-12 bg-white text-gray-900 border-0 rounded-xl text-base"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Agent Grid */}
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        {isLoading ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="rounded-2xl border border-border bg-card p-6 space-y-4 animate-pulse">
+                <div className="flex items-center gap-4">
+                  <div className="h-16 w-16 rounded-full bg-muted" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-4 bg-muted rounded w-3/4" />
+                    <div className="h-3 bg-muted rounded w-1/2" />
+                  </div>
+                </div>
+                <div className="h-12 bg-muted rounded" />
+              </div>
+            ))}
+          </div>
+        ) : !filtered.length ? (
+          <div className="text-center py-20 text-muted-foreground">
+            <Users className="h-12 w-12 mx-auto mb-4 opacity-30" />
+            <p className="text-lg font-medium">
+              {search ? "No agents match your search." : "No agents listed yet."}
+            </p>
+            {search && (
+              <Button variant="ghost" className="mt-2" onClick={() => setSearch("")}>
+                Clear search
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map(agent => (
+              <AgentCard key={agent.id} agent={agent} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AgentCard({ agent }: { agent: any }) {
+  const areas = (agent.serviceAreas as string[]) ?? [];
+  const specialties = (agent.specialties as string[]) ?? [];
+
+  return (
+    <Link href={`/agents/${agent.id}`}>
+      <div className="rounded-2xl border border-border bg-card p-6 hover:shadow-lg hover:border-[#00C896]/40 transition-all cursor-pointer group">
+        <div className="flex items-center gap-4 mb-4">
+          {agent.photoUrl ? (
+            <img
+              src={agent.photoUrl}
+              alt={agent.name}
+              className="h-16 w-16 rounded-full object-cover border-2 border-border"
+            />
+          ) : (
+            <div className="h-16 w-16 rounded-full bg-[#1B2B5E]/10 flex items-center justify-center text-[#1B2B5E] text-xl font-black border-2 border-border">
+              {(agent.name || "A")[0]}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-foreground truncate group-hover:text-[#00C896] transition-colors">
+              {agent.name}
+            </h3>
+            {agent.licenseNumber && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                <Award className="h-3 w-3" />
+                License #{agent.licenseNumber}
+              </div>
+            )}
+            {agent.averageRating != null && Number(agent.averageRating) > 0 && (
+              <div className="flex items-center gap-1 mt-1">
+                <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                <span className="text-xs font-semibold text-foreground">
+                  {Number(agent.averageRating).toFixed(1)}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  ({agent.reviewCount} reviews)
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {agent.bio && (
+          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{agent.bio}</p>
+        )}
+
+        {areas.length > 0 && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
+            <MapPin className="h-3 w-3 shrink-0" />
+            <span className="truncate">{areas.slice(0, 3).join(", ")}</span>
+          </div>
+        )}
+
+        {specialties.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {specialties.slice(0, 3).map((s: string) => (
+              <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t border-border">
+          <span>{agent.dealCount ?? 0} deals closed</span>
+          <span className="flex items-center gap-1 text-[#00C896] font-semibold group-hover:gap-2 transition-all">
+            View Profile <ChevronRight className="h-3.5 w-3.5" />
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}

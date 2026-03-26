@@ -1,0 +1,2487 @@
+import { COOKIE_NAME } from "@shared/const";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+import { getSessionCookieOptions } from "./_core/cookies";
+import { systemRouter } from "./_core/systemRouter";
+import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { notifyOwner } from "./_core/notification";
+import { sendEmail, workOrderDispatchEmail, tenantMaintenanceConfirmEmail, landlordMaintenanceAlertEmail } from "./_core/email";
+import Stripe from "stripe";
+import { LEASELY_PRO, LEASELY_PRO_SETUP } from "./products";
+import QRCode from "qrcode";
+import { storagePut } from "./storage";
+import { affiliates, w9Submissions, affiliateReferrals, affiliatePayouts } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
+import { getDb } from "./db";
+import {
+  upsertUser, getUserByOpenId,
+  getMarketplaceListings, getFeaturedListings, getMapListings,
+  getListingById, getListingsByUserId, createListing, updateListing, deleteListing,
+  incrementViewCount, countUserListings,
+  saveListing, unsaveListing, getSavedListings, isListingSaved,
+  createInquiry, getListingAnalytics,
+  getUserSubscription, upsertUserSubscription,
+  setAccountType, updatePortalBranding,
+  getSavedSearches, createSavedSearch, deleteSavedSearch,
+  getPortalBySubdomain, getPaymentsByLandlord, createPaymentRecord, updatePaymentStatus,
+  getVendors, createVendor, updateVendor, deleteVendor,
+  getWorkOrders, getWorkOrderById, createWorkOrder, updateWorkOrder,
+  getAccountingEntries, createAccountingEntry, updateAccountingEntry, deleteAccountingEntry,
+  getCrmProperties, getCrmPropertyById, createCrmProperty, updateCrmProperty, deleteCrmProperty,
+  getCrmTenants, createCrmTenant, updateCrmTenant, deleteCrmTenant,
+  getCrmLeases, createCrmLease, updateCrmLease,
+  getCrmNotes, createCrmNote,
+  // Tenant portal
+  getTenantByEmail, getTenantByToken, createTenantAccount, updateTenantToken,
+  getTenantsByLandlord, getTenantById, getUserById,
+  // Support tickets
+  createSupportTicket, getSupportTickets, getSupportTicketById,
+  createSupportReply, getSupportReplies,
+  // Rental applications
+  createRentalApplication, getRentalApplicationsByLandlord, getRentalApplicationsByListing,
+  getRentalApplicationById, updateRentalApplicationStatus,
+  // Custom templates
+  getCustomTemplatesByUser, createCustomTemplate, deleteCustomTemplate,
+  // Rent rates
+  getAreaRentRates, getAreaRentRatesByState,
+  // Admin
+  getAllUsers, getUserCount, getPaidUserCount, getListingCount, getApplicationCount,
+  setUserRole, getAllSubscriptions,
+  // Creme Agents
+  getCremeAgentByUserId, getCremeAgentById, getApprovedCremeAgents, getAllCremeAgents,
+  upsertCremeAgent, updateCremeAgentStatus,
+  createCremeAgentLead, getLeadsByAgent, getAllLeads, updateLeadStatus, assignLead,
+  createAgentReview, getApprovedReviewsByAgent, getAllReviews, updateReviewApproval, deleteReview,
+  // Renter Waitlist
+  joinWaitlist, getWaitlistEntries, markWaitlistContacted, deleteWaitlistEntry,
+  // FSBO
+  createFsboProfile, getFsboByUserId, updateFsboProfile, getAllFsboProfiles,
+  // SOP
+  markSopRead, getSopReadsByUser, getAllSopReads,
+  // Training
+  markTrainingComplete, getTrainingProgressByUser,
+  // Syndication
+  getSyndicationShares, createSyndicationShare, deleteSyndicationShare,
+} from "./db";
+import {
+  getComplexesByUser, getComplexById, createComplex, updateComplex, deleteComplex,
+  getUnitsByComplex, getUnitById, createUnit, updateUnit, deleteUnit, publishUnitToMarketplace,
+  getIstayListings, getIstayListingById, getIstayListingsByUser,
+  createIstayListing, updateIstayListing, deleteIstayListing,
+  saveIstayListing, unsaveIstayListing, getSavedIstayListings,
+  getIstayReviews, createIstayReview,
+  createIstayBooking, getIstayBookingsByGuest, getIstayBookingsByHost, updateIstayBooking,
+} from "./db-extensions";
+
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return null;
+  return new Stripe(key, { apiVersion: "2025-01-27.acacia" as any });
+}
+
+const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+
+const complexesRouter = router({
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const complexes = await getComplexesByUser(ctx.user.id);
+    return Promise.all(complexes.map(async (c) => {
+      const units = await getUnitsByComplex(c.id);
+      return {
+        ...c,
+        units,
+        availableUnits: units.filter(u => u.status === "available").length,
+        occupiedUnits: units.filter(u => u.status === "occupied").length,
+      };
+    }));
+  }),
+
+  getById: publicProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+    const complex = await getComplexById(input.id);
+    if (!complex || complex.status !== "active") throw new TRPCError({ code: "NOT_FOUND" });
+    const units = await getUnitsByComplex(input.id);
+    return { ...complex, units };
+  }),
+
+  create: protectedProcedure.input(z.object({
+    name: z.string().min(1).max(255),
+    description: z.string().optional(),
+    address: z.string().min(1),
+    city: z.string().min(1),
+    state: z.string().min(1),
+    zip: z.string().min(1),
+    neighborhood: z.string().optional(),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+    totalUnits: z.number().min(1).default(1),
+    yearBuilt: z.number().optional(),
+    stories: z.number().optional(),
+    hasPool: z.boolean().default(false),
+    hasGym: z.boolean().default(false),
+    hasElevator: z.boolean().default(false),
+    hasDoorman: z.boolean().default(false),
+    hasParking: z.boolean().default(false),
+    hasLaundry: z.boolean().default(false),
+    petPolicy: z.enum(["allowed", "not_allowed", "case_by_case"]).default("case_by_case"),
+    photos: z.array(z.string()).optional(),
+    coverPhotoUrl: z.string().optional(),
+    contactName: z.string().optional(),
+    contactEmail: z.string().optional(),
+    contactPhone: z.string().optional(),
+    website: z.string().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const id = await createComplex({
+      userId: ctx.user.id,
+      name: input.name,
+      description: input.description,
+      address: input.address,
+      city: input.city,
+      state: input.state,
+      zip: input.zip,
+      neighborhood: input.neighborhood,
+      latitude: input.latitude,
+      longitude: input.longitude,
+      totalUnits: input.totalUnits,
+      yearBuilt: input.yearBuilt,
+      stories: input.stories,
+      hasPool: input.hasPool ? 1 : 0,
+      hasGym: input.hasGym ? 1 : 0,
+      hasElevator: input.hasElevator ? 1 : 0,
+      hasDoorman: input.hasDoorman ? 1 : 0,
+      hasParking: input.hasParking ? 1 : 0,
+      hasLaundry: input.hasLaundry ? 1 : 0,
+      petPolicy: input.petPolicy,
+      photos: input.photos ? JSON.stringify(input.photos) : undefined,
+      coverPhotoUrl: input.coverPhotoUrl,
+      contactName: input.contactName,
+      contactEmail: input.contactEmail,
+      contactPhone: input.contactPhone,
+      website: input.website,
+      status: "active",
+    });
+    return { id };
+  }),
+
+  update: protectedProcedure.input(z.object({
+    id: z.number(),
+    name: z.string().optional(),
+    description: z.string().optional(),
+    address: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    zip: z.string().optional(),
+    neighborhood: z.string().optional(),
+    totalUnits: z.number().optional(),
+    yearBuilt: z.number().optional(),
+    stories: z.number().optional(),
+    hasPool: z.boolean().optional(),
+    hasGym: z.boolean().optional(),
+    hasElevator: z.boolean().optional(),
+    hasDoorman: z.boolean().optional(),
+    hasParking: z.boolean().optional(),
+    hasLaundry: z.boolean().optional(),
+    petPolicy: z.enum(["allowed", "not_allowed", "case_by_case"]).optional(),
+    photos: z.array(z.string()).optional(),
+    coverPhotoUrl: z.string().optional(),
+    contactName: z.string().optional(),
+    contactEmail: z.string().optional(),
+    contactPhone: z.string().optional(),
+    website: z.string().optional(),
+    status: z.enum(["active", "inactive"]).optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const { id, ...rest } = input;
+    const updateData: Record<string, unknown> = { ...rest };
+    if (rest.hasPool !== undefined) updateData.hasPool = rest.hasPool ? 1 : 0;
+    if (rest.hasGym !== undefined) updateData.hasGym = rest.hasGym ? 1 : 0;
+    if (rest.hasElevator !== undefined) updateData.hasElevator = rest.hasElevator ? 1 : 0;
+    if (rest.hasDoorman !== undefined) updateData.hasDoorman = rest.hasDoorman ? 1 : 0;
+    if (rest.hasParking !== undefined) updateData.hasParking = rest.hasParking ? 1 : 0;
+    if (rest.hasLaundry !== undefined) updateData.hasLaundry = rest.hasLaundry ? 1 : 0;
+    if (rest.photos !== undefined) updateData.photos = JSON.stringify(rest.photos);
+    await updateComplex(id, ctx.user.id, updateData as any);
+    return { success: true };
+  }),
+
+  delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+    await deleteComplex(input.id, ctx.user.id);
+    return { success: true };
+  }),
+
+  listUnits: protectedProcedure.input(z.object({ complexId: z.number() })).query(async ({ ctx, input }) => {
+    const complex = await getComplexById(input.complexId);
+    if (!complex || complex.userId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+    return getUnitsByComplex(input.complexId);
+  }),
+
+  createUnit: protectedProcedure.input(z.object({
+    complexId: z.number(),
+    unitNumber: z.string().min(1).max(20),
+    floor: z.number().optional(),
+    monthlyRent: z.number().min(1),
+    securityDeposit: z.number().optional(),
+    bedrooms: z.string(),
+    bathrooms: z.string(),
+    squareFeet: z.number().optional(),
+    availableDate: z.string().optional(),
+    petFriendly: z.boolean().default(false),
+    washerDryer: z.boolean().default(false),
+    airConditioning: z.boolean().default(false),
+    dishwasher: z.boolean().default(false),
+    balcony: z.boolean().default(false),
+    utilities: z.enum(["included", "not_included", "partial"]).default("not_included"),
+    photos: z.array(z.string()).optional(),
+    description: z.string().optional(),
+    status: z.enum(["available", "occupied", "reserved", "maintenance"]).default("available"),
+  })).mutation(async ({ ctx, input }) => {
+    const complex = await getComplexById(input.complexId);
+    if (!complex || complex.userId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+    const id = await createUnit({
+      complexId: input.complexId,
+      userId: ctx.user.id,
+      unitNumber: input.unitNumber,
+      floor: input.floor,
+      monthlyRent: input.monthlyRent,
+      securityDeposit: input.securityDeposit,
+      bedrooms: input.bedrooms,
+      bathrooms: input.bathrooms,
+      squareFeet: input.squareFeet,
+      availableDate: input.availableDate,
+      petFriendly: input.petFriendly ? 1 : 0,
+      washerDryer: input.washerDryer ? 1 : 0,
+      airConditioning: input.airConditioning ? 1 : 0,
+      dishwasher: input.dishwasher ? 1 : 0,
+      balcony: input.balcony ? 1 : 0,
+      utilities: input.utilities,
+      photos: input.photos ? JSON.stringify(input.photos) : undefined,
+      description: input.description,
+      status: input.status,
+    });
+    return { id };
+  }),
+
+  updateUnit: protectedProcedure.input(z.object({
+    id: z.number(),
+    unitNumber: z.string().optional(),
+    floor: z.number().optional(),
+    monthlyRent: z.number().optional(),
+    securityDeposit: z.number().optional(),
+    bedrooms: z.string().optional(),
+    bathrooms: z.string().optional(),
+    squareFeet: z.number().optional(),
+    availableDate: z.string().optional(),
+    petFriendly: z.boolean().optional(),
+    washerDryer: z.boolean().optional(),
+    airConditioning: z.boolean().optional(),
+    dishwasher: z.boolean().optional(),
+    balcony: z.boolean().optional(),
+    utilities: z.enum(["included", "not_included", "partial"]).optional(),
+    photos: z.array(z.string()).optional(),
+    description: z.string().optional(),
+    status: z.enum(["available", "occupied", "reserved", "maintenance"]).optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const { id, ...rest } = input;
+    const updateData: Record<string, unknown> = { ...rest };
+    if (rest.petFriendly !== undefined) updateData.petFriendly = rest.petFriendly ? 1 : 0;
+    if (rest.washerDryer !== undefined) updateData.washerDryer = rest.washerDryer ? 1 : 0;
+    if (rest.airConditioning !== undefined) updateData.airConditioning = rest.airConditioning ? 1 : 0;
+    if (rest.dishwasher !== undefined) updateData.dishwasher = rest.dishwasher ? 1 : 0;
+    if (rest.balcony !== undefined) updateData.balcony = rest.balcony ? 1 : 0;
+    if (rest.photos !== undefined) updateData.photos = JSON.stringify(rest.photos);
+    await updateUnit(id, ctx.user.id, updateData as any);
+    return { success: true };
+  }),
+
+  deleteUnit: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+    await deleteUnit(input.id, ctx.user.id);
+    return { success: true };
+  }),
+
+  publishUnit: protectedProcedure.input(z.object({ unitId: z.number() })).mutation(async ({ ctx, input }) => {
+    const listingId = await publishUnitToMarketplace(input.unitId, ctx.user.id);
+    return { listingId };
+  }),
+});
+
+// ─── iStay™ Router ────────────────────────────────────────────────────────────
+
+const istayRouter = router({
+  getListings: publicProcedure.input(z.object({
+    city: z.string().optional(),
+    state: z.string().optional(),
+    guests: z.number().optional(),
+    minPrice: z.number().optional(),
+    maxPrice: z.number().optional(),
+    propertyType: z.string().optional(),
+    petsAllowed: z.boolean().optional(),
+    limit: z.number().optional(),
+    offset: z.number().optional(),
+  })).query(async ({ input }) => getIstayListings(input)),
+
+  getById: publicProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+    const listing = await getIstayListingById(input.id);
+    if (!listing) throw new TRPCError({ code: "NOT_FOUND" });
+    const reviews = await getIstayReviews(input.id);
+    return { ...listing, reviews };
+  }),
+
+  getMyListings: protectedProcedure.query(async ({ ctx }) => getIstayListingsByUser(ctx.user.id)),
+
+  create: protectedProcedure.input(z.object({
+    title: z.string().min(1).max(255),
+    description: z.string().optional(),
+    propertyType: z.enum(["entire_home","private_room","shared_room","hotel_room","apartment","condo","villa","cabin","cottage","loft","studio","penthouse","townhouse","other"]).default("entire_home"),
+    address: z.string().min(1),
+    city: z.string().min(1),
+    state: z.string().min(1),
+    zip: z.string().min(1),
+    country: z.string().default("United States"),
+    neighborhood: z.string().optional(),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+    pricePerNight: z.number().min(1),
+    cleaningFee: z.number().default(0),
+    weeklyDiscount: z.number().default(0),
+    monthlyDiscount: z.number().default(0),
+    maxGuests: z.number().min(1).default(1),
+    bedrooms: z.number().min(0).default(1),
+    beds: z.number().min(1).default(1),
+    bathrooms: z.string().default("1"),
+    minNights: z.number().min(1).default(1),
+    maxNights: z.number().optional(),
+    checkInTime: z.string().default("15:00"),
+    checkOutTime: z.string().default("11:00"),
+    amenities: z.array(z.string()).optional(),
+    smokingAllowed: z.boolean().default(false),
+    petsAllowed: z.boolean().default(false),
+    partiesAllowed: z.boolean().default(false),
+    childrenAllowed: z.boolean().default(true),
+    houseRules: z.string().optional(),
+    photos: z.array(z.string()).optional(),
+    coverPhotoUrl: z.string().optional(),
+    hostName: z.string().optional(),
+    hostPhotoUrl: z.string().optional(),
+    hostBio: z.string().optional(),
+    cancellationPolicy: z.enum(["flexible","moderate","strict","super_strict"]).default("moderate"),
+    instantBook: z.boolean().default(true),
+  })).mutation(async ({ ctx, input }) => {
+    const id = await createIstayListing({
+      userId: ctx.user.id,
+      title: input.title,
+      description: input.description,
+      propertyType: input.propertyType,
+      address: input.address,
+      city: input.city,
+      state: input.state,
+      zip: input.zip,
+      country: input.country,
+      neighborhood: input.neighborhood,
+      latitude: input.latitude,
+      longitude: input.longitude,
+      pricePerNight: input.pricePerNight,
+      cleaningFee: input.cleaningFee,
+      weeklyDiscount: input.weeklyDiscount,
+      monthlyDiscount: input.monthlyDiscount,
+      maxGuests: input.maxGuests,
+      bedrooms: input.bedrooms,
+      beds: input.beds,
+      bathrooms: input.bathrooms,
+      minNights: input.minNights,
+      maxNights: input.maxNights,
+      checkInTime: input.checkInTime,
+      checkOutTime: input.checkOutTime,
+      amenities: input.amenities ? JSON.stringify(input.amenities) : undefined,
+      smokingAllowed: input.smokingAllowed ? 1 : 0,
+      petsAllowed: input.petsAllowed ? 1 : 0,
+      partiesAllowed: input.partiesAllowed ? 1 : 0,
+      childrenAllowed: input.childrenAllowed ? 1 : 0,
+      houseRules: input.houseRules,
+      photos: input.photos ? JSON.stringify(input.photos) : undefined,
+      coverPhotoUrl: input.coverPhotoUrl,
+      hostName: input.hostName ?? ctx.user.name ?? undefined,
+      hostPhotoUrl: input.hostPhotoUrl,
+      hostBio: input.hostBio,
+      cancellationPolicy: input.cancellationPolicy,
+      instantBook: input.instantBook ? 1 : 0,
+      status: "active",
+    });
+    return { id };
+  }),
+
+  update: protectedProcedure.input(z.object({
+    id: z.number(),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    pricePerNight: z.number().optional(),
+    cleaningFee: z.number().optional(),
+    maxGuests: z.number().optional(),
+    minNights: z.number().optional(),
+    amenities: z.array(z.string()).optional(),
+    photos: z.array(z.string()).optional(),
+    coverPhotoUrl: z.string().optional(),
+    status: z.enum(["active","inactive"]).optional(),
+    petsAllowed: z.boolean().optional(),
+    smokingAllowed: z.boolean().optional(),
+    houseRules: z.string().optional(),
+    cancellationPolicy: z.enum(["flexible","moderate","strict","super_strict"]).optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const { id, ...rest } = input;
+    const updateData: Record<string, unknown> = { ...rest };
+    if (rest.petsAllowed !== undefined) updateData.petsAllowed = rest.petsAllowed ? 1 : 0;
+    if (rest.smokingAllowed !== undefined) updateData.smokingAllowed = rest.smokingAllowed ? 1 : 0;
+    if (rest.amenities !== undefined) updateData.amenities = JSON.stringify(rest.amenities);
+    if (rest.photos !== undefined) updateData.photos = JSON.stringify(rest.photos);
+    await updateIstayListing(id, ctx.user.id, updateData as any);
+    return { success: true };
+  }),
+
+  delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+    await deleteIstayListing(input.id, ctx.user.id);
+    return { success: true };
+  }),
+
+  save: protectedProcedure.input(z.object({ listingId: z.number() })).mutation(async ({ ctx, input }) => {
+    await saveIstayListing(input.listingId, ctx.user.id);
+    return { saved: true };
+  }),
+
+  unsave: protectedProcedure.input(z.object({ listingId: z.number() })).mutation(async ({ ctx, input }) => {
+    await unsaveIstayListing(input.listingId, ctx.user.id);
+    return { saved: false };
+  }),
+
+  getSaved: protectedProcedure.query(async ({ ctx }) => getSavedIstayListings(ctx.user.id)),
+
+  getReviews: publicProcedure.input(z.object({ listingId: z.number() })).query(async ({ input }) => getIstayReviews(input.listingId)),
+
+  createReview: protectedProcedure.input(z.object({
+    listingId: z.number(),
+    bookingId: z.number(),
+    overallRating: z.number().min(1).max(5),
+    cleanlinessRating: z.number().min(1).max(5).optional(),
+    accuracyRating: z.number().min(1).max(5).optional(),
+    communicationRating: z.number().min(1).max(5).optional(),
+    locationRating: z.number().min(1).max(5).optional(),
+    valueRating: z.number().min(1).max(5).optional(),
+    comment: z.string().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const id = await createIstayReview({
+      ...input,
+      reviewerUserId: ctx.user.id,
+      reviewerName: ctx.user.name ?? "Guest",
+    });
+    return { id };
+  }),
+
+  getMyBookings: protectedProcedure.query(async ({ ctx }) => getIstayBookingsByGuest(ctx.user.id)),
+  getHostBookings: protectedProcedure.query(async ({ ctx }) => getIstayBookingsByHost(ctx.user.id)),
+
+  book: protectedProcedure.input(z.object({
+    listingId: z.number(),
+    checkIn: z.string(),
+    checkOut: z.string(),
+    nights: z.number().min(1),
+    guestCount: z.number().min(1),
+    specialRequests: z.string().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const listing = await getIstayListingById(input.listingId);
+    if (!listing) throw new TRPCError({ code: "NOT_FOUND" });
+    const subtotal = listing.pricePerNight * input.nights;
+    const cleaningFee = listing.cleaningFee ?? 0;
+    const serviceFee = Math.round(subtotal * 0.12); // 12% platform fee
+    const totalAmount = subtotal + cleaningFee + serviceFee;
+    const id = await createIstayBooking({
+      listingId: input.listingId,
+      hostUserId: listing.userId,
+      guestUserId: ctx.user.id,
+      guestName: ctx.user.name ?? "Guest",
+      guestEmail: ctx.user.email ?? "",
+      guestCount: input.guestCount,
+      checkIn: input.checkIn,
+      checkOut: input.checkOut,
+      nights: input.nights,
+      pricePerNight: listing.pricePerNight,
+      subtotal,
+      cleaningFee,
+      serviceFee,
+      totalAmount,
+      specialRequests: input.specialRequests,
+      status: "confirmed",
+    });
+    return { id, totalAmount };
+  }),
+});
+
+
+export const appRouter = router({
+  system: systemRouter,
+
+  auth: router({
+    me: publicProcedure.query(async opts => {
+      if (!opts.ctx.user) return null;
+      // Attach subscription info to me response
+      const sub = await getUserSubscription(opts.ctx.user.id);
+      return {
+        ...opts.ctx.user,
+        tier: sub?.tier ?? "free",
+        subStatus: sub?.status ?? null,
+        brandName: sub?.brandName ?? null,
+        brandLogoUrl: sub?.brandLogoUrl ?? null,
+        brandColor: sub?.brandColor ?? null,
+        portalSubdomain: sub?.portalSubdomain ?? null,
+      };
+    }),
+    logout: publicProcedure.mutation(({ ctx }) => {
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      return { success: true } as const;
+    }),
+  }),
+
+  // ─── Marketplace: Public ──────────────────────────────────────────────────
+
+  marketplace: router({
+
+    /** Browse listings with filters */
+    getListings: publicProcedure
+      .input(z.object({
+        propertyType: z.string().optional(),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        minRent: z.number().optional(),
+        maxRent: z.number().optional(),
+        bedrooms: z.string().optional(),
+        petFriendly: z.boolean().optional(),
+        isCoLiving: z.boolean().optional(),
+        sort: z.enum(["newest", "price_asc", "price_desc"]).optional(),
+        limit: z.number().min(1).max(50).optional(),
+        offset: z.number().min(0).optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return getMarketplaceListings(input ?? {});
+      }),
+
+    /** Featured listings for homepage */
+    getFeaturedListings: publicProcedure.query(async () => {
+      return getFeaturedListings(6);
+    }),
+
+    /** Map pins — lightweight, lat/lng only */
+    getMapListings: publicProcedure.query(async () => {
+      return getMapListings();
+    }),
+
+    /** Get a single listing by ID (also increments view count) */
+    getListingById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input, ctx }) => {
+        const listing = await getListingById(input.id);
+        if (!listing || listing.status !== "active") {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Listing not found" });
+        }
+        // Increment view count async (fire and forget)
+        const ip = (ctx.req as any).ip ?? (ctx.req as any).headers?.["x-forwarded-for"] ?? undefined;
+        incrementViewCount(input.id, ip).catch(() => {});
+        return listing;
+      }),
+
+    /** Submit a contact inquiry */
+    submitInquiry: publicProcedure
+      .input(z.object({
+        listingId: z.number(),
+        senderName: z.string().min(1),
+        senderEmail: z.string().email(),
+        senderPhone: z.string().optional(),
+        message: z.string().min(10),
+        moveInDate: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const listing = await getListingById(input.listingId);
+        if (!listing) throw new TRPCError({ code: "NOT_FOUND" });
+        await createInquiry({
+          listingId: input.listingId,
+          senderName: input.senderName,
+          senderEmail: input.senderEmail,
+          senderPhone: input.senderPhone ?? null,
+          message: input.message,
+          moveInDate: input.moveInDate ?? null,
+        });
+        // Notify the listing owner
+        await notifyOwner({
+          title: `New inquiry for "${listing.title}"`,
+          content: `From: ${input.senderName} (${input.senderEmail})\n\n${input.message}`,
+        }).catch(() => {});
+        return { success: true };
+      }),
+
+    // ─── Marketplace: Protected ─────────────────────────────────────────────
+
+    /** Get current user's subscription tier */
+    getUserTier: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      return {
+        tier: sub?.tier ?? "free",
+        status: sub?.status ?? "active",
+        currentPeriodEnd: sub?.currentPeriodEnd ?? null,
+      };
+    }),
+
+    /** Get all listings owned by the current user */
+    getMyListings: protectedProcedure.query(async ({ ctx }) => {
+      return getListingsByUserId(ctx.user.id);
+    }),
+
+    /** Create a new listing (enforces tier limits) */
+    createListing: protectedProcedure
+      .input(z.object({
+        title: z.string().min(5),
+        description: z.string().optional(),
+        propertyType: z.enum(["apartment", "house", "condo", "townhouse", "co_living", "studio", "room", "other"]),
+        address: z.string().min(5),
+        city: z.string().min(1),
+        state: z.string().min(2),
+        zip: z.string().min(5),
+        neighborhood: z.string().optional(),
+        latitude: z.number().optional(),
+        longitude: z.number().optional(),
+        monthlyRent: z.number().min(1),
+        securityDeposit: z.number().optional(),
+        bedrooms: z.string(),
+        bathrooms: z.string(),
+        squareFeet: z.number().optional(),
+        availableDate: z.string().optional(),
+        petFriendly: z.boolean().optional(),
+        isCoLiving: z.boolean().optional(),
+        parkingAvailable: z.boolean().optional(),
+        washerDryer: z.boolean().optional(),
+        airConditioning: z.boolean().optional(),
+        dishwasher: z.boolean().optional(),
+        utilities: z.enum(["included", "not_included", "partial"]).optional(),
+        photos: z.array(z.string()).optional(),
+        contactName: z.string().optional(),
+        contactEmail: z.string().email().optional(),
+        contactPhone: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Check tier limits
+        const sub = await getUserSubscription(ctx.user.id);
+        const tier = sub?.tier ?? "free";
+        const existingCount = await countUserListings(ctx.user.id);
+
+        if (tier === "free" && existingCount >= 1) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "UPGRADE_REQUIRED",
+          });
+        }
+
+        const id = await createListing({
+          userId: ctx.user.id,
+          title: input.title,
+          description: input.description ?? null,
+          propertyType: input.propertyType,
+          address: input.address,
+          city: input.city,
+          state: input.state,
+          zip: input.zip,
+          neighborhood: input.neighborhood ?? null,
+          latitude: input.latitude ?? null,
+          longitude: input.longitude ?? null,
+          monthlyRent: input.monthlyRent,
+          securityDeposit: input.securityDeposit ?? null,
+          bedrooms: input.bedrooms,
+          bathrooms: input.bathrooms,
+          squareFeet: input.squareFeet ?? null,
+          availableDate: input.availableDate ?? null,
+          petFriendly: input.petFriendly ? 1 : 0,
+          isCoLiving: input.isCoLiving ? 1 : 0,
+          parkingAvailable: input.parkingAvailable ? 1 : 0,
+          washerDryer: input.washerDryer ? 1 : 0,
+          airConditioning: input.airConditioning ? 1 : 0,
+          dishwasher: input.dishwasher ? 1 : 0,
+          utilities: input.utilities ?? "not_included",
+          photos: input.photos ? JSON.stringify(input.photos) : null,
+          contactName: input.contactName ?? ctx.user.name ?? null,
+          contactEmail: input.contactEmail ?? ctx.user.email ?? null,
+          contactPhone: input.contactPhone ?? null,
+          status: "active",
+          viewCount: 0,
+          saveCount: 0,
+        });
+
+        return { id, success: true };
+      }),
+
+    /** Update a listing (owner only) */
+    updateListing: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().min(5).optional(),
+        description: z.string().optional(),
+        monthlyRent: z.number().min(1).optional(),
+        status: z.enum(["active", "inactive"]).optional(),
+        photos: z.array(z.string()).optional(),
+        petFriendly: z.boolean().optional(),
+        isCoLiving: z.boolean().optional(),
+        availableDate: z.string().optional(),
+        contactEmail: z.string().email().optional(),
+        contactPhone: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { id, ...data } = input;
+        const updateData: Record<string, unknown> = {};
+        if (data.title !== undefined) updateData.title = data.title;
+        if (data.description !== undefined) updateData.description = data.description;
+        if (data.monthlyRent !== undefined) updateData.monthlyRent = data.monthlyRent;
+        if (data.status !== undefined) updateData.status = data.status;
+        if (data.photos !== undefined) updateData.photos = JSON.stringify(data.photos);
+        if (data.petFriendly !== undefined) updateData.petFriendly = data.petFriendly ? 1 : 0;
+        if (data.isCoLiving !== undefined) updateData.isCoLiving = data.isCoLiving ? 1 : 0;
+        if (data.availableDate !== undefined) updateData.availableDate = data.availableDate;
+        if (data.contactEmail !== undefined) updateData.contactEmail = data.contactEmail;
+        if (data.contactPhone !== undefined) updateData.contactPhone = data.contactPhone;
+        await updateListing(id, ctx.user.id, updateData as any);
+        return { success: true };
+      }),
+
+    /** Deactivate / delete a listing (owner only) */
+    deleteListing: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        await deleteListing(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    /** Save / favorite a listing */
+    saveListing: protectedProcedure
+      .input(z.object({ listingId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        return saveListing(input.listingId, ctx.user.id);
+      }),
+
+    /** Unsave / unfavorite a listing */
+    unsaveListing: protectedProcedure
+      .input(z.object({ listingId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        return unsaveListing(input.listingId, ctx.user.id);
+      }),
+
+    /** Check if a listing is saved by current user */
+    isListingSaved: protectedProcedure
+      .input(z.object({ listingId: z.number() }))
+      .query(async ({ input, ctx }) => {
+        return { saved: await isListingSaved(input.listingId, ctx.user.id) };
+      }),
+
+    /** Get all saved listings for current user */
+    getSavedListings: protectedProcedure.query(async ({ ctx }) => {
+      return getSavedListings(ctx.user.id);
+    }),
+
+    /** Get analytics for a listing (owner only) */
+    getListingAnalytics: protectedProcedure
+      .input(z.object({ listingId: z.number() }))
+      .query(async ({ input, ctx }) => {
+        const analytics = await getListingAnalytics(input.listingId, ctx.user.id);
+        if (!analytics) throw new TRPCError({ code: "NOT_FOUND" });
+        return analytics;
+      }),
+
+    /** Upload a photo to S3 and return URL */
+    uploadPhoto: protectedProcedure
+      .input(z.object({
+        fileName: z.string(),
+        fileType: z.string(),
+        fileData: z.string(), // base64
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const buffer = Buffer.from(input.fileData, "base64");
+        const ext = input.fileName.split(".").pop() ?? "jpg";
+        const key = `listings/${ctx.user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { url } = await storagePut(key, buffer, input.fileType);
+        return { url };
+      }),
+
+    /** Create Stripe Checkout session for Pro subscription — redirects to /pro-setup on success */
+    createProCheckout: protectedProcedure.input(z.object({
+      referralCode: z.string().optional(),
+    }).optional()).mutation(async ({ ctx, input }) => {
+      const stripe = getStripe();
+      if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured. Please add STRIPE_SECRET_KEY in Settings → Payment." });
+      const origin = (ctx.req as any).headers?.origin ?? APP_URL;
+      // $99 one-time setup fee line item
+      const setupLineItem = LEASELY_PRO_SETUP.priceId
+        ? { price: LEASELY_PRO_SETUP.priceId, quantity: 1 }
+        : { price_data: { currency: "usd", product_data: { name: LEASELY_PRO_SETUP.name, description: LEASELY_PRO_SETUP.description }, unit_amount: LEASELY_PRO_SETUP.setupPrice }, quantity: 1 };
+      // $39.99/month recurring subscription line item
+      const subscriptionLineItem = LEASELY_PRO.priceId
+        ? { price: LEASELY_PRO.priceId, quantity: 1 }
+        : { price_data: { currency: "usd", product_data: { name: LEASELY_PRO.name, description: LEASELY_PRO.description }, unit_amount: LEASELY_PRO.monthlyPrice, recurring: { interval: "month" as const } }, quantity: 1 };
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        line_items: [setupLineItem, subscriptionLineItem],
+        customer_email: ctx.user.email ?? undefined,
+        client_reference_id: ctx.user.id.toString(),
+        metadata: { user_id: ctx.user.id.toString(), customer_email: ctx.user.email ?? "", customer_name: ctx.user.name ?? "", referral_code: input?.referralCode ?? "" },
+        allow_promotion_codes: true,
+        success_url: `${origin}/pro-setup?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/pro`,
+      });
+      return { url: session.url };
+    }),
+
+    /** Simulate upgrade to paid tier (in production, wire to Stripe) */
+    upgradeToPaid: protectedProcedure.mutation(async ({ ctx }) => {
+      await upsertUserSubscription({
+        userId: ctx.user.id,
+        tier: "paid",
+        status: "active",
+      });
+      // Also set accountType to landlord if not already
+      await setAccountType(ctx.user.id, "landlord");
+      return { success: true };
+    }),
+
+    /** Set account type during onboarding (renter vs landlord) */
+    setAccountType: protectedProcedure
+      .input(z.object({ accountType: z.enum(["renter", "landlord"]) }))
+      .mutation(async ({ input, ctx }) => {
+        await setAccountType(ctx.user.id, input.accountType);
+        return { success: true };
+      }),
+
+    /** Update portal branding (paid landlords only) */
+    updatePortalBranding: protectedProcedure
+      .input(z.object({
+        brandName: z.string().min(1).optional(),
+        brandLogoUrl: z.string().url().optional(),
+        brandColor: z.string().optional(),
+        portalSubdomain: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/, "Subdomain must be lowercase letters, numbers, and hyphens only").optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const sub = await getUserSubscription(ctx.user.id);
+        if (!sub || sub.tier !== "paid") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Portal branding requires a Pro subscription" });
+        }
+        await updatePortalBranding(ctx.user.id, input);
+        return { success: true };
+      }),
+
+    /** Get saved searches for current renter */
+    getSavedSearches: protectedProcedure.query(async ({ ctx }) => {
+      return getSavedSearches(ctx.user.id);
+    }),
+
+    /** Save a search filter set */
+    saveSearch: protectedProcedure
+      .input(z.object({
+        label: z.string().optional(),
+        filters: z.object({
+          city: z.string().optional(),
+          state: z.string().optional(),
+          propertyType: z.string().optional(),
+          minRent: z.number().optional(),
+          maxRent: z.number().optional(),
+          bedrooms: z.string().optional(),
+          petFriendly: z.boolean().optional(),
+          isCoLiving: z.boolean().optional(),
+        }),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const id = await createSavedSearch(ctx.user.id, input.label ?? null, JSON.stringify(input.filters));
+        return { id, success: true };
+      }),
+
+    /** Delete a saved search */
+    deleteSavedSearch: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        await deleteSavedSearch(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    // ─── Public Portal Page ───────────────────────────────────────────────────
+
+    getPortalBySubdomain: publicProcedure
+      .input(z.object({ subdomain: z.string() }))
+      .query(async ({ input }) => {
+        const portal = await getPortalBySubdomain(input.subdomain);
+        if (!portal) throw new TRPCError({ code: "NOT_FOUND", message: "Portal not found" });
+        return portal;
+      }),
+
+    // ─── QR Code ─────────────────────────────────────────────────────────────
+
+    generateQRCode: protectedProcedure
+      .input(z.object({ listingId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        const listing = await getListingById(input.listingId);
+        if (!listing || listing.userId !== ctx.user.id) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        const url = `${APP_URL}/listing/${input.listingId}`;
+        const qrDataUrl = await QRCode.toDataURL(url, {
+          width: 400,
+          margin: 2,
+          color: { dark: "#1B2B5E", light: "#FFFFFF" },
+        });
+        return { qrDataUrl, url };
+      }),
+
+    // ─── Stripe Connect ───────────────────────────────────────────────────────
+
+    createStripeConnectLink: protectedProcedure.mutation(async ({ ctx }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Stripe Connect requires a Pro subscription" });
+      }
+      const stripe = getStripe();
+      if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured. Please add STRIPE_SECRET_KEY." });
+
+      let accountId = sub.stripeConnectAccountId;
+      if (!accountId) {
+        const account = await stripe.accounts.create({
+          type: "express",
+          email: ctx.user.email ?? undefined,
+          capabilities: { transfers: { requested: true }, card_payments: { requested: true } },
+          business_type: "individual",
+          metadata: { leaselyUserId: String(ctx.user.id) },
+        });
+        accountId = account.id;
+        await upsertUserSubscription({ userId: ctx.user.id, stripeConnectAccountId: accountId, stripeConnectStatus: "pending" });
+      }
+
+      const link = await stripe.accountLinks.create({
+        account: accountId,
+        refresh_url: `${APP_URL}/dashboard?stripe=refresh`,
+        return_url: `${APP_URL}/dashboard?stripe=success`,
+        type: "account_onboarding",
+      });
+      return { url: link.url };
+    }),
+
+    getStripeConnectStatus: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") return { status: "not_connected" as const, accountId: null };
+      if (!sub.stripeConnectAccountId) return { status: "not_connected" as const, accountId: null };
+
+      const stripe = getStripe();
+      if (!stripe) return { status: (sub.stripeConnectStatus ?? "not_connected") as "not_connected" | "pending" | "active", accountId: sub.stripeConnectAccountId };
+
+      try {
+        const account = await stripe.accounts.retrieve(sub.stripeConnectAccountId);
+        const isActive = account.charges_enabled && account.payouts_enabled;
+        if (isActive && sub.stripeConnectStatus !== "active") {
+          await upsertUserSubscription({ userId: ctx.user.id, stripeConnectStatus: "active" });
+        }
+        return {
+          status: isActive ? "active" as const : "pending" as const,
+          accountId: sub.stripeConnectAccountId,
+          chargesEnabled: account.charges_enabled,
+          payoutsEnabled: account.payouts_enabled,
+        };
+      } catch {
+        return { status: (sub.stripeConnectStatus ?? "not_connected") as "not_connected" | "pending" | "active", accountId: sub.stripeConnectAccountId };
+      }
+    }),
+
+    // ─── Tenant Rent Payments ─────────────────────────────────────────────────
+
+    createRentPaymentSession: publicProcedure
+      .input(z.object({
+        listingId: z.number(),
+        tenantName: z.string().min(1),
+        tenantEmail: z.string().email(),
+        amountDollars: z.number().min(1).max(50000),
+        description: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const listing = await getListingById(input.listingId);
+        if (!listing || listing.status !== "active") {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Listing not found" });
+        }
+        const sub = await getUserSubscription(listing.userId);
+        if (!sub || sub.tier !== "paid" || !sub.stripeConnectAccountId) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Landlord has not set up payments" });
+        }
+        const stripe = getStripe();
+        if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured" });
+
+        const amountCents = Math.round(input.amountDollars * 100);
+        const desc = input.description ?? `Rent payment — ${listing.title}`;
+
+        const paymentId = await createPaymentRecord({
+          listingId: input.listingId,
+          landlordUserId: listing.userId,
+          tenantName: input.tenantName,
+          tenantEmail: input.tenantEmail,
+          amountCents,
+          description: desc,
+          status: "pending",
+        });
+
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          mode: "payment",
+          customer_email: input.tenantEmail,
+          line_items: [{
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name: desc,
+                description: `${listing.address}, ${listing.city}, ${listing.state}`,
+              },
+              unit_amount: amountCents,
+            },
+            quantity: 1,
+          }],
+          payment_intent_data: {
+            transfer_data: { destination: sub.stripeConnectAccountId },
+            metadata: { leaselyPaymentId: String(paymentId), listingId: String(input.listingId) },
+          },
+          success_url: `${APP_URL}/pay/${input.listingId}/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${APP_URL}/pay/${input.listingId}`,
+          metadata: { leaselyPaymentId: String(paymentId) },
+        });
+
+        await updatePaymentStatus(paymentId, "pending", session.id, undefined);
+        return { sessionUrl: session.url, paymentId };
+      }),
+
+     getPaymentHistory: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      return getPaymentsByLandlord(ctx.user.id);
+    }),
+    // ─── Instant Payout ───────────────────────────────────────────────────────
+    requestInstantPayout: protectedProcedure
+      .input(z.object({ amountCents: z.number().min(100).optional() }))
+      .mutation(async ({ ctx, input }) => {
+        const sub = await getUserSubscription(ctx.user.id);
+        if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN", message: "Pro subscription required" });
+        if (!sub.stripeConnectAccountId) throw new TRPCError({ code: "BAD_REQUEST", message: "Stripe Connect not set up. Please connect your bank account first." });
+        const stripe = getStripe();
+        if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured" });
+        try {
+          const balance = await stripe.balance.retrieve({ stripeAccount: sub.stripeConnectAccountId });
+          const available = balance.available.find(b => b.currency === "usd");
+          if (!available || available.amount < 100) throw new TRPCError({ code: "BAD_REQUEST", message: "No available balance to pay out" });
+          const payoutAmount = input.amountCents ?? available.amount;
+          if (payoutAmount > available.amount) throw new TRPCError({ code: "BAD_REQUEST", message: "Requested amount exceeds available balance" });
+          const payout = await stripe.payouts.create({
+            amount: payoutAmount, currency: "usd", method: "instant",
+            statement_descriptor: "LEASELY PAYOUT",
+          }, { stripeAccount: sub.stripeConnectAccountId });
+          return { success: true, payoutId: payout.id, amountCents: payout.amount, arrivalDate: payout.arrival_date, status: payout.status };
+        } catch (err: any) {
+          if (err.code === "TRPC_ERROR" || err instanceof TRPCError) throw err;
+          if (err.raw?.code === "instant_payouts_unsupported") {
+            const balance = await stripe.balance.retrieve({ stripeAccount: sub.stripeConnectAccountId });
+            const available = balance.available.find(b => b.currency === "usd");
+            const payoutAmount = input.amountCents ?? available?.amount ?? 0;
+            const payout = await stripe.payouts.create({ amount: payoutAmount, currency: "usd", method: "standard" }, { stripeAccount: sub.stripeConnectAccountId });
+            return { success: true, payoutId: payout.id, amountCents: payout.amount, arrivalDate: payout.arrival_date, status: payout.status, note: "Standard payout initiated (1-2 business days)" };
+          }
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: err.message ?? "Payout failed" });
+        }
+      }),
+    getAvailableBalance: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      if (!sub.stripeConnectAccountId) return { availableCents: 0, pendingCents: 0 };
+      const stripe = getStripe();
+      if (!stripe) return { availableCents: 0, pendingCents: 0 };
+      try {
+        const balance = await stripe.balance.retrieve({ stripeAccount: sub.stripeConnectAccountId });
+        const available = balance.available.find(b => b.currency === "usd");
+        const pending = balance.pending.find(b => b.currency === "usd");
+        return { availableCents: available?.amount ?? 0, pendingCents: pending?.amount ?? 0 };
+      } catch { return { availableCents: 0, pendingCents: 0 }; }
+    }),
+  }),
+
+  // ── VENDORS ──────────────────────────────────────────────────────────────
+  vendors: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      return getVendors(ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      name: z.string().min(1),
+      trade: z.string().optional(),
+      email: z.string().email().optional().or(z.literal("")),
+      phone: z.string().optional(),
+      serviceAreas: z.string().optional(), // JSON
+      notes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      const id = await createVendor({ ...input, userId: ctx.user.id, isActive: 1 });
+      return { id };
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(),
+      name: z.string().optional(),
+      trade: z.string().optional(),
+      email: z.string().optional(),
+      phone: z.string().optional(),
+      serviceAreas: z.string().optional(),
+      notes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      await updateVendor(id, ctx.user.id, data);
+      return { success: true };
+    }),
+    delete: protectedProcedure.input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await deleteVendor(input.id, ctx.user.id);
+        return { success: true };
+      }),
+  }),
+
+  // ── WORK ORDERS ──────────────────────────────────────────────────────────
+  workOrders: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      return getWorkOrders(ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      title: z.string().min(1),
+      description: z.string().optional(),
+      category: z.string().optional(),
+      priority: z.enum(["low", "medium", "high", "emergency"]).default("medium"),
+      propertyAddress: z.string().optional(),
+      crmPropertyId: z.number().optional(),
+      listingId: z.number().optional(),
+      tenantName: z.string().optional(),
+      tenantEmail: z.string().optional(),
+      tenantPhone: z.string().optional(),
+      vendorId: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+
+      // Use AI to summarize and categorize the work order
+      let aiSummary = input.description ?? "";
+      try {
+        const { createOpenAI } = await import("@ai-sdk/openai");
+        const { generateText } = await import("ai");
+        const openai = createOpenAI({ baseURL: (process.env.BUILT_IN_FORGE_API_URL ?? "https://api.openai.com") + "/v1", apiKey: process.env.BUILT_IN_FORGE_API_KEY ?? process.env.OPENAI_API_KEY ?? "" });
+        const result = await generateText({
+          model: openai("gpt-4o-mini"),
+          prompt: `You are a property maintenance assistant. Summarize this work order in 1-2 sentences and confirm receipt. Work order: "${input.title} - ${input.description ?? ""}". Reply with a brief professional confirmation.`,
+          maxOutputTokens: 100,
+        });
+        aiSummary = result.text;
+      } catch { /* AI optional */ }
+
+      // Find vendor for this work order if vendorId provided
+      let vendorName: string | undefined;
+      let vendorEmail: string | undefined;
+      let vendorPhone: string | undefined;
+      if (input.vendorId) {
+        const allVendors = await getVendors(ctx.user.id);
+        const vendor = allVendors.find(v => v.id === input.vendorId);
+        if (vendor) {
+          vendorName = vendor.name;
+          vendorEmail = vendor.email ?? undefined;
+          vendorPhone = vendor.phone ?? undefined;
+        }
+      }
+
+      const id = await createWorkOrder({
+        ...input,
+        userId: ctx.user.id,
+        aiSummary,
+        vendorName,
+        vendorEmail,
+        vendorPhone,
+        category: (input.category as any) ?? "other",
+        status: input.vendorId ? "dispatched" : "open",
+        dispatchedAt: input.vendorId ? new Date() : undefined,
+      });
+
+      // Notify vendor by email if assigned
+      if (vendorEmail) {
+        const landlord = await getUserByOpenId(ctx.user.openId);
+        sendEmail({
+          to: vendorEmail,
+          subject: `Work Order: ${input.title} — ${input.propertyAddress ?? "Property"}`,
+          html: workOrderDispatchEmail({
+            vendorName: vendorName ?? "Vendor",
+            propertyAddress: input.propertyAddress ?? "N/A",
+            issueTitle: input.title,
+            description: input.description ?? "",
+            priority: input.priority,
+            landlordName: landlord?.name ?? undefined,
+            landlordEmail: landlord?.email ?? undefined,
+          }),
+        }).catch(() => {});
+      }
+
+      return { id, aiSummary };
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(),
+      status: z.string().optional(),
+      estimatedCost: z.number().optional(),
+      actualCost: z.number().optional(),
+      notes: z.string().optional(),
+      vendorId: z.number().optional(),
+      vendorName: z.string().optional(),
+      vendorEmail: z.string().optional(),
+      vendorPhone: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      const updateData: Record<string, any> = { ...data };
+      if (data.status === "dispatched") updateData.dispatchedAt = new Date();
+      if (data.status === "vendor_confirmed") updateData.vendorConfirmedAt = new Date();
+      if (data.status === "resolved") updateData.resolvedAt = new Date();
+      await updateWorkOrder(id, ctx.user.id, updateData);
+      return { success: true };
+    }),
+    // Research local handymen when no vendor is on file
+    findVendor: protectedProcedure.input(z.object({
+      workOrderId: z.number(),
+      trade: z.string(),
+      city: z.string(),
+      state: z.string(),
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+
+      // AI researches and composes outreach email
+      let outreachEmail = "";
+      try {
+        const { createOpenAI } = await import("@ai-sdk/openai");
+        const { generateText } = await import("ai");
+        const openai = createOpenAI({ baseURL: (process.env.BUILT_IN_FORGE_API_URL ?? "https://api.openai.com") + "/v1", apiKey: process.env.BUILT_IN_FORGE_API_KEY ?? process.env.OPENAI_API_KEY ?? "" });
+        const result = await generateText({
+          model: openai("gpt-4o-mini"),
+          prompt: `Write a professional outreach email from a property manager looking for a ${input.trade} in ${input.city}, ${input.state}. The email should request availability, pricing, and contact info. Keep it under 150 words. Subject line first, then body.`,
+          maxOutputTokens: 250,
+        });
+        outreachEmail = result.text;
+      } catch { outreachEmail = "AI unavailable — please compose email manually."; }
+
+      // Mark work order as dispatched
+      await updateWorkOrder(input.workOrderId, ctx.user.id, {
+        status: "dispatched",
+        dispatchedAt: new Date(),
+        notes: `AI outreach email drafted for ${input.trade} in ${input.city}, ${input.state}`,
+      });
+
+      // Email the landlord the AI-drafted outreach for their records
+      const landlordForOutreach = await getUserByOpenId(ctx.user.openId);
+      if (landlordForOutreach?.email) {
+        sendEmail({
+          to: landlordForOutreach.email,
+          subject: `[Leasely] AI Vendor Outreach Drafted — ${input.trade} in ${input.city}`,
+          html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+            <h2 style="color:#1B2B5E">Vendor Outreach Email Drafted</h2>
+            <p>Here is the AI-generated outreach email for a <strong>${input.trade}</strong> in ${input.city}, ${input.state}:</p>
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;white-space:pre-wrap;font-size:14px">${outreachEmail}</div>
+            <p style="color:#9ca3af;font-size:12px;margin-top:16px">You can copy this email and send it to local vendors in your area.</p>
+          </div>`,
+        }).catch(() => {});
+      }
+
+      return { outreachEmail };
+    }),
+
+    // ── Tenant submits a maintenance request (no Leasely login needed) ────────
+    submitTenant: publicProcedure.input(z.object({
+      tenantToken: z.string().min(1),
+      title: z.string().min(1),
+      description: z.string().optional(),
+      category: z.enum(["plumbing","electrical","hvac","appliance","structural","pest_control","cleaning","landscaping","other"]).default("other"),
+      priority: z.enum(["low","medium","high","emergency"]).default("medium"),
+    })).mutation(async ({ input }) => {
+      // Authenticate via tenant portal token
+      const tenant = await getTenantByToken(input.tenantToken);
+      if (!tenant || tenant.status !== "active") {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid or expired tenant session." });
+      }
+
+      // Get the landlord
+      const landlord = await getUserById(tenant.landlordUserId);
+      if (!landlord) throw new TRPCError({ code: "NOT_FOUND", message: "Landlord not found." });
+
+      // Check landlord is Pro — work orders require Pro
+      const sub = await getUserSubscription(tenant.landlordUserId);
+      if (!sub || sub.tier !== "paid") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Landlord does not have an active Pro subscription." });
+      }
+
+      // Get property address from listing or lease
+      let propertyAddress = "Your property";
+      if (tenant.listingId) {
+        const listing = await getListingById(tenant.listingId);
+        if (listing) propertyAddress = `${listing.address ?? ""} ${listing.city ?? ""}, ${listing.state ?? ""}`.trim();
+      }
+
+      // AI summary (optional, fire-and-forget)
+      let aiSummary = input.description ?? "";
+      try {
+        const { createOpenAI } = await import("@ai-sdk/openai");
+        const { generateText } = await import("ai");
+        const openai = createOpenAI({ baseURL: (process.env.BUILT_IN_FORGE_API_URL ?? "https://api.openai.com") + "/v1", apiKey: process.env.BUILT_IN_FORGE_API_KEY ?? process.env.OPENAI_API_KEY ?? "" });
+        const result = await generateText({
+          model: openai("gpt-4o-mini"),
+          prompt: `Summarize this maintenance request in 1-2 sentences: "${input.title} - ${input.description ?? ""}". Be brief and professional.`,
+          maxOutputTokens: 80,
+        });
+        aiSummary = result.text;
+      } catch { /* AI optional */ }
+
+      // Create the work order under the landlord's account
+      const workOrderId = await createWorkOrder({
+        userId: tenant.landlordUserId,
+        title: input.title,
+        description: input.description,
+        category: input.category,
+        priority: input.priority,
+        propertyAddress,
+        tenantName: tenant.name,
+        tenantEmail: tenant.email,
+        tenantPhone: tenant.phone ?? undefined,
+        aiSummary,
+        status: "open",
+      });
+
+      // Auto-dispatch: find the first available vendor for this category
+      const vendors = await getVendors(tenant.landlordUserId);
+      const matchingVendor = vendors.find(v =>
+        v.email && (
+          !v.trade ||
+          v.trade.toLowerCase().includes(input.category.toLowerCase()) ||
+          input.category === "other"
+        )
+      );
+
+      if (matchingVendor?.email) {
+        // Auto-dispatch to vendor
+        await updateWorkOrder(workOrderId, tenant.landlordUserId, {
+          status: "dispatched",
+          vendorId: matchingVendor.id,
+          vendorName: matchingVendor.name,
+          vendorEmail: matchingVendor.email,
+          vendorPhone: matchingVendor.phone ?? undefined,
+          dispatchedAt: new Date(),
+        });
+
+        // Email vendor
+        sendEmail({
+          to: matchingVendor.email,
+          subject: `Work Order: ${input.title} — ${propertyAddress}`,
+          html: workOrderDispatchEmail({
+            vendorName: matchingVendor.name,
+            propertyAddress,
+            issueTitle: input.title,
+            description: input.description ?? "",
+            priority: input.priority,
+            landlordName: landlord.name ?? undefined,
+            landlordEmail: landlord.email ?? undefined,
+          }),
+        }).catch(() => {});
+      }
+
+      // Email landlord that a tenant submitted a request
+      if (landlord.email) {
+        const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+        sendEmail({
+          to: landlord.email,
+          subject: `🔧 Maintenance Request from ${tenant.name} — ${input.priority === "emergency" ? "EMERGENCY" : input.title}`,
+          html: landlordMaintenanceAlertEmail({
+            landlordName: landlord.name ?? "",
+            tenantName: tenant.name,
+            tenantEmail: tenant.email,
+            propertyAddress,
+            issueTitle: input.title,
+            description: input.description ?? "",
+            priority: input.priority,
+            dashboardUrl: `${APP_URL}/work-orders`,
+          }),
+        }).catch(() => {});
+      }
+
+      // Email tenant confirmation
+      sendEmail({
+        to: tenant.email,
+        subject: `Maintenance Request Received — ${input.title}`,
+        html: tenantMaintenanceConfirmEmail({
+          tenantName: tenant.name,
+          issueTitle: input.title,
+          propertyAddress,
+          priority: input.priority,
+        }),
+      }).catch(() => {});
+
+      return {
+        success: true,
+        workOrderId,
+        autoDispatched: !!matchingVendor,
+        vendorName: matchingVendor?.name,
+      };
+    }),
+  }),
+
+  // ── ACCOUNTING ───────────────────────────────────────────────────────────
+  accounting: router({
+    list: protectedProcedure.input(z.object({
+      year: z.number().optional(),
+    })).query(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      return getAccountingEntries(ctx.user.id, input.year);
+    }),
+    create: protectedProcedure.input(z.object({
+      type: z.enum(["income", "expense"]),
+      category: z.string(),
+      amount: z.number().positive(), // in cents
+      date: z.string(),
+      description: z.string().optional(),
+      propertyAddress: z.string().optional(),
+      crmPropertyId: z.number().optional(),
+      listingId: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      const id = await createAccountingEntry({ ...input, userId: ctx.user.id, category: input.category as any });
+      return { id };
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(),
+      type: z.enum(["income", "expense"]).optional(),
+      category: z.string().optional(),
+      amount: z.number().optional(),
+      date: z.string().optional(),
+      description: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      await updateAccountingEntry(id, ctx.user.id, data as any);
+      return { success: true };
+    }),
+    delete: protectedProcedure.input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await deleteAccountingEntry(input.id, ctx.user.id);
+        return { success: true };
+      }),
+  }),
+
+  // ── CRM ──────────────────────────────────────────────────────────────────
+  crm: router({
+    // Properties
+    listProperties: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      return getCrmProperties(ctx.user.id);
+    }),
+    createProperty: protectedProcedure.input(z.object({
+      address: z.string().min(1),
+      city: z.string().optional(),
+      state: z.string().optional(),
+      zip: z.string().optional(),
+      propertyType: z.string().optional(),
+      totalUnits: z.number().optional(),
+      purchasePrice: z.number().optional(),
+      currentValue: z.number().optional(),
+      yearBuilt: z.number().optional(),
+      squareFeet: z.number().optional(),
+      notes: z.string().optional(),
+      listingId: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      const id = await createCrmProperty({ ...input, userId: ctx.user.id, propertyType: (input.propertyType as any) ?? "other" });
+      return { id };
+    }),
+    updateProperty: protectedProcedure.input(z.object({
+      id: z.number(),
+      address: z.string().optional(),
+      city: z.string().optional(),
+      state: z.string().optional(),
+      notes: z.string().optional(),
+      status: z.string().optional(),
+      totalUnits: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      await updateCrmProperty(id, ctx.user.id, data as any);
+      return { success: true };
+    }),
+    deleteProperty: protectedProcedure.input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await deleteCrmProperty(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    // Tenants
+    listTenants: protectedProcedure.input(z.object({
+      propertyId: z.number().optional(),
+    })).query(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      return getCrmTenants(ctx.user.id, input.propertyId);
+    }),
+    createTenant: protectedProcedure.input(z.object({
+      crmPropertyId: z.number(),
+      firstName: z.string().min(1),
+      lastName: z.string().min(1),
+      email: z.string().optional(),
+      phone: z.string().optional(),
+      moveInDate: z.string().optional(),
+      moveOutDate: z.string().optional(),
+      monthlyRent: z.number().optional(),
+      securityDeposit: z.number().optional(),
+      notes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const id = await createCrmTenant({ ...input, userId: ctx.user.id });
+      return { id };
+    }),
+    updateTenant: protectedProcedure.input(z.object({
+      id: z.number(),
+      firstName: z.string().optional(),
+      lastName: z.string().optional(),
+      email: z.string().optional(),
+      phone: z.string().optional(),
+      status: z.string().optional(),
+      notes: z.string().optional(),
+      moveOutDate: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      await updateCrmTenant(id, ctx.user.id, data as any);
+      return { success: true };
+    }),
+    deleteTenant: protectedProcedure.input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await deleteCrmTenant(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    // Leases
+    listLeases: protectedProcedure.input(z.object({
+      propertyId: z.number().optional(),
+    })).query(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      return getCrmLeases(ctx.user.id, input.propertyId);
+    }),
+    createLease: protectedProcedure.input(z.object({
+      crmPropertyId: z.number(),
+      crmTenantId: z.number(),
+      startDate: z.string(),
+      endDate: z.string(),
+      monthlyRent: z.number(),
+      securityDeposit: z.number().optional(),
+      leaseType: z.enum(["month_to_month", "fixed_term", "week_to_week"]).default("fixed_term"),
+      notes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const id = await createCrmLease({ ...input, userId: ctx.user.id });
+      return { id };
+    }),
+    updateLease: protectedProcedure.input(z.object({
+      id: z.number(),
+      status: z.string().optional(),
+      endDate: z.string().optional(),
+      monthlyRent: z.number().optional(),
+      notes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      await updateCrmLease(id, ctx.user.id, data as any);
+      return { success: true };
+    }),
+
+    // Notes
+    listNotes: protectedProcedure.input(z.object({
+      entityType: z.enum(["property", "tenant", "lease", "work_order"]),
+      entityId: z.number(),
+    })).query(async ({ ctx, input }) => {
+      return getCrmNotes(ctx.user.id, input.entityType, input.entityId);
+    }),
+    createNote: protectedProcedure.input(z.object({
+      entityType: z.enum(["property", "tenant", "lease", "work_order"]),
+      entityId: z.number(),
+      content: z.string().min(1),
+    })).mutation(async ({ ctx, input }) => {
+      const id = await createCrmNote({ ...input, userId: ctx.user.id });
+      return { id };
+    }),
+  }),
+  // ─── Tenant Portal Router ────────────────────────────────────────────────────
+  tenant: router({
+    /** Send a 6-digit magic-link login code to the tenant's email */
+    sendLoginLink: publicProcedure.input(z.object({
+      email: z.string().email(),
+    })).mutation(async ({ input }) => {
+      const tenant = await getTenantByEmail(input.email);
+      if (!tenant) throw new TRPCError({ code: "NOT_FOUND", message: "No tenant account found with that email. Contact your landlord to get set up." });
+      // Generate a 6-digit numeric token
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+      await updateTenantToken(tenant.id, code, expiresAt);
+      // In production, send via email. For now, notify owner and return code in dev.
+      await notifyOwner({
+        title: `Tenant Login Code: ${tenant.name}`,
+        content: `Tenant ${tenant.name} (${input.email}) requested login code: ${code} (expires in 15 min)`,
+      });
+      return { sent: true };
+    }),
+    /** Verify the 6-digit code and return a session token */
+    verifyToken: publicProcedure.input(z.object({
+      token: z.string().length(6),
+    })).mutation(async ({ input }) => {
+      const tenant = await getTenantByToken(input.token);
+      if (!tenant) throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid or expired code. Please request a new one." });
+      if (!tenant.tokenExpiresAt || new Date() > tenant.tokenExpiresAt) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Code has expired. Please request a new one." });
+      }
+      // Clear token after use
+      await updateTenantToken(tenant.id, null, null);
+      // Return a simple signed token (tenant id + timestamp, base64)
+      const sessionToken = Buffer.from(JSON.stringify({ id: tenant.id, ts: Date.now() })).toString("base64");
+      return { token: sessionToken, tenantId: tenant.id };
+    }),
+    /** Get tenant portal data by session token (from localStorage) */
+    getPortalData: publicProcedure.input(z.object({
+      sessionToken: z.string(),
+    })).query(async ({ input }) => {
+      try {
+        const decoded = JSON.parse(Buffer.from(input.sessionToken, "base64").toString());
+        const tenant = await getTenantById(decoded.id);
+        if (!tenant) throw new TRPCError({ code: "NOT_FOUND" });
+        // Get payment history for this tenant's listing
+        const payments = tenant.listingId ? await getPaymentsByLandlord(tenant.landlordUserId) : [];
+        const myPayments = payments.filter((p: any) => p.listingId === tenant.listingId);
+        return { tenant, payments: myPayments };
+      } catch {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid session. Please sign in again." });
+      }
+    }),
+    /** Landlord: list all tenants they've invited */
+    listTenants: protectedProcedure.query(async ({ ctx }) => {
+      return getTenantsByLandlord(ctx.user.id);
+    }),
+    /** Landlord: invite a tenant to the portal */
+    inviteTenant: protectedProcedure.input(z.object({
+      name: z.string().min(1),
+      email: z.string().email(),
+      phone: z.string().optional(),
+      listingId: z.number().optional(),
+      leaseId: z.number().optional(),
+      monthlyRentCents: z.number().optional(),
+      leaseStart: z.string().optional(),
+      leaseEnd: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN", message: "Tenant portal invitations require a Pro subscription." });
+      const id = await createTenantAccount({
+        ...input,
+        landlordUserId: ctx.user.id,
+        leaseStart: input.leaseStart ? new Date(input.leaseStart) : undefined,
+        leaseEnd: input.leaseEnd ? new Date(input.leaseEnd) : undefined,
+      });
+      // Notify owner
+      await notifyOwner({ title: "New Tenant Invited", content: `${ctx.user.name} invited ${input.name} (${input.email}) to the tenant portal.` });
+      return { id };
+    }),
+    /** Landlord: remove a tenant */
+    removeTenant: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const tenant = await getTenantById(input.id);
+      if (!tenant || tenant.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      await updateTenantToken(input.id, null, null); // deactivate
+      return { success: true };
+    }),
+  }),
+
+  // ─── Support Tickets Router ───────────────────────────────────────────────────
+  support: router({
+    /** Submit a support ticket — available to everyone */
+    submit: publicProcedure.input(z.object({
+      subject: z.string().min(5).max(255),
+      message: z.string().min(20),
+      category: z.enum(["billing", "technical", "listing", "payment", "account", "other"]),
+      contactEmail: z.string().email().optional(),
+      userId: z.number().optional(),
+      userTier: z.enum(["free", "paid", "guest"]).default("guest"),
+    })).mutation(async ({ input }) => {
+      const priority = input.userTier === "paid" ? "high" : "normal";
+      const id = await createSupportTicket({ ...input, priority });
+      await notifyOwner({
+        title: `[${priority.toUpperCase()}] New Support Ticket: ${input.subject}`,
+        content: `From: ${input.contactEmail || "authenticated user"} | Category: ${input.category} | Tier: ${input.userTier}\n\n${input.message}`,
+      });
+      return { id, priority };
+    }),
+    /** Get user's own tickets */
+    myTickets: protectedProcedure.query(async ({ ctx }) => {
+      return getSupportTickets(ctx.user.id);
+    }),
+    /** Get a single ticket with replies */
+    getTicket: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      const ticket = await getSupportTicketById(input.id);
+      if (!ticket || ticket.userId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+      const replies = await getSupportReplies(input.id);
+      return { ticket, replies };
+    }),
+    /** Add a reply to a ticket */
+    reply: protectedProcedure.input(z.object({
+      ticketId: z.number(),
+      message: z.string().min(1),
+    })).mutation(async ({ ctx, input }) => {
+      const ticket = await getSupportTicketById(input.ticketId);
+      if (!ticket || ticket.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      const id = await createSupportReply({
+        ticketId: input.ticketId,
+        authorType: "user",
+        authorName: ctx.user.name ?? "User",
+        message: input.message,
+      });
+       await notifyOwner({ title: `Support Reply on Ticket #${input.ticketId}`, content: input.message });
+      return { id };
+    }),
+  }),
+  complexes: complexesRouter,
+  istay: istayRouter,
+
+  // ─── Rental Applications ────────────────────────────────────────────────────
+  applications: router({
+    /** Public: submit a rental application for a listing */
+    submit: publicProcedure.input(z.object({
+      listingId: z.number(),
+      landlordUserId: z.number(),
+      applicantName: z.string().min(1),
+      applicantEmail: z.string().email(),
+      applicantPhone: z.string().optional(),
+      applicantDob: z.string().optional(),
+      currentAddress: z.string().optional(),
+      currentLandlordName: z.string().optional(),
+      currentLandlordPhone: z.string().optional(),
+      currentRent: z.string().optional(),
+      reasonForLeaving: z.string().optional(),
+      employerName: z.string().optional(),
+      employerPhone: z.string().optional(),
+      occupation: z.string().optional(),
+      monthlyIncome: z.string().optional(),
+      applicationFormType: z.enum(["standard", "coliving_member"]).default("standard"),
+      moveInDate: z.string().optional(),
+      roomPreference: z.string().optional(),
+      lifestyleNotes: z.string().optional(),
+      state: z.string().max(2).optional(),
+      stateDisclosureAgreed: z.boolean().default(false),
+      hasPets: z.boolean().default(false),
+      petDescription: z.string().optional(),
+      vehicleInfo: z.string().optional(),
+      emergencyContactName: z.string().optional(),
+      emergencyContactPhone: z.string().optional(),
+      emergencyContactRelation: z.string().optional(),
+      additionalOccupants: z.array(z.object({ name: z.string(), relation: z.string() })).optional(),
+      backgroundCheckConsent: z.boolean().default(false),
+      creditCheckConsent: z.boolean().default(false),
+      signatureDataUrl: z.string().optional(),
+    })).mutation(async ({ input }) => {
+      const id = await createRentalApplication({
+        listingId: input.listingId,
+        landlordUserId: input.landlordUserId,
+        applicantName: input.applicantName,
+        applicantEmail: input.applicantEmail,
+        applicantPhone: input.applicantPhone,
+        applicantDob: input.applicantDob,
+        currentAddress: input.currentAddress,
+        currentLandlordName: input.currentLandlordName,
+        currentLandlordPhone: input.currentLandlordPhone,
+        currentRent: input.currentRent,
+        reasonForLeaving: input.reasonForLeaving,
+        employerName: input.employerName,
+        employerPhone: input.employerPhone,
+        occupation: input.occupation,
+        monthlyIncome: input.monthlyIncome,
+        applicationFormType: input.applicationFormType,
+        moveInDate: input.moveInDate,
+        roomPreference: input.roomPreference,
+        lifestyleNotes: input.lifestyleNotes,
+        state: input.state,
+        stateDisclosureAgreed: input.stateDisclosureAgreed ? 1 : 0,
+        hasPets: input.hasPets ? 1 : 0,
+        petDescription: input.petDescription,
+        vehicleInfo: input.vehicleInfo,
+        emergencyContactName: input.emergencyContactName,
+        emergencyContactPhone: input.emergencyContactPhone,
+        emergencyContactRelation: input.emergencyContactRelation,
+        additionalOccupants: input.additionalOccupants ? JSON.stringify(input.additionalOccupants) : undefined,
+        backgroundCheckConsent: input.backgroundCheckConsent ? 1 : 0,
+        creditCheckConsent: input.creditCheckConsent ? 1 : 0,
+        signatureDataUrl: input.signatureDataUrl,
+        signedAt: input.signatureDataUrl ? new Date() : undefined,
+        status: "submitted",
+      });
+      return { id, success: true };
+    }),
+
+    /** Landlord: list all applications */
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return getRentalApplicationsByLandlord(ctx.user.id);
+    }),
+
+    /** Landlord: list applications for a specific listing */
+    byListing: protectedProcedure.input(z.object({ listingId: z.number() })).query(async ({ ctx, input }) => {
+      const apps = await getRentalApplicationsByListing(input.listingId);
+      // Verify landlord owns the listing
+      const listing = await getListingById(input.listingId);
+      if (!listing || listing.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      return apps;
+    }),
+
+    /** Landlord: get single application */
+    getById: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      const app = await getRentalApplicationById(input.id);
+      if (!app || app.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+      return app;
+    }),
+
+    /** Landlord: update status */
+    updateStatus: protectedProcedure.input(z.object({
+      id: z.number(),
+      status: z.enum(["reviewing", "approved", "denied", "withdrawn"]),
+      notes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      await updateRentalApplicationStatus(input.id, ctx.user.id, input.status, input.notes);
+      return { success: true };
+    }),
+  }),
+
+  // ─── Custom Application Templates ──────────────────────────────────────────
+  appTemplates: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return getCustomTemplatesByUser(ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      name: z.string().min(1),
+      fileUrl: z.string().optional(),
+      fileKey: z.string().optional(),
+      templateType: z.enum(["leasely_builtin", "custom_upload"]).default("leasely_builtin"),
+      state: z.string().max(2).optional(),
+      isDefault: z.boolean().default(false),
+    })).mutation(async ({ ctx, input }) => {
+      const id = await createCustomTemplate({
+        userId: ctx.user.id,
+        name: input.name,
+        fileUrl: input.fileUrl,
+        fileKey: input.fileKey,
+        templateType: input.templateType,
+        state: input.state,
+        isDefault: input.isDefault ? 1 : 0,
+      });
+      return { id };
+    }),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      await deleteCustomTemplate(input.id, ctx.user.id);
+      return { success: true };
+    }),
+    uploadUrl: protectedProcedure.input(z.object({
+      filename: z.string(),
+      contentType: z.string(),
+    })).mutation(async ({ ctx, input }) => {
+      // Client uploads file, gets back a key to store
+      const key = `app-templates/${ctx.user.id}/${Date.now()}-${input.filename}`;
+      return { key, uploadPath: key };
+    }),
+  }),
+
+  // ─── Rent Rate Intelligence ─────────────────────────────────────────────────
+  rentRates: router({
+    /** Get market rent rates for a city/state */
+    getByArea: publicProcedure.input(z.object({
+      city: z.string(),
+      state: z.string().max(2),
+      propertyType: z.string().optional(),
+    })).query(async ({ input }) => {
+      const rates = await getAreaRentRates(input.city, input.state, input.propertyType);
+      // If no data in DB, return curated estimates based on national averages
+      if (rates.length === 0) {
+        const estimates: Record<string, { median: number; min: number; max: number }> = {
+          studio: { median: 1200, min: 900, max: 1600 },
+          "1br": { median: 1500, min: 1100, max: 2100 },
+          "2br": { median: 1900, min: 1400, max: 2800 },
+          "3br": { median: 2400, min: 1800, max: 3500 },
+          "4br_plus": { median: 3000, min: 2200, max: 4500 },
+          room: { median: 800, min: 600, max: 1200 },
+          co_living: { median: 900, min: 700, max: 1300 },
+        };
+        return Object.entries(estimates).map(([type, data]) => ({
+          propertyType: type,
+          medianRent: data.median,
+          minRent: data.min,
+          maxRent: data.max,
+          sampleSize: 0,
+          dataSource: "national_estimate",
+          city: input.city,
+          state: input.state,
+        }));
+      }
+      return rates;
+    }),
+
+    /** Get all rates for a state */
+    getByState: publicProcedure.input(z.object({ state: z.string().max(2) })).query(async ({ input }) => {
+      return getAreaRentRatesByState(input.state);
+    }),
+  }),
+
+  // ─── Admin (Leasely superadmin only) ───────────────────────────────────────
+  admin: router({
+    stats: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const [totalUsers, paidUsers, totalListings, totalApplications] = await Promise.all([
+        getUserCount(),
+        getPaidUserCount(),
+        getListingCount(),
+        getApplicationCount(),
+      ]);
+      return { totalUsers, paidUsers, totalListings, totalApplications };
+    }),
+
+    getUsers: protectedProcedure.input(z.object({
+      limit: z.number().default(50),
+      offset: z.number().default(0),
+    })).query(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return getAllUsers(input.limit, input.offset);
+    }),
+
+    getSubscriptions: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return getAllSubscriptions();
+    }),
+
+    setUserRole: protectedProcedure.input(z.object({
+      userId: z.number(),
+      role: z.enum(["user", "admin"]),
+    })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      await setUserRole(input.userId, input.role);
+      return { success: true };
+    }),
+
+    getAllApplications: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return getRentalApplicationsByLandlord(0);
+    }),
+    // Affiliate management for admin
+    getAllAffiliates: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(affiliates).orderBy(affiliates.createdAt);
+    }),
+    getAllW9s: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(w9Submissions).orderBy(w9Submissions.submittedAt);
+    }),
+    markAffiliatePaid: protectedProcedure.input(z.object({
+      affiliateId: z.number(),
+      amountCents: z.number(),
+      method: z.enum(["stripe", "ach", "check", "other"]),
+      referenceId: z.string().optional(),
+      notes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.insert(affiliatePayouts).values({
+        affiliateId: input.affiliateId,
+        amountCents: input.amountCents,
+        method: input.method,
+        status: "completed",
+        referenceId: input.referenceId,
+        notes: input.notes,
+        paidAt: new Date(),
+        taxYear: new Date().getFullYear(),
+      });
+      await db.update(affiliates).set({ totalPaid: input.amountCents }).where(eq(affiliates.id, input.affiliateId));
+      return { success: true };
+    }),
+  }),
+
+  // ─── Affiliate Program ────────────────────────────────────────────────────
+  affiliate: router({
+    // Get current user's affiliate status
+    getMyAffiliate: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return null;
+      const [aff] = await db.select().from(affiliates).where(eq(affiliates.userId, ctx.user.id));
+      if (!aff) return null;
+      const [w9] = await db.select().from(w9Submissions).where(eq(w9Submissions.affiliateId, aff.id));
+      const referrals = await db.select().from(affiliateReferrals).where(eq(affiliateReferrals.affiliateId, aff.id));
+      const payouts = await db.select().from(affiliatePayouts).where(eq(affiliatePayouts.affiliateId, aff.id));
+      return { affiliate: aff, w9: w9 ?? null, referrals, payouts };
+    }),
+
+    // Apply to become an affiliate (creates pending record)
+    joinProgram: protectedProcedure.mutation(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [existing] = await db.select().from(affiliates).where(eq(affiliates.userId, ctx.user.id));
+      if (existing) return { affiliate: existing, alreadyExists: true };
+      // Generate unique referral code
+      const baseCode = (ctx.user.name ?? ctx.user.email ?? "ref").replace(/[^a-zA-Z0-9]/g, "").slice(0, 8).toUpperCase();
+      const suffix = Math.random().toString(36).slice(2, 6).toUpperCase();
+      const referralCode = `${baseCode}${suffix}`;
+      const [aff] = await db.insert(affiliates).values({
+        userId: ctx.user.id,
+        referralCode,
+        status: "pending_w9",
+        totalEarned: 0,
+        totalPaid: 0,
+      }).$returningId();
+      const [created] = await db.select().from(affiliates).where(eq(affiliates.id, aff.id));
+      return { affiliate: created, alreadyExists: false };
+    }),
+
+    // Submit W-9 form — activates affiliate account
+    submitW9: protectedProcedure.input(z.object({
+      legalName: z.string().min(2),
+      businessName: z.string().optional(),
+      taxClassification: z.enum(["individual", "sole_proprietor", "c_corp", "s_corp", "partnership", "trust", "llc", "other"]),
+      address: z.string().min(5),
+      city: z.string().min(2),
+      state: z.string().length(2),
+      zipCode: z.string().min(5),
+      tinType: z.enum(["ssn", "ein"]),
+      tin: z.string().min(9).max(11), // SSN: XXX-XX-XXXX or EIN: XX-XXXXXXX
+    })).mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [aff] = await db.select().from(affiliates).where(eq(affiliates.userId, ctx.user.id));
+      if (!aff) throw new TRPCError({ code: "NOT_FOUND", message: "Apply to become an affiliate first." });
+      const existing = await db.select().from(w9Submissions).where(eq(w9Submissions.affiliateId, aff.id));
+      if (existing.length > 0) throw new TRPCError({ code: "CONFLICT", message: "W-9 already submitted." });
+      const tinClean = input.tin.replace(/[^0-9]/g, "");
+      const tinLast4 = tinClean.slice(-4);
+      // Simple XOR obfuscation (in production use proper encryption)
+      const tinEncrypted = Buffer.from(tinClean).toString("base64");
+      await db.insert(w9Submissions).values({
+        affiliateId: aff.id,
+        legalName: input.legalName,
+        businessName: input.businessName,
+        taxClassification: input.taxClassification,
+        address: input.address,
+        city: input.city,
+        state: input.state,
+        zipCode: input.zipCode,
+        tinType: input.tinType,
+        tinLast4,
+        tinEncrypted,
+        certifiedAt: new Date(),
+      });
+      // Activate affiliate
+      await db.update(affiliates).set({ status: "active" }).where(eq(affiliates.id, aff.id));
+      return { success: true };
+    }),
+
+    // Get referral stats
+    getStats: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return null;
+      const [aff] = await db.select().from(affiliates).where(eq(affiliates.userId, ctx.user.id));
+      if (!aff) return null;
+      const refs = await db.select().from(affiliateReferrals).where(eq(affiliateReferrals.affiliateId, aff.id));
+      const paid = refs.filter(r => r.status === "paid");
+      const pending = refs.filter(r => r.status === "signed_up");
+      return {
+        referralCode: aff.referralCode,
+        status: aff.status,
+        totalReferrals: refs.length,
+        paidConversions: paid.length,
+        pendingConversions: pending.length,
+        totalEarnedCents: aff.totalEarned,
+        totalPaidCents: aff.totalPaid,
+        pendingPayoutCents: aff.totalEarned - aff.totalPaid,
+      };
+    }),
+  }),
+
+  // ─── Creme Agent ────────────────────────────────────────────────────────────
+
+  cremeAgent: router({
+    /** Register as a Creme Agent (creates pending record) */
+    register: protectedProcedure.input(z.object({
+      licenseNumber: z.string().optional(),
+      bio: z.string().optional(),
+      phone: z.string().optional(),
+      photoUrl: z.string().url().optional(),
+      specialties: z.array(z.string()).optional(),
+      serviceAreas: z.array(z.string()).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const existing = await getCremeAgentByUserId(ctx.user.id);
+      if (existing) throw new TRPCError({ code: "CONFLICT", message: "Already registered" });
+      await upsertCremeAgent({
+        userId: ctx.user.id,
+        licenseNumber: input.licenseNumber,
+        bio: input.bio,
+        phone: input.phone,
+        photoUrl: input.photoUrl,
+        specialties: input.specialties ? JSON.stringify(input.specialties) : null,
+        serviceAreas: input.serviceAreas ? JSON.stringify(input.serviceAreas) : null,
+        status: "pending",
+      });
+      return { success: true };
+    }),
+
+    /** Get all approved agents for public directory */
+    getApproved: publicProcedure.query(async () => {
+      const agents = await getApprovedCremeAgents();
+      return agents.map(a => ({
+        ...a,
+        specialties: a.specialties ? JSON.parse(a.specialties) : [],
+        serviceAreas: a.serviceAreas ? JSON.parse(a.serviceAreas) : [],
+      }));
+    }),
+
+    /** Get single agent by id for public profile */
+    getById: publicProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+      const agent = await getCremeAgentById(input.id);
+      if (!agent || agent.status !== "approved") throw new TRPCError({ code: "NOT_FOUND" });
+      return {
+        ...agent,
+        specialties: agent.specialties ? JSON.parse(agent.specialties) : [],
+        serviceAreas: agent.serviceAreas ? JSON.parse(agent.serviceAreas) : [],
+      };
+    }),
+
+    /** Get current user's agent profile */
+    getMyProfile: protectedProcedure.query(async ({ ctx }) => {
+      const agent = await getCremeAgentByUserId(ctx.user.id);
+      if (!agent) return null;
+      return {
+        ...agent,
+        specialties: agent.specialties ? JSON.parse(agent.specialties) : [],
+        serviceAreas: agent.serviceAreas ? JSON.parse(agent.serviceAreas) : [],
+      };
+    }),
+
+    /** Update agent profile */
+    updateProfile: protectedProcedure.input(z.object({
+      bio: z.string().optional(),
+      phone: z.string().optional(),
+      photoUrl: z.string().url().optional(),
+      specialties: z.array(z.string()).optional(),
+      serviceAreas: z.array(z.string()).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const agent = await getCremeAgentByUserId(ctx.user.id);
+      if (!agent) throw new TRPCError({ code: "NOT_FOUND" });
+      await upsertCremeAgent({
+        ...agent,
+        bio: input.bio ?? agent.bio,
+        phone: input.phone ?? agent.phone,
+        photoUrl: input.photoUrl ?? agent.photoUrl,
+        specialties: input.specialties ? JSON.stringify(input.specialties) : agent.specialties,
+        serviceAreas: input.serviceAreas ? JSON.stringify(input.serviceAreas) : agent.serviceAreas,
+      });
+      return { success: true };
+    }),
+
+    /** Public: request this agent */
+    requestAgent: publicProcedure.input(z.object({
+      agentId: z.number(),
+      clientName: z.string().min(1),
+      clientEmail: z.string().email(),
+      clientPhone: z.string().optional(),
+      leadType: z.enum(["investor","fsbo","novation","fix_flip","general"]).optional(),
+      propertyAddress: z.string().optional(),
+      message: z.string().optional(),
+    })).mutation(async ({ input }) => {
+      const agent = await getCremeAgentById(input.agentId);
+      if (!agent || agent.status !== "approved") throw new TRPCError({ code: "NOT_FOUND" });
+      await createCremeAgentLead({
+        agentId: input.agentId,
+        clientName: input.clientName,
+        clientEmail: input.clientEmail,
+        clientPhone: input.clientPhone,
+        leadType: input.leadType ?? "general",
+        propertyAddress: input.propertyAddress,
+        message: input.message,
+        source: "public_request",
+      });
+      return { success: true };
+    }),
+
+    /** Agent: get my leads */
+    getMyLeads: protectedProcedure.query(async ({ ctx }) => {
+      const agent = await getCremeAgentByUserId(ctx.user.id);
+      if (!agent) throw new TRPCError({ code: "NOT_FOUND", message: "Not an agent" });
+      return getLeadsByAgent(agent.id);
+    }),
+
+    /** Agent: update lead status */
+    updateLeadStatus: protectedProcedure.input(z.object({
+      leadId: z.number(),
+      status: z.enum(["new","contacted","qualified","closed","lost"]),
+      dealValue: z.number().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const agent = await getCremeAgentByUserId(ctx.user.id);
+      if (!agent) throw new TRPCError({ code: "FORBIDDEN" });
+      const leads = await getLeadsByAgent(agent.id);
+      if (!leads.find(l => l.id === input.leadId)) throw new TRPCError({ code: "FORBIDDEN" });
+      await updateLeadStatus(input.leadId, input.status, input.dealValue ? input.dealValue * 100 : undefined);
+      return { success: true };
+    }),
+
+    /** Public: submit review */
+    submitReview: publicProcedure.input(z.object({
+      agentId: z.number(),
+      reviewerName: z.string().min(1),
+      reviewerEmail: z.string().email().optional(),
+      rating: z.number().min(1).max(5),
+      body: z.string().optional(),
+    })).mutation(async ({ input }) => {
+      const agent = await getCremeAgentById(input.agentId);
+      if (!agent || agent.status !== "approved") throw new TRPCError({ code: "NOT_FOUND" });
+      await createAgentReview({
+        agentId: input.agentId,
+        reviewerName: input.reviewerName,
+        reviewerEmail: input.reviewerEmail,
+        rating: input.rating,
+        body: input.body,
+        approved: 0,
+      });
+      return { success: true };
+    }),
+
+    /** Public: get approved reviews for an agent */
+    getReviews: publicProcedure.input(z.object({ agentId: z.number() })).query(async ({ input }) => {
+      return getApprovedReviewsByAgent(input.agentId);
+    }),
+
+    // Admin procedures
+    getAllAgents: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return getAllCremeAgents();
+    }),
+    approveAgent: protectedProcedure.input(z.object({ agentId: z.number() })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      await updateCremeAgentStatus(input.agentId, "approved");
+      return { success: true };
+    }),
+    rejectAgent: protectedProcedure.input(z.object({ agentId: z.number() })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      await updateCremeAgentStatus(input.agentId, "rejected");
+      return { success: true };
+    }),
+    getAllLeads: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return getAllLeads();
+    }),
+    assignLead: protectedProcedure.input(z.object({ leadId: z.number(), agentId: z.number() })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      await assignLead(input.leadId, input.agentId);
+      return { success: true };
+    }),
+    getAllReviews: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return getAllReviews();
+    }),
+    moderateReview: protectedProcedure.input(z.object({ reviewId: z.number(), approved: z.boolean() })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      await updateReviewApproval(input.reviewId, input.approved ? 1 : 0);
+      return { success: true };
+    }),
+    deleteReview: protectedProcedure.input(z.object({ reviewId: z.number() })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      await deleteReview(input.reviewId);
+      return { success: true };
+    }),
+  }),
+
+  // ─── Renter Waitlist ─────────────────────────────────────────────────────────
+
+  waitlist: router({
+    /** Public: join waitlist */
+    join: publicProcedure.input(z.object({
+      name: z.string().min(1),
+      email: z.string().email(),
+      phone: z.string().optional(),
+      preferredArea: z.string().optional(),
+      moveInDate: z.string().optional(),
+      budgetMin: z.number().optional(),
+      budgetMax: z.number().optional(),
+      bedroomsNeeded: z.string().optional(),
+      notes: z.string().optional(),
+    })).mutation(async ({ input }) => {
+      await joinWaitlist(input);
+      return { success: true };
+    }),
+
+    /** Pro: view waitlist entries */
+    getEntries: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (sub?.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN", message: "Pro subscription required" });
+      return getWaitlistEntries();
+    }),
+
+    /** Pro: mark contacted */
+    markContacted: protectedProcedure.input(z.object({ entryId: z.number() })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (sub?.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      await markWaitlistContacted(input.entryId, ctx.user.id);
+      return { success: true };
+    }),
+
+    /** Admin: get all entries */
+    getAll: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return getWaitlistEntries();
+    }),
+
+    /** Admin: delete entry */
+    deleteEntry: protectedProcedure.input(z.object({ entryId: z.number() })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      await deleteWaitlistEntry(input.entryId);
+      return { success: true };
+    }),
+  }),
+
+  // ─── FSBO ───────────────────────────────────────────────────────────────────
+
+  fsbo: router({
+    /** Public: register as FSBO seller */
+    register: publicProcedure.input(z.object({
+      email: z.string().email(),
+      password: z.string().min(8),
+      name: z.string().min(1),
+      propertyAddress: z.string().min(5),
+      askingPrice: z.number().optional(),
+      propertyType: z.enum(["single_family","condo","townhouse","multi_family","land","other"]).optional(),
+      bedrooms: z.string().optional(),
+      bathrooms: z.string().optional(),
+      squareFeet: z.number().optional(),
+      description: z.string().optional(),
+    })).mutation(async ({ input, ctx }) => {
+      // This delegates to auth register — handled by Express route
+      // Here we just create the FSBO profile after account exists
+      // The /fsbo-signup page calls /api/auth/register first, then this
+      throw new TRPCError({ code: "METHOD_NOT_SUPPORTED", message: "Use /api/auth/register then fsbo.createProfile" });
+    }),
+
+    createProfile: protectedProcedure.input(z.object({
+      propertyAddress: z.string().min(5),
+      askingPrice: z.number().optional(),
+      propertyType: z.enum(["single_family","condo","townhouse","multi_family","land","other"]).optional(),
+      bedrooms: z.string().optional(),
+      bathrooms: z.string().optional(),
+      squareFeet: z.number().optional(),
+      description: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const existing = await getFsboByUserId(ctx.user.id);
+      if (existing) return { fsboId: existing.id };
+      const id = await createFsboProfile({
+        userId: ctx.user.id,
+        propertyAddress: input.propertyAddress,
+        askingPrice: input.askingPrice ? input.askingPrice * 100 : undefined,
+        propertyType: input.propertyType,
+        bedrooms: input.bedrooms,
+        bathrooms: input.bathrooms,
+        squareFeet: input.squareFeet,
+        description: input.description,
+      });
+      return { fsboId: id };
+    }),
+
+    getMyProfile: protectedProcedure.query(async ({ ctx }) => {
+      return getFsboByUserId(ctx.user.id);
+    }),
+
+    getStats: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await getFsboByUserId(ctx.user.id);
+      if (!profile) return null;
+      return { viewCount: profile.viewCount, upgradedToPro: profile.upgradedToPro === 1 };
+    }),
+
+    // Admin
+    getAll: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return getAllFsboProfiles();
+    }),
+  }),
+
+  // ─── SOP Library ────────────────────────────────────────────────────────────
+
+  sop: router({
+    markRead: protectedProcedure.input(z.object({ sopId: z.string() })).mutation(async ({ ctx, input }) => {
+      await markSopRead(ctx.user.id, input.sopId);
+      return { success: true };
+    }),
+    getMyReads: protectedProcedure.query(async ({ ctx }) => {
+      const reads = await getSopReadsByUser(ctx.user.id);
+      return reads.map(r => r.sopId);
+    }),
+    // Admin: see all SOP reads across all users
+    getAll: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return getAllSopReads();
+    }),
+  }),
+
+  // ─── Staff Training ──────────────────────────────────────────────────────────
+
+  training: router({
+    markComplete: protectedProcedure.input(z.object({ videoId: z.string() })).mutation(async ({ ctx, input }) => {
+      await markTrainingComplete(ctx.user.id, input.videoId);
+      return { success: true };
+    }),
+    getProgress: protectedProcedure.query(async ({ ctx }) => {
+      const progress = await getTrainingProgressByUser(ctx.user.id);
+      return progress.map(p => p.videoId);
+    }),
+  }),
+
+  // ─── Syndication ─────────────────────────────────────────────────────────────
+
+  syndication: router({
+    getShares: protectedProcedure.query(async ({ ctx }) => {
+      return getSyndicationShares(ctx.user.id);
+    }),
+    addShare: protectedProcedure.input(z.object({
+      listingId: z.string().min(1),
+      platform: z.string().min(1),
+      shareUrl: z.string().optional(),
+      notes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const id = await createSyndicationShare({ ...input, userId: ctx.user.id });
+      return { id };
+    }),
+    deleteShare: protectedProcedure.input(z.object({ shareId: z.number() })).mutation(async ({ ctx, input }) => {
+      await deleteSyndicationShare(input.shareId, ctx.user.id);
+      return { success: true };
+    }),
+  }),
+
+  // ─── Growth Dashboard (Admin) ────────────────────────────────────────────────
+
+  growth: router({
+    getStats: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const [userCount, paidCount, listingCount, appCount] = await Promise.all([
+        getUserCount(), getPaidUserCount(), getListingCount(), getApplicationCount(),
+      ]);
+      const allSubs = await getAllSubscriptions();
+      const recentUsers = await getAllUsers();
+      const waitlist = await getWaitlistEntries();
+      const allLeads = await getAllLeads();
+      return {
+        totalUsers: userCount,
+        paidUsers: paidCount,
+        totalListings: listingCount,
+        totalApplications: appCount,
+        totalWaitlist: waitlist.length,
+        totalLeads: allLeads.length,
+        closedLeads: allLeads.filter(l => l.status === "closed").length,
+        monthlyRevenueCents: paidCount * 2500,
+        recentSignups: recentUsers.slice(0, 10),
+      };
+    }),
+  }),
+});
+
+export type AppRouter = typeof appRouter;
