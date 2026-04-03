@@ -24,6 +24,10 @@ import {
   sopReads, SopRead,
   trainingProgress, TrainingProgress,
   syndicationShares, InsertSyndicationShare, SyndicationShare,
+  contractorProfiles, contractorReviews, contractorLeads,
+  type ContractorProfile, type InsertContractorProfile,
+  type ContractorReview, type InsertContractorReview,
+  type ContractorLead, type InsertContractorLead,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1220,4 +1224,155 @@ export async function deleteSyndicationShare(id: number, userId: number): Promis
   const db = await getDb();
   if (!db) return;
   await db.delete(syndicationShares).where(and(eq(syndicationShares.id, id), eq(syndicationShares.userId, userId)));
+}
+
+// ─── Contractor / Handyman Directory ─────────────────────────────────────────
+export async function getApprovedContractors(filters?: {
+  state?: string; trade?: string; search?: string; featured?: boolean;
+}): Promise<ContractorProfile[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(contractorProfiles)
+    .where(eq(contractorProfiles.status, "approved"))
+    .orderBy(desc(contractorProfiles.featured), desc(contractorProfiles.averageRating));
+  let result = rows;
+  if (filters?.state) result = result.filter(c => c.state === filters.state);
+  if (filters?.featured) result = result.filter(c => c.featured === 1);
+  if (filters?.trade) {
+    result = result.filter(c => {
+      const trades = c.trades ? JSON.parse(c.trades) : [];
+      return trades.includes(filters.trade);
+    });
+  }
+  if (filters?.search) {
+    const q = filters.search.toLowerCase();
+    result = result.filter(c =>
+      c.businessName.toLowerCase().includes(q) ||
+      (c.city ?? "").toLowerCase().includes(q) ||
+      (c.ownerName ?? "").toLowerCase().includes(q)
+    );
+  }
+  return result;
+}
+
+export async function getContractorById(id: number): Promise<ContractorProfile | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(contractorProfiles).where(eq(contractorProfiles.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function getContractorBySlug(slug: string): Promise<ContractorProfile | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(contractorProfiles).where(eq(contractorProfiles.slug, slug)).limit(1);
+  return rows[0];
+}
+
+export async function getContractorByUserId(userId: number): Promise<ContractorProfile | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(contractorProfiles).where(eq(contractorProfiles.userId, userId)).limit(1);
+  return rows[0];
+}
+
+export async function getAllContractors(): Promise<ContractorProfile[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(contractorProfiles).orderBy(desc(contractorProfiles.createdAt));
+}
+
+export async function upsertContractorProfile(userId: number, data: Partial<InsertContractorProfile>): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const existing = await getContractorByUserId(userId);
+  if (existing) {
+    await db.update(contractorProfiles).set({ ...data, updatedAt: new Date() }).where(eq(contractorProfiles.id, existing.id));
+    return existing.id;
+  }
+  const result = await db.insert(contractorProfiles).values({ ...data, userId } as InsertContractorProfile);
+  return (result[0] as any).insertId;
+}
+
+export async function createContractorProfile(data: InsertContractorProfile): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const result = await db.insert(contractorProfiles).values(data);
+  return (result[0] as any).insertId;
+}
+
+export async function updateContractorStatus(id: number, status: "pending" | "approved" | "rejected" | "suspended"): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(contractorProfiles).set({ status, updatedAt: new Date() }).where(eq(contractorProfiles.id, id));
+}
+
+export async function incrementContractorViews(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  const row = await db.select({ v: contractorProfiles.profileViews }).from(contractorProfiles).where(eq(contractorProfiles.id, id)).limit(1);
+  const current = row[0]?.v ?? 0;
+  await db.update(contractorProfiles).set({ profileViews: current + 1 }).where(eq(contractorProfiles.id, id));
+}
+
+export async function getApprovedContractorReviews(contractorId: number): Promise<ContractorReview[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(contractorReviews)
+    .where(and(eq(contractorReviews.contractorId, contractorId), eq(contractorReviews.approved, 1)))
+    .orderBy(desc(contractorReviews.createdAt));
+}
+
+export async function getAllContractorReviews(): Promise<ContractorReview[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(contractorReviews).orderBy(desc(contractorReviews.createdAt));
+}
+
+export async function createContractorReview(data: InsertContractorReview): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const result = await db.insert(contractorReviews).values(data);
+  const id = (result[0] as any).insertId;
+  // Recalculate average rating
+  const allApproved = await db.select().from(contractorReviews)
+    .where(and(eq(contractorReviews.contractorId, data.contractorId), eq(contractorReviews.approved, 1)));
+  if (allApproved.length > 0) {
+    const avg = allApproved.reduce((s, r) => s + r.rating, 0) / allApproved.length;
+    await db.update(contractorProfiles).set({ averageRating: avg, reviewCount: allApproved.length }).where(eq(contractorProfiles.id, data.contractorId));
+  }
+  return id;
+}
+
+export async function updateContractorReviewApproval(id: number, approved: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(contractorReviews).set({ approved }).where(eq(contractorReviews.id, id));
+  // Recalculate rating for contractor
+  const review = await db.select().from(contractorReviews).where(eq(contractorReviews.id, id)).limit(1);
+  if (review[0]) {
+    const allApproved = await db.select().from(contractorReviews)
+      .where(and(eq(contractorReviews.contractorId, review[0].contractorId), eq(contractorReviews.approved, 1)));
+    const avg = allApproved.length > 0 ? allApproved.reduce((s, r) => s + r.rating, 0) / allApproved.length : 0;
+    await db.update(contractorProfiles).set({ averageRating: avg, reviewCount: allApproved.length }).where(eq(contractorProfiles.id, review[0].contractorId));
+  }
+}
+
+export async function createContractorLead(data: InsertContractorLead): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const result = await db.insert(contractorLeads).values(data);
+  return (result[0] as any).insertId;
+}
+
+export async function getContractorLeads(contractorId: number): Promise<ContractorLead[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(contractorLeads).where(eq(contractorLeads.contractorId, contractorId)).orderBy(desc(contractorLeads.createdAt));
+}
+
+export async function getAllContractorLeads(): Promise<ContractorLead[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(contractorLeads).orderBy(desc(contractorLeads.createdAt));
 }

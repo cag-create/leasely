@@ -1090,3 +1090,84 @@ export const syndicationShares = mysqlTable("syndication_shares", {
 });
 export type SyndicationShare = typeof syndicationShares.$inferSelect;
 export type InsertSyndicationShare = typeof syndicationShares.$inferInsert;
+
+// ─── Handyman / Contractor Directory ─────────────────────────────────────────
+export const contractorProfiles = mysqlTable("contractor_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").unique(), // optional — linked Leasely account
+  businessName: varchar("businessName", { length: 255 }).notNull(),
+  ownerName: varchar("ownerName", { length: 255 }),
+  slug: varchar("slug", { length: 120 }).unique(),
+  phone: varchar("phone", { length: 30 }),
+  email: varchar("email", { length: 320 }),
+  website: text("website"),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 2 }).notNull(),
+  zipCode: varchar("zipCode", { length: 10 }),
+  serviceRadius: int("serviceRadius").default(25),
+  serviceAreas: text("serviceAreas"), // JSON array
+  bio: text("bio"),
+  photoUrl: text("photoUrl"),
+  bannerUrl: text("bannerUrl"),
+  yearsInBusiness: int("yearsInBusiness"),
+  licenseNumber: varchar("licenseNumber", { length: 100 }),
+  insuranceVerified: tinyint("insuranceVerified").default(0),
+  backgroundChecked: tinyint("backgroundChecked").default(0),
+  trades: text("trades"), // JSON array
+  specialties: text("specialties"), // JSON array
+  availableWeekdays: tinyint("availableWeekdays").default(1),
+  availableWeekends: tinyint("availableWeekends").default(0),
+  emergencyService: tinyint("emergencyService").default(0),
+  hourlyRateMin: int("hourlyRateMin"),
+  hourlyRateMax: int("hourlyRateMax"),
+  freeEstimates: tinyint("freeEstimates").default(1),
+  portfolioPhotos: text("portfolioPhotos"), // JSON array
+  socialFacebook: text("socialFacebook"),
+  socialInstagram: text("socialInstagram"),
+  socialLinkedin: text("socialLinkedin"),
+  status: mysqlEnum("status", ["pending", "approved", "rejected", "suspended"]).default("pending").notNull(),
+  featured: tinyint("featured").default(0),
+  averageRating: float("averageRating").default(0),
+  reviewCount: int("reviewCount").default(0),
+  jobsCompleted: int("jobsCompleted").default(0),
+  profileViews: int("profileViews").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ContractorProfile = typeof contractorProfiles.$inferSelect;
+export type InsertContractorProfile = typeof contractorProfiles.$inferInsert;
+
+export const contractorReviews = mysqlTable("contractor_reviews", {
+  id: int("id").autoincrement().primaryKey(),
+  contractorId: int("contractorId").notNull(),
+  reviewerName: varchar("reviewerName", { length: 255 }).notNull(),
+  reviewerEmail: varchar("reviewerEmail", { length: 320 }),
+  reviewerUserId: int("reviewerUserId"),
+  rating: int("rating").notNull(),
+  title: varchar("title", { length: 255 }),
+  body: text("body"),
+  jobType: varchar("jobType", { length: 100 }),
+  jobDate: varchar("jobDate", { length: 30 }),
+  approved: tinyint("approved").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ContractorReview = typeof contractorReviews.$inferSelect;
+export type InsertContractorReview = typeof contractorReviews.$inferInsert;
+
+export const contractorLeads = mysqlTable("contractor_leads", {
+  id: int("id").autoincrement().primaryKey(),
+  contractorId: int("contractorId").notNull(),
+  clientName: varchar("clientName", { length: 255 }).notNull(),
+  clientEmail: varchar("clientEmail", { length: 320 }),
+  clientPhone: varchar("clientPhone", { length: 30 }),
+  clientUserId: int("clientUserId"),
+  jobType: varchar("jobType", { length: 100 }),
+  propertyAddress: text("propertyAddress"),
+  message: text("message"),
+  urgency: mysqlEnum("urgency", ["flexible", "within_week", "within_month", "emergency"]).default("flexible"),
+  status: mysqlEnum("status", ["new", "contacted", "quoted", "booked", "completed", "cancelled"]).default("new"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ContractorLead = typeof contractorLeads.$inferSelect;
+export type InsertContractorLead = typeof contractorLeads.$inferInsert;

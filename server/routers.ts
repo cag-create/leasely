@@ -62,6 +62,12 @@ import {
   markTrainingComplete, getTrainingProgressByUser,
   // Syndication
   getSyndicationShares, createSyndicationShare, deleteSyndicationShare,
+  // Contractors
+  getApprovedContractors, getContractorById, getContractorBySlug, getContractorByUserId,
+  getAllContractors, upsertContractorProfile, createContractorProfile, updateContractorStatus,
+  incrementContractorViews, getApprovedContractorReviews, getAllContractorReviews,
+  createContractorReview, updateContractorReviewApproval,
+  createContractorLead, getContractorLeads, getAllContractorLeads,
 } from "./db";
 import {
   getComplexesByUser, getComplexById, createComplex, updateComplex, deleteComplex,
@@ -2480,6 +2486,174 @@ export const appRouter = router({
         monthlyRevenueCents: paidCount * 2500,
         recentSignups: recentUsers.slice(0, 10),
       };
+    }),
+  }),
+
+  // ─── Handyman / Contractor Directory ─────────────────────────────────────────
+  contractors: router({
+    // Public: browse approved contractors
+    list: publicProcedure.input(z.object({
+      state: z.string().optional(),
+      trade: z.string().optional(),
+      search: z.string().optional(),
+      featured: z.boolean().optional(),
+    }).optional()).query(async ({ input }) => {
+      return getApprovedContractors(input ?? {});
+    }),
+
+    // Public: get single contractor by ID
+    getById: publicProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+      const contractor = await getContractorById(input.id);
+      if (!contractor || contractor.status !== "approved") throw new TRPCError({ code: "NOT_FOUND" });
+      await incrementContractorViews(input.id);
+      return contractor;
+    }),
+
+    // Public: get single contractor by slug
+    getBySlug: publicProcedure.input(z.object({ slug: z.string() })).query(async ({ input }) => {
+      const contractor = await getContractorBySlug(input.slug);
+      if (!contractor || contractor.status !== "approved") throw new TRPCError({ code: "NOT_FOUND" });
+      await incrementContractorViews(contractor.id);
+      return contractor;
+    }),
+
+    // Public: get approved reviews for a contractor
+    getReviews: publicProcedure.input(z.object({ contractorId: z.number() })).query(async ({ input }) => {
+      return getApprovedContractorReviews(input.contractorId);
+    }),
+
+    // Public: submit a review
+    submitReview: publicProcedure.input(z.object({
+      contractorId: z.number(),
+      reviewerName: z.string().min(2),
+      reviewerEmail: z.string().email().optional(),
+      rating: z.number().min(1).max(5),
+      title: z.string().optional(),
+      body: z.string().optional(),
+      jobType: z.string().optional(),
+      jobDate: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const id = await createContractorReview({
+        ...input,
+        reviewerUserId: ctx.user?.id ?? null,
+        approved: 0,
+      });
+      return { id };
+    }),
+
+    // Public: submit a lead / contact request
+    submitLead: publicProcedure.input(z.object({
+      contractorId: z.number(),
+      clientName: z.string().min(2),
+      clientEmail: z.string().email().optional(),
+      clientPhone: z.string().optional(),
+      jobType: z.string().optional(),
+      propertyAddress: z.string().optional(),
+      message: z.string().optional(),
+      urgency: z.enum(["flexible", "within_week", "within_month", "emergency"]).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const id = await createContractorLead({
+        ...input,
+        clientUserId: ctx.user?.id ?? null,
+        status: "new",
+      });
+      return { id };
+    }),
+
+    // Protected: contractor registers / updates their own profile
+    upsertMyProfile: protectedProcedure.input(z.object({
+      businessName: z.string().min(2),
+      ownerName: z.string().optional(),
+      slug: z.string().min(3).max(80).regex(/^[a-z0-9-]+$/).optional(),
+      phone: z.string().optional(),
+      email: z.string().email().optional(),
+      website: z.string().optional(),
+      city: z.string().optional(),
+      state: z.string().length(2),
+      zipCode: z.string().optional(),
+      serviceRadius: z.number().optional(),
+      serviceAreas: z.array(z.string()).optional(),
+      bio: z.string().optional(),
+      photoUrl: z.string().optional(),
+      bannerUrl: z.string().optional(),
+      yearsInBusiness: z.number().optional(),
+      licenseNumber: z.string().optional(),
+      trades: z.array(z.string()).optional(),
+      specialties: z.array(z.string()).optional(),
+      availableWeekdays: z.boolean().optional(),
+      availableWeekends: z.boolean().optional(),
+      emergencyService: z.boolean().optional(),
+      hourlyRateMin: z.number().optional(),
+      hourlyRateMax: z.number().optional(),
+      freeEstimates: z.boolean().optional(),
+      portfolioPhotos: z.array(z.string()).optional(),
+      socialFacebook: z.string().optional(),
+      socialInstagram: z.string().optional(),
+      socialLinkedin: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const data: any = {
+        ...input,
+        serviceAreas: input.serviceAreas ? JSON.stringify(input.serviceAreas) : undefined,
+        trades: input.trades ? JSON.stringify(input.trades) : undefined,
+        specialties: input.specialties ? JSON.stringify(input.specialties) : undefined,
+        portfolioPhotos: input.portfolioPhotos ? JSON.stringify(input.portfolioPhotos) : undefined,
+        availableWeekdays: input.availableWeekdays !== undefined ? (input.availableWeekdays ? 1 : 0) : undefined,
+        availableWeekends: input.availableWeekends !== undefined ? (input.availableWeekends ? 1 : 0) : undefined,
+        emergencyService: input.emergencyService !== undefined ? (input.emergencyService ? 1 : 0) : undefined,
+        freeEstimates: input.freeEstimates !== undefined ? (input.freeEstimates ? 1 : 0) : undefined,
+      };
+      const id = await upsertContractorProfile(ctx.user.id, data);
+      return { id };
+    }),
+
+    // Protected: get my contractor profile
+    getMyProfile: protectedProcedure.query(async ({ ctx }) => {
+      return getContractorByUserId(ctx.user.id);
+    }),
+
+    // Protected: get my leads
+    getMyLeads: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await getContractorByUserId(ctx.user.id);
+      if (!profile) return [];
+      return getContractorLeads(profile.id);
+    }),
+
+    // Admin: list all contractors
+    adminList: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return getAllContractors();
+    }),
+
+    // Admin: update status
+    adminUpdateStatus: protectedProcedure.input(z.object({
+      id: z.number(),
+      status: z.enum(["pending", "approved", "rejected", "suspended"]),
+    })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      await updateContractorStatus(input.id, input.status);
+      return { success: true };
+    }),
+
+    // Admin: approve/reject review
+    adminUpdateReview: protectedProcedure.input(z.object({
+      id: z.number(),
+      approved: z.number().min(0).max(1),
+    })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      await updateContractorReviewApproval(input.id, input.approved);
+      return { success: true };
+    }),
+
+    // Admin: get all reviews
+    adminGetReviews: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return getAllContractorReviews();
+    }),
+
+    // Admin: get all leads
+    adminGetLeads: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return getAllContractorLeads();
     }),
   }),
 });

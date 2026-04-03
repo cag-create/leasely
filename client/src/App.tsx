@@ -34,6 +34,9 @@ import AffiliateDashboard from "./pages/AffiliateDashboard";
 import LoginPage from "./pages/LoginPage";
 import AgentDirectory from "./pages/AgentDirectory";
 import AgentProfile from "./pages/AgentProfile";
+import ContractorDirectory from "./pages/ContractorDirectory";
+import ContractorProfile from "./pages/ContractorProfile";
+import ContractorRegister from "./pages/ContractorRegister";
 import FsboSignup from "./pages/FsboSignup";
 import JoinWaitlist from "./pages/JoinWaitlist";
 import Compare from "./pages/Compare";
@@ -97,6 +100,11 @@ function Router() {
       {/* Creme Agent Network */}
       <Route path="/agents" component={AgentDirectory} />
       <Route path="/agents/:id" component={AgentProfile} />
+
+      {/* Handyman / Contractor Directory */}
+      <Route path="/contractors" component={ContractorDirectory} />
+      <Route path="/contractors/register" component={ContractorRegister} />
+      <Route path="/contractors/:slug" component={ContractorProfile} />
 
       {/* FSBO & Renter tools */}
       <Route path="/fsbo-signup" component={FsboSignup} />

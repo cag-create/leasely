@@ -8,7 +8,7 @@ import { trpc } from "@/lib/trpc";
 import {
   Map, PlusCircle, LayoutDashboard, Heart, Menu, X,
   LogOut, ChevronDown, Sparkles, Search, Building2,
-  Headphones, Shield, Settings
+  Headphones, Shield, Settings, Wrench
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -110,6 +110,7 @@ export default function Navbar() {
               <NavLink href="/pro" className="text-[#00C896] hover:text-[#00A87C]">
                 <span className="flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5" />Pro</span>
               </NavLink>
+              <NavLink href="/contractors"><span className="flex items-center gap-1.5"><Wrench className="h-3.5 w-3.5" />Contractors</span></NavLink>
               <NavLink href="/pricing">Pricing</NavLink>
               <NavLink href="/support"><span className="flex items-center gap-1.5"><Headphones className="h-3.5 w-3.5" />Support</span></NavLink>
 
@@ -288,6 +289,7 @@ export default function Navbar() {
                 ] : []),
               ] : []),
               { href: "/pro", label: "Pro Features", icon: <Sparkles className="h-4 w-4" /> },
+              { href: "/contractors", label: "Contractors", icon: <Wrench className="h-4 w-4" /> },
               { href: "/pricing", label: "Pricing", icon: null },
               { href: "/support", label: "Support", icon: <Headphones className="h-4 w-4" /> },
               ...(isAdmin ? [{ href: "/admin", label: "Admin Panel", icon: <Shield className="h-4 w-4" /> }] : []),

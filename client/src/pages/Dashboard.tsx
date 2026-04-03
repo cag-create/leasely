@@ -832,6 +832,41 @@ export default function Dashboard() {
             {/* Market Rent Intelligence - Pro only */}
             {isPaid && <RentRateWidget />}
 
+            {/* Contractor Directory Widget */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Wrench className="h-5 w-5 text-orange-500" />
+                <h3 className="font-black text-gray-900">Find a Contractor</h3>
+              </div>
+              <p className="text-xs text-gray-400 mb-4">Browse verified handymen & contractors nationwide for your properties.</p>
+              <div className="space-y-2">
+                <Link href="/contractors">
+                  <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer border border-gray-100">
+                    <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ background: "#FFF7ED" }}>
+                      <Wrench className="h-4 w-4 text-orange-500" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm text-gray-900">Contractor Directory</div>
+                      <div className="text-xs text-gray-400">Search all 50 states</div>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-gray-300" />
+                  </div>
+                </Link>
+                <Link href="/contractors/register">
+                  <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer border border-gray-100">
+                    <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ background: "#F0FDF4" }}>
+                      <PlusCircle className="h-4 w-4 text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm text-gray-900">List Your Business</div>
+                      <div className="text-xs text-gray-400">Free contractor profile</div>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-gray-300" />
+                  </div>
+                </Link>
+              </div>
+            </div>
+
             {/* Saved Listings */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">

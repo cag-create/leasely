@@ -601,6 +601,20 @@ export default function Home() {
             </div>
 
             <div>
+              <p className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-3">Contractors</p>
+              <div className="space-y-2">
+                {[
+                  { label: "Find a Contractor", href: "/contractors" },
+                  { label: "List Your Business", href: "/contractors/register" },
+                ].map(l => (
+                  <Link key={l.href} href={l.href}>
+                    <span className="block text-white/40 hover:text-white/80 text-sm transition-colors cursor-pointer">{l.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div>
               <p className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-3">Company</p>
               <div className="space-y-2">
                 {[

@@ -11,10 +11,10 @@ import {
   Users, Building2, DollarSign, TrendingUp, Shield,
   Search, ChevronRight, Crown, CheckCircle2,
   RefreshCw, BarChart3, Zap, Globe, Star,
-  Award, Clock, XCircle, MessageSquare, Bell, Loader2, FileText, BookOpen
+  Award, Clock, XCircle, MessageSquare, Bell, Loader2, FileText, BookOpen, Wrench
 } from "lucide-react";
 
-type AdminTab = "overview" | "agents" | "waitlist" | "sop" | "growth";
+type AdminTab = "overview" | "agents" | "contractors" | "waitlist" | "sop" | "growth";
 
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
@@ -51,6 +51,7 @@ export default function AdminPage() {
   const TABS: { key: AdminTab; label: string; icon: any }[] = [
     { key: "overview", label: "Overview", icon: BarChart3 },
     { key: "agents", label: "Creme Agents", icon: Award },
+    { key: "contractors", label: "Contractors", icon: Wrench },
     { key: "waitlist", label: "Waitlist", icon: Bell },
     { key: "sop", label: "SOP Library", icon: FileText },
     { key: "growth", label: "Growth", icon: TrendingUp },
@@ -95,6 +96,7 @@ export default function AdminPage() {
 
         {activeTab === "overview" && <OverviewTab />}
         {activeTab === "agents" && <AgentsTab />}
+        {activeTab === "contractors" && <ContractorsAdminTab />}
         {activeTab === "waitlist" && <WaitlistTab />}
         {activeTab === "sop" && <SopAdminTab />}
         {activeTab === "growth" && <GrowthTab />}
@@ -842,6 +844,258 @@ function SopAdminTab() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Contractors Admin Tab ────────────────────────────────────────────────────
+
+function ContractorsAdminTab() {
+  const [subTab, setSubTab] = useState<"contractors" | "reviews" | "leads">("contractors");
+  const [search, setSearch] = useState("");
+
+  const { data: contractors = [], refetch: refetchContractors } = trpc.contractors.adminList.useQuery();
+  const { data: reviews = [], refetch: refetchReviews } = trpc.contractors.adminGetReviews.useQuery();
+  const { data: leads = [] } = trpc.contractors.adminGetLeads.useQuery();
+
+  const updateStatus = trpc.contractors.adminUpdateStatus.useMutation({
+    onSuccess: () => { toast.success("Status updated"); refetchContractors(); },
+    onError: (e) => toast.error("Failed", { description: e.message }),
+  });
+
+  const updateReview = trpc.contractors.adminUpdateReview.useMutation({
+    onSuccess: () => { toast.success("Review updated"); refetchReviews(); },
+    onError: (e) => toast.error("Failed", { description: e.message }),
+  });
+
+  const filtered = (contractors as any[]).filter(c =>
+    !search || c.businessName?.toLowerCase().includes(search.toLowerCase()) ||
+    c.state?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const statusColor = (s: string) => ({
+    pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    approved: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    rejected: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    suspended: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
+  }[s] ?? "bg-muted text-muted-foreground");
+
+  return (
+    <div className="space-y-5">
+      {/* Stats row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: "Total Listings", value: (contractors as any[]).length, icon: Wrench },
+          { label: "Approved", value: (contractors as any[]).filter((c: any) => c.status === "approved").length, icon: CheckCircle2 },
+          { label: "Pending Review", value: (contractors as any[]).filter((c: any) => c.status === "pending").length, icon: Clock },
+          { label: "Total Leads", value: (leads as any[]).length, icon: MessageSquare },
+        ].map(({ label, value, icon: Icon }) => (
+          <div key={label} className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Icon className="h-4 w-4 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">{label}</span>
+            </div>
+            <div className="text-2xl font-black text-foreground">{value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Sub-tabs */}
+      <div className="flex gap-1 bg-muted/40 rounded-xl p-1 w-fit">
+        {(["contractors", "reviews", "leads"] as const).map(t => (
+          <button
+            key={t}
+            onClick={() => setSubTab(t)}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors capitalize ${
+              subTab === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {/* Contractors list */}
+      {subTab === "contractors" && (
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              className="w-full pl-10 pr-4 py-2 rounded-xl border border-border bg-background text-sm"
+              placeholder="Search by business name or state..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="rounded-xl border border-border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Business</th>
+                  <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Location</th>
+                  <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Status</th>
+                  <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Rating</th>
+                  <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">No contractors found</td></tr>
+                ) : filtered.map((c: any) => (
+                  <tr key={c.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="font-semibold text-foreground">{c.businessName}</div>
+                      {c.ownerName && <div className="text-xs text-muted-foreground">{c.ownerName}</div>}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{[c.city, c.state].filter(Boolean).join(", ")}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${statusColor(c.status)}`}>{c.status}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {Number(c.averageRating) > 0 ? (
+                        <span className="flex items-center gap-1">
+                          <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                          {Number(c.averageRating).toFixed(1)}
+                        </span>
+                      ) : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1.5">
+                        {c.status !== "approved" && (
+                          <button
+                            onClick={() => updateStatus.mutate({ id: c.id, status: "approved" })}
+                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
+                          >
+                            Approve
+                          </button>
+                        )}
+                        {c.status !== "rejected" && (
+                          <button
+                            onClick={() => updateStatus.mutate({ id: c.id, status: "rejected" })}
+                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
+                          >
+                            Reject
+                          </button>
+                        )}
+                        {c.status !== "suspended" && c.status === "approved" && (
+                          <button
+                            onClick={() => updateStatus.mutate({ id: c.id, status: "suspended" })}
+                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 transition-colors"
+                          >
+                            Suspend
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Reviews moderation */}
+      {subTab === "reviews" && (
+        <div className="rounded-xl border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Reviewer</th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Contractor ID</th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Rating</th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Status</th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {(reviews as any[]).length === 0 ? (
+                <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">No reviews yet</td></tr>
+              ) : (reviews as any[]).map((r: any) => (
+                <tr key={r.id} className="hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="font-semibold text-foreground">{r.reviewerName}</div>
+                    {r.title && <div className="text-xs text-muted-foreground truncate max-w-[200px]">{r.title}</div>}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">#{r.contractorId}</td>
+                  <td className="px-4 py-3">
+                    <span className="flex items-center gap-1">
+                      <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                      {r.rating}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${r.approved ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}`}>
+                      {r.approved ? "Approved" : "Pending"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-1.5">
+                      {!r.approved && (
+                        <button
+                          onClick={() => updateReview.mutate({ id: r.id, approved: 1 })}
+                          className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors"
+                        >
+                          Approve
+                        </button>
+                      )}
+                      {r.approved === 1 && (
+                        <button
+                          onClick={() => updateReview.mutate({ id: r.id, approved: 0 })}
+                          className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Leads */}
+      {subTab === "leads" && (
+        <div className="rounded-xl border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Client</th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Contractor ID</th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Job Type</th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Urgency</th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Date</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {(leads as any[]).length === 0 ? (
+                <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">No leads yet</td></tr>
+              ) : (leads as any[]).map((l: any) => (
+                <tr key={l.id} className="hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="font-semibold text-foreground">{l.clientName}</div>
+                    {l.clientEmail && <div className="text-xs text-muted-foreground">{l.clientEmail}</div>}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">#{l.contractorId}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{l.jobType || "—"}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                      l.urgency === "emergency" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                      l.urgency === "within_week" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                      "bg-muted text-muted-foreground"
+                    }`}>
+                      {l.urgency?.replace("_", " ") ?? "flexible"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{new Date(l.createdAt).toLocaleDateString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

@@ -27,7 +27,7 @@ export default defineConfig({
   },
   server: {
     host: true,
-    allowedHosts: ["localhost", "127.0.0.1", ".railway.app", ".up.railway.app"],
+    allowedHosts: ["localhost", "127.0.0.1", ".railway.app", ".up.railway.app", ".manus.computer"],
     fs: {
       strict: true,
       deny: ["**/.*"],

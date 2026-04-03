@@ -27,7 +27,7 @@ import { trpc } from "@/lib/trpc";
 import {
   LayoutDashboard, LogOut, PanelLeft, Home, Building2,
   Briefcase, Calculator, UserCircle, HeadphonesIcon, Heart,
-  FileText, Sparkles, Shield, ChevronDown
+  FileText, Sparkles, Shield, ChevronDown, Wrench
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -48,6 +48,10 @@ const proMenuItems = [
   { icon: Briefcase, label: "Work Orders", path: "/work-orders", group: "pro" },
   { icon: Calculator, label: "Accounting", path: "/accounting", group: "pro" },
   { icon: UserCircle, label: "Tenants / CRM", path: "/crm", group: "pro" },
+];
+
+const directoryMenuItems = [
+  { icon: Wrench, label: "Contractors", path: "/contractors", group: "directory" },
 ];
 
 const supportMenuItems = [
@@ -280,6 +284,19 @@ function DashboardLayoutContent({
                 </SidebarMenu>
               </>
             )}
+
+            {/* Directory section */}
+            {!isCollapsed && (
+              <div className="px-4 pt-4 pb-1">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                  Directory
+                </p>
+              </div>
+            )}
+            {isCollapsed && <div className="h-3" />}
+            <SidebarMenu className="px-2 gap-0.5">
+              {directoryMenuItems.map(item => <NavItem key={item.path} item={item} />)}
+            </SidebarMenu>
 
             {/* Support */}
             <div className="mt-auto">
