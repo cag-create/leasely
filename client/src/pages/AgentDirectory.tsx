@@ -30,10 +30,18 @@ export default function AgentDirectory() {
           <Badge className="bg-[#00C896]/20 text-[#00C896] border-[#00C896]/30 text-xs">
             Creme Agent Network
           </Badge>
-          <h1 className="text-4xl font-black">Find a Trusted Agent</h1>
+          <h1 className="text-4xl font-black">Close Deals Faster.</h1>
           <p className="text-blue-100 text-lg max-w-2xl mx-auto">
-            Connect with verified Leasely agents who specialize in your area. Every Creme Agent is background-checked and community-reviewed.
+            The Creme Agent Network connects landlords, investors, and FSBO sellers with specialized agents. Buy, sell, invest, or novate — with agents who know your market.
           </p>
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+            {["Background-checked agents", "Available nationwide", "Investor & FSBO specialists", "No upfront cost"].map(item => (
+              <span key={item} className="flex items-center gap-1.5 text-sm text-[#00C896] font-medium">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#00C896] inline-block" />
+                {item}
+              </span>
+            ))}
+          </div>
           <div className="relative max-w-lg mx-auto mt-6">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
@@ -66,13 +74,22 @@ export default function AgentDirectory() {
         ) : !filtered.length ? (
           <div className="text-center py-20 text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-4 opacity-30" />
-            <p className="text-lg font-medium">
-              {search ? "No agents match your search." : "No agents listed yet."}
-            </p>
-            {search && (
-              <Button variant="ghost" className="mt-2" onClick={() => setSearch("")}>
-                Clear search
-              </Button>
+            {search ? (
+              <>
+                <p className="text-lg font-medium">No agents match your search.</p>
+                <Button variant="ghost" className="mt-2" onClick={() => setSearch("")}>
+                  Clear search
+                </Button>
+              </>
+            ) : (
+              <>
+                <p className="text-lg font-semibold text-foreground">Background-checked agents · Available nationwide</p>
+                <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+                  Our agent network is actively growing. Check back soon or{" "}
+                  <a href="mailto:support@leasely.net" className="text-[#00C896] underline">contact us</a>{" "}
+                  to connect with a specialist in your area.
+                </p>
+              </>
             )}
           </div>
         ) : (
@@ -149,8 +166,7 @@ function AgentCard({ agent }: { agent: any }) {
           </div>
         )}
 
-        <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t border-border">
-          <span>{agent.dealCount ?? 0} deals closed</span>
+        <div className="flex items-center justify-end text-xs pt-3 border-t border-border">
           <span className="flex items-center gap-1 text-[#00C896] font-semibold group-hover:gap-2 transition-all">
             View Profile <ChevronRight className="h-3.5 w-3.5" />
           </span>

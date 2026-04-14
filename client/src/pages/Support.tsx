@@ -37,7 +37,7 @@ const FAQ_CATEGORIES = [
     color: "text-green-600",
     bg: "bg-green-50",
     questions: [
-      { q: "What does the Pro plan cost?", a: "The Pro plan is a $50 one-time setup fee plus $25/month. The setup fee covers building and configuring your branded portal. It includes unlimited listings, your own branded portal, AI tenant screening, fraud detection, rental applications, Stripe Connect payouts, waived ACH fees, and priority customer support." },
+      { q: "What does the Pro plan cost?", a: "The Pro plan is a $75 one-time setup fee plus $25/month. The setup fee includes your branded website, custom logo placement, and your personalized leasely.net subdomain URL. It also includes unlimited listings, your own branded portal, AI tenant screening, fraud detection, rental applications, Stripe Connect payouts, waived ACH fees, and priority customer support." },
       { q: "Are ACH fees really waived for Pro subscribers?", a: "Yes! Standard ACH processing costs 0.8% (capped at $5 per transaction). Pro subscribers have this fee completely waived — your tenants pay rent for free via bank transfer, and you receive 100% of the rent amount." },
       { q: "How do tenant rent payments work?", a: "Pro subscribers connect their bank account via Stripe Connect. Tenants receive a portal login and can pay rent via ACH (free) or card. Funds are deposited directly to your bank account, typically within 1-2 business days." },
       { q: "Can I cancel my Pro subscription?", a: "Yes, you can cancel anytime from your dashboard. Your Pro features remain active until the end of your billing period." },

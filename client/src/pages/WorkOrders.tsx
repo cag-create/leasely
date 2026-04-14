@@ -14,7 +14,8 @@ import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import {
   Wrench, Plus, AlertTriangle, Clock, CheckCircle2,
-  Truck, Bot, Search, ChevronRight, Phone, Mail, MapPin
+  Truck, Bot, Search, ChevronRight, Phone, Mail, MapPin,
+  Send, DollarSign, Users, RefreshCw, ThumbsUp, XCircle, RotateCcw,
 } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -33,19 +34,34 @@ const PRIORITY_COLORS: Record<string, string> = {
   emergency: "bg-red-100 text-red-800",
 };
 
+const BID_STATUS_COLORS: Record<string, string> = {
+  sent: "bg-gray-100 text-gray-700",
+  viewed: "bg-yellow-100 text-yellow-800",
+  accepted: "bg-green-100 text-green-800",
+  declined: "bg-red-100 text-red-800",
+  no_response: "bg-gray-100 text-gray-500",
+};
+
 const CATEGORIES = [
   "plumbing", "electrical", "hvac", "appliance",
   "structural", "pest_control", "cleaning", "landscaping", "other"
 ];
 
+function formatDollars(cents: number) {
+  return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 0 })}`;
+}
+
 export default function WorkOrders() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
   const [createOpen, setCreateOpen] = useState(false);
+  const [roundRobin, setRoundRobin] = useState(false);
   const [findVendorOpen, setFindVendorOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [findVendorData, setFindVendorData] = useState({ trade: "", city: "", state: "" });
   const [aiOutreach, setAiOutreach] = useState("");
+  const [payAmount, setPayAmount] = useState("");
+  const [payDispatchId, setPayDispatchId] = useState<number | null>(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -68,6 +84,12 @@ export default function WorkOrders() {
     enabled: isAuthenticated,
     retry: false,
   });
+
+  // Query bids for selected work order
+  const { data: bids, refetch: refetchBids } = trpc.workOrders.listBids.useQuery(
+    { workOrderId: selectedOrder?.id ?? 0 },
+    { enabled: !!selectedOrder?.id && isAuthenticated, retry: false }
+  );
 
   const createMutation = trpc.workOrders.create.useMutation({
     onSuccess: (data) => {
@@ -95,6 +117,43 @@ export default function WorkOrders() {
     onError: (e) => toast.error(e.message),
   });
 
+  const dispatchAllMutation = trpc.workOrders.dispatchToAll.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Dispatched to ${data.dispatched} vendor${data.dispatched === 1 ? "" : "s"}`);
+      refetch();
+      refetchBids();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const approveVendorMutation = trpc.workOrders.approveVendor.useMutation({
+    onSuccess: () => {
+      toast.success("Vendor approved! Others have been notified.");
+      refetch();
+      refetchBids();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const setRoundRobinMutation = trpc.marketplace.setRoundRobin.useMutation({
+    onSuccess: (_, vars) => {
+      setRoundRobin(vars.enabled);
+      toast.success(vars.enabled ? "Round Robin enabled — vendors rotated one at a time" : "Round Robin off — all vendors notified at once");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const payVendorMutation = trpc.workOrders.payVendor.useMutation({
+    onSuccess: () => {
+      toast.success("Payment processed! Work order resolved.");
+      setPayDispatchId(null);
+      setPayAmount("");
+      refetch();
+      refetchBids();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -115,6 +174,8 @@ export default function WorkOrders() {
   const dispatched = workOrders?.filter(w => w.status === "dispatched" || w.status === "vendor_confirmed" || w.status === "in_progress").length ?? 0;
   const resolved = workOrders?.filter(w => w.status === "resolved").length ?? 0;
 
+  const acceptedBid = bids?.find(b => b.landlordApproved === 1);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -128,6 +189,22 @@ export default function WorkOrders() {
             </h1>
             <p className="text-gray-500 mt-1">AI-powered maintenance dispatch and tracking</p>
           </div>
+          <div className="flex items-center gap-3">
+            {/* Round Robin Toggle */}
+            {vendors && vendors.length > 1 && (
+              <button
+                onClick={() => setRoundRobinMutation.mutate({ enabled: !roundRobin })}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                  roundRobin
+                    ? "bg-purple-100 border-purple-300 text-purple-800"
+                    : "bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200"
+                }`}
+                title={roundRobin ? "Round Robin ON: vendors rotated one at a time" : "Round Robin OFF: all vendors notified at once"}
+              >
+                <RotateCcw className={`w-4 h-4 ${roundRobin ? "text-purple-600" : ""}`} />
+                Round Robin {roundRobin ? "ON" : "OFF"}
+              </button>
+            )}
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
               <Button className="bg-[#1B4332] hover:bg-[#2D6A4F] text-white gap-2">
@@ -144,7 +221,7 @@ export default function WorkOrders() {
               <div className="space-y-4 mt-2">
                 <p className="text-sm text-gray-500 bg-green-50 border border-green-200 rounded-lg p-3">
                   <Bot className="w-4 h-4 inline mr-1 text-[#1B4332]" />
-                  Our AI will automatically confirm receipt and summarize the issue. If a vendor is assigned, they'll be notified immediately.
+                  AI confirms receipt and summarizes the issue. Use "Dispatch to All" to send to every vendor in your list at once.
                 </p>
                 <div>
                   <Label>Issue Title *</Label>
@@ -172,7 +249,7 @@ export default function WorkOrders() {
                         <SelectItem value="low">Low</SelectItem>
                         <SelectItem value="medium">Medium</SelectItem>
                         <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="emergency">Emergency</SelectItem>
+                        <SelectItem value="emergency">🚨 Emergency</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -197,11 +274,11 @@ export default function WorkOrders() {
                 </div>
                 {vendors && vendors.length > 0 && (
                   <div>
-                    <Label>Assign Vendor (optional)</Label>
+                    <Label>Assign Single Vendor (optional)</Label>
                     <Select value={form.vendorId?.toString() ?? ""} onValueChange={v => setForm(f => ({ ...f, vendorId: v ? parseInt(v) : undefined }))}>
-                      <SelectTrigger><SelectValue placeholder="Select a vendor to auto-dispatch" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Or use Dispatch to All below" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No vendor (save as open)</SelectItem>
+                        <SelectItem value="">No vendor — dispatch to all after creating</SelectItem>
                         {vendors.map(v => (
                           <SelectItem key={v.id} value={v.id.toString()}>{v.name} — {v.trade ?? "General"}</SelectItem>
                         ))}
@@ -219,6 +296,7 @@ export default function WorkOrders() {
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Stats */}
@@ -267,13 +345,13 @@ export default function WorkOrders() {
         ) : (
           <div className="space-y-3">
             {workOrders.map(order => (
-              <Card key={order.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedOrder(order)}>
+              <Card key={order.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => { setSelectedOrder(order); setAiOutreach(""); }}>
                 <CardContent className="py-4 px-5">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[order.status ?? "open"]}`}>
-                          {(order.status ?? "open").replace("_", " ")}
+                          {(order.status ?? "open").replace(/_/g, " ")}
                         </span>
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${PRIORITY_COLORS[order.priority ?? "medium"]}`}>
                           {order.priority}
@@ -313,8 +391,8 @@ export default function WorkOrders() {
 
         {/* Work Order Detail Dialog */}
         {selectedOrder && (
-          <Dialog open={!!selectedOrder} onOpenChange={() => { setSelectedOrder(null); setAiOutreach(""); }}>
-            <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <Dialog open={!!selectedOrder} onOpenChange={() => { setSelectedOrder(null); setAiOutreach(""); setPayDispatchId(null); setPayAmount(""); }}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Wrench className="w-5 h-5 text-[#1B4332]" />
@@ -322,13 +400,18 @@ export default function WorkOrders() {
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <span className={`text-xs font-medium px-2 py-1 rounded-full ${STATUS_COLORS[selectedOrder.status ?? "open"]}`}>
-                    {(selectedOrder.status ?? "open").replace("_", " ")}
+                    {(selectedOrder.status ?? "open").replace(/_/g, " ")}
                   </span>
                   <span className={`text-xs font-medium px-2 py-1 rounded-full ${PRIORITY_COLORS[selectedOrder.priority ?? "medium"]}`}>
                     {selectedOrder.priority} priority
                   </span>
+                  {selectedOrder.category && (
+                    <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-700 capitalize">
+                      {selectedOrder.category.replace(/_/g, " ")}
+                    </span>
+                  )}
                 </div>
 
                 {selectedOrder.aiSummary && (
@@ -346,6 +429,24 @@ export default function WorkOrders() {
                     <p className="text-sm text-gray-600">{selectedOrder.description}</p>
                   </div>
                 )}
+
+                {/* Photos */}
+                {selectedOrder.photos && (() => {
+                  try {
+                    const photos = JSON.parse(selectedOrder.photos) as string[];
+                    if (photos.length > 0) return (
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-2">Photos</p>
+                        <div className="flex gap-2 flex-wrap">
+                          {photos.map((url, i) => (
+                            <img key={i} src={url} alt={`Photo ${i+1}`} className="w-24 h-20 object-cover rounded-lg border border-gray-200" />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  } catch { return null; }
+                  return null;
+                })()}
 
                 <div className="grid grid-cols-2 gap-4">
                   {selectedOrder.propertyAddress && (
@@ -369,7 +470,7 @@ export default function WorkOrders() {
                   )}
                 </div>
 
-                {selectedOrder.vendorName && (
+                {selectedOrder.vendorName && !bids?.length && (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                     <p className="text-sm font-medium text-blue-800 mb-1 flex items-center gap-1">
                       <Truck className="w-4 h-4" /> Assigned Vendor
@@ -388,32 +489,150 @@ export default function WorkOrders() {
                   </div>
                 )}
 
+                {/* ── Multi-bid Vendor Panel ────────────────────────────────── */}
+                {bids && bids.length > 0 && (
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1">
+                      <Users className="w-4 h-4 text-[#1B4332]" />
+                      Vendor Bids ({bids.length})
+                    </p>
+                    <div className="space-y-2">
+                      {bids.map(bid => (
+                        <div key={bid.id} className={`border rounded-lg p-3 ${bid.landlordApproved ? "border-green-300 bg-green-50" : "border-gray-200 bg-white"}`}>
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-sm font-semibold">{bid.vendorName}</span>
+                                <span className={`text-xs px-1.5 py-0.5 rounded-full ${BID_STATUS_COLORS[bid.status]}`}>
+                                  {bid.status}
+                                </span>
+                                {bid.landlordApproved === 1 && (
+                                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-100 text-green-800 font-semibold">✓ Approved</span>
+                                )}
+                              </div>
+                              {bid.proposedDate && (
+                                <p className="text-xs text-gray-600">
+                                  📅 {bid.proposedDate}{bid.proposedTimeSlot ? ` · ${bid.proposedTimeSlot}` : ""}
+                                </p>
+                              )}
+                              {bid.vendorQuoteCents != null && (
+                                <p className="text-sm font-bold text-[#1B4332]">
+                                  Quote: {formatDollars(bid.vendorQuoteCents)}
+                                </p>
+                              )}
+                              {bid.vendorNotes && (
+                                <p className="text-xs text-gray-500 mt-1 italic">"{bid.vendorNotes}"</p>
+                              )}
+                            </div>
+                            <div className="flex gap-2 ml-3 shrink-0">
+                              {bid.status === "accepted" && !bid.landlordApproved && (
+                                <Button
+                                  size="sm"
+                                  className="bg-green-600 hover:bg-green-700 text-white gap-1 text-xs"
+                                  onClick={() => approveVendorMutation.mutate({ dispatchId: bid.id })}
+                                  disabled={approveVendorMutation.isPending}
+                                >
+                                  <ThumbsUp className="w-3 h-3" /> Approve
+                                </Button>
+                              )}
+                              {bid.landlordApproved === 1 && bid.paymentStatus !== "paid" && (
+                                payDispatchId === bid.id ? (
+                                  <div className="flex items-center gap-1">
+                                    <Input
+                                      className="w-24 h-8 text-xs"
+                                      placeholder="$0.00"
+                                      value={payAmount}
+                                      onChange={e => setPayAmount(e.target.value)}
+                                    />
+                                    <Button
+                                      size="sm"
+                                      className="bg-[#1B2B5E] text-white gap-1 text-xs h-8"
+                                      onClick={() => {
+                                        const cents = Math.round(parseFloat(payAmount) * 100);
+                                        if (isNaN(cents) || cents <= 0) return toast.error("Enter a valid amount");
+                                        payVendorMutation.mutate({ dispatchId: bid.id, amountCents: cents });
+                                      }}
+                                      disabled={payVendorMutation.isPending}
+                                    >
+                                      <DollarSign className="w-3 h-3" />
+                                      {payVendorMutation.isPending ? "..." : "Pay"}
+                                    </Button>
+                                    <Button size="sm" variant="ghost" className="h-8 px-2 text-xs" onClick={() => setPayDispatchId(null)}>
+                                      <XCircle className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    className="bg-[#1B2B5E] hover:bg-[#2D3F7C] text-white gap-1 text-xs"
+                                    onClick={() => {
+                                      setPayDispatchId(bid.id);
+                                      setPayAmount(bid.vendorQuoteCents ? (bid.vendorQuoteCents / 100).toFixed(2) : "");
+                                    }}
+                                  >
+                                    <DollarSign className="w-3 h-3" /> Pay Vendor
+                                  </Button>
+                                )
+                              )}
+                              {bid.paymentStatus === "paid" && (
+                                <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-1 rounded-full">✓ Paid</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Dispatch to All Vendors ───────────────────────────────── */}
+                {vendors && vendors.length > 0 && selectedOrder.status !== "resolved" && (
+                  <div className="border border-dashed border-[#1B4332] rounded-lg p-4 bg-green-50/50">
+                    <p className="text-sm font-medium text-[#1B4332] mb-1 flex items-center gap-1">
+                      <Send className="w-4 h-4" /> Dispatch to All Vendors
+                    </p>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Send this work order to all {vendors.length} vendor{vendors.length === 1 ? "" : "s"} in your list at once.
+                      They'll each see the photos/details and respond with their available time slot and quote.
+                    </p>
+                    <Button
+                      size="sm"
+                      className="bg-[#1B4332] hover:bg-[#2D6A4F] text-white gap-1"
+                      onClick={() => dispatchAllMutation.mutate({ workOrderId: selectedOrder.id })}
+                      disabled={dispatchAllMutation.isPending}
+                    >
+                      <Send className="w-3 h-3" />
+                      {dispatchAllMutation.isPending ? "Dispatching..." : `Dispatch to All ${vendors.length} Vendor${vendors.length === 1 ? "" : "s"}`}
+                    </Button>
+                  </div>
+                )}
+
                 {/* Update Status */}
                 <div>
-                  <Label>Update Status</Label>
+                  <Label className="text-sm font-medium text-gray-700">Update Status</Label>
                   <div className="flex gap-2 mt-1 flex-wrap">
                     {["open", "dispatched", "vendor_confirmed", "in_progress", "resolved", "cancelled"].map(s => (
                       <Button
                         key={s}
                         size="sm"
                         variant={selectedOrder.status === s ? "default" : "outline"}
-                        className={selectedOrder.status === s ? "bg-[#1B4332] text-white" : ""}
+                        className={selectedOrder.status === s ? "bg-[#1B4332] text-white text-xs" : "text-xs"}
                         onClick={() => {
                           updateMutation.mutate({ id: selectedOrder.id, status: s });
                           setSelectedOrder({ ...selectedOrder, status: s });
                         }}
                       >
-                        {s.replace("_", " ")}
+                        {s.replace(/_/g, " ")}
                       </Button>
                     ))}
                   </div>
                 </div>
 
-                {/* Find Vendor if none assigned */}
-                {!selectedOrder.vendorName && (
+                {/* Find Vendor with AI if none assigned and no bids */}
+                {!selectedOrder.vendorName && (!bids || bids.length === 0) && (
                   <div className="border border-dashed border-gray-300 rounded-lg p-4">
                     <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                      <Search className="w-4 h-4 text-[#1B4332]" /> No vendor assigned — find one with AI
+                      <Search className="w-4 h-4 text-[#1B4332]" /> Find vendor with AI outreach
                     </p>
                     <div className="grid grid-cols-3 gap-2 mb-3">
                       <Input placeholder="Trade (e.g. plumber)" value={findVendorData.trade} onChange={e => setFindVendorData(d => ({ ...d, trade: e.target.value }))} />

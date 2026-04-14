@@ -796,7 +796,19 @@ export default function Dashboard() {
                       </div>
                       <div className="flex-1">
                         <div className="font-semibold text-sm text-gray-900">Work Orders</div>
-                        <div className="text-xs text-gray-400">AI dispatch & vendor management</div>
+                        <div className="text-xs text-gray-400">AI dispatch & multi-bid vendor management</div>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-gray-300" />
+                    </div>
+                  </Link>
+                  <Link href="/leases">
+                    <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer border border-gray-100">
+                      <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ background: "#EFF6FF" }}>
+                        <FileText className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-sm text-gray-900">Lease Agreements</div>
+                        <div className="text-xs text-gray-400">State-specific leases · auto payment links</div>
                       </div>
                       <ArrowRight className="h-4 w-4 text-gray-300" />
                     </div>

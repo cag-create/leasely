@@ -46,6 +46,7 @@ const proMenuItems = [
   { icon: Building2, label: "Complexes", path: "/complexes", group: "pro" },
   { icon: FileText, label: "Applications", path: "/applications", group: "pro" },
   { icon: Briefcase, label: "Work Orders", path: "/work-orders", group: "pro" },
+  { icon: FileText, label: "Lease Agreements", path: "/leases", group: "pro" },
   { icon: Calculator, label: "Accounting", path: "/accounting", group: "pro" },
   { icon: UserCircle, label: "Tenants / CRM", path: "/crm", group: "pro" },
 ];
@@ -74,11 +75,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
   }, [sidebarWidth]);
 
-  if (loading) return <DashboardLayoutSkeleton />;
+  if (loading) return <div className="dark"><DashboardLayoutSkeleton /></div>;
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="dark flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-6 p-8 max-w-sm w-full text-center">
           <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
             <LayoutDashboard className="h-7 w-7 text-primary" />
@@ -102,11 +103,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <SidebarProvider style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}>
-      <DashboardLayoutContent setSidebarWidth={setSidebarWidth}>
-        {children}
-      </DashboardLayoutContent>
-    </SidebarProvider>
+    <div className="dark">
+      <SidebarProvider style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}>
+        <DashboardLayoutContent setSidebarWidth={setSidebarWidth}>
+          {children}
+        </DashboardLayoutContent>
+      </SidebarProvider>
+    </div>
   );
 }
 

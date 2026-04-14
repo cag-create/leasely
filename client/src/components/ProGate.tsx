@@ -87,7 +87,7 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
                 {featureName === "this feature"
                   ? "This feature is available exclusively to Leasely Pro subscribers."
                   : `${featureName} is available exclusively to Leasely Pro subscribers.`}{" "}
-                Unlock your full property management portal for $50 one-time setup + $25/month.
+                Unlock your full property management portal for $75 one-time setup + $25/month.
               </p>
             </div>
 
@@ -127,7 +127,7 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
                   </>
                 ) : (
                   <>
-                    Upgrade to Pro — $50 setup + $25/mo
+                    Upgrade to Pro — $75 setup + $25/mo
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}
@@ -138,7 +138,7 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
             </div>
 
             <p className="text-xs text-muted-foreground">
-$50 one-time portal setup · then $25/mo · Cancel anytime.
+$75 one-time setup (website, logo & URL) · then $25/mo · Cancel anytime.
             </p>
           </div>
         </div>

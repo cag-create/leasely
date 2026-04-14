@@ -419,13 +419,13 @@ export default function ProPage() {
             </h1>
 
             <p className="text-xl text-white/55 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Your own branded portal. Instant payouts. AI fraud applicant detection. Work order automation. Tax-ready accounting. Everything under your brand for $50 setup + $25/month.
+              Your own branded portal. Instant payouts. AI fraud applicant detection. Work order automation. Tax-ready accounting. Everything under your brand for $75 setup + $25/month.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <a href={isAuthenticated ? "/dashboard" : getLoginUrl()}>
                 <Button size="lg" className="btn-teal font-black px-10 py-4 text-base gap-2">
-                  <Sparkles className="w-5 h-5" /> Start Pro — $50 setup + $25/mo
+                  <Sparkles className="w-5 h-5" /> Start Pro — $75 setup + $25/mo
                 </Button>
               </a>
               <Button
@@ -440,7 +440,7 @@ export default function ProPage() {
 
             {/* Social proof */}
             <div className="flex flex-wrap items-center justify-center gap-6 text-white/35 text-sm">
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>$50 one-time setup</span></div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>$75 one-time setup</span></div>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>Cancel anytime</span></div>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>Waived ACH fees</span></div>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>Priority 24hr support</span></div>
@@ -459,14 +459,14 @@ export default function ProPage() {
               { value: "$0", label: "First Listing Free", sub: "No credit card needed", icon: Building2, color: "#00C896" },
               { value: "0%", label: "ACH Fees for Pro", sub: "Tenants pay at no cost", icon: DollarSign, color: "#F5A623" },
               { value: "∞", label: "Listings Allowed", sub: "Unlimited on Pro plan", icon: Globe, color: "#6366F1" },
-              { value: "$39", label: "Per Month", sub: "Cancel anytime", icon: Star, color: "#10B981" },
+              { value: "$25", label: "Per Month", sub: "Cancel anytime", icon: Star, color: "#10B981" },
             ].map((s, i) => (
               <div key={i} className="flex flex-col items-center">
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: `${s.color}15` }}>
                   <s.icon className="w-6 h-6" style={{ color: s.color }} />
                 </div>
                 <div className="text-3xl md:text-4xl font-black mb-1" style={{ color: BRAND, fontFamily: "'Outfit', sans-serif" }}>
-                  {s.value}{i === 3 ? ".99/mo" : ""}
+                  {s.value}{i === 3 ? "/mo" : ""}
                 </div>
                 <div className="text-gray-700 text-sm font-semibold">{s.label}</div>
                 <div className="text-gray-400 text-xs mt-0.5">{s.sub}</div>
@@ -686,8 +686,8 @@ export default function ProPage() {
       <section className="section-padding" style={{ background: "linear-gradient(180deg, #F8FAFB 0%, #EEF2F7 100%)" }}>
         <div className="container">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-black text-gray-900" style={{ fontFamily: 'Outfit, sans-serif' }}>$50 Setup + $25.00/Month</h2>
-            <p className="text-gray-500 mt-2 text-lg">One-time portal setup fee, then $25/month. No contracts. Cancel anytime.</p>
+            <h2 className="text-4xl font-black text-gray-900" style={{ fontFamily: 'Outfit, sans-serif' }}>$75 Setup + $25.00/Month</h2>
+            <p className="text-gray-500 mt-2 text-lg">One-time setup fee (website, logo & URL), then $25/month. No contracts. Cancel anytime.</p>
           </div>
           <div className="max-w-lg mx-auto rounded-3xl overflow-hidden shadow-2xl" style={{ background: BRAND }}>
             <div className="p-8">
@@ -698,7 +698,7 @@ export default function ProPage() {
                     <span className="text-5xl font-black text-white" style={{ fontFamily:'Outfit,sans-serif' }}>$25.00</span>
                     <span className="text-white/40">/month</span>
                   </div>
-                  <div className="text-sm font-semibold mt-1" style={{ color: '#00C896' }}>+ $50 one-time setup fee</div>
+                  <div className="text-sm font-semibold mt-1" style={{ color: '#00C896' }}>+ $75 one-time setup fee</div>
                 </div>
                 <Badge className="bg-teal-500 text-[#0a2a1f] font-bold border-0">Most Popular</Badge>
               </div>
@@ -724,10 +724,10 @@ export default function ProPage() {
               </div>
               <a href={isAuthenticated ? "/dashboard" : getLoginUrl()} className="block">
                 <Button size="lg" className="w-full btn-teal font-black text-base py-4 gap-2">
-                  <Sparkles className="w-5 h-5" /> Start Pro — $50 setup + $25/mo
+                  <Sparkles className="w-5 h-5" /> Start Pro — $75 setup + $25/mo
                 </Button>
               </a>
-              <p className="text-center text-white/30 text-sm mt-4">$50 one-time portal setup · then $25/mo · Cancel anytime</p>
+              <p className="text-center text-white/30 text-sm mt-4">$75 one-time setup (website, logo & URL) · then $25/mo · Cancel anytime</p>
             </div>
           </div>
           <div className="text-center mt-8">

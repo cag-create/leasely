@@ -11,6 +11,8 @@ export const PROPERTY_TYPES = [
   { value: "townhouse", label: "Townhouse" },
   { value: "co_living", label: "Co-Living" },
   { value: "studio", label: "Studio" },
+  { value: "room", label: "Room Rental" },
+  { value: "for_sale", label: "For Sale (FSBO)" },
   { value: "other", label: "Other" },
 ];
 
@@ -21,7 +23,8 @@ export const PROPERTY_TYPE_LABELS: Record<string, string> = {
   townhouse: "Townhouse",
   co_living: "Co-Living",
   studio: "Studio",
-  room: "Room",
+  room: "Room Rental",
+  for_sale: "For Sale (FSBO)",
   other: "Other",
 };
 
@@ -59,7 +62,8 @@ export function getPropertyTypeIcon(type: string): string {
     townhouse: "🏘️",
     co_living: "👥",
     studio: "🛋️",
-    room: "👥",
+    room: "🛏️",
+    for_sale: "🏡",
     other: "🏗️",
   };
   return icons[type] ?? "🏠";

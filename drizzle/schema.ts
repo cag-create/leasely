@@ -49,6 +49,8 @@ export const userSubscriptions = mysqlTable("user_subscriptions", {
   // Stripe Connect (for tenant rent payments)
   stripeConnectAccountId: varchar("stripeConnectAccountId", { length: 255 }),
   stripeConnectStatus: mysqlEnum("stripeConnectStatus", ["not_connected", "pending", "active"]).default("not_connected"),
+  // Vendor dispatch preferences
+  roundRobinEnabled: tinyint("roundRobinEnabled").default(0), // 1 = rotate vendors, 0 = send to all
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -1056,6 +1058,94 @@ export const fsboProfiles = mysqlTable("fsbo_profiles", {
 });
 export type FsboProfile = typeof fsboProfiles.$inferSelect;
 export type InsertFsboProfile = typeof fsboProfiles.$inferInsert;
+
+// ─── Lease Agreements (state-specific) ───────────────────────────────────────
+
+export const leaseAgreements = mysqlTable("lease_agreements", {
+  id: int("id").autoincrement().primaryKey(),
+  landlordUserId: int("landlordUserId").notNull(),
+  listingId: int("listingId"),
+  tenantName: varchar("tenantName", { length: 255 }).notNull(),
+  tenantEmail: varchar("tenantEmail", { length: 320 }).notNull(),
+  tenantPhone: varchar("tenantPhone", { length: 30 }),
+  state: varchar("state", { length: 2 }).notNull(), // 2-letter US state code
+  propertyAddress: text("propertyAddress").notNull(),
+  monthlyRent: int("monthlyRent").notNull(), // in cents
+  securityDeposit: int("securityDeposit").default(0), // in cents
+  leaseStartDate: varchar("leaseStartDate", { length: 20 }).notNull(),
+  leaseEndDate: varchar("leaseEndDate", { length: 20 }),
+  leaseTerm: mysqlEnum("leaseTerm", ["month_to_month", "6_months", "12_months", "24_months"]).default("12_months"),
+  // Lockbox / key access
+  accessMethod: mysqlEnum("accessMethod", ["lockbox", "key_pickup", "in_person", "other"]).default("key_pickup"),
+  lockboxCode: varchar("lockboxCode", { length: 50 }),
+  accessInstructions: text("accessInstructions"),
+  // Status tracking
+  status: mysqlEnum("status", ["draft", "sent", "signed", "active", "expired", "terminated"]).default("draft").notNull(),
+  sentAt: timestamp("sentAt"),
+  signedAt: timestamp("signedAt"),
+  // Payment link sent after signing
+  firstMonthPaymentSent: tinyint("firstMonthPaymentSent").default(0),
+  depositPaymentSent: tinyint("depositPaymentSent").default(0),
+  // Signed document URL (uploaded PDF or DocuSign)
+  signedDocumentUrl: text("signedDocumentUrl"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LeaseAgreement = typeof leaseAgreements.$inferSelect;
+export type InsertLeaseAgreement = typeof leaseAgreements.$inferInsert;
+
+// ─── Property Manager Access ──────────────────────────────────────────────────
+
+export const propertyManagerAccess = mysqlTable("property_manager_access", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerUserId: int("ownerUserId").notNull(),       // landlord/owner
+  managerUserId: int("managerUserId").notNull(),   // property manager
+  // Scope: which properties they manage
+  allProperties: tinyint("allProperties").default(0), // 1 = manage all
+  listingIds: text("listingIds"), // JSON array of specific listing IDs
+  // Permissions
+  canViewWorkOrders: tinyint("canViewWorkOrders").default(1),
+  canManageWorkOrders: tinyint("canManageWorkOrders").default(1),
+  canViewPayments: tinyint("canViewPayments").default(1),
+  canViewLeases: tinyint("canViewLeases").default(1),
+  canManageLeases: tinyint("canManageLeases").default(0),
+  canApproveApplications: tinyint("canApproveApplications").default(0),
+  canPayVendors: tinyint("canPayVendors").default(0),
+  // Status
+  status: mysqlEnum("status", ["active", "revoked"]).default("active").notNull(),
+  inviteEmail: varchar("inviteEmail", { length: 320 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PropertyManagerAccess = typeof propertyManagerAccess.$inferSelect;
+export type InsertPropertyManagerAccess = typeof propertyManagerAccess.$inferInsert;
+
+// ─── Vendor Dispatch Requests (multi-bid / round robin) ───────────────────────
+
+export const vendorDispatchRequests = mysqlTable("vendor_dispatch_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  workOrderId: int("workOrderId").notNull(),
+  vendorId: int("vendorId").notNull(),
+  landlordUserId: int("landlordUserId").notNull(),
+  // Vendor response
+  status: mysqlEnum("status", ["sent", "viewed", "accepted", "declined", "no_response"]).default("sent").notNull(),
+  // Time slot proposed by vendor
+  proposedDate: varchar("proposedDate", { length: 20 }),
+  proposedTimeSlot: varchar("proposedTimeSlot", { length: 50 }), // e.g. "9am-12pm"
+  vendorQuoteCents: int("vendorQuoteCents"), // vendor's quoted price
+  vendorNotes: text("vendorNotes"),
+  // Landlord decision
+  landlordApproved: tinyint("landlordApproved"),
+  approvedAt: timestamp("approvedAt"),
+  // Payment
+  paymentStatus: mysqlEnum("paymentStatus", ["pending", "paid", "failed"]).default("pending"),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
+  paidAt: timestamp("paidAt"),
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+  respondedAt: timestamp("respondedAt"),
+});
+export type VendorDispatchRequest = typeof vendorDispatchRequests.$inferSelect;
+export type InsertVendorDispatchRequest = typeof vendorDispatchRequests.$inferInsert;
 
 // ─── SOP Library ─────────────────────────────────────────────────────────────
 

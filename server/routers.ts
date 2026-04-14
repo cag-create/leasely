@@ -5,13 +5,18 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { notifyOwner } from "./_core/notification";
-import { sendEmail, workOrderDispatchEmail, tenantMaintenanceConfirmEmail, landlordMaintenanceAlertEmail } from "./_core/email";
+import {
+  sendEmail,
+  workOrderDispatchEmail, tenantMaintenanceConfirmEmail, landlordMaintenanceAlertEmail,
+  leaseAgreementEmail, leaseSignedPaymentEmail,
+  vendorDispatchRequestEmail, vendorQuoteReceivedEmail, vendorJobCompleteEmail,
+} from "./_core/email";
 import Stripe from "stripe";
 import { LEASELY_PRO, LEASELY_PRO_SETUP } from "./products";
 import QRCode from "qrcode";
 import { storagePut } from "./storage";
-import { affiliates, w9Submissions, affiliateReferrals, affiliatePayouts } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { affiliates, w9Submissions, affiliateReferrals, affiliatePayouts, marketplaceListings, rentalApplications, leaseAgreements } from "../drizzle/schema";
+import { eq, sql, and } from "drizzle-orm";
 import { getDb } from "./db";
 import {
   upsertUser, getUserByOpenId,
@@ -68,6 +73,12 @@ import {
   incrementContractorViews, getApprovedContractorReviews, getAllContractorReviews,
   createContractorReview, updateContractorReviewApproval,
   createContractorLead, getContractorLeads, getAllContractorLeads,
+  // Lease Agreements
+  createLeaseAgreement, getLeasesByLandlord, getLeasesByTenantEmail, getLeaseById, updateLeaseAgreement,
+  // Property Manager Access
+  createPropertyManagerAccess, getPropertyManagersByOwner, getPropertiesManagedBy, updatePropertyManagerAccess, revokePropertyManagerAccess,
+  // Vendor Dispatch
+  createVendorDispatchRequest, getDispatchsByWorkOrder, getDispatchsByVendor, updateVendorDispatchRequest,
 } from "./db";
 import {
   getComplexesByUser, getComplexById, createComplex, updateComplex, deleteComplex,
@@ -871,6 +882,19 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    /** Toggle round robin vendor dispatch */
+    setRoundRobin: protectedProcedure
+      .input(z.object({ enabled: z.boolean() }))
+      .mutation(async ({ input, ctx }) => {
+        const sub = await getUserSubscription(ctx.user.id);
+        if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+        await upsertUserSubscription({
+          userId: ctx.user.id,
+          roundRobinEnabled: input.enabled ? 1 : 0,
+        } as any);
+        return { success: true };
+      }),
+
     /** Get saved searches for current renter */
     getSavedSearches: protectedProcedure.query(async ({ ctx }) => {
       return getSavedSearches(ctx.user.id);
@@ -1005,7 +1029,7 @@ export const appRouter = router({
           throw new TRPCError({ code: "NOT_FOUND", message: "Listing not found" });
         }
         const sub = await getUserSubscription(listing.userId);
-        if (!sub || sub.tier !== "paid" || !sub.stripeConnectAccountId) {
+        if (!sub || !sub.stripeConnectAccountId) {
           throw new TRPCError({ code: "FORBIDDEN", message: "Landlord has not set up payments" });
         }
         const stripe = getStripe();
@@ -1013,6 +1037,9 @@ export const appRouter = router({
 
         const amountCents = Math.round(input.amountDollars * 100);
         const desc = input.description ?? `Rent payment — ${listing.title}`;
+        // Pro landlords: 0% platform fee. Free tier: 1% Leasely platform fee.
+        const isProLandlord = sub.tier === "paid";
+        const platformFeeCents = isProLandlord ? 0 : Math.round(amountCents * 0.01);
 
         const paymentId = await createPaymentRecord({
           listingId: input.listingId,
@@ -1023,6 +1050,14 @@ export const appRouter = router({
           description: desc,
           status: "pending",
         });
+
+        const paymentIntentData: any = {
+          transfer_data: { destination: sub.stripeConnectAccountId },
+          metadata: { leaselyPaymentId: String(paymentId), listingId: String(input.listingId) },
+        };
+        if (platformFeeCents > 0) {
+          paymentIntentData.application_fee_amount = platformFeeCents;
+        }
 
         const session = await stripe.checkout.sessions.create({
           payment_method_types: ["card"],
@@ -1039,10 +1074,7 @@ export const appRouter = router({
             },
             quantity: 1,
           }],
-          payment_intent_data: {
-            transfer_data: { destination: sub.stripeConnectAccountId },
-            metadata: { leaselyPaymentId: String(paymentId), listingId: String(input.listingId) },
-          },
+          payment_intent_data: paymentIntentData,
           success_url: `${APP_URL}/pay/${input.listingId}/success?session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: `${APP_URL}/pay/${input.listingId}`,
           metadata: { leaselyPaymentId: String(paymentId) },
@@ -1066,17 +1098,23 @@ export const appRouter = router({
         if (!sub.stripeConnectAccountId) throw new TRPCError({ code: "BAD_REQUEST", message: "Stripe Connect not set up. Please connect your bank account first." });
         const stripe = getStripe();
         if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured" });
+        // Pro instant payout fee: $1.00 flat (Leasely fee — Pro subscriber benefit)
+        const INSTANT_PAYOUT_FLAT_FEE = 100; // $1.00 in cents
         try {
           const balance = await stripe.balance.retrieve({ stripeAccount: sub.stripeConnectAccountId });
           const available = balance.available.find(b => b.currency === "usd");
-          if (!available || available.amount < 100) throw new TRPCError({ code: "BAD_REQUEST", message: "No available balance to pay out" });
-          const payoutAmount = input.amountCents ?? available.amount;
-          if (payoutAmount > available.amount) throw new TRPCError({ code: "BAD_REQUEST", message: "Requested amount exceeds available balance" });
+          if (!available || available.amount < 200) throw new TRPCError({ code: "BAD_REQUEST", message: "No available balance to pay out" });
+          const grossAmount = input.amountCents ?? available.amount;
+          if (grossAmount > available.amount) throw new TRPCError({ code: "BAD_REQUEST", message: "Requested amount exceeds available balance" });
+          // Deduct $1.00 flat Leasely instant payout fee (Pro subscriber benefit)
+          const leaselyFee = INSTANT_PAYOUT_FLAT_FEE;
+          const netPayoutAmount = grossAmount - leaselyFee;
+          if (netPayoutAmount < 100) throw new TRPCError({ code: "BAD_REQUEST", message: "Amount too small after $1.00 instant payout fee" });
           const payout = await stripe.payouts.create({
-            amount: payoutAmount, currency: "usd", method: "instant",
+            amount: netPayoutAmount, currency: "usd", method: "instant",
             statement_descriptor: "LEASELY PAYOUT",
           }, { stripeAccount: sub.stripeConnectAccountId });
-          return { success: true, payoutId: payout.id, amountCents: payout.amount, arrivalDate: payout.arrival_date, status: payout.status };
+          return { success: true, payoutId: payout.id, amountCents: payout.amount, grossAmountCents: grossAmount, leaselyFee, feeRate: "$1.00 flat", arrivalDate: payout.arrival_date, status: payout.status };
         } catch (err: any) {
           if (err.code === "TRPC_ERROR" || err instanceof TRPCError) throw err;
           if (err.raw?.code === "instant_payouts_unsupported") {
@@ -1302,6 +1340,7 @@ export const appRouter = router({
       description: z.string().optional(),
       category: z.enum(["plumbing","electrical","hvac","appliance","structural","pest_control","cleaning","landscaping","other"]).default("other"),
       priority: z.enum(["low","medium","high","emergency"]).default("medium"),
+      photos: z.array(z.string().url()).optional(), // photo URLs from tenant
     })).mutation(async ({ input }) => {
       // Authenticate via tenant portal token
       const tenant = await getTenantByToken(input.tenantToken);
@@ -1353,30 +1392,64 @@ export const appRouter = router({
         tenantPhone: tenant.phone ?? undefined,
         aiSummary,
         status: "open",
+        photos: input.photos?.length ? JSON.stringify(input.photos) : undefined,
       });
 
-      // Auto-dispatch: find the first available vendor for this category
-      const vendors = await getVendors(tenant.landlordUserId);
-      const matchingVendor = vendors.find(v =>
-        v.email && (
-          !v.trade ||
-          v.trade.toLowerCase().includes(input.category.toLowerCase()) ||
-          input.category === "other"
-        )
-      );
+      // Auto-dispatch: send to ALL vendors immediately for every priority level.
+      // Emergency = fire immediately with 🚨 banner. All others = standard dispatch.
+      // Round Robin: if landlord has round_robin setting, rotate through vendors one at a time.
+      const allVendorsList = await getVendors(tenant.landlordUserId);
+      const vendorsWithEmail = allVendorsList.filter(v => v.email && v.isActive);
 
+      if (vendorsWithEmail.length > 0) {
+        const APP_URL_AUTO = process.env.VITE_APP_URL ?? "https://leasely.net";
+        const isEmergency = input.priority === "emergency";
+        const sub2 = await getUserSubscription(tenant.landlordUserId);
+
+        // Round Robin: pick the single vendor that has been dispatched the fewest times
+        // Standard: send to ALL vendors
+        const useRoundRobin = (sub2 as any)?.roundRobinEnabled === 1;
+
+        let vendorsToNotify = vendorsWithEmail;
+        if (useRoundRobin) {
+          // Count how many times each vendor has been dispatched
+          const allDispatches = await Promise.all(vendorsWithEmail.map(v => getDispatchsByVendor(v.id)));
+          const countMap = vendorsWithEmail.map((v, i) => ({ vendor: v, count: allDispatches[i].length }));
+          countMap.sort((a, b) => a.count - b.count);
+          vendorsToNotify = [countMap[0].vendor]; // least-used vendor
+        }
+
+        await updateWorkOrder(workOrderId, tenant.landlordUserId, { status: "dispatched", dispatchedAt: new Date() });
+
+        for (const v of vendorsToNotify) {
+          const dispatchId = await createVendorDispatchRequest({
+            workOrderId,
+            vendorId: v.id,
+            landlordUserId: tenant.landlordUserId,
+            status: "sent",
+            sentAt: new Date(),
+          });
+          sendEmail({
+            to: v.email!,
+            subject: `${isEmergency ? "🚨 EMERGENCY — " : ""}Work Request: ${input.title} — ${propertyAddress}`,
+            html: vendorDispatchRequestEmail({
+              vendorName: v.name,
+              propertyAddress,
+              issueTitle: input.title,
+              description: input.description ?? "",
+              priority: input.priority,
+              photos: input.photos ?? [],
+              responseUrl: `${APP_URL_AUTO}/vendor/respond/${dispatchId}`,
+              isEmergency,
+            }),
+          }).catch(() => {});
+        }
+      }
+
+      // (legacy single-vendor path removed — all dispatch now goes through the multi-bid system above)
+      const matchingVendor: any = null; // kept for email block below to compile
       if (matchingVendor?.email) {
-        // Auto-dispatch to vendor
-        await updateWorkOrder(workOrderId, tenant.landlordUserId, {
-          status: "dispatched",
-          vendorId: matchingVendor.id,
-          vendorName: matchingVendor.name,
-          vendorEmail: matchingVendor.email,
-          vendorPhone: matchingVendor.phone ?? undefined,
-          dispatchedAt: new Date(),
-        });
-
-        // Email vendor
+        // (dead code — round-robin/all-dispatch handles this now)
         sendEmail({
           to: matchingVendor.email,
           subject: `Work Order: ${input.title} — ${propertyAddress}`,
@@ -1426,9 +1499,243 @@ export const appRouter = router({
       return {
         success: true,
         workOrderId,
-        autoDispatched: !!matchingVendor,
-        vendorName: matchingVendor?.name,
+        autoDispatched: vendorsWithEmail.length > 0,
+        vendorsNotified: vendorsWithEmail.length,
       };
+    }),
+
+    // ── Get vendor bids/dispatch status for a work order ─────────────────────
+    listBids: protectedProcedure.input(z.object({ workOrderId: z.number() })).query(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      const wo = await getWorkOrderById(input.workOrderId, ctx.user.id);
+      if (!wo || wo.userId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+      const bids = await getDispatchsByWorkOrder(input.workOrderId);
+      const allVendors = await getVendors(ctx.user.id);
+      return bids.map(b => ({
+        ...b,
+        vendorName: allVendors.find(v => v.id === b.vendorId)?.name ?? "Unknown Vendor",
+        vendorEmail: allVendors.find(v => v.id === b.vendorId)?.email ?? null,
+        vendorPhone: allVendors.find(v => v.id === b.vendorId)?.phone ?? null,
+      }));
+    }),
+
+    // ── Dispatch to ALL vendors in the landlord's list for a property state ────
+    dispatchToAll: protectedProcedure.input(z.object({
+      workOrderId: z.number(),
+      photos: z.array(z.string()).optional(), // photo URLs
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+
+      const wo = await getWorkOrderById(input.workOrderId, ctx.user.id);
+      if (!wo || wo.userId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const allVendors = await getVendors(ctx.user.id);
+      const vendorsWithEmail = allVendors.filter(v => v.email && v.isActive);
+
+      if (vendorsWithEmail.length === 0) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No vendors with email addresses found." });
+
+      const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+      const landlord = await getUserByOpenId(ctx.user.openId);
+      let dispatched = 0;
+
+      // If photos provided, persist them on the work order
+      if (input.photos?.length) {
+        await updateWorkOrder(input.workOrderId, ctx.user.id, { photos: JSON.stringify(input.photos) });
+      }
+
+      for (const vendor of vendorsWithEmail) {
+        // Create a dispatch request record
+        const dispatchId = await createVendorDispatchRequest({
+          workOrderId: wo.id,
+          vendorId: vendor.id,
+          landlordUserId: ctx.user.id,
+          status: "sent",
+          sentAt: new Date(),
+        });
+
+        const respondUrl = `${APP_URL}/vendor/respond/${dispatchId}`;
+
+        sendEmail({
+          to: vendor.email!,
+          subject: `${wo.priority === "emergency" ? "🚨 EMERGENCY — " : ""}Work Request: ${wo.title} — ${wo.propertyAddress ?? "Property"}`,
+          html: vendorDispatchRequestEmail({
+            vendorName: vendor.name,
+            propertyAddress: wo.propertyAddress ?? "N/A",
+            issueTitle: wo.title,
+            description: wo.description ?? "",
+            priority: wo.priority ?? "medium",
+            photos: input.photos ?? (wo.photos ? JSON.parse(wo.photos) : []),
+            responseUrl: respondUrl,
+            isEmergency: wo.priority === "emergency",
+          }),
+        }).catch(() => {});
+
+        dispatched++;
+      }
+
+      // Update work order status
+      await updateWorkOrder(input.workOrderId, ctx.user.id, { status: "dispatched", dispatchedAt: new Date() });
+
+      return { success: true, dispatched };
+    }),
+
+    // ── Vendor responds with availability + quote ─────────────────────────────
+    // Public — vendor doesn't need a Leasely account
+    vendorRespond: publicProcedure.input(z.object({
+      dispatchId: z.number(),
+      action: z.enum(["accept", "decline"]),
+      proposedDate: z.string().optional(),
+      proposedTimeSlot: z.string().optional(),
+      quoteCents: z.number().optional(),
+      notes: z.string().optional(),
+    })).mutation(async ({ input }) => {
+      await updateVendorDispatchRequest(input.dispatchId, {
+        status: input.action === "accept" ? "accepted" : "declined",
+        proposedDate: input.proposedDate,
+        proposedTimeSlot: input.proposedTimeSlot,
+        vendorQuoteCents: input.quoteCents,
+        vendorNotes: input.notes,
+        respondedAt: new Date(),
+      });
+
+      // Notify landlord if accepted
+      if (input.action === "accept") {
+        // Fetch dispatch record directly
+        const { getDb } = await import("./db");
+        const db = await getDb();
+        if (db) {
+          const { vendorDispatchRequests } = await import("../drizzle/schema");
+          const { eq } = await import("drizzle-orm");
+          const rows = await db.select().from(vendorDispatchRequests).where(eq(vendorDispatchRequests.id, input.dispatchId)).limit(1);
+          const dr = rows[0];
+          if (dr) {
+            const landlord = await getUserById(dr.landlordUserId);
+            const wo = await getWorkOrderById(dr.workOrderId, dr.landlordUserId);
+            const allVendors = await getVendors(dr.landlordUserId);
+            const vendor = allVendors.find(v => v.id === dr.vendorId);
+            if (landlord?.email && wo) {
+              const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+              sendEmail({
+                to: landlord.email,
+                subject: `✅ Vendor Responded — ${wo.title}`,
+                html: vendorQuoteReceivedEmail({
+                  landlordName: landlord.name ?? "",
+                  vendorName: vendor?.name ?? "Vendor",
+                  issueTitle: wo.title,
+                  propertyAddress: wo.propertyAddress ?? "",
+                  proposedDate: input.proposedDate ?? "",
+                  proposedTimeSlot: input.proposedTimeSlot ?? "",
+                  quoteDollars: input.quoteCents ? input.quoteCents / 100 : 0,
+                  vendorNotes: input.notes,
+                  approveUrl: `${APP_URL}/work-orders?approveDispatch=${input.dispatchId}`,
+                  dashboardUrl: `${APP_URL}/work-orders`,
+                }),
+              }).catch(() => {});
+            }
+          }
+        }
+      }
+
+      return { success: true };
+    }),
+
+    // ── Landlord approves a vendor's bid ──────────────────────────────────────
+    approveVendor: protectedProcedure.input(z.object({
+      dispatchId: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+
+      await updateVendorDispatchRequest(input.dispatchId, {
+        landlordApproved: 1,
+        approvedAt: new Date(),
+      });
+
+      // Decline all other bids on this work order
+      const { getDb } = await import("./db");
+      const db = await getDb();
+      if (db) {
+        const { vendorDispatchRequests } = await import("../drizzle/schema");
+        const { eq, and, ne } = await import("drizzle-orm");
+        const rows = await db.select().from(vendorDispatchRequests).where(eq(vendorDispatchRequests.id, input.dispatchId)).limit(1);
+        const dr = rows[0];
+        if (dr) {
+          await db.update(vendorDispatchRequests)
+            .set({ status: "declined" } as any)
+            .where(and(eq(vendorDispatchRequests.workOrderId, dr.workOrderId), ne(vendorDispatchRequests.id, input.dispatchId)));
+          // Mark work order as vendor_confirmed
+          await updateWorkOrder(dr.workOrderId, ctx.user.id, { status: "vendor_confirmed", vendorConfirmedAt: new Date() });
+        }
+      }
+
+      return { success: true };
+    }),
+
+    // ── Mark work order complete + pay vendor via Stripe ─────────────────────
+    payVendor: protectedProcedure.input(z.object({
+      dispatchId: z.number(),
+      amountCents: z.number().positive(),
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+
+      const { getDb } = await import("./db");
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const { vendorDispatchRequests } = await import("../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      const rows = await db.select().from(vendorDispatchRequests).where(eq(vendorDispatchRequests.id, input.dispatchId)).limit(1);
+      const dr = rows[0];
+      if (!dr || dr.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+
+      const stripe = getStripe();
+      if (!stripe || !sub.stripeConnectAccountId) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Stripe not configured." });
+      }
+
+      // Find vendor email for notification
+      const allVendors = await getVendors(ctx.user.id);
+      const vendor = allVendors.find(v => v.id === dr.vendorId);
+      const wo = await getWorkOrderById(dr.workOrderId, dr.landlordUserId);
+
+      // Create a Stripe PaymentIntent charged to the landlord's connected account
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: input.amountCents,
+        currency: "usd",
+        description: `Vendor payment: ${wo?.title ?? "Work order"} — ${wo?.propertyAddress ?? ""}`,
+        metadata: { dispatchId: String(input.dispatchId), workOrderId: String(dr.workOrderId), vendorId: String(dr.vendorId) },
+      }, { stripeAccount: sub.stripeConnectAccountId });
+
+      await updateVendorDispatchRequest(input.dispatchId, {
+        paymentStatus: "paid",
+        stripePaymentIntentId: paymentIntent.id,
+        paidAt: new Date(),
+      });
+
+      // Mark work order resolved
+      if (wo) await updateWorkOrder(wo.id, ctx.user.id, { status: "resolved", resolvedAt: new Date(), actualCost: input.amountCents });
+
+      // Notify landlord summary + vendor if email on file
+      const landlord = await getUserByOpenId(ctx.user.openId);
+      if (landlord?.email && wo) {
+        sendEmail({
+          to: landlord.email,
+          subject: `💰 Vendor Paid — ${wo.title}`,
+          html: vendorJobCompleteEmail({
+            landlordName: landlord.name ?? "",
+            vendorName: vendor?.name ?? "Vendor",
+            issueTitle: wo.title,
+            propertyAddress: wo.propertyAddress ?? "",
+            finalAmountDollars: input.amountCents / 100,
+            paymentUrl: `${process.env.VITE_APP_URL ?? "https://leasely.net"}/work-orders`,
+          }),
+        }).catch(() => {});
+      }
+
+      return { success: true, paymentIntentId: paymentIntent.id };
     }),
   }),
 
@@ -1844,13 +2151,73 @@ export const appRouter = router({
       return app;
     }),
 
-    /** Landlord: update status */
+    /** Landlord: update status — approving auto-creates a draft lease */
     updateStatus: protectedProcedure.input(z.object({
       id: z.number(),
       status: z.enum(["reviewing", "approved", "denied", "withdrawn"]),
       notes: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
       await updateRentalApplicationStatus(input.id, ctx.user.id, input.status, input.notes);
+
+      // When approved: auto-create a draft lease pre-filled with the applicant's info
+      if (input.status === "approved") {
+        const app = await getRentalApplicationById(input.id);
+        if (app) {
+          // Pull property info from listing
+          let propertyAddress = "Property address TBD";
+          let state = app.state ?? "XX";
+          let monthlyRentCents = 0;
+          const listing = await getListingById(app.listingId);
+          if (listing) {
+            propertyAddress = `${listing.address ?? ""} ${listing.city ?? ""}, ${listing.state ?? ""}`.trim();
+            state = listing.state?.slice(0, 2).toUpperCase() ?? state;
+            // rent is stored as a string in listings, convert to cents
+            const rentStr = (listing as any).rentAmount ?? (listing as any).price ?? "0";
+            monthlyRentCents = Math.round(parseFloat(String(rentStr).replace(/[^0-9.]/g, "")) * 100) || 0;
+          }
+
+          const leaseId = await createLeaseAgreement({
+            landlordUserId: ctx.user.id,
+            listingId: app.listingId,
+            tenantName: app.applicantName,
+            tenantEmail: app.applicantEmail,
+            tenantPhone: app.applicantPhone ?? undefined,
+            state,
+            propertyAddress,
+            monthlyRent: monthlyRentCents,
+            securityDeposit: monthlyRentCents, // default 1 month's rent
+            leaseStartDate: app.moveInDate ?? new Date().toISOString().split("T")[0],
+            leaseTerm: "12_months",
+            accessMethod: "key_pickup",
+            status: "draft",
+            notes: `Auto-created from application #${app.id}. Review and send when ready.`,
+          });
+
+          // Notify landlord a draft lease is waiting
+          const landlord = await getUserByOpenId(ctx.user.openId);
+          const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+          if (landlord?.email) {
+            sendEmail({
+              to: landlord.email,
+              subject: `✅ Application Approved — Draft Lease Created for ${app.applicantName}`,
+              html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+                <h2 style="color:#1B2B5E">Application Approved — Draft Lease Ready</h2>
+                <p>You approved <strong>${app.applicantName}</strong>'s application for <strong>${propertyAddress}</strong>.</p>
+                <p>A draft lease has been automatically created. Review the details (rent, dates, access instructions) and send it to the tenant when ready.</p>
+                <p style="margin-top:16px">
+                  <a href="${APP_URL}/leases" style="background:#1B2B5E;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold">
+                    Review &amp; Send Lease →
+                  </a>
+                </p>
+                <p style="color:#9ca3af;font-size:12px;margin-top:16px">Powered by Leasely</p>
+              </div>`,
+            }).catch(() => {});
+          }
+
+          return { success: true, draftLeaseId: leaseId };
+        }
+      }
+
       return { success: true };
     }),
   }),
@@ -2007,6 +2374,79 @@ export const appRouter = router({
       });
       await db.update(affiliates).set({ totalPaid: input.amountCents }).where(eq(affiliates.id, input.affiliateId));
       return { success: true };
+    }),
+
+    /** Market Rent Intelligence — avg rent by state/zip from real listings */
+    getMarketRent: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) return [];
+      const rows = await db
+        .select({
+          state: marketplaceListings.state,
+          zip: marketplaceListings.zip,
+          avgRent: sql<number>`ROUND(AVG(${marketplaceListings.monthlyRent}), 0)`,
+          medianSample: sql<number>`MIN(${marketplaceListings.monthlyRent})`,
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(marketplaceListings)
+        .where(and(eq(marketplaceListings.status, "active"), sql`${marketplaceListings.zip} IS NOT NULL`))
+        .groupBy(marketplaceListings.state, marketplaceListings.zip)
+        .orderBy(sql`COUNT(*) DESC`)
+        .limit(50);
+      return rows;
+    }),
+
+    /** Tenant Score distribution across all applications on the platform */
+    getTenantScoreStats: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) return { excellent: 0, good: 0, fair: 0, review: 0, total: 0 };
+      const apps = await db.select({
+        monthlyIncome: rentalApplications.monthlyIncome,
+        employerName: rentalApplications.employerName,
+        currentLandlordName: rentalApplications.currentLandlordName,
+        emergencyContactName: rentalApplications.emergencyContactName,
+        hasPets: rentalApplications.hasPets,
+        backgroundCheckConsent: rentalApplications.backgroundCheckConsent,
+        status: rentalApplications.status,
+        createdAt: rentalApplications.createdAt,
+      }).from(rentalApplications).limit(1000);
+
+      let excellent = 0, good = 0, fair = 0, review = 0;
+      for (const app of apps) {
+        let score = 0;
+        const income = parseFloat(app.monthlyIncome ?? "0");
+        if (income >= 4500) score += 40;
+        else if (income >= 3750) score += 25;
+        else if (income >= 3000) score += 10;
+        if (app.employerName) score += 15;
+        if (app.currentLandlordName) score += 15;
+        if (app.emergencyContactName) score += 10;
+        if (!app.hasPets) score += 5;
+        if (app.backgroundCheckConsent) score += 15;
+        if (score >= 80) excellent++;
+        else if (score >= 65) good++;
+        else if (score >= 50) fair++;
+        else review++;
+      }
+      return { excellent, good, fair, review, total: apps.length };
+    }),
+
+    /** Lease outcome stats across the platform */
+    getLeaseOutcomes: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) return [];
+      const rows = await db
+        .select({
+          status: leaseAgreements.status,
+          count: sql<number>`COUNT(*)`,
+          avgRentCents: sql<number>`ROUND(AVG(${leaseAgreements.monthlyRent}), 0)`,
+        })
+        .from(leaseAgreements)
+        .groupBy(leaseAgreements.status);
+      return rows;
     }),
   }),
 
@@ -2225,12 +2665,24 @@ export const appRouter = router({
       leadId: z.number(),
       status: z.enum(["new","contacted","qualified","closed","lost"]),
       dealValue: z.number().optional(),
+      leadType: z.enum(["investor","fsbo","novation","fix_flip","general"]).optional(),
     })).mutation(async ({ ctx, input }) => {
       const agent = await getCremeAgentByUserId(ctx.user.id);
       if (!agent) throw new TRPCError({ code: "FORBIDDEN" });
       const leads = await getLeadsByAgent(agent.id);
-      if (!leads.find(l => l.id === input.leadId)) throw new TRPCError({ code: "FORBIDDEN" });
-      await updateLeadStatus(input.leadId, input.status, input.dealValue ? input.dealValue * 100 : undefined);
+      const lead = leads.find(l => l.id === input.leadId);
+      if (!lead) throw new TRPCError({ code: "FORBIDDEN" });
+      // Rental placements: $350 flat fee. All other deal types: 0.75% of deal value.
+      const isRentalPlacement = (input.leadType ?? lead.leadType) === "general";
+      let dealValueCents: number | undefined;
+      if (input.status === "closed") {
+        if (isRentalPlacement) {
+          dealValueCents = 35000; // $350 flat fee in cents for rental placements
+        } else if (input.dealValue) {
+          dealValueCents = input.dealValue * 100;
+        }
+      }
+      await updateLeadStatus(input.leadId, input.status, dealValueCents);
       return { success: true };
     }),
 
@@ -2654,6 +3106,300 @@ export const appRouter = router({
     adminGetLeads: protectedProcedure.query(async ({ ctx }) => {
       if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
       return getAllContractorLeads();
+    }),
+  }),
+
+  // ─── LEASE AGREEMENTS ────────────────────────────────────────────────────────
+  leases: router({
+    /** Landlord: list all leases */
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      return getLeasesByLandlord(ctx.user.id);
+    }),
+
+    /** Landlord: create a draft lease */
+    create: protectedProcedure.input(z.object({
+      listingId: z.number().optional(),
+      tenantName: z.string().min(1),
+      tenantEmail: z.string().email(),
+      tenantPhone: z.string().optional(),
+      state: z.string().length(2),
+      propertyAddress: z.string().min(1),
+      monthlyRent: z.number().positive(),           // in cents
+      securityDeposit: z.number().min(0).default(0),
+      leaseStartDate: z.string(),
+      leaseEndDate: z.string().optional(),
+      leaseTerm: z.enum(["month_to_month","6_months","12_months","24_months"]).default("12_months"),
+      accessMethod: z.enum(["lockbox","key_pickup","in_person","other"]).default("key_pickup"),
+      lockboxCode: z.string().optional(),
+      accessInstructions: z.string().optional(),
+      notes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+
+      const id = await createLeaseAgreement({
+        ...input,
+        landlordUserId: ctx.user.id,
+        status: "draft",
+      });
+      return { id };
+    }),
+
+    /** Landlord: send lease to tenant (status → sent) */
+    send: protectedProcedure.input(z.object({ leaseId: z.number() })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+
+      const lease = await getLeaseById(input.leaseId);
+      if (!lease || lease.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+
+      await updateLeaseAgreement(input.leaseId, ctx.user.id, { status: "sent", sentAt: new Date() });
+
+      const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+      const landlord = await getUserByOpenId(ctx.user.openId);
+      const signUrl = `${APP_URL}/tenant/sign-lease/${input.leaseId}`;
+
+      sendEmail({
+        to: lease.tenantEmail,
+        subject: `Your Lease Agreement is Ready — ${lease.propertyAddress}`,
+        html: leaseAgreementEmail({
+          tenantName: lease.tenantName,
+          landlordName: landlord?.name ?? "Your Landlord",
+          propertyAddress: lease.propertyAddress,
+          state: lease.state,
+          monthlyRentDollars: lease.monthlyRent / 100,
+          securityDepositDollars: (lease.securityDeposit ?? 0) / 100,
+          leaseStartDate: lease.leaseStartDate,
+          leaseTerm: lease.leaseTerm ?? "12_months",
+          leaseUrl: signUrl,
+        }),
+      }).catch(() => {});
+
+      return { success: true };
+    }),
+
+    /** Tenant signs lease (public — tenant uses sign link) */
+    sign: publicProcedure.input(z.object({
+      leaseId: z.number(),
+      tenantEmail: z.string().email(),
+    })).mutation(async ({ input }) => {
+      const lease = await getLeaseById(input.leaseId);
+      if (!lease || lease.tenantEmail.toLowerCase() !== input.tenantEmail.toLowerCase()) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Invalid lease or email mismatch." });
+      }
+      if (lease.status !== "sent") {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Lease is not in a signable state." });
+      }
+
+      const now = new Date();
+      await updateLeaseAgreement(lease.id, lease.landlordUserId, { status: "signed", signedAt: now });
+
+      // Build payment links for tenant
+      const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+      const rentPayUrl = `${APP_URL}/pay/rent/${lease.id}`;
+      const depositPayUrl = lease.securityDeposit ? `${APP_URL}/pay/deposit/${lease.id}` : undefined;
+
+      // Auto-send payment + access info email to tenant
+      sendEmail({
+        to: lease.tenantEmail,
+        subject: `Lease Signed! Here's What's Next — ${lease.propertyAddress}`,
+        html: leaseSignedPaymentEmail({
+          tenantName: lease.tenantName,
+          propertyAddress: lease.propertyAddress,
+          monthlyRentDollars: lease.monthlyRent / 100,
+          securityDepositDollars: (lease.securityDeposit ?? 0) / 100,
+          rentPaymentUrl: rentPayUrl,
+          depositPaymentUrl: depositPayUrl ?? rentPayUrl,
+          accessMethod: lease.accessMethod ?? "key_pickup",
+          lockboxCode: lease.lockboxCode ?? undefined,
+          accessInstructions: lease.accessInstructions ?? undefined,
+        }),
+      }).catch(() => {});
+
+      // Notify landlord
+      const landlord = await getUserById(lease.landlordUserId);
+      if (landlord?.email) {
+        sendEmail({
+          to: landlord.email,
+          subject: `✅ Lease Signed by ${lease.tenantName} — ${lease.propertyAddress}`,
+          html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+            <h2 style="color:#1B2B5E">Lease Signed</h2>
+            <p><strong>${lease.tenantName}</strong> has signed the lease for <strong>${lease.propertyAddress}</strong>.</p>
+            <p>Payment links have been automatically sent to the tenant for first month's rent${lease.securityDeposit ? " and security deposit" : ""}.</p>
+            <p style="margin-top:16px"><a href="${APP_URL}/leases" style="background:#1B2B5E;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none">View Lease</a></p>
+          </div>`,
+        }).catch(() => {});
+      }
+
+      return { success: true };
+    }),
+
+    /** Landlord: update a draft lease */
+    update: protectedProcedure.input(z.object({
+      leaseId: z.number(),
+      tenantPhone: z.string().optional(),
+      monthlyRent: z.number().optional(),
+      securityDeposit: z.number().optional(),
+      leaseStartDate: z.string().optional(),
+      leaseEndDate: z.string().optional(),
+      accessMethod: z.enum(["lockbox","key_pickup","in_person","other"]).optional(),
+      lockboxCode: z.string().optional(),
+      accessInstructions: z.string().optional(),
+      notes: z.string().optional(),
+      status: z.enum(["draft","sent","signed","active","expired","terminated"]).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { leaseId, ...data } = input;
+      await updateLeaseAgreement(leaseId, ctx.user.id, data as any);
+      return { success: true };
+    }),
+
+    /** Tenant: get leases by email (portal auth) */
+    getByTenantEmail: publicProcedure.input(z.object({
+      tenantToken: z.string(),
+    })).query(async ({ input }) => {
+      const tenant = await getTenantByToken(input.tenantToken);
+      if (!tenant) throw new TRPCError({ code: "UNAUTHORIZED" });
+      return getLeasesByTenantEmail(tenant.email);
+    }),
+  }),
+
+  // ─── PROPERTY MANAGER ACCESS ─────────────────────────────────────────────────
+  propertyManager: router({
+    /** Landlord: invite a property manager by email */
+    invite: protectedProcedure.input(z.object({
+      inviteEmail: z.string().email(),
+      allProperties: z.boolean().default(false),
+      listingIds: z.array(z.number()).optional(),
+      canViewWorkOrders: z.boolean().default(true),
+      canManageWorkOrders: z.boolean().default(true),
+      canViewPayments: z.boolean().default(true),
+      canViewLeases: z.boolean().default(true),
+      canManageLeases: z.boolean().default(false),
+      canApproveApplications: z.boolean().default(false),
+      canPayVendors: z.boolean().default(false),
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+
+      // Check if manager has a Leasely account
+      const managerUser = await (async () => {
+        const db = await getDb();
+        if (!db) return undefined;
+        const { users } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        const rows = await db.select().from(users).where(eq(users.email, input.inviteEmail)).limit(1);
+        return rows[0];
+      })();
+
+      if (!managerUser) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "No Leasely account found for that email. The property manager must sign up first." });
+      }
+
+      const id = await createPropertyManagerAccess({
+        ownerUserId: ctx.user.id,
+        managerUserId: managerUser.id,
+        allProperties: input.allProperties ? 1 : 0,
+        listingIds: input.listingIds ? JSON.stringify(input.listingIds) : null,
+        canViewWorkOrders: input.canViewWorkOrders ? 1 : 0,
+        canManageWorkOrders: input.canManageWorkOrders ? 1 : 0,
+        canViewPayments: input.canViewPayments ? 1 : 0,
+        canViewLeases: input.canViewLeases ? 1 : 0,
+        canManageLeases: input.canManageLeases ? 1 : 0,
+        canApproveApplications: input.canApproveApplications ? 1 : 0,
+        canPayVendors: input.canPayVendors ? 1 : 0,
+        status: "active",
+        inviteEmail: input.inviteEmail,
+      });
+
+      // Email the property manager
+      const landlord = await getUserByOpenId(ctx.user.openId);
+      const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+      sendEmail({
+        to: input.inviteEmail,
+        subject: `You've been added as a Property Manager on Leasely`,
+        html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+          <h2 style="color:#1B2B5E">Property Manager Access Granted</h2>
+          <p><strong>${landlord?.name ?? "A landlord"}</strong> has given you property manager access on Leasely.</p>
+          <p>You can now view and manage their properties based on the permissions assigned.</p>
+          <p style="margin-top:16px"><a href="${APP_URL}/manage" style="background:#1B2B5E;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none">View Portal</a></p>
+        </div>`,
+      }).catch(() => {});
+
+      return { id };
+    }),
+
+    /** Landlord: list their property managers */
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      const accesses = await getPropertyManagersByOwner(ctx.user.id);
+      // Enrich with manager name
+      const enriched = await Promise.all(accesses.map(async (a) => {
+        const manager = await getUserById(a.managerUserId);
+        return { ...a, managerName: manager?.name, managerEmail: manager?.email };
+      }));
+      return enriched;
+    }),
+
+    /** Landlord: update permissions */
+    updatePermissions: protectedProcedure.input(z.object({
+      accessId: z.number(),
+      canViewWorkOrders: z.boolean().optional(),
+      canManageWorkOrders: z.boolean().optional(),
+      canViewPayments: z.boolean().optional(),
+      canViewLeases: z.boolean().optional(),
+      canManageLeases: z.boolean().optional(),
+      canApproveApplications: z.boolean().optional(),
+      canPayVendors: z.boolean().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { accessId, ...perms } = input;
+      const mapped: Record<string, number> = {};
+      for (const [k, v] of Object.entries(perms)) {
+        if (v !== undefined) mapped[k] = v ? 1 : 0;
+      }
+      await updatePropertyManagerAccess(accessId, ctx.user.id, mapped as any);
+      return { success: true };
+    }),
+
+    /** Landlord: revoke access */
+    revoke: protectedProcedure.input(z.object({ accessId: z.number() })).mutation(async ({ ctx, input }) => {
+      await revokePropertyManagerAccess(input.accessId, ctx.user.id);
+      return { success: true };
+    }),
+
+    /** Property manager: view the portals they manage */
+    getManagedPortals: protectedProcedure.query(async ({ ctx }) => {
+      const accesses = await getPropertiesManagedBy(ctx.user.id);
+      const enriched = await Promise.all(accesses.map(async (a) => {
+        const owner = await getUserById(a.ownerUserId);
+        const sub = await getUserSubscription(a.ownerUserId);
+        return {
+          ...a,
+          ownerName: owner?.name,
+          ownerEmail: owner?.email,
+          brandName: sub?.brandName,
+          brandColor: sub?.brandColor,
+        };
+      }));
+      return enriched;
+    }),
+
+    /** Property manager: get work orders for a managed owner */
+    getManagedWorkOrders: protectedProcedure.input(z.object({ ownerUserId: z.number() })).query(async ({ ctx, input }) => {
+      const accesses = await getPropertiesManagedBy(ctx.user.id);
+      const access = accesses.find(a => a.ownerUserId === input.ownerUserId);
+      if (!access || !access.canViewWorkOrders) throw new TRPCError({ code: "FORBIDDEN" });
+      return getWorkOrders(input.ownerUserId);
+    }),
+
+    /** Property manager: get leases for a managed owner */
+    getManagedLeases: protectedProcedure.input(z.object({ ownerUserId: z.number() })).query(async ({ ctx, input }) => {
+      const accesses = await getPropertiesManagedBy(ctx.user.id);
+      const access = accesses.find(a => a.ownerUserId === input.ownerUserId);
+      if (!access || !access.canViewLeases) throw new TRPCError({ code: "FORBIDDEN" });
+      return getLeasesByLandlord(input.ownerUserId);
     }),
   }),
 });

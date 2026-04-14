@@ -38,6 +38,24 @@ const US_STATES = [
 
 type ApplicationStatus = "submitted" | "under_review" | "approved" | "denied" | "all";
 
+function computeTenantScore(app: any): { score: number; grade: string; color: string; bgColor: string } {
+  let score = 0;
+  const income = parseFloat(app.monthlyIncome ?? "0");
+  if (income >= 4500) score += 40;
+  else if (income >= 3750) score += 25;
+  else if (income >= 3000) score += 10;
+  if (app.employerName) score += 15;
+  if (app.currentLandlordName) score += 15;
+  if (app.emergencyContactName) score += 10;
+  if (!app.hasPets) score += 5;
+  if (app.backgroundCheckConsent) score += 15;
+
+  if (score >= 80) return { score, grade: "Excellent", color: "text-[#00C896]", bgColor: "bg-[#00C896]/10 border-[#00C896]/20" };
+  if (score >= 65) return { score, grade: "Good", color: "text-blue-500", bgColor: "bg-blue-500/10 border-blue-500/20" };
+  if (score >= 50) return { score, grade: "Fair", color: "text-amber-500", bgColor: "bg-amber-500/10 border-amber-500/20" };
+  return { score, grade: "Review", color: "text-red-500", bgColor: "bg-red-500/10 border-red-500/20" };
+}
+
 export default function RentalApplications() {
   const [activeTab, setActiveTab] = useState<"received" | "send">("received");
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus>("all");
@@ -217,6 +235,14 @@ function ReceivedApplications({
                     {isColiving && (
                       <Badge className="bg-purple-500/10 text-purple-600 border-0 text-xs">Member App</Badge>
                     )}
+                    {(() => {
+                      const ts = computeTenantScore(app);
+                      return (
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${ts.bgColor} ${ts.color}`}>
+                          {ts.score} · {ts.grade}
+                        </span>
+                      );
+                    })()}
                     {app.state && (
                       <Badge variant="outline" className="text-xs">{app.state}</Badge>
                     )}

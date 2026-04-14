@@ -1,135 +1,170 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ProGate } from "./components/ProGate";
-import Home from "./pages/Home";
-import Marketplace from "./pages/Marketplace";
-import MapViewPage from "./pages/MapView";
-import ListProperty from "./pages/ListProperty";
-import ListingDetail from "./pages/ListingDetail";
-import Dashboard from "./pages/Dashboard";
-import SavedListings from "./pages/SavedListings";
-import Onboarding from "./pages/Onboarding";
-import PortalPage from "./pages/PortalPage";
-import RentPayment from "./pages/RentPayment";
-import RentPaymentSuccess from "./pages/RentPaymentSuccess";
-import WorkOrders from "./pages/WorkOrders";
-import Accounting from "./pages/Accounting";
-import CRM from "./pages/CRM";
-import TenantLogin from "./pages/TenantLogin";
-import TenantDashboard from "./pages/TenantDashboard";
-import Support from "./pages/Support";
-import Pricing from "./pages/Pricing";
-import ProPage from "./pages/ProPage";
-import ApartmentComplexes from "./pages/ApartmentComplexes";
-import AdminPage from "./pages/AdminPage";
-import RentalApplications from "./pages/RentalApplications";
-import PublicApplication from "./pages/PublicApplication";
-import ProSetup from "./pages/ProSetup";
-import AffiliateSignup from "./pages/AffiliateSignup";
-import AffiliateDashboard from "./pages/AffiliateDashboard";
-import LoginPage from "./pages/LoginPage";
-import AgentDirectory from "./pages/AgentDirectory";
-import AgentProfile from "./pages/AgentProfile";
-import ContractorDirectory from "./pages/ContractorDirectory";
-import ContractorProfile from "./pages/ContractorProfile";
-import ContractorRegister from "./pages/ContractorRegister";
-import FsboSignup from "./pages/FsboSignup";
-import JoinWaitlist from "./pages/JoinWaitlist";
-import Compare from "./pages/Compare";
-import BrokerDashboard from "./pages/BrokerDashboard";
+import { lazy, Suspense } from "react";
+
+// ── Eager loads (tiny, always needed) ─────────────────────────────────────────
+import NotFound from "@/pages/NotFound";
+
+// ── Lazy loads (route-level code splitting) ───────────────────────────────────
+const Home                = lazy(() => import("./pages/Home"));
+const Marketplace         = lazy(() => import("./pages/Marketplace"));
+const MapViewPage         = lazy(() => import("./pages/MapView"));
+const ListProperty        = lazy(() => import("./pages/ListProperty"));
+const ListingDetail       = lazy(() => import("./pages/ListingDetail"));
+const Dashboard           = lazy(() => import("./pages/Dashboard"));
+const SavedListings       = lazy(() => import("./pages/SavedListings"));
+const Onboarding          = lazy(() => import("./pages/Onboarding"));
+const PortalPage          = lazy(() => import("./pages/PortalPage"));
+const RentPayment         = lazy(() => import("./pages/RentPayment"));
+const RentPaymentSuccess  = lazy(() => import("./pages/RentPaymentSuccess"));
+const WorkOrders          = lazy(() => import("./pages/WorkOrders"));
+const Accounting          = lazy(() => import("./pages/Accounting"));
+const CRM                 = lazy(() => import("./pages/CRM"));
+const TenantLogin         = lazy(() => import("./pages/TenantLogin"));
+const TenantDashboard     = lazy(() => import("./pages/TenantDashboard"));
+const Support             = lazy(() => import("./pages/Support"));
+const Pricing             = lazy(() => import("./pages/Pricing"));
+const ProPage             = lazy(() => import("./pages/ProPage"));
+const ApartmentComplexes  = lazy(() => import("./pages/ApartmentComplexes"));
+const AdminPage           = lazy(() => import("./pages/AdminPage"));
+const RentalApplications  = lazy(() => import("./pages/RentalApplications"));
+const PublicApplication   = lazy(() => import("./pages/PublicApplication"));
+const ProSetup            = lazy(() => import("./pages/ProSetup"));
+const AffiliateSignup     = lazy(() => import("./pages/AffiliateSignup"));
+const AffiliateDashboard  = lazy(() => import("./pages/AffiliateDashboard"));
+const LoginPage           = lazy(() => import("./pages/LoginPage"));
+const AgentDirectory      = lazy(() => import("./pages/AgentDirectory"));
+const AgentProfile        = lazy(() => import("./pages/AgentProfile"));
+const ContractorDirectory = lazy(() => import("./pages/ContractorDirectory"));
+const ContractorProfile   = lazy(() => import("./pages/ContractorProfile"));
+const ContractorRegister  = lazy(() => import("./pages/ContractorRegister"));
+const FsboSignup          = lazy(() => import("./pages/FsboSignup"));
+const JoinWaitlist        = lazy(() => import("./pages/JoinWaitlist"));
+const IStay               = lazy(() => import("./pages/IStay"));
+const Compare             = lazy(() => import("./pages/Compare"));
+const BrokerDashboard     = lazy(() => import("./pages/BrokerDashboard"));
+const FeeSchedule         = lazy(() => import("./pages/FeeSchedule"));
+const Leases              = lazy(() => import("./pages/Leases"));
+const VendorRespond       = lazy(() => import("./pages/VendorRespond"));
+const TenantSignLease     = lazy(() => import("./pages/TenantSignLease"));
+
+// ── Page-level loading fallback ───────────────────────────────────────────────
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+    </div>
+  );
+}
 
 function Router() {
   return (
-    <Switch>
-      {/* Auth */}
-      <Route path="/login" component={LoginPage} />
+    <Suspense fallback={<PageLoader />}>
+      <Switch>
+        {/* Auth */}
+        <Route path="/login" component={LoginPage} />
 
-      {/* Public */}
-      <Route path="/" component={Home} />
-      <Route path="/apply/:listingId" component={PublicApplication} />
-      <Route path="/pro-setup" component={ProSetup} />
-      <Route path="/marketplace" component={Marketplace} />
-      <Route path="/marketplace/map" component={MapViewPage} />
-      <Route path="/listing/:id" component={ListingDetail} />
+        {/* Public */}
+        <Route path="/" component={Home} />
+        <Route path="/apply/:listingId" component={PublicApplication} />
+        <Route path="/pro-setup" component={ProSetup} />
+        <Route path="/marketplace" component={Marketplace} />
+        <Route path="/marketplace/map" component={MapViewPage} />
+        <Route path="/listing/:id" component={ListingDetail} />
 
-      {/* Public portal pages */}
-      <Route path="/portal/:subdomain" component={PortalPage} />
+        {/* Public portal pages */}
+        <Route path="/portal/:subdomain" component={PortalPage} />
 
-      {/* Tenant rent payment (public — tenants don't need Leasely accounts) */}
-      <Route path="/pay/:id" component={RentPayment} />
-      <Route path="/pay/:id/success" component={RentPaymentSuccess} />
+        {/* Tenant rent payment (public) */}
+        <Route path="/pay/:id" component={RentPayment} />
+        <Route path="/pay/:id/success" component={RentPaymentSuccess} />
 
-      {/* Auth + Pro required — wrapped with ProGate */}
-      <Route path="/onboarding" component={Onboarding} />
-      <Route path="/list-property" component={ListProperty} />
-      <Route path="/dashboard">
-        {() => <ProGate featureName="your dashboard"><Dashboard /></ProGate>}
-      </Route>
-      <Route path="/saved" component={SavedListings} />
-      <Route path="/work-orders">
-        {() => <ProGate featureName="Work Orders"><WorkOrders /></ProGate>}
-      </Route>
-      <Route path="/accounting">
-        {() => <ProGate featureName="Accounting"><Accounting /></ProGate>}
-      </Route>
-      <Route path="/crm">
-        {() => <ProGate featureName="Property CRM"><CRM /></ProGate>}
-      </Route>
-      <Route path="/complexes">
-        {() => <ProGate featureName="Apartment Complexes"><ApartmentComplexes /></ProGate>}
-      </Route>
-      <Route path="/applications">
-        {() => <ProGate featureName="Rental Applications"><RentalApplications /></ProGate>}
-      </Route>
+        {/* Auth + Pro required */}
+        <Route path="/onboarding" component={Onboarding} />
+        <Route path="/list-property" component={ListProperty} />
+        <Route path="/dashboard">
+          {() => <ProGate featureName="your dashboard"><Dashboard /></ProGate>}
+        </Route>
+        <Route path="/saved" component={SavedListings} />
+        <Route path="/work-orders">
+          {() => <ProGate featureName="Work Orders"><WorkOrders /></ProGate>}
+        </Route>
+        <Route path="/accounting">
+          {() => <ProGate featureName="Accounting"><Accounting /></ProGate>}
+        </Route>
+        <Route path="/crm">
+          {() => <ProGate featureName="Property CRM"><CRM /></ProGate>}
+        </Route>
+        <Route path="/complexes">
+          {() => <ProGate featureName="Apartment Complexes"><ApartmentComplexes /></ProGate>}
+        </Route>
+        <Route path="/applications">
+          {() => <ProGate featureName="Rental Applications"><RentalApplications /></ProGate>}
+        </Route>
 
-      {/* Admin only */}
-      <Route path="/admin" component={AdminPage} />
+        {/* Lease Agreements (Pro) */}
+        <Route path="/leases">
+          {() => <ProGate featureName="Lease Agreements"><Leases /></ProGate>}
+        </Route>
 
-      {/* Tenant portal (separate login system) */}
-      <Route path="/tenant/login" component={TenantLogin} />
-      <Route path="/tenant/dashboard" component={TenantDashboard} />
+        {/* Admin only */}
+        <Route path="/admin" component={AdminPage} />
 
-      {/* Affiliate program */}
-      <Route path="/affiliate/signup" component={AffiliateSignup} />
-      <Route path="/affiliate/dashboard" component={AffiliateDashboard} />
+        {/* Tenant portal */}
+        <Route path="/tenant/login" component={TenantLogin} />
+        <Route path="/tenant/dashboard" component={TenantDashboard} />
+        <Route path="/tenant/sign-lease/:id" component={TenantSignLease} />
 
-      {/* Creme Agent Network */}
-      <Route path="/agents" component={AgentDirectory} />
-      <Route path="/agents/:id" component={AgentProfile} />
+        {/* Vendor response (public) */}
+        <Route path="/vendor/respond/:id" component={VendorRespond} />
 
-      {/* Handyman / Contractor Directory */}
-      <Route path="/contractors" component={ContractorDirectory} />
-      <Route path="/contractors/register" component={ContractorRegister} />
-      <Route path="/contractors/:slug" component={ContractorProfile} />
+        {/* Affiliate program */}
+        <Route path="/affiliate/signup" component={AffiliateSignup} />
+        <Route path="/affiliate/dashboard" component={AffiliateDashboard} />
 
-      {/* FSBO & Renter tools */}
-      <Route path="/fsbo-signup" component={FsboSignup} />
-      <Route path="/join-waitlist" component={JoinWaitlist} />
+        {/* Creme Agent Network */}
+        <Route path="/agents" component={AgentDirectory} />
+        <Route path="/agents/:id" component={AgentProfile} />
 
-      {/* Broker dashboard */}
-      <Route path="/broker-dashboard" component={BrokerDashboard} />
+        {/* Contractor / Handyman Directory */}
+        <Route path="/contractors" component={ContractorDirectory} />
+        <Route path="/contractors/register" component={ContractorRegister} />
+        <Route path="/contractors/:slug" component={ContractorProfile} />
 
-      {/* Public marketing */}
-      <Route path="/compare" component={Compare} />
-      <Route path="/support" component={Support} />
-      <Route path="/pricing" component={Pricing} />
-      <Route path="/pro" component={ProPage} />
+        {/* FSBO & Renter tools */}
+        <Route path="/fsbo-signup" component={FsboSignup} />
+        <Route path="/join-waitlist" component={JoinWaitlist} />
 
-      {/* Fallback */}
-      <Route path="/404" component={NotFound} />
-      <Route component={NotFound} />
-    </Switch>
+        {/* iStay — Short-Term Rental */}
+        <Route path="/istay" component={IStay} />
+        <Route path="/istay/:id" component={IStay} />
+
+        {/* Broker dashboard */}
+        <Route path="/broker-dashboard" component={BrokerDashboard} />
+
+        {/* Public marketing */}
+        <Route path="/compare" component={Compare} />
+        <Route path="/support" component={Support} />
+        <Route path="/pricing" component={Pricing} />
+        <Route path="/pro" component={ProPage} />
+        <Route path="/fees" component={FeeSchedule} />
+
+        {/* Fallback */}
+        <Route path="/404" component={NotFound} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="dark">
+      <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster position="top-right" />
           <Router />

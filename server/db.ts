@@ -1376,3 +1376,118 @@ export async function getAllContractorLeads(): Promise<ContractorLead[]> {
   if (!db) return [];
   return db.select().from(contractorLeads).orderBy(desc(contractorLeads.createdAt));
 }
+
+// ─── Lease Agreements ─────────────────────────────────────────────────────────
+import {
+  leaseAgreements, InsertLeaseAgreement, LeaseAgreement,
+  propertyManagerAccess, InsertPropertyManagerAccess, PropertyManagerAccess,
+  vendorDispatchRequests, InsertVendorDispatchRequest, VendorDispatchRequest,
+} from "../drizzle/schema";
+
+export async function createLeaseAgreement(data: Omit<InsertLeaseAgreement, "id" | "createdAt" | "updatedAt">): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const result = await db.insert(leaseAgreements).values(data as any);
+  return (result[0] as any).insertId;
+}
+
+export async function getLeasesByLandlord(landlordUserId: number): Promise<LeaseAgreement[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(leaseAgreements)
+    .where(eq(leaseAgreements.landlordUserId, landlordUserId))
+    .orderBy(desc(leaseAgreements.createdAt));
+}
+
+export async function getLeasesByTenantEmail(email: string): Promise<LeaseAgreement[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(leaseAgreements)
+    .where(eq(leaseAgreements.tenantEmail, email))
+    .orderBy(desc(leaseAgreements.createdAt));
+}
+
+export async function getLeaseById(id: number): Promise<LeaseAgreement | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(leaseAgreements).where(eq(leaseAgreements.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function updateLeaseAgreement(id: number, landlordUserId: number, data: Partial<InsertLeaseAgreement>): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(leaseAgreements)
+    .set({ ...data, updatedAt: new Date() } as any)
+    .where(and(eq(leaseAgreements.id, id), eq(leaseAgreements.landlordUserId, landlordUserId)));
+}
+
+// ─── Property Manager Access ──────────────────────────────────────────────────
+
+export async function createPropertyManagerAccess(data: Omit<InsertPropertyManagerAccess, "id" | "createdAt">): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const result = await db.insert(propertyManagerAccess).values(data as any);
+  return (result[0] as any).insertId;
+}
+
+export async function getPropertyManagersByOwner(ownerUserId: number): Promise<PropertyManagerAccess[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(propertyManagerAccess)
+    .where(and(eq(propertyManagerAccess.ownerUserId, ownerUserId), eq(propertyManagerAccess.status, "active")));
+}
+
+export async function getPropertiesManagedBy(managerUserId: number): Promise<PropertyManagerAccess[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(propertyManagerAccess)
+    .where(and(eq(propertyManagerAccess.managerUserId, managerUserId), eq(propertyManagerAccess.status, "active")));
+}
+
+export async function updatePropertyManagerAccess(id: number, ownerUserId: number, data: Partial<InsertPropertyManagerAccess>): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(propertyManagerAccess)
+    .set(data as any)
+    .where(and(eq(propertyManagerAccess.id, id), eq(propertyManagerAccess.ownerUserId, ownerUserId)));
+}
+
+export async function revokePropertyManagerAccess(id: number, ownerUserId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(propertyManagerAccess)
+    .set({ status: "revoked" })
+    .where(and(eq(propertyManagerAccess.id, id), eq(propertyManagerAccess.ownerUserId, ownerUserId)));
+}
+
+// ─── Vendor Dispatch Requests ─────────────────────────────────────────────────
+
+export async function createVendorDispatchRequest(data: Omit<InsertVendorDispatchRequest, "id">): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const result = await db.insert(vendorDispatchRequests).values(data as any);
+  return (result[0] as any).insertId;
+}
+
+export async function getDispatchsByWorkOrder(workOrderId: number): Promise<VendorDispatchRequest[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(vendorDispatchRequests)
+    .where(eq(vendorDispatchRequests.workOrderId, workOrderId))
+    .orderBy(asc(vendorDispatchRequests.sentAt));
+}
+
+export async function getDispatchsByVendor(vendorId: number): Promise<VendorDispatchRequest[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(vendorDispatchRequests)
+    .where(eq(vendorDispatchRequests.vendorId, vendorId))
+    .orderBy(desc(vendorDispatchRequests.sentAt));
+}
+
+export async function updateVendorDispatchRequest(id: number, data: Partial<InsertVendorDispatchRequest>): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(vendorDispatchRequests).set(data as any).where(eq(vendorDispatchRequests.id, id));
+}

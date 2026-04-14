@@ -4,57 +4,66 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { CheckCircle2, XCircle, Minus, ArrowRight, Zap } from "lucide-react";
 
-const COMPETITORS = ["Leasely", "Zillow Rental", "Apartments.com", "Avail", "TurboTenant"];
+const COMPETITORS = ["Leasely", "Buildium", "Avail", "TurboTenant", "Zillow Rental", "Apartments.com"];
 
 const FEATURES = [
   {
     category: "Listings & Marketing",
     items: [
-      { label: "Property Listings", values: [true, true, true, true, true] },
-      { label: "Map View", values: [true, true, true, false, false] },
-      { label: "QR Code per Listing", values: [true, false, false, false, false] },
-      { label: "Branded Portal (yourname.domain)", values: [true, false, false, false, false] },
-      { label: "FSBO Listings", values: [true, true, true, false, false] },
+      { label: "Property Listings", values: [true, true, true, true, true, true] },
+      { label: "Unlimited Listings — Flat Rate", values: [true, false, false, false, true, true] },
+      { label: "Map View", values: [true, false, false, false, true, true] },
+      { label: "QR Code per Listing", values: [true, false, false, false, false, false] },
+      { label: "Branded Portal (yourname.domain)", values: [true, false, false, false, false, false] },
+      { label: "FSBO Listings", values: [true, false, false, false, true, true] },
     ],
   },
   {
-    category: "Tenant Management",
+    category: "Tenant Screening & Applications",
     items: [
-      { label: "Online Rental Applications", values: [true, false, true, true, true] },
-      { label: "AI Fraud Detection on Applications", values: [true, false, false, false, false] },
-      { label: "Background & Credit Checks", values: [true, false, true, true, true] },
-      { label: "Tenant Payment Portal", values: [true, false, false, true, true] },
-      { label: "Waived ACH Fees for Tenants", values: [true, false, false, false, false] },
+      { label: "Online Rental Applications", values: [true, true, true, true, false, true] },
+      { label: "AI Fraud Detection — Included Free", values: [true, false, false, false, false, false] },
+      { label: "Background & Credit Checks", values: [true, true, true, true, false, false] },
+      { label: "State-Specific Application Templates", values: [true, false, false, false, false, false] },
+      { label: "Digital Signature Capture", values: [true, true, true, true, false, false] },
+    ],
+  },
+  {
+    category: "Rent Collection & Payments",
+    items: [
+      { label: "Tenant Payment Portal", values: [true, true, true, true, false, false] },
+      { label: "Waived ACH Fees for Tenants", values: [true, false, false, false, false, false] },
+      { label: "Instant Bank Payouts (Stripe Connect)", values: [true, false, true, false, false, false] },
+      { label: "Automated Rent Reminders", values: [true, true, true, true, false, false] },
     ],
   },
   {
     category: "Property Operations",
     items: [
-      { label: "Work Order Management", values: [true, false, false, true, true] },
-      { label: "AI Vendor Dispatch", values: [true, false, false, false, false] },
-      { label: "Accounting & Ledger", values: [true, false, false, true, true] },
-      { label: "Tax-Ready Export", values: [true, false, false, true, false] },
-      { label: "Property CRM", values: [true, false, false, true, true] },
+      { label: "Work Order Management", values: [true, true, true, true, false, false] },
+      { label: "AI Vendor Dispatch", values: [true, false, false, false, false, false] },
+      { label: "Accounting & Ledger", values: [true, true, true, true, false, false] },
+      { label: "IRS Schedule E / Tax-Ready Export", values: [true, true, true, false, false, false] },
+      { label: "Property CRM (Units, Tenants, Leases)", values: [true, true, true, true, false, false] },
     ],
   },
   {
     category: "Platform & Extras",
     items: [
-      { label: "Creme Agent Network", values: [true, false, false, false, false] },
-      { label: "Renter Waitlist System", values: [true, false, false, false, false] },
-      { label: "Affiliate Program", values: [true, false, false, false, false] },
-      { label: "SOP / Training Library", values: [true, false, false, false, false] },
-      { label: "Listing Syndication Tools", values: [true, false, false, false, false] },
-      { label: "Growth Dashboard (Admin)", values: [true, false, false, false, false] },
-      { label: "Instant Payouts (Stripe Connect)", values: [true, false, false, true, false] },
+      { label: "Creme Agent Network (Lead Matching)", values: [true, false, false, false, false, false] },
+      { label: "Renter Waitlist System", values: [true, false, false, false, false, false] },
+      { label: "Short-Term Rental (iStay™)", values: [true, false, false, false, false, false] },
+      { label: "Affiliate / Referral Program", values: [true, false, false, false, false, false] },
+      { label: "Branded Tenant Portal Subdomain", values: [true, false, false, false, false, false] },
     ],
   },
   {
-    category: "Pricing",
+    category: "Pricing & Value",
     items: [
-      { label: "Free Tier", values: [true, true, true, true, true] },
-      { label: "Pro Price / month", values: ["$25.00", "$0*", "$0*", "$9", "$0*"] },
-      { label: "Per-unit fees", values: ["None", "Varies", "Varies", "Per unit", "Per unit"] },
+      { label: "Free Tier Available", values: [true, false, true, true, true, true] },
+      { label: "Pro Price / month", values: ["$25/mo flat", "$55–$375+/mo", "$9/unit/mo", "$8.25+/mo", "Listing fees", "Listing fees"] },
+      { label: "Per-Unit Fees", values: ["None ✓", "Yes (scales)", "Yes", "Yes", "Varies", "Varies"] },
+      { label: "AI Screening Included (no add-on)", values: [true, false, false, false, false, false] },
     ],
   },
 ];
@@ -89,7 +98,7 @@ export default function Compare() {
           </Badge>
           <h1 className="text-3xl font-black">Why Leasely?</h1>
           <p className="text-blue-100 text-lg">
-            See how Leasely stacks up against the competition — feature by feature.
+            See how Leasely stacks up against Buildium, Avail, TurboTenant & more — feature by feature, price by price.
           </p>
         </div>
       </div>
@@ -149,8 +158,8 @@ export default function Compare() {
           {/* Footer note */}
           <div className="px-6 py-4 bg-muted/20 border-t border-border">
             <p className="text-xs text-muted-foreground">
-              * Competitor pricing may charge per-unit fees, transaction fees, or require premium add-ons not reflected here.
-              Leasely Pro includes all features for a flat $25/mo with no per-unit fees.
+              * Buildium starts at $55/mo (Essential, up to 20 units) and scales to $375+/mo. Avail charges $9/unit/mo on their paid plan. TurboTenant is $8.25+/mo per property. Zillow &amp; Apartments.com charge listing/lead fees. None include AI fraud screening as a built-in feature.
+              <strong className="text-foreground"> Leasely Pro is $25/mo flat — unlimited listings, AI screening included, no per-unit fees, ever.</strong>
             </p>
           </div>
         </div>
@@ -159,7 +168,7 @@ export default function Compare() {
         <div className="mt-10 rounded-2xl bg-[#1B2B5E] text-white p-8 text-center space-y-4">
           <h2 className="text-2xl font-black">Ready to switch to Leasely?</h2>
           <p className="text-blue-100">
-            Everything your rental business needs in one platform, at one price.
+            Unlimited listings + AI screening + instant payouts — all for $25/mo flat. No per-unit fees. No add-ons.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/pricing">

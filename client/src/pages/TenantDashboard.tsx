@@ -31,8 +31,10 @@ export default function TenantDashboard() {
     description: "",
     category: "other" as "plumbing"|"electrical"|"hvac"|"appliance"|"structural"|"pest_control"|"cleaning"|"landscaping"|"other",
     priority: "medium" as "low"|"medium"|"high"|"emergency",
+    photos: [] as string[], // photo URLs (tenant pastes Cloudinary/S3 links or uses upload)
   });
   const [maintenanceSubmitted, setMaintenanceSubmitted] = useState(false);
+  const [photoInput, setPhotoInput] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("leasely_tenant_token");
@@ -54,7 +56,8 @@ export default function TenantDashboard() {
     onSuccess: () => {
       toast.success("Maintenance request submitted! Your landlord has been notified.");
       setMaintenanceSubmitted(true);
-      setMaintenanceForm({ title: "", description: "", category: "other", priority: "medium" });
+      setMaintenanceForm({ title: "", description: "", category: "other", priority: "medium", photos: [] });
+      setPhotoInput("");
     },
     onError: (err) => toast.error(err.message),
   });
@@ -68,6 +71,7 @@ export default function TenantDashboard() {
       description: maintenanceForm.description || undefined,
       category: maintenanceForm.category,
       priority: maintenanceForm.priority,
+      photos: maintenanceForm.photos.length > 0 ? maintenanceForm.photos : undefined,
     });
   };
 
@@ -405,6 +409,60 @@ export default function TenantDashboard() {
                     className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                   />
                 </div>
+                {/* Photo URLs */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Photos <span className="text-gray-400 font-normal">(optional — paste image URLs)</span>
+                  </label>
+                  <div className="flex gap-2 mb-2">
+                    <input
+                      type="url"
+                      placeholder="https://... (paste a photo link)"
+                      value={photoInput}
+                      onChange={e => setPhotoInput(e.target.value)}
+                      className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (photoInput.trim() && maintenanceForm.photos.length < 5) {
+                          setMaintenanceForm(f => ({ ...f, photos: [...f.photos, photoInput.trim()] }));
+                          setPhotoInput("");
+                        }
+                      }}
+                      className="px-4 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 hover:bg-gray-50 text-gray-700"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  {maintenanceForm.photos.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {maintenanceForm.photos.map((url, i) => (
+                        <div key={i} className="relative group">
+                          <img src={url} alt={`Photo ${i+1}`} className="w-20 h-16 object-cover rounded-lg border border-gray-200" onError={e => { (e.target as HTMLImageElement).style.opacity = "0.3"; }} />
+                          <button
+                            type="button"
+                            onClick={() => setMaintenanceForm(f => ({ ...f, photos: f.photos.filter((_, j) => j !== i) }))}
+                            className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-400 mt-1">Photos help vendors understand the issue before arrival. Up to 5 photos.</p>
+                </div>
+
+                {maintenanceForm.priority === "emergency" && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                    <p className="text-xs text-red-700 font-medium">
+                      Emergency requests are sent immediately. If there's a safety risk, also call 911 or your local emergency services.
+                    </p>
+                  </div>
+                )}
+
                 <Button
                   type="submit"
                   disabled={submitMaintenanceMutation.isPending || !maintenanceForm.title.trim()}

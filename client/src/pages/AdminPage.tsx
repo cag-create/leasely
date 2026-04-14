@@ -11,10 +11,11 @@ import {
   Users, Building2, DollarSign, TrendingUp, Shield,
   Search, ChevronRight, Crown, CheckCircle2,
   RefreshCw, BarChart3, Zap, Globe, Star,
-  Award, Clock, XCircle, MessageSquare, Bell, Loader2, FileText, BookOpen, Wrench
+  Award, Clock, XCircle, MessageSquare, Bell, Loader2, FileText, BookOpen, Wrench, Sparkles
 } from "lucide-react";
 
-type AdminTab = "overview" | "agents" | "contractors" | "waitlist" | "sop" | "growth";
+type AdminTab = "overview" | "agents" | "contractors" | "waitlist" | "sop" | "growth" | "intelligence";
+
 
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
@@ -55,6 +56,7 @@ export default function AdminPage() {
     { key: "waitlist", label: "Waitlist", icon: Bell },
     { key: "sop", label: "SOP Library", icon: FileText },
     { key: "growth", label: "Growth", icon: TrendingUp },
+    { key: "intelligence", label: "Intelligence", icon: Sparkles },
   ];
 
   return (
@@ -100,6 +102,7 @@ export default function AdminPage() {
         {activeTab === "waitlist" && <WaitlistTab />}
         {activeTab === "sop" && <SopAdminTab />}
         {activeTab === "growth" && <GrowthTab />}
+        {activeTab === "intelligence" && <IntelligenceTab />}
       </div>
     </DashboardLayout>
   );
@@ -715,17 +718,368 @@ function GrowthTab() {
 
 // ─── SOP Admin Tab ────────────────────────────────────────────────────────────
 
-const SOP_LIST = [
-  { id: "sop-lead-handling", title: "Lead Handling Protocol" },
-  { id: "sop-showing-prep", title: "Showing Preparation Checklist" },
-  { id: "sop-application-review", title: "Application Review Standards" },
-  { id: "sop-move-in", title: "Move-In / Move-Out Process" },
-  { id: "sop-maintenance", title: "Maintenance Request Workflow" },
-  { id: "sop-renewal", title: "Lease Renewal Process" },
+type SopSection = { heading: string; items: string[] };
+type Sop = { id: string; title: string; description: string; estimatedMinutes: number; sections: SopSection[] };
+
+const SOP_LIST: Sop[] = [
+  {
+    id: "sop-lead-handling",
+    title: "Lead Handling Protocol",
+    description: "How to respond to, qualify, and convert inbound rental leads within 24 hours.",
+    estimatedMinutes: 8,
+    sections: [
+      {
+        heading: "1. Initial Response (within 2 hours)",
+        items: [
+          "Acknowledge every inquiry via the channel it came in (email, text, Leasely message) within 2 hours during business hours.",
+          "Send a personalized reply using the applicant's first name — never use generic auto-responders without personalizing.",
+          "Include the listing address, monthly rent, available date, and a direct link to the application.",
+          "If the unit is already leased, pivot: ask if they'd like to be on the waitlist or see similar units you manage.",
+          "Log the lead in the Leasely CRM with source (Leasely, Zillow, Referral, etc.) and initial contact timestamp.",
+        ],
+      },
+      {
+        heading: "2. Lead Qualification",
+        items: [
+          "Ask the four qualification questions: (1) Desired move-in date, (2) Number of occupants, (3) Monthly income (must be 3× rent), (4) Any eviction or felony history in the last 7 years.",
+          "If income does not meet 3× threshold, politely inform and offer a co-signer option. Document the response.",
+          "Do not promise any unit before a completed application and credit/background check — verbal holds are not binding and create liability.",
+          "For corporate or Section 8 applicants, note any additional documentation requirements upfront.",
+          "Rate the lead: Hot (ready to apply today), Warm (applying within 7 days), Cold (still shopping). Follow-up cadence differs by rating.",
+        ],
+      },
+      {
+        heading: "3. Follow-Up Cadence",
+        items: [
+          "Hot lead: follow up every 24 hours until application is submitted or they opt out.",
+          "Warm lead: follow up on Day 1, Day 3, and Day 7 after initial contact.",
+          "Cold lead: add to the Leasely CRM drip — automated check-in at 14 days and 30 days.",
+          "Never contact a lead more than once per day. All communication must be professional and FAIR Housing compliant.",
+          "After 3 non-responses, mark the lead as inactive and cease outreach. Log the final status.",
+        ],
+      },
+      {
+        heading: "4. Scheduling a Showing",
+        items: [
+          "Offer at least 3 available time slots in the next 5 business days.",
+          "Confirm the showing via both email and text 24 hours before.",
+          "If you are sending a Creme Agent for the showing, brief the agent via the Leasely portal with property highlights, key selling points, and any known issues.",
+          "For vacant units, ensure the unit is clean, HVAC is set to a comfortable temperature, and all lights are functional before any showing.",
+          "Send a follow-up within 2 hours post-showing to gauge interest and answer questions.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "sop-showing-prep",
+    title: "Showing Preparation Checklist",
+    description: "Step-by-step property preparation and agent briefing before every showing.",
+    estimatedMinutes: 6,
+    sections: [
+      {
+        heading: "1. 48 Hours Before the Showing",
+        items: [
+          "Confirm the appointment via text and email with the prospect.",
+          "Verify the key or lockbox code is functional. Test it yourself — do not assume.",
+          "Notify current tenants (if occupied) with at least 24 hours written notice as required by state law.",
+          "Pull the unit's fact sheet: sq ft, bed/bath, included utilities, appliances, parking, pet policy, lease terms.",
+          "Confirm the showing agent has access to the Leasely portal listing with all photos and details.",
+        ],
+      },
+      {
+        heading: "2. Day-of Preparation (1–2 hours before)",
+        items: [
+          "Walk the unit or have the agent walk it. Check for: odors, burnt-out lights, leaky faucets, HVAC function, clean bathrooms and kitchen.",
+          "Set the thermostat: 72°F in summer, 68°F in winter. First impressions are physical.",
+          "Open blinds and window treatments to maximize natural light.",
+          "Ensure all common areas are clean if applicable (hallways, laundry room, parking lot).",
+          "Place a simple welcome card or printed fact sheet on the kitchen counter.",
+        ],
+      },
+      {
+        heading: "3. During the Showing",
+        items: [
+          "Greet the prospect by name. Shake hands. Begin with the strongest feature of the property.",
+          "Highlight: storage space, natural light, proximity to transit/schools, recent upgrades.",
+          "Never apologize for the unit. If a prospect raises an issue, acknowledge it and pivot to a solution or benefit.",
+          "Disclose known material defects — this is legally required and protects you from future liability.",
+          "End with: 'Do you have any questions? Is this a fit for what you're looking for?'",
+        ],
+      },
+      {
+        heading: "4. Post-Showing Follow-Up",
+        items: [
+          "Send a follow-up message within 2 hours: 'Great meeting you today — here's the application link: [link]'",
+          "Log showing outcome in CRM: Interested / Needs time / Not a fit. Note specific objections.",
+          "If the prospect is interested but hesitant, offer a second look or offer to answer remaining questions.",
+          "If a showing no-show occurs, send one re-engagement message. If no response in 48 hours, mark as cold.",
+          "Showing feedback should be documented and shared with the landlord via the Leasely portal notes.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "sop-application-review",
+    title: "Application Review Standards",
+    description: "Consistent, FAIR Housing-compliant criteria for evaluating and approving rental applications.",
+    estimatedMinutes: 10,
+    sections: [
+      {
+        heading: "1. Minimum Qualification Criteria",
+        items: [
+          "Income: Combined gross monthly household income must be at least 3× the monthly rent.",
+          "Credit: Minimum score of 620 for standard approval. 580–619 may be approved with an additional security deposit equal to one month's rent.",
+          "Rental History: No evictions in the past 5 years. No more than 2 late rent payments in the past 12 months.",
+          "Criminal Background: Convictions that directly relate to property damage or harm to other residents are grounds for denial. Blanket criminal screening policies that do not consider time elapsed or nature of offense may violate FAIR Housing — consult local ordinances.",
+          "Employment/Income: Employed for at least 6 months at current job, OR has documented self-employment income for at least 1 year, OR has sufficient documented savings (12+ months rent).",
+        ],
+      },
+      {
+        heading: "2. Required Documents",
+        items: [
+          "Government-issued photo ID (driver's license, state ID, or passport).",
+          "Two most recent pay stubs OR two most recent months of bank statements.",
+          "Most recent tax return if self-employed.",
+          "Contact information for previous two landlords (not current if still residing).",
+          "All adult occupants (18+) must submit a separate application and undergo background/credit screening.",
+        ],
+      },
+      {
+        heading: "3. FAIR Housing Compliance",
+        items: [
+          "NEVER consider: race, color, national origin, religion, sex, familial status, disability, or any other protected class under federal, state, or local law.",
+          "Apply the same written criteria to every applicant — no exceptions. Inconsistent application is the most common FAIR Housing violation.",
+          "If you use AI screening, document its criteria. AI tools do not provide FAIR Housing immunity.",
+          "Keep all application documents, screening reports, and decision records for a minimum of 3 years.",
+          "If you deny an application, provide a written adverse action notice citing the specific criteria that were not met. Do not simply say 'denied.'",
+        ],
+      },
+      {
+        heading: "4. Decision and Notification",
+        items: [
+          "Complete review within 48–72 hours of receiving a completed application with all documents.",
+          "Approve: Send the lease agreement via Leasely. Lease must be signed within 5 business days or the unit returns to market.",
+          "Conditional Approve: Notify the applicant of the condition (e.g., additional deposit) and give 48 hours to respond.",
+          "Deny: Send a written adverse action notice. Do not leave applicants waiting — it creates liability and poor reviews.",
+          "If multiple qualified applications arrive simultaneously, approve in the order received. Document timestamps.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "sop-move-in",
+    title: "Move-In / Move-Out Process",
+    description: "End-to-end checklist for a smooth tenant transition that protects your security deposit and prevents disputes.",
+    estimatedMinutes: 12,
+    sections: [
+      {
+        heading: "1. Pre-Move-In (5–7 Days Before)",
+        items: [
+          "Confirm all cleaning, painting, and repairs are complete. The unit must be in 'broom clean' condition — ready to photograph.",
+          "Conduct a professional walk-through with a checklist. Document the condition of: walls, floors, carpets, appliances, windows, doors, fixtures, HVAC filters, smoke detectors, carbon monoxide detectors.",
+          "Photograph every room from at least two angles. Photograph all appliances, fixtures, and any pre-existing damage. Use timestamped photos — store in Leasely.",
+          "Verify all utilities are transferred or activated. Confirm tenant has set up their utility accounts if required by lease.",
+          "Prepare the move-in packet: lease copy, welcome letter, utility contacts, trash pickup schedule, maintenance request instructions, emergency contact numbers.",
+        ],
+      },
+      {
+        heading: "2. Move-In Day",
+        items: [
+          "Meet the tenant at the property. Do not just mail keys — a brief in-person walkthrough is your best protection against future disputes.",
+          "Walk through the entire unit with the tenant and complete the move-in condition report together. Both parties sign.",
+          "Explain the maintenance request process: how to submit via Leasely, expected response times, what constitutes an emergency.",
+          "Provide all keys, fobs, parking passes, and mailbox keys. Have the tenant sign a receipt for each item.",
+          "Collect first month's rent and security deposit if not already received. Provide a written receipt.",
+        ],
+      },
+      {
+        heading: "3. During Tenancy — Periodic Inspections",
+        items: [
+          "Conduct a routine inspection at 90 days and then annually. State law governs required notice (typically 24–48 hours written notice).",
+          "Use the same condition report form used at move-in. Document changes.",
+          "Address any lease violations (unapproved pets, unauthorized occupants, hoarding, smoking) in writing immediately after the inspection.",
+          "Keep records of all communication. Email or Leasely messages are preferable over text — they create a clear paper trail.",
+        ],
+      },
+      {
+        heading: "4. Move-Out Process",
+        items: [
+          "Send a written move-out checklist to the tenant 30 days before lease end: cleaning expectations, what to return, final utilities.",
+          "Conduct a final walk-through within 24–48 hours of the tenant vacating. Use the original move-in condition report for comparison.",
+          "Document all damage with timestamped photos. Only charge for damage that exceeds normal wear and tear — this is a legal standard, not a discretionary judgment.",
+          "Normal wear and tear examples: small nail holes, minor carpet wear, paint that needs refreshing after 3+ years. NOT normal: large holes, stains, broken fixtures, unauthorized paint colors.",
+          "Provide a written itemized security deposit disposition statement within the timeframe required by state law (typically 14–30 days). Late returns may forfeit your right to deduct.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "sop-maintenance",
+    title: "Maintenance Request Workflow",
+    description: "How to triage, dispatch, track, and close maintenance requests — from tenant submit to vendor payment.",
+    estimatedMinutes: 9,
+    sections: [
+      {
+        heading: "1. Request Intake and Triage",
+        items: [
+          "All requests must be submitted through Leasely so there is a written record. Do not accept verbal-only maintenance requests.",
+          "Triage by priority within 4 business hours of submission:",
+          "EMERGENCY (respond immediately): No heat in winter, no hot water, gas leak, flooding, electrical hazard, sewage backup, broken exterior door/lock.",
+          "URGENT (respond within 24 hours): Appliance outage, HVAC partial failure, roof leak, plumbing drip, pest infestation.",
+          "ROUTINE (respond within 72 hours): Cosmetic issues, slow drain, minor appliance issues, parking/common area requests.",
+        ],
+      },
+      {
+        heading: "2. Vendor Dispatch",
+        items: [
+          "For emergencies: Use the Leasely emergency dispatch to notify ALL vendors simultaneously. The first available vendor responds. Do not wait to compare quotes in an emergency.",
+          "For non-emergencies: Use multi-bid dispatch. Send to all qualified vendors for that trade (HVAC, plumbing, electric, general). Collect quotes + availability within 24–48 hours.",
+          "Round-robin option: Enable in Leasely settings to auto-rotate dispatch order among qualified vendors for routine work, ensuring fair distribution.",
+          "Never use a vendor who is not in your Leasely vendor list — unvetted vendors create insurance and liability exposure.",
+          "Send the tenant an automated update: 'We've received your request and dispatched a vendor. You'll hear from them to schedule within [timeframe].'",
+        ],
+      },
+      {
+        heading: "3. Vendor Management",
+        items: [
+          "Require all vendors in your network to have: current general liability insurance (min $1M), trade license if applicable, W-9 on file.",
+          "Review vendor quotes via the Leasely portal. Compare price, proposed date, and notes before approving.",
+          "Once approved, inform the tenant of the scheduled date. Provide the tenant 24+ hours notice of entry.",
+          "Do not allow vendors to charge additional amounts beyond the approved quote without prior landlord approval.",
+          "After job completion, do a photo verification before releasing payment through Leasely's vendor pay system.",
+        ],
+      },
+      {
+        heading: "4. Closing and Documentation",
+        items: [
+          "Mark work orders as 'Resolved' in Leasely only after confirming the repair is complete and effective.",
+          "Keep all invoices, vendor communications, and completion photos in the work order record for at minimum 3 years.",
+          "Track repair frequency by unit and by system (HVAC, plumbing, roof). Recurring issues indicate a capital improvement need, not a maintenance issue.",
+          "For any repair costing more than $500, send the tenant a written notice of the work performed. For any repair that was caused by tenant negligence, document clearly and advise them they may be charged at move-out.",
+          "Conduct a 30-day follow-up check on any significant repair (roof, HVAC, plumbing) to confirm it holds.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "sop-renewal",
+    title: "Lease Renewal Process",
+    description: "How to retain good tenants, negotiate renewals, and handle turnover efficiently.",
+    estimatedMinutes: 7,
+    sections: [
+      {
+        heading: "1. Renewal Timeline",
+        items: [
+          "Begin the renewal process 90 days before lease expiration — never wait until 30 days out.",
+          "Day 90: Pull the tenant's payment history, maintenance request history, and any lease violation notes. Decide: renew, renew with conditions, or non-renew.",
+          "Day 75: Send the renewal offer via Leasely — include new rent amount, new lease term options, and deadline to respond (typically 14 days).",
+          "Day 60: If no response, follow up directly by phone or email. A non-response is not a rejection — many tenants are simply busy.",
+          "Day 45: Final decision required. If tenant declines or does not respond, begin marketing the unit immediately.",
+        ],
+      },
+      {
+        heading: "2. Setting the Renewal Rate",
+        items: [
+          "Research current market rents for comparable units in the same zip code. Use Leasely marketplace, Zillow, and Apartments.com as benchmarks.",
+          "Typical renewal increase range: 3–8% depending on market conditions and tenant quality.",
+          "Factor in vacancy cost: a 30-day vacancy at $1,500/mo = $1,500 lost + ~$500 turn cost. A quality tenant renewing at market rate is almost always more profitable than a vacancy.",
+          "Offer a small incentive for long-term renewal (12+ months): free carpet cleaning, appliance upgrade, or $50 off first month.",
+          "Never raise rent more than the amount allowed by local rent stabilization or rent control ordinances — know your local laws.",
+        ],
+      },
+      {
+        heading: "3. Good-Tenant Retention Strategies",
+        items: [
+          "Acknowledge on-time payment: A simple 'Thanks for always paying on time — we really appreciate it' goes a long way.",
+          "Respond to maintenance requests fast. The #1 reason good tenants leave is feeling ignored when something breaks.",
+          "Personalize the renewal letter. 'We'd love to have you stay for another year' is more effective than a form letter.",
+          "Offer a month-to-month option at a 10–15% premium for tenants who need flexibility. It keeps them without locking you in.",
+          "Track tenure bonuses: consider a one-time $100 gift card for tenants at their 2-year anniversary. Retention is cheaper than turnover.",
+        ],
+      },
+      {
+        heading: "4. Non-Renewal and Turnover",
+        items: [
+          "Send non-renewal notice in writing per state law requirements (typically 30–60 days). Never assume a verbal notice is sufficient.",
+          "If the tenant is being non-renewed for cause (violations, non-payment), document everything. Consult a local attorney before proceeding with eviction — improper process is expensive.",
+          "Begin marketing the unit while the tenant is still in place. With proper notice, you can show the unit with 24-hour advance written notice.",
+          "Calculate total turn cost: cleaning, painting, carpet (if needed), marketing time, leasing fee. This number justifies investing in retention.",
+          "After a tenant vacates, complete the move-out inspection within 24 hours. Start the turn immediately — every day vacant is revenue lost.",
+        ],
+      },
+    ],
+  },
 ];
+
+// ─── SOP Viewer Modal ─────────────────────────────────────────────────────────
+
+function SopViewerModal({ sop, onClose }: { sop: Sop; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl">
+        {/* Header */}
+        <div className="flex items-start justify-between p-6 border-b border-border shrink-0">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-xl bg-[#1B2B5E]/10 flex items-center justify-center shrink-0 mt-0.5">
+              <BookOpen className="h-5 w-5 text-[#1B2B5E] dark:text-blue-400" />
+            </div>
+            <div>
+              <h2 className="font-bold text-lg text-foreground leading-tight">{sop.title}</h2>
+              <p className="text-sm text-muted-foreground mt-0.5">{sop.description}</p>
+              <div className="flex items-center gap-2 mt-1.5">
+                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">~{sop.estimatedMinutes} min read</span>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground shrink-0"
+          >
+            <XCircle className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {sop.sections.map((section, si) => (
+            <div key={si}>
+              <h3 className="font-semibold text-sm text-foreground mb-3 pb-1.5 border-b border-border">
+                {section.heading}
+              </h3>
+              <ul className="space-y-2.5">
+                {section.items.map((item, ii) => (
+                  <li key={ii} className="flex gap-3 text-sm text-muted-foreground leading-relaxed">
+                    <span className="h-5 w-5 rounded-full bg-[#00C896]/15 text-[#00C896] flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                      {ii + 1}
+                    </span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-border shrink-0 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 rounded-xl bg-[#00C896] hover:bg-[#00A87C] text-[#062018] font-semibold text-sm transition-colors"
+          >
+            Done Reading
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── SOP Admin Tab ─────────────────────────────────────────────────────────────
 
 function SopAdminTab() {
   const { data: allReads, isLoading } = trpc.sop.getAll.useQuery();
+  const [viewingSop, setViewingSop] = useState<Sop | null>(null);
 
   // Build per-SOP stats
   const sopStats = SOP_LIST.map(sop => {
@@ -746,104 +1100,337 @@ function SopAdminTab() {
     .sort((a, b) => b.count - a.count);
 
   return (
-    <div className="space-y-6">
-      {/* SOP completion overview */}
-      <div className="rounded-2xl border border-border bg-card overflow-hidden">
-        <div className="p-5 border-b border-border flex items-center gap-2">
-          <BookOpen className="h-4 w-4 text-muted-foreground" />
-          <h3 className="font-semibold text-foreground">SOP Completion Overview</h3>
-          {!isLoading && (
+    <>
+      {viewingSop && (
+        <SopViewerModal sop={viewingSop} onClose={() => setViewingSop(null)} />
+      )}
+
+      <div className="space-y-6">
+        {/* SOP Library Grid */}
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="p-5 border-b border-border flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
+            <h3 className="font-semibold text-foreground">SOP Library</h3>
             <Badge variant="secondary" className="text-xs ml-auto">
-              {(allReads ?? []).length} total reads
+              {SOP_LIST.length} procedures
             </Badge>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-border">
+            {SOP_LIST.map((sop) => {
+              const stat = sopStats.find(s => s.id === sop.id);
+              return (
+                <button
+                  key={sop.id}
+                  onClick={() => setViewingSop(sop)}
+                  className="group text-left p-5 hover:bg-muted/40 transition-colors border-b border-border last:border-b-0 sm:last:border-b sm:border-b sm:[&:nth-child(n+4)]:border-t sm:[&:nth-child(n+4)]:border-border"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="h-9 w-9 rounded-xl bg-[#1B2B5E]/10 flex items-center justify-center shrink-0 group-hover:bg-[#1B2B5E]/20 transition-colors">
+                      <FileText className="h-4.5 w-4.5 text-[#1B2B5E] dark:text-blue-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm text-foreground leading-tight group-hover:text-[#1B2B5E] dark:group-hover:text-blue-400 transition-colors">
+                        {sop.title}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1 leading-snug line-clamp-2">{sop.description}</div>
+                      <div className="flex items-center gap-3 mt-2">
+                        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" /> {sop.estimatedMinutes} min
+                        </span>
+                        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                          <Users className="h-3 w-3" /> {stat?.uniqueUsers ?? 0} read
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* SOP completion overview stats */}
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="p-5 border-b border-border flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <h3 className="font-semibold text-foreground">Completion Stats</h3>
+            {!isLoading && (
+              <Badge variant="secondary" className="text-xs ml-auto">
+                {(allReads ?? []).length} total reads
+              </Badge>
+            )}
+          </div>
+          {isLoading ? (
+            <div className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
+          ) : (
+            <div className="divide-y divide-border">
+              {sopStats.map(sop => (
+                <div key={sop.id} className="px-5 py-3.5 flex items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm text-foreground">{sop.title}</div>
+                  </div>
+                  <div className="flex items-center gap-4 shrink-0">
+                    <div className="text-right">
+                      <div className="text-base font-bold text-foreground">{sop.uniqueUsers}</div>
+                      <div className="text-[11px] text-muted-foreground">users</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-base font-bold text-foreground">{sop.totalReads}</div>
+                      <div className="text-[11px] text-muted-foreground">reads</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
-        {isLoading ? (
+
+        {/* User SOP progress leaderboard */}
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="p-5 border-b border-border flex items-center gap-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <h3 className="font-semibold text-foreground">Agent SOP Progress</h3>
+          </div>
+          {isLoading ? (
+            <div className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
+          ) : !userRows.length ? (
+            <div className="p-10 text-center text-muted-foreground text-sm">
+              <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              No SOPs have been read yet.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-muted/30 border-b border-border">
+                    <th className="text-left px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Agent</th>
+                    <th className="text-left px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">SOPs Completed</th>
+                    <th className="text-left px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Progress</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {userRows.map((u, i) => {
+                    const pct = Math.round((u.count / SOP_LIST.length) * 100);
+                    return (
+                      <tr key={u.userId} className={`border-b border-border last:border-0 ${i % 2 === 0 ? "" : "bg-muted/5"}`}>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-8 w-8 rounded-full bg-[#1B2B5E]/10 flex items-center justify-center text-xs font-bold text-[#1B2B5E] shrink-0">
+                              {(u.name || u.email || "?")[0].toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="font-medium text-foreground">{u.name || "—"}</div>
+                              <div className="text-xs text-muted-foreground">{u.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3">
+                          <span className="font-semibold text-foreground">{u.count}</span>
+                          <span className="text-muted-foreground"> / {SOP_LIST.length}</span>
+                        </td>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden max-w-[120px]">
+                              <div
+                                className={`h-full rounded-full ${pct === 100 ? "bg-[#00C896]" : "bg-[#1B2B5E]"}`}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-muted-foreground w-8">{pct}%</span>
+                            {pct === 100 && <CheckCircle2 className="h-3.5 w-3.5 text-[#00C896]" />}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function IntelligenceTab() {
+  const { data: marketRent, isLoading: loadingRent } = trpc.admin.getMarketRent.useQuery();
+  const { data: scoreStats, isLoading: loadingScore } = trpc.admin.getTenantScoreStats.useQuery();
+  const { data: leaseOutcomes, isLoading: loadingLeases } = trpc.admin.getLeaseOutcomes.useQuery();
+
+  const scoreItems = scoreStats ? [
+    { label: "Excellent", range: "80–100", count: scoreStats.excellent, color: "bg-[#00C896]", textColor: "text-[#00C896]" },
+    { label: "Good", range: "65–79", count: scoreStats.good, color: "bg-blue-500", textColor: "text-blue-500" },
+    { label: "Fair", range: "50–64", count: scoreStats.fair, color: "bg-amber-500", textColor: "text-amber-500" },
+    { label: "Review", range: "< 50", count: scoreStats.review, color: "bg-red-400", textColor: "text-red-400" },
+  ] : [];
+
+  const leaseStatusConfig: Record<string, { label: string; color: string }> = {
+    active: { label: "Active", color: "bg-[#00C896]/80" },
+    signed: { label: "Signed", color: "bg-blue-500/80" },
+    draft: { label: "Draft", color: "bg-muted" },
+    sent: { label: "Sent (Awaiting Signature)", color: "bg-amber-500/80" },
+    expired: { label: "Expired", color: "bg-red-400/60" },
+    terminated: { label: "Terminated", color: "bg-gray-400/60" },
+  };
+
+  return (
+    <div className="space-y-6">
+
+      {/* Header banner */}
+      <div className="rounded-2xl bg-gradient-to-br from-[#00C896]/10 to-blue-500/10 border border-[#00C896]/20 p-5">
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-xl bg-[#00C896]/15 flex items-center justify-center shrink-0">
+            <Sparkles className="h-5 w-5 text-[#00C896]" />
+          </div>
+          <div>
+            <h3 className="font-bold text-foreground">Platform Intelligence</h3>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Proprietary data aggregated across all landlords and tenants on Leasely. This is your network-effect moat — it gets smarter with every user.
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-3 mt-4">
+          {[
+            { label: "AI Tenant Score", desc: "Score every applicant on income, employer, references, and consent signals" },
+            { label: "Market Rent Intelligence", desc: "Real-time avg rent by zip code from active listings across the platform" },
+            { label: "Lease Outcome Database", desc: "Track which lease statuses lead to renewals vs. churn across all landlords" },
+          ].map((item, i) => (
+            <div key={i} className="rounded-xl bg-background/60 border border-border p-3">
+              <div className="text-xs font-semibold text-foreground">{item.label}</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{item.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Tenant Score Distribution */}
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="p-5 border-b border-border flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground">AI Tenant Reliability Score — Platform Distribution</h3>
+          {!loadingScore && scoreStats && (
+            <Badge variant="secondary" className="text-xs ml-auto">{scoreStats.total} applicants scored</Badge>
+          )}
+        </div>
+        {loadingScore ? (
           <div className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
+        ) : !scoreStats || scoreStats.total === 0 ? (
+          <div className="p-8 text-center text-muted-foreground text-sm">No applications yet. Score data will appear as tenants apply.</div>
         ) : (
-          <div className="divide-y divide-border">
-            {sopStats.map(sop => (
-              <div key={sop.id} className="px-5 py-4 flex items-center gap-4">
-                <div className="h-10 w-10 rounded-xl bg-[#1B2B5E]/10 flex items-center justify-center shrink-0">
-                  <FileText className="h-5 w-5 text-[#1B2B5E]" />
+          <div className="p-5 space-y-4">
+            <div className="grid grid-cols-4 gap-3">
+              {scoreItems.map(item => (
+                <div key={item.label} className="rounded-xl border border-border p-4 text-center">
+                  <div className={`text-2xl font-bold ${item.textColor}`}>{item.count}</div>
+                  <div className="text-sm font-semibold text-foreground mt-0.5">{item.label}</div>
+                  <div className="text-xs text-muted-foreground">Score {item.range}</div>
+                  <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${item.color}`}
+                      style={{ width: scoreStats.total ? `${Math.round((item.count / scoreStats.total) * 100)}%` : "0%" }}
+                    />
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-1">
+                    {scoreStats.total ? Math.round((item.count / scoreStats.total) * 100) : 0}%
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm text-foreground">{sop.title}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">ID: {sop.id}</div>
-                </div>
-                <div className="text-right shrink-0">
-                  <div className="text-lg font-bold text-foreground">{sop.uniqueUsers}</div>
-                  <div className="text-xs text-muted-foreground">users completed</div>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
+            <div className="rounded-xl bg-muted/40 border border-border p-4 text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">Score factors: </span>
+              Monthly income level (+40), employer on file (+15), landlord reference (+15), background check consent (+15), emergency contact (+10), no pets (+5). Max score: 100.
+            </div>
           </div>
         )}
       </div>
 
-      {/* User SOP progress leaderboard */}
+      {/* Market Rent Intelligence */}
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="p-5 border-b border-border flex items-center gap-2">
-          <Users className="h-4 w-4 text-muted-foreground" />
-          <h3 className="font-semibold text-foreground">Agent SOP Progress</h3>
+          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground">Market Rent Intelligence — Avg Rent by Zip Code</h3>
+          {!loadingRent && (
+            <Badge variant="secondary" className="text-xs ml-auto">{marketRent?.length ?? 0} zip codes tracked</Badge>
+          )}
         </div>
-        {isLoading ? (
+        {loadingRent ? (
           <div className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
-        ) : !userRows.length ? (
-          <div className="p-10 text-center text-muted-foreground text-sm">
-            <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-30" />
-            No SOPs have been read yet.
-          </div>
+        ) : !marketRent?.length ? (
+          <div className="p-8 text-center text-muted-foreground text-sm">No active listings with zip codes yet. Market data appears as landlords post listings.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-muted/30 border-b border-border">
-                  <th className="text-left px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Agent</th>
-                  <th className="text-left px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">SOPs Completed</th>
-                  <th className="text-left px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Progress</th>
+                  <th className="text-left px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">State</th>
+                  <th className="text-left px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Zip Code</th>
+                  <th className="text-left px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Avg Rent</th>
+                  <th className="text-left px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Listings</th>
+                  <th className="text-left px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Data Quality</th>
                 </tr>
               </thead>
               <tbody>
-                {userRows.map((u, i) => {
-                  const pct = Math.round((u.count / SOP_LIST.length) * 100);
-                  return (
-                    <tr key={u.userId} className={`border-b border-border last:border-0 ${i % 2 === 0 ? "" : "bg-muted/5"}`}>
-                      <td className="px-5 py-3">
-                        <div className="flex items-center gap-2.5">
-                          <div className="h-8 w-8 rounded-full bg-[#1B2B5E]/10 flex items-center justify-center text-xs font-bold text-[#1B2B5E] shrink-0">
-                            {(u.name || u.email || "?")[0].toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="font-medium text-foreground">{u.name || "—"}</div>
-                            <div className="text-xs text-muted-foreground">{u.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className="font-semibold text-foreground">{u.count}</span>
-                        <span className="text-muted-foreground"> / {SOP_LIST.length}</span>
-                      </td>
-                      <td className="px-5 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden max-w-[120px]">
-                            <div
-                              className={`h-full rounded-full ${pct === 100 ? "bg-[#00C896]" : "bg-[#1B2B5E]"}`}
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                          <span className="text-xs text-muted-foreground w-8">{pct}%</span>
-                          {pct === 100 && <CheckCircle2 className="h-3.5 w-3.5 text-[#00C896]" />}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {marketRent.map((row: any, i: number) => (
+                  <tr key={i} className={`border-b border-border last:border-0 ${i % 2 === 0 ? "" : "bg-muted/5"}`}>
+                    <td className="px-5 py-3 font-mono text-xs font-semibold text-foreground">{row.state ?? "—"}</td>
+                    <td className="px-5 py-3 font-mono text-sm text-foreground">{row.zip ?? "—"}</td>
+                    <td className="px-5 py-3 font-semibold text-[#00C896]">${Number(row.avgRent ?? 0).toLocaleString()}/mo</td>
+                    <td className="px-5 py-3 text-muted-foreground">{row.count}</td>
+                    <td className="px-5 py-3">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${Number(row.count) >= 5 ? "bg-[#00C896]/10 text-[#00C896]" : Number(row.count) >= 2 ? "bg-amber-500/10 text-amber-600" : "bg-muted text-muted-foreground"}`}>
+                        {Number(row.count) >= 5 ? "High confidence" : Number(row.count) >= 2 ? "Growing" : "Limited"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         )}
       </div>
+
+      {/* Lease Outcome Database */}
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="p-5 border-b border-border flex items-center gap-2">
+          <FileText className="h-4 w-4 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground">Lease Outcome Database</h3>
+        </div>
+        {loadingLeases ? (
+          <div className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
+        ) : !leaseOutcomes?.length ? (
+          <div className="p-8 text-center text-muted-foreground text-sm">No leases yet. Outcome data appears as landlords create and sign leases.</div>
+        ) : (
+          <div className="p-5">
+            <div className="grid sm:grid-cols-3 gap-3">
+              {leaseOutcomes.map((row: any, i: number) => {
+                const config = leaseStatusConfig[row.status] ?? { label: row.status, color: "bg-muted" };
+                return (
+                  <div key={i} className="rounded-xl border border-border p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={`h-2.5 w-2.5 rounded-full ${config.color}`} />
+                      <span className="text-sm font-semibold text-foreground">{config.label}</span>
+                    </div>
+                    <div className="text-2xl font-bold text-foreground">{row.count}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">leases</div>
+                    {row.avgRentCents > 0 && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Avg: ${Math.round(Number(row.avgRentCents) / 100).toLocaleString()}/mo
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-4 rounded-xl bg-muted/40 border border-border p-4 text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">Why this matters: </span>
+              As this database grows, Leasely can identify which tenant profiles (income ratio, employment type, application speed) correlate with on-time payment, low maintenance, and lease renewals — feeding back into the AI screening score.
+            </div>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }

@@ -56,8 +56,8 @@ export default function Navbar() {
       <span className={`
         relative px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-150 cursor-pointer
         ${isActive(href)
-          ? "text-foreground bg-secondary"
-          : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+          ? "text-[#0A1628] bg-gray-100"
+          : "text-gray-500 hover:text-[#0A1628] hover:bg-gray-100/70"
         }
         ${className}
       `}>
@@ -71,8 +71,8 @@ export default function Navbar() {
       <header className={`
         sticky top-0 z-50 transition-all duration-300
         ${scrolled
-          ? "bg-background/95 backdrop-blur-xl border-b border-border shadow-sm"
-          : "bg-background/90 backdrop-blur-md border-b border-border/60"
+          ? "bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-sm"
+          : "bg-white/90 backdrop-blur-md border-b border-gray-100/60"
         }
       `}>
         <div className="container">
@@ -86,7 +86,7 @@ export default function Navbar() {
                 className="h-7 w-auto transition-opacity group-hover:opacity-80"
                 onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
               />
-              <span className="font-black text-[1.15rem] tracking-tight text-foreground">
+              <span className="font-black text-[1.15rem] tracking-tight text-[#0A1628]">
                 Leasely
               </span>
             </Link>
@@ -274,7 +274,7 @@ export default function Navbar() {
 
       {/* ── Mobile Menu ── */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-background/98 backdrop-blur-xl pt-[60px]">
+        <div className="md:hidden fixed inset-0 z-40 bg-white/98 backdrop-blur-xl pt-[60px]">
           <nav className="container py-6 flex flex-col gap-1">
             {[
               { href: "/marketplace", label: "Browse Rentals", icon: <Search className="h-4 w-4" /> },
@@ -297,7 +297,7 @@ export default function Navbar() {
               <Link key={href} href={href} onClick={() => setMobileOpen(false)}>
                 <span className={`
                   flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-colors
-                  ${isActive(href) ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"}
+                  ${isActive(href) ? "bg-gray-100 text-[#0A1628]" : "text-gray-500 hover:bg-gray-100/70 hover:text-[#0A1628]"}
                 `}>
                   {icon}
                   {label}

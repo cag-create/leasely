@@ -157,6 +157,11 @@ export default function Onboarding() {
         <p className="text-center text-xs text-gray-400 mt-4">
           You can always switch later from your account settings.
         </p>
+        <p className="text-center text-xs text-gray-400 mt-2">
+          By continuing you agree to our{" "}
+          <a href="/fees" className="underline hover:text-gray-600 transition-colors">fee schedule & platform terms</a>.
+          Pro: $75 one-time setup + $25/mo · Cancel anytime.
+        </p>
       </div>
     </div>
   );

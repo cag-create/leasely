@@ -52,7 +52,10 @@ const PRO_FEATURES = [
   { label: "Priority customer support — 24hr SLA", included: true },
   { label: "Custom brand logo, colors & subdomain", included: true },
   { label: "Public portal page (shareable on Google)", included: true },
+  { label: "Property manager delegated access", included: true },
+  { label: "Granular PM permissions (view/manage/approve)", included: true },
 ];
+
 
 const COMPARISON_ROWS = [
   { category: "Marketplace", label: "Property listings", free: "1 listing", pro: "Unlimited" },
@@ -72,6 +75,9 @@ const COMPARISON_ROWS = [
   { category: "Management", label: "Work order management + AI dispatch", free: false, pro: true },
   { category: "Management", label: "Accounting ledger & CSV export", free: false, pro: true },
   { category: "Management", label: "Property CRM", free: false, pro: true },
+  { category: "Management", label: "Lease agreements + e-signature", free: false, pro: true },
+  { category: "Management", label: "Property manager delegated access", free: false, pro: true },
+  { category: "Management", label: "PM granular permissions (view / manage / approve)", free: false, pro: true },
   { category: "Support", label: "Customer support", free: "Standard (3–5 days)", pro: "Priority (24hr SLA)" },
 ];
 
@@ -105,8 +111,12 @@ const FAQ_ITEMS = [
     a: "The CRM lets you organize all your properties, units, tenants, leases, and notes in one place. Track lease start/end dates, monthly rent, security deposits, tenant contact info, and add notes to any record. It's designed to replace spreadsheets and give you a clean, searchable database of your entire portfolio."
   },
   {
-    q: "Do you offer discounts for large portfolios?",
-    a: "The Pro plan is $50 one-time setup fee plus $25/month. The setup fee covers building and configuring your branded portal (subdomain, branding, onboarding). For property management companies with 50+ units, contact us at support@leasely.net to discuss enterprise pricing."
+    q: "Can I use Leasely if I have a property manager handling my units?",
+    a: "Yes — and it's included in Pro at no extra charge. You can invite your property manager to your account and give them granular permissions: they can view work orders, manage maintenance, approve applications, or handle leases — whatever you authorize. You stay in control, they get the access they need. No separate tier, no extra fee."
+  },
+  {
+    q: "I manage many properties. Is there a per-unit charge?",
+    a: "No. Pro is $75 one-time setup + $25/month flat — no per-property or per-unit fees, ever. List 1 property or 100. Add a property manager. Hand off entire portfolios. It's all the same $25/month."
   },
 ];
 
@@ -232,7 +242,7 @@ export default function Pricing() {
                 <span className="text-white/50 text-sm">/ month</span>
               </div>
               <div className="flex items-center gap-1.5 mt-1">
-                <span className="text-white/70 text-sm font-semibold">+ $50 one-time setup fee</span>
+                <span className="text-white/70 text-sm font-semibold">+ $75 one-time setup fee</span>
               </div>
               <p className="text-white/60 text-sm mt-2">Everything you need to run a professional rental business.</p>
             </div>
@@ -252,7 +262,7 @@ export default function Pricing() {
                 {checkoutMutation.isPending ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /> Opening checkout...</>
                 ) : (
-                  <><Sparkles className="h-4 w-4" /> Get Pro — $50 setup + $25/mo</>
+                  <><Sparkles className="h-4 w-4" /> Get Pro — $75 setup + $25/mo</>
                 )}
               </Button>
             )}
@@ -264,8 +274,9 @@ export default function Pricing() {
                 </div>
               ))}
             </div>
-            <p className="text-white/40 text-xs text-center mt-6">$50 one-time setup · $25/mo thereafter · Cancel anytime</p>
+            <p className="text-white/40 text-xs text-center mt-6">$75 one-time setup (website, logo & URL) · $25/mo thereafter · Cancel anytime</p>
           </div>
+
         </div>
       </section>
 
@@ -451,17 +462,37 @@ export default function Pricing() {
             )}
           </div>
           <p className="text-white/40 text-sm mt-6">
-            Free tier · No credit card required · Pro: $50 setup + $25/mo · Cancel anytime
+            Free tier · No credit card required · Pro: $75 setup + $25/mo · Cancel anytime
+          </p>
+          <p className="text-white/30 text-xs mt-2">
+            <Link href="/fees" className="underline hover:text-white/60 transition-colors">View full fee schedule & terms →</Link>
           </p>
         </div>
       </section>
 
+      {/* Affiliate CTA */}
+      <div className="py-10 px-4 bg-background border-t border-border">
+        <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 rounded-2xl bg-gradient-to-r from-[#00C896]/8 to-[#4F46E5]/8 border border-[#00C896]/15 px-8 py-6">
+          <div className="text-center md:text-left">
+            <p className="text-foreground font-bold text-base">Refer landlords. Earn $25/mo per referral.</p>
+            <p className="text-muted-foreground text-sm mt-1">No cap, no expiry. Earn recurring commission for every Pro subscriber you send our way.</p>
+          </div>
+          <Link href="/affiliate/signup">
+            <Button className="bg-[#00C896] hover:bg-[#00A87C] text-[#062018] font-bold gap-2 whitespace-nowrap shrink-0">
+              <Sparkles className="h-4 w-4" /> Join Affiliate Program
+            </Button>
+          </Link>
+        </div>
+      </div>
+
       {/* Footer note */}
-      <div className="py-8 px-4 text-center bg-white border-t border-gray-100">
-        <p className="text-gray-400 text-sm">
-          Questions? Email us at <a href="mailto:support@leasely.net" className="text-gray-600 hover:underline font-medium">support@leasely.net</a>
+      <div className="py-8 px-4 text-center bg-background border-t border-border">
+        <p className="text-muted-foreground text-sm">
+          Questions? Email us at <a href="mailto:support@leasely.net" className="text-muted-foreground hover:underline font-medium">support@leasely.net</a>
           {" · "}
-          <Link href="/support" className="text-gray-600 hover:underline font-medium">Support Center</Link>
+          <Link href="/support" className="text-muted-foreground hover:underline font-medium">Support Center</Link>
+          {" · "}
+          <Link href="/fees" className="text-[#00C896] hover:underline font-medium">Fee Schedule</Link>
         </p>
       </div>
     </div>

@@ -69,7 +69,7 @@ const proFeatures = [
 const howItWorks = [
   { step: "01", title: "Sign Up Free", desc: "Create your account in seconds. No credit card required. Your first listing is always free.", icon: HomeIcon },
   { step: "02", title: "List Your Property", desc: "Add your property with photos, pricing, and amenities. It goes live on the marketplace instantly.", icon: Globe },
-  { step: "03", title: "Upgrade to Pro", desc: "Pay a $50 setup fee + $25/month and your branded portal is built automatically — no waiting, no calls.", icon: Sparkles },
+  { step: "03", title: "Upgrade to Pro", desc: "Pay a $75 setup fee + $25/month and your branded portal is built automatically — no waiting, no calls.", icon: Sparkles },
   { step: "04", title: "Manage Everything", desc: "Applications, rent payments, work orders, accounting — all in one place from day one.", icon: BarChart3 },
 ];
 
@@ -95,17 +95,17 @@ export default function Home() {
               <div>
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00C896]/25 bg-[#00C896]/8 text-[#00C896] text-xs font-semibold mb-6">
                   <Sparkles className="h-3.5 w-3.5" />
-                  The Complete Property Management Platform
+                  The AI-Powered Landlord OS
                 </div>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight">
-                  Manage rentals
+                  One platform.
                   <br />
-                  <span className="text-gradient">like a pro.</span>
+                  <span className="text-gradient">One flat price.</span>
                 </h1>
               </div>
 
               <p className="text-lg md:text-xl text-white/65 leading-relaxed max-w-lg">
-                List properties, screen applicants, collect rent, manage work orders, and grow your portfolio — all from one beautifully designed platform.
+                List properties, screen tenants with AI, collect rent, dispatch vendors, manage work orders, and close deals through the Creme Agent Network — all for <span className="text-white font-semibold">$25/month</span>. No per-unit fees. Ever.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3">
@@ -124,7 +124,7 @@ export default function Home() {
               </div>
 
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-white/50">
-                {["$50 one-time setup", "First listing free", "Cancel anytime", "Portal built automatically"].map(item => (
+                {["AI fraud screening included", "Instant bank payouts", "$25/mo — no per-unit fees", "First listing free"].map(item => (
                   <span key={item} className="flex items-center gap-1.5">
                     <CheckCircle2 className="h-3.5 w-3.5 text-[#00C896]" />
                     {item}
@@ -217,10 +217,10 @@ export default function Home() {
       <section className="bg-[#0A1628] border-y border-white/8 py-12">
         <div className="container">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
-            <AnimatedStat value={0} prefix="$" label="First Listing" sublabel="Always free" />
+            <AnimatedStat value={25} prefix="$" suffix="/mo" label="Pro Portal — Flat Rate" sublabel="$75 one-time setup" />
             <AnimatedStat value={0} suffix="%" label="ACH Fees for Pro" sublabel="vs. industry 0.8%" />
-            <AnimatedStat value={50} label="States Covered" sublabel="All US markets" />
-            <AnimatedStat value={25} prefix="$" suffix="/mo" label="Pro Portal" sublabel="$50 one-time setup" />
+            <AnimatedStat value={50} label="States Supported" sublabel="All US markets" />
+            <AnimatedStat value={0} prefix="$" label="First Listing" sublabel="Always free" />
           </div>
         </div>
       </section>
@@ -320,10 +320,10 @@ export default function Home() {
               <div className="space-y-3 mb-8">
                 {[
                   "Branded tenant portal — built automatically",
-                  "State-specific rental applications",
-                  "AI fraud detection & screening",
-                  "Instant payouts via Stripe Connect",
-                  "Apartment complex management",
+                  "State-specific rental applications + AI fraud screening",
+                  "Instant payouts via Stripe Connect (2.99% fee only)",
+                  "Creme Agent Network — close deals faster",
+                  "Work orders, accounting, CRM & apartment complexes",
                 ].map(item => (
                   <div key={item} className="flex items-center gap-3 text-sm text-white/80">
                     <CheckCircle2 className="h-4 w-4 text-[#00C896] shrink-0" />
@@ -358,11 +358,11 @@ export default function Home() {
               <Sparkles className="h-3 w-3 mr-1.5 text-[#00C896]" /> Pro Features
             </Badge>
             <h2 className="text-3xl md:text-4xl font-black text-foreground mb-4">
-              Everything you need to run<br />
-              <span className="text-gradient">a professional portfolio.</span>
+              Every tool to run a pro portfolio —<br />
+              <span className="text-gradient">built in from day one.</span>
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              All Pro features are live and available the moment your payment clears. No manual activation. No waiting.
+              AI screening, instant payouts, work orders, accounting, Creme Agents — all live the moment your payment clears. No setup calls. No waiting.
             </p>
           </div>
 
@@ -485,7 +485,7 @@ export default function Home() {
                     <span className="text-4xl font-black text-white">$25.00</span>
                     <span className="text-white/50 mb-1">/month</span>
                   </div>
-                  <p className="text-white/40 text-xs mt-1">$50 one-time setup · No contracts · Cancel anytime.</p>
+                  <p className="text-white/40 text-xs mt-1">$75 one-time setup (website, logo & URL) · No contracts · Cancel anytime.</p>
                 </div>
                 <div className="space-y-2.5 mb-8">
                   {[
@@ -546,6 +546,27 @@ export default function Home() {
                 <Button size="lg" variant="outline" className="text-base px-10 h-12 gap-2 w-full sm:w-auto border-white/20 text-white hover:bg-white/8 bg-transparent">
                   <Play className="h-4 w-4" />
                   See How It Works
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          AFFILIATE BANNER
+          ═══════════════════════════════════════════════════════ */}
+      <section className="bg-[#0A1628] border-t border-white/8 py-10">
+        <div className="container">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 rounded-2xl bg-gradient-to-r from-[#00C896]/10 to-[#4F46E5]/10 border border-[#00C896]/20 px-8 py-6">
+            <div className="text-center md:text-left">
+              <p className="text-white font-bold text-lg">Refer landlords. Earn $25/mo per referral.</p>
+              <p className="text-white/50 text-sm mt-1">Join the Leasely affiliate program — earn recurring commission for every Pro subscriber you refer. No cap. No expiry.</p>
+            </div>
+            <div className="flex gap-3 shrink-0">
+              <Link href="/affiliate/signup">
+                <Button className="bg-[#00C896] hover:bg-[#00A87C] text-[#062018] font-bold gap-2 whitespace-nowrap">
+                  <TrendingUp className="h-4 w-4" /> Join Affiliate Program
                 </Button>
               </Link>
             </div>
@@ -621,8 +642,27 @@ export default function Home() {
                   { label: "Support", href: "/support" },
                   { label: "Pro Features", href: "/pro" },
                   { label: "Pricing", href: "/pricing" },
+                  { label: "Fee Schedule", href: "/fees" },
+                  { label: "Compare Platforms", href: "/compare" },
+                  { label: "Creme Agents", href: "/agents" },
                 ].map(l => (
                   <Link key={l.href} href={l.href}>
+                    <span className="block text-white/40 hover:text-white/80 text-sm transition-colors cursor-pointer">{l.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-3">Earn with Leasely</p>
+              <div className="space-y-2">
+                {[
+                  { label: "Affiliate Program", href: "/affiliate/signup" },
+                  { label: "Refer & Earn $25/mo", href: "/affiliate/signup" },
+                  { label: "Creme Agent Network", href: "/agents" },
+                  { label: "Affiliate Dashboard", href: "/affiliate/dashboard" },
+                ].map(l => (
+                  <Link key={l.label} href={l.href}>
                     <span className="block text-white/40 hover:text-white/80 text-sm transition-colors cursor-pointer">{l.label}</span>
                   </Link>
                 ))}
@@ -650,9 +690,16 @@ export default function Home() {
             <p className="text-white/30 text-xs">
               © {new Date().getFullYear()} Leasely. All rights reserved.
             </p>
-            <div className="flex items-center gap-4">
-              {["Privacy Policy", "Terms of Service", "Cookie Policy"].map(item => (
-                <span key={item} className="text-white/30 hover:text-white/60 text-xs cursor-pointer transition-colors">{item}</span>
+            <div className="flex items-center gap-4 flex-wrap">
+              {[
+                { label: "Privacy Policy", href: "/support" },
+                { label: "Terms of Service", href: "/support" },
+                { label: "Fee Schedule", href: "/fees" },
+                { label: "Affiliate Program", href: "/affiliate/signup" },
+              ].map(item => (
+                <Link key={item.label} href={item.href}>
+                  <span className="text-white/30 hover:text-white/60 text-xs cursor-pointer transition-colors">{item.label}</span>
+                </Link>
               ))}
             </div>
           </div>
