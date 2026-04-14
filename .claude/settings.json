@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/chadglover/Downloads/leasely-deployment-package/leasely-src/leasely && [ -n \"$(git status --porcelain 2>/dev/null)\" ] && git add -A && git commit -m \"Auto-deploy: $(date '+%Y-%m-%d %H:%M')\" && git push origin main 2>&1 || true",
+            "timeout": 60,
+            "statusMessage": "Pushing to GitHub..."
+          }
+        ]
+      }
+    ]
+  }
+}
