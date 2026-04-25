@@ -474,8 +474,8 @@ export default function Pricing() {
       <div className="py-10 px-4 bg-background border-t border-border">
         <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 rounded-2xl bg-gradient-to-r from-[#00C896]/8 to-[#4F46E5]/8 border border-[#00C896]/15 px-8 py-6">
           <div className="text-center md:text-left">
-            <p className="text-foreground font-bold text-base">Refer landlords. Earn $25/mo per referral.</p>
-            <p className="text-muted-foreground text-sm mt-1">No cap, no expiry. Earn recurring commission for every Pro subscriber you send our way.</p>
+            <p className="text-foreground font-bold text-base">Refer landlords. Earn $50 one-time per signup.</p>
+            <p className="text-muted-foreground text-sm mt-1">No cap, no expiry. Earn a $50 one-time bonus for every landlord who signs up using your affiliate code and pays their first full month plus setup fee.</p>
           </div>
           <Link href="/affiliate/signup">
             <Button className="bg-[#00C896] hover:bg-[#00A87C] text-[#062018] font-bold gap-2 whitespace-nowrap shrink-0">

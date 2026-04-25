@@ -227,7 +227,7 @@ export default function FeeSchedule() {
           <Section title="Affiliate Program">
             <Row
               label="Referral commission"
-              desc="Earn recurring commission for every landlord you refer who upgrades to Pro."
+              desc="Earn a $50 one-time bonus for every landlord who signs up using your affiliate code and pays their first full month plus setup fee."
               free="Open to all"
               pro="Open to all"
             />

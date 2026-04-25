@@ -749,8 +749,8 @@ export default function Home() {
         <div className="container">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 rounded-2xl bg-gradient-to-r from-[#00C896]/10 to-[#4F46E5]/10 border border-[#00C896]/20 px-8 py-6">
             <div className="text-center md:text-left">
-              <p className="text-white font-bold text-lg">Refer landlords. Earn $25/mo per referral.</p>
-              <p className="text-white/50 text-sm mt-1">Join the Leasely affiliate program — earn recurring commission for every Pro subscriber you refer. No cap. No expiry.</p>
+              <p className="text-white font-bold text-lg">Refer landlords. Earn $50 one-time per signup.</p>
+              <p className="text-white/50 text-sm mt-1">Join the Leasely affiliate program — earn a $50 one-time bonus for every landlord who signs up using your affiliate code and pays their first full month plus setup fee. No cap. No expiry.</p>
             </div>
             <div className="flex gap-3 shrink-0">
               <Link href="/affiliate/signup">
@@ -847,7 +847,7 @@ export default function Home() {
               <div className="space-y-2">
                 {[
                   { label: "Affiliate Program", href: "/affiliate/signup" },
-                  { label: "Refer & Earn $25/mo", href: "/affiliate/signup" },
+                  { label: "Refer & Earn $50 per Signup", href: "/affiliate/signup" },
                   { label: "Creme Agent Network", href: "/agents" },
                   { label: "Affiliate Dashboard", href: "/affiliate/dashboard" },
                 ].map(l => (
