@@ -1,15 +1,21 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
+import { trpc } from "@/lib/trpc";
+import PropertyCard from "@/components/PropertyCard";
 import {
   Sparkles, ArrowRight, Search, Map, Shield, Zap, Building2,
   DollarSign, FileText, BarChart3, CheckCircle2,
   ChevronRight, Play, Globe, TrendingUp, Users,
-  Wrench, Home as HomeIcon, CreditCard
+  Wrench, Home as HomeIcon, XCircle, SlidersHorizontal
 } from "lucide-react";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/112528410/Ucb4CaDiJcuyDWNAe95Wyq/leasely-logo-corrected_6f0929ef.png";
 
@@ -76,6 +82,26 @@ const howItWorks = [
 export default function Home() {
   const { isAuthenticated } = useAuth();
   const [activeFeature, setActiveFeature] = useState(0);
+  const [, navigate] = useLocation();
+
+  // Marketplace search state
+  const [searchCity, setSearchCity] = useState("");
+  const [searchType, setSearchType] = useState("all");
+  const [searchBeds, setSearchBeds] = useState("any");
+
+  // Featured listings (latest 6)
+  const { data: featuredListings = [], isLoading: loadingListings } = trpc.marketplace.getListings.useQuery({
+    limit: 6,
+    sort: "newest",
+  });
+
+  const handleMarketplaceSearch = () => {
+    const params = new URLSearchParams();
+    if (searchCity) params.set("city", searchCity);
+    if (searchType !== "all") params.set("type", searchType);
+    if (searchBeds !== "any") params.set("beds", searchBeds);
+    navigate(`/marketplace${params.toString() ? `?${params}` : ""}`);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -222,6 +248,132 @@ export default function Home() {
             <AnimatedStat value={50} label="States Supported" sublabel="All US markets" />
             <AnimatedStat value={0} prefix="$" label="First Listing" sublabel="Always free" />
           </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          ZILLOW-STYLE MARKETPLACE SEARCH + LISTINGS
+          ═══════════════════════════════════════════════════════ */}
+      <section className="py-20 bg-white">
+        <div className="container max-w-7xl mx-auto px-4">
+          {/* Header */}
+          <div className="text-center mb-10">
+            <Badge className="mb-4 text-xs font-semibold px-3 py-1 bg-[#00C896]/10 text-[#00A87C] border-0">
+              <Globe className="h-3 w-3 mr-1.5" /> Live Marketplace
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
+              Find your next rental,<br />
+              <span className="text-[#00C896]">anywhere in the US.</span>
+            </h2>
+            <p className="text-gray-500 text-lg max-w-xl mx-auto">
+              Browse verified listings across all 50 states. Filter by city, type, and beds — then contact the landlord directly.
+            </p>
+          </div>
+
+          {/* Search bar — Zillow style */}
+          <div className="max-w-4xl mx-auto mb-12">
+            <div className="flex flex-col sm:flex-row gap-3 bg-white rounded-2xl border-2 border-gray-200 p-3 shadow-lg">
+              <div className="flex-1 flex items-center gap-3 pl-2">
+                <Search className="h-5 w-5 text-gray-400 shrink-0" />
+                <Input
+                  placeholder="City, neighborhood, or address..."
+                  value={searchCity}
+                  onChange={e => setSearchCity(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && handleMarketplaceSearch()}
+                  className="border-0 shadow-none text-base font-medium placeholder:text-gray-400 focus-visible:ring-0 px-0 h-auto"
+                />
+              </div>
+              <div className="flex gap-2 items-center">
+                <Select value={searchType} onValueChange={setSearchType}>
+                  <SelectTrigger className="w-36 border-gray-200 text-sm">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="apartment">Apartment</SelectItem>
+                    <SelectItem value="house">House</SelectItem>
+                    <SelectItem value="room">Room</SelectItem>
+                    <SelectItem value="condo">Condo</SelectItem>
+                    <SelectItem value="townhouse">Townhouse</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={searchBeds} onValueChange={setSearchBeds}>
+                  <SelectTrigger className="w-28 border-gray-200 text-sm">
+                    <SelectValue placeholder="Beds" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any beds</SelectItem>
+                    <SelectItem value="studio">Studio</SelectItem>
+                    <SelectItem value="1">1 bed</SelectItem>
+                    <SelectItem value="2">2 beds</SelectItem>
+                    <SelectItem value="3">3 beds</SelectItem>
+                    <SelectItem value="4+">4+ beds</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={handleMarketplaceSearch}
+                  className="h-10 px-6 font-bold text-sm gap-2 shrink-0"
+                  style={{ background: "#00C896", color: "#062018" }}
+                >
+                  <Search className="h-4 w-4" /> Search
+                </Button>
+              </div>
+            </div>
+            <div className="flex items-center justify-center gap-6 mt-4 text-sm text-gray-400">
+              <Link href="/marketplace/map">
+                <span className="flex items-center gap-1.5 hover:text-gray-600 cursor-pointer transition-colors">
+                  <Map className="h-4 w-4" /> Map View
+                </span>
+              </Link>
+              <Link href="/marketplace">
+                <span className="flex items-center gap-1.5 hover:text-gray-600 cursor-pointer transition-colors">
+                  <SlidersHorizontal className="h-4 w-4" /> Advanced Filters
+                </span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Featured Listings Grid */}
+          {loadingListings ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="bg-gray-100 rounded-3xl overflow-hidden animate-pulse">
+                  <div className="h-52 bg-gray-200" />
+                  <div className="p-4 space-y-3">
+                    <div className="h-4 bg-gray-200 rounded w-3/4" />
+                    <div className="h-3 bg-gray-200 rounded w-1/2" />
+                    <div className="h-6 bg-gray-200 rounded w-1/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : featuredListings.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+                {featuredListings.map(listing => (
+                  <PropertyCard key={listing.id} listing={listing} view="grid" />
+                ))}
+              </div>
+              <div className="text-center">
+                <Link href="/marketplace">
+                  <Button size="lg" variant="outline" className="font-bold gap-2 px-10 border-2">
+                    <Building2 className="h-5 w-5" /> View All Listings
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-16 rounded-3xl bg-gray-50 border border-gray-100">
+              <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 font-medium mb-4">Be the first to list in your area!</p>
+              <Link href="/list-property">
+                <Button style={{ background: "#00C896", color: "#062018" }} className="font-bold gap-2">
+                  List Your Property Free
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
@@ -394,128 +546,165 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          MAP SECTION
+          PRICING — CARDS + FULL COMPARISON TABLE
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-16 bg-secondary/30">
-        <div className="container">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <Badge variant="secondary" className="mb-4 text-xs font-semibold px-3 py-1">
-                <Globe className="h-3 w-3 mr-1.5" /> Live Marketplace
-              </Badge>
-              <h2 className="text-3xl md:text-4xl font-black text-foreground mb-4">
-                Browse rentals across<br /><span className="text-gradient">all 50 states.</span>
-              </h2>
-              <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
-                Our interactive map shows verified listings in real time. Filter by neighborhood, price, and property type.
-              </p>
-              <div className="flex gap-3">
-                <Link href="/marketplace/map">
-                  <Button size="lg" className="gap-2 bg-[#00C896] hover:bg-[#00A87C] text-[#062018] font-semibold">
-                    <Map className="h-4 w-4" /> Open Map View
-                  </Button>
-                </Link>
-                <Link href="/marketplace">
-                  <Button size="lg" variant="outline" className="gap-2">
-                    <Search className="h-4 w-4" /> Browse All
-                  </Button>
-                </Link>
-              </div>
-            </div>
-            <div className="rounded-2xl border border-border overflow-hidden aspect-[4/3] bg-gradient-to-br from-[#0A1628] to-[#1A3060] flex items-center justify-center">
-              <div className="text-center space-y-3">
-                <div className="h-16 w-16 rounded-2xl bg-[#00C896]/15 flex items-center justify-center mx-auto">
-                  <Map className="h-8 w-8 text-[#00C896]" />
+      <section className="py-24 bg-white" id="pricing">
+        <div className="container max-w-5xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <Badge className="mb-4 text-xs font-semibold px-3 py-1 bg-[#0d3d2e]/8 text-[#0d3d2e] border-0">
+              Simple Pricing
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
+              Start free. Grow with Pro.
+            </h2>
+            <p className="text-gray-500 text-lg">No per-unit fees. No hidden charges. Cancel anytime.</p>
+          </div>
+
+          {/* Pricing cards */}
+          <div className="grid md:grid-cols-2 gap-6 mb-16">
+            {/* Free */}
+            <div className="rounded-3xl border-2 border-gray-100 p-8 bg-white">
+              <div className="mb-6">
+                <p className="text-sm font-black text-gray-400 uppercase tracking-widest mb-2">Free</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-5xl font-black text-gray-900">$0</span>
+                  <span className="text-gray-400 text-sm">/ forever</span>
                 </div>
-                <p className="text-white font-semibold">Interactive Map</p>
-                <p className="text-white/50 text-sm">Listings across all 50 states</p>
-                <Link href="/marketplace/map">
-                  <Button size="sm" className="mt-2 bg-[#00C896] hover:bg-[#00A87C] text-[#062018] font-semibold gap-2">
-                    <Map className="h-3.5 w-3.5" /> Open Map
-                  </Button>
-                </Link>
+                <p className="text-gray-500 text-sm mt-2">List your first property. No credit card.</p>
               </div>
+              <div className="space-y-2.5 mb-8">
+                {[
+                  "1 property listing on marketplace",
+                  "Map pin placement (US-wide)",
+                  "Views & saves analytics",
+                  "Contact form inquiries",
+                ].map(f => (
+                  <div key={f} className="flex items-start gap-2.5 text-sm text-gray-700">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                    {f}
+                  </div>
+                ))}
+                {[
+                  "Branded portal",
+                  "AI fraud detection",
+                  "Tenant payments",
+                  "Work orders & accounting",
+                ].map(f => (
+                  <div key={f} className="flex items-start gap-2.5 text-sm text-gray-300">
+                    <XCircle className="h-4 w-4 text-gray-200 shrink-0 mt-0.5" />
+                    <span className="line-through">{f}</span>
+                  </div>
+                ))}
+              </div>
+              <a href={getLoginUrl()}>
+                <Button variant="outline" size="lg" className="w-full font-bold">Get Started Free</Button>
+              </a>
+            </div>
+
+            {/* Pro */}
+            <div className="rounded-3xl border-2 p-8 relative overflow-hidden" style={{ borderColor: "#b8f04a", background: "linear-gradient(160deg, #0d3d2e 0%, #0a2a1f 100%)" }}>
+              <div className="absolute top-4 right-4">
+                <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: "#b8f04a", color: "#0a2a1f" }}>
+                  <Sparkles className="h-3 w-3 inline mr-1" />Most Popular
+                </span>
+              </div>
+              <div className="mb-6">
+                <p className="text-sm font-black uppercase tracking-widest mb-2" style={{ color: "#b8f04a" }}>Pro</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-5xl font-black text-white">$25</span>
+                  <span className="text-white/50 text-sm">/ month</span>
+                </div>
+                <p className="text-white/60 text-sm font-semibold mt-1">+ $75 one-time setup fee</p>
+                <p className="text-white/40 text-xs mt-1">Unlimited listings · No per-unit fees · Cancel anytime</p>
+              </div>
+              <div className="space-y-2.5 mb-8">
+                {[
+                  "Everything in Free",
+                  "Unlimited property listings",
+                  "Branded portal (yourname.leasely.net)",
+                  "AI fraud applicant detection",
+                  "Digital rental applications",
+                  "Background checks (TransUnion)",
+                  "Tenant payment portal (0% ACH)",
+                  "Work orders + AI vendor dispatch",
+                  "Accounting ledger & CSV export",
+                  "Property CRM + lease agreements",
+                  "Property manager delegated access",
+                  "Priority support — 24hr SLA",
+                ].map(f => (
+                  <div key={f} className="flex items-start gap-2.5 text-sm text-white/80">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "#b8f04a" }} />
+                    {f}
+                  </div>
+                ))}
+              </div>
+              <Link href="/pricing">
+                <Button size="lg" className="w-full font-bold gap-2" style={{ background: "#b8f04a", color: "#0a2a1f" }}>
+                  <Sparkles className="h-4 w-4" /> Get Pro — $75 setup + $25/mo
+                </Button>
+              </Link>
+              <p className="text-white/30 text-xs text-center mt-3">$75 one-time setup · $25/mo thereafter · Cancel anytime</p>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          PRICING TEASER
-          ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-background">
-        <div className="container">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-black text-foreground mb-3">Simple, transparent pricing.</h2>
-              <p className="text-muted-foreground text-lg">No hidden fees. No contracts. No surprises.</p>
-            </div>
-            <div className="grid md:grid-cols-2 gap-6">
-
-              {/* Free */}
-              <div className="rounded-2xl border border-border bg-card p-8">
-                <div className="mb-6">
-                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Free</p>
-                  <div className="flex items-end gap-1">
-                    <span className="text-4xl font-black text-foreground">$0</span>
-                    <span className="text-muted-foreground mb-1">/forever</span>
+          {/* Full Comparison Table */}
+          <div>
+            <h3 className="text-xl font-black text-gray-900 text-center mb-2">Full Feature Comparison</h3>
+            <p className="text-gray-500 text-center text-sm mb-8">Every feature, side by side.</p>
+            <div className="rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+              {/* Header */}
+              <div className="grid grid-cols-3 bg-gray-50 border-b border-gray-100">
+                <div className="p-4 text-sm font-bold text-gray-500">Feature</div>
+                <div className="p-4 text-sm font-bold text-gray-700 text-center">Free</div>
+                <div className="p-4 text-sm font-bold text-center" style={{ color: "#b8f04a", background: "#0d3d2e10" }}>
+                  <Sparkles className="inline h-3.5 w-3.5 mr-1" />Pro
+                </div>
+              </div>
+              {[
+                { cat: "Marketplace", label: "Property listings", free: "1 listing", pro: "Unlimited" },
+                { cat: "Marketplace", label: "Map pin placement", free: true, pro: true },
+                { cat: "Marketplace", label: "Views & saves stats", free: true, pro: true },
+                { cat: "Marketplace", label: "Contact form inquiries", free: true, pro: true },
+                { cat: "Portal", label: "Branded portal (yourname.leasely.net)", free: false, pro: true },
+                { cat: "Portal", label: "Custom logo & colors", free: false, pro: true },
+                { cat: "Portal", label: "QR code per listing", free: false, pro: true },
+                { cat: "Screening", label: "AI fraud applicant detection", free: false, pro: true },
+                { cat: "Screening", label: "Digital rental applications", free: false, pro: true },
+                { cat: "Screening", label: "Background checks (TransUnion)", free: false, pro: true },
+                { cat: "Payments", label: "Tenant payment portal", free: false, pro: true },
+                { cat: "Payments", label: "ACH rent (waived fees)", free: false, pro: "Fees waived" },
+                { cat: "Payments", label: "Instant payouts (Stripe Connect)", free: false, pro: true },
+                { cat: "Management", label: "Work orders + AI dispatch", free: false, pro: true },
+                { cat: "Management", label: "Accounting & CSV export", free: false, pro: true },
+                { cat: "Management", label: "Property CRM + leases", free: false, pro: true },
+                { cat: "Management", label: "PM delegated access", free: false, pro: true },
+                { cat: "Support", label: "Customer support", free: "Standard", pro: "Priority 24hr SLA" },
+              ].map((row, i) => (
+                <div key={row.label} className={`grid grid-cols-3 border-b border-gray-50 ${i % 2 === 0 ? "bg-white" : "bg-gray-50/40"}`}>
+                  <div className="p-4 text-sm text-gray-700">
+                    <span className="text-xs text-gray-400 block mb-0.5">{row.cat}</span>
+                    {row.label}
+                  </div>
+                  <div className="p-4 flex items-center justify-center">
+                    {typeof row.free === "boolean" ? (
+                      row.free ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> : <XCircle className="h-5 w-5 text-gray-200" />
+                    ) : <span className="text-sm font-semibold text-gray-700">{row.free}</span>}
+                  </div>
+                  <div className="p-4 flex items-center justify-center" style={{ background: "#0d3d2e04" }}>
+                    {typeof row.pro === "boolean" ? (
+                      row.pro ? <CheckCircle2 className="h-5 w-5" style={{ color: "#b8f04a" }} /> : <XCircle className="h-5 w-5 text-gray-200" />
+                    ) : <span className="text-sm font-bold" style={{ color: "#b8f04a" }}>{row.pro}</span>}
                   </div>
                 </div>
-                <div className="space-y-2.5 mb-8">
-                  {["1 active listing", "Marketplace visibility", "Renter inquiries", "Basic analytics"].map(f => (
-                    <div key={f} className="flex items-center gap-2.5 text-sm text-foreground">
-                      <CheckCircle2 className="h-4 w-4 text-[#00C896] shrink-0" />
-                      {f}
-                    </div>
-                  ))}
-                </div>
-                <a href={getLoginUrl()}>
-                  <Button variant="outline" size="lg" className="w-full font-semibold">Get Started Free</Button>
-                </a>
-              </div>
-
-              {/* Pro */}
-              <div className="rounded-2xl border border-[#00C896]/20 p-8 bg-gradient-to-br from-[#0A1628] to-[#1A3060] relative overflow-hidden">
-                <div className="absolute top-4 right-4">
-                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#00C896]/15 text-[#00C896] border border-[#00C896]/25">Most Popular</span>
-                </div>
-                <div className="mb-6">
-                  <p className="text-sm font-semibold text-[#00C896] uppercase tracking-wider mb-2">Pro</p>
-                  <div className="flex items-end gap-1">
-                    <span className="text-4xl font-black text-white">$25.00</span>
-                    <span className="text-white/50 mb-1">/month</span>
-                  </div>
-                  <p className="text-white/40 text-xs mt-1">$75 one-time setup (website, logo & URL) · No contracts · Cancel anytime.</p>
-                </div>
-                <div className="space-y-2.5 mb-8">
-                  {[
-                    "Unlimited listings",
-                    "Branded tenant portal",
-                    "State-specific applications",
-                    "AI fraud detection",
-                    "Instant payouts (0% ACH)",
-                    "Work orders, accounting, CRM",
-                  ].map(f => (
-                    <div key={f} className="flex items-center gap-2.5 text-sm text-white/80">
-                      <CheckCircle2 className="h-4 w-4 text-[#00C896] shrink-0" />
-                      {f}
-                    </div>
-                  ))}
-                </div>
-                <Link href="/pricing">
-                  <Button size="lg" className="w-full font-semibold bg-[#00C896] hover:bg-[#00A87C] text-[#062018] gap-2">
-                    <Sparkles className="h-4 w-4" /> Get Pro — $25/mo
-                  </Button>
-                </Link>
-              </div>
+              ))}
             </div>
-
-            <p className="text-center text-sm text-muted-foreground mt-6">
-              Questions?{" "}
-              <Link href="/support" className="text-[#00C896] hover:underline font-medium">Contact our team</Link>
-              {" "}or{" "}
-              <Link href="/pricing" className="text-[#00C896] hover:underline font-medium">view full pricing details</Link>.
-            </p>
+            <div className="text-center mt-8">
+              <Link href="/pricing">
+                <Button variant="outline" className="font-bold gap-2 px-8">
+                  View Full Pricing Details <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
