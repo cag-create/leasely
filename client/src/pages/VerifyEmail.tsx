@@ -58,10 +58,8 @@ export default function VerifyEmail() {
           <p className={`text-sm border rounded-lg px-3 py-3 ${tone}`}>{message}</p>
 
           <div className="mt-6 text-center text-sm text-white/50">
-            <Link href={status === "success" ? "/onboarding" : "/login"}>
-              <a className="text-white/80 hover:text-white underline">
-                {status === "success" ? "Continue" : "Back to sign in"}
-              </a>
+            <Link href={status === "success" ? "/onboarding" : "/login"} className="text-white/80 hover:text-white underline">
+              {status === "success" ? "Continue" : "Back to sign in"}
             </Link>
           </div>
         </div>

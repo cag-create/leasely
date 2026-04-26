@@ -53,10 +53,8 @@ export default function ForgotPassword() {
               <p className="text-emerald-400 text-sm bg-emerald-400/10 border border-emerald-400/20 rounded-lg px-3 py-3">
                 If an account exists for that email, a password reset link has been sent. The link expires in 1 hour.
               </p>
-              <Link href="/login">
-                <a className="block text-center text-sm text-white/60 hover:text-white underline">
-                  Back to sign in
-                </a>
+              <Link href="/login" className="block text-center text-sm text-white/60 hover:text-white underline">
+                Back to sign in
               </Link>
             </div>
           ) : (
@@ -91,9 +89,7 @@ export default function ForgotPassword() {
 
               <div className="text-center text-sm text-white/40 pt-2">
                 Remembered it?{" "}
-                <Link href="/login">
-                  <a className="text-white/80 hover:text-white underline">Sign in</a>
-                </Link>
+                <Link href="/login" className="text-white/80 hover:text-white underline">Sign in</Link>
               </div>
             </form>
           )}
