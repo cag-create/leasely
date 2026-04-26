@@ -141,12 +141,27 @@ export function registerAuthRoutes(app: Express) {
       const isOwner = process.env.OWNER_EMAIL &&
         normalizedEmail === process.env.OWNER_EMAIL.toLowerCase().trim();
       const shouldPromote = isOwner && user.role !== "admin";
+      const willBeAdmin = user.role === "admin" || shouldPromote;
 
       await db.upsertUser({
         openId: user.openId,
         lastSignedIn: new Date(),
         ...(shouldPromote ? { role: "admin" as const } : {}),
       });
+
+      // Admins automatically get Pro — upsert their subscription row so every
+      // server-side `tier === "paid"` check passes without requiring payment.
+      if (willBeAdmin) {
+        try {
+          await db.upsertUserSubscription({
+            userId: user.id,
+            tier: "paid",
+            status: "active",
+          });
+        } catch (err) {
+          console.warn("[Auth] Admin Pro subscription upsert failed:", err);
+        }
+      }
 
       const sessionToken = await sdk.createSessionToken(user.openId, {
         name: user.name || "",

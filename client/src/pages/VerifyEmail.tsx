@@ -50,7 +50,9 @@ export default function VerifyEmail() {
     <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] px-4">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
-          <img src={LOGO_URL} alt="Leasely" className="h-10 object-contain" />
+          <Link href="/" aria-label="Back to Leasely home" className="hover:opacity-80 transition-opacity">
+            <img src={LOGO_URL} alt="Leasely" className="h-10 object-contain" />
+          </Link>
         </div>
 
         <div className="bg-[#111] border border-white/10 rounded-2xl p-8">

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -84,9 +84,11 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] px-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
+        {/* Logo — links back to marketing site */}
         <div className="flex justify-center mb-8">
-          <img src={LOGO_URL} alt="Leasely" className="h-10 object-contain" />
+          <Link href="/" aria-label="Back to Leasely home" className="hover:opacity-80 transition-opacity">
+            <img src={LOGO_URL} alt="Leasely" className="h-10 object-contain" />
+          </Link>
         </div>
 
         {/* Card */}

@@ -566,10 +566,12 @@ export const appRouter = router({
       if (!opts.ctx.user) return null;
       // Attach subscription info to me response
       const sub = await getUserSubscription(opts.ctx.user.id);
+      // Admins are always treated as Pro — independent of payment status.
+      const isAdmin = opts.ctx.user.role === "admin";
       return {
         ...opts.ctx.user,
-        tier: sub?.tier ?? "free",
-        subStatus: sub?.status ?? null,
+        tier: isAdmin ? "paid" : (sub?.tier ?? "free"),
+        subStatus: isAdmin ? "active" : (sub?.status ?? null),
         brandName: sub?.brandName ?? null,
         brandLogoUrl: sub?.brandLogoUrl ?? null,
         brandColor: sub?.brandColor ?? null,
