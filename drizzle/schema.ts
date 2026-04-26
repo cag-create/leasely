@@ -18,6 +18,15 @@ export const users = mysqlTable("users", {
    * Null means not yet chosen (set during onboarding).
    */
   accountType: mysqlEnum("accountType", ["renter", "landlord"]),
+  // Email verification
+  emailVerified: tinyint("emailVerified").default(0).notNull(),
+  emailVerifyToken: varchar("emailVerifyToken", { length: 128 }),
+  emailVerifyExpires: timestamp("emailVerifyExpires"),
+  // Password reset
+  passwordResetToken: varchar("passwordResetToken", { length: 128 }),
+  passwordResetExpires: timestamp("passwordResetExpires"),
+  // Session revocation: bumped on logout, invalidates all prior JWTs
+  tokenVersion: int("tokenVersion").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -1080,12 +1089,18 @@ export const leaseAgreements = mysqlTable("lease_agreements", {
   lockboxCode: varchar("lockboxCode", { length: 50 }),
   accessInstructions: text("accessInstructions"),
   // Status tracking
-  status: mysqlEnum("status", ["draft", "sent", "signed", "active", "expired", "terminated"]).default("draft").notNull(),
+  // Flow: draft → sent → tenant_signed → awaiting_payment → paid → signed (landlord countersigned) → active
+  status: mysqlEnum("status", ["draft", "sent", "tenant_signed", "awaiting_payment", "paid", "signed", "active", "expired", "terminated"]).default("draft").notNull(),
   sentAt: timestamp("sentAt"),
   signedAt: timestamp("signedAt"),
+  tenantSignedAt: timestamp("tenantSignedAt"),
+  landlordSignedAt: timestamp("landlordSignedAt"),
+  paidAt: timestamp("paidAt"),
   // Payment link sent after signing
   firstMonthPaymentSent: tinyint("firstMonthPaymentSent").default(0),
   depositPaymentSent: tinyint("depositPaymentSent").default(0),
+  firstMonthPaid: tinyint("firstMonthPaid").default(0),
+  depositPaid: tinyint("depositPaid").default(0),
   // Signed document URL (uploaded PDF or DocuSign)
   signedDocumentUrl: text("signedDocumentUrl"),
   notes: text("notes"),

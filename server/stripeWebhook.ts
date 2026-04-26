@@ -5,7 +5,11 @@
  */
 import type { Express, Request, Response } from "express";
 import Stripe from "stripe";
-import { upsertUserSubscription, getUserByOpenId, getDb } from "./db";
+import {
+  upsertUserSubscription, getUserByOpenId, getDb,
+  getLeaseById, updateLeaseAgreement, getUserById,
+} from "./db";
+import { sendEmail } from "./_core/email";
 import { affiliates, affiliateReferrals } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 
@@ -71,7 +75,14 @@ export function registerStripeWebhook(app: Express) {
         switch (event.type) {
           case "checkout.session.completed": {
             const session = event.data.object as Stripe.Checkout.Session;
-            await handleCheckoutCompleted(session);
+            // Lease move-in payments (rent / deposit) — handled separately from Pro subscription
+            const leaseId = session.metadata?.leaselyLeaseId;
+            const leaseKind = session.metadata?.leaselyLeasePaymentKind;
+            if (leaseId && (leaseKind === "rent" || leaseKind === "deposit")) {
+              await handleLeasePaymentCompleted(parseInt(leaseId), leaseKind);
+            } else {
+              await handleCheckoutCompleted(session);
+            }
             break;
           }
           case "customer.subscription.deleted":
@@ -201,6 +212,57 @@ async function creditAffiliateReferral(userId: number, stripeSessionId: string, 
     }
   } catch (err) {
     console.error("[Webhook] Affiliate credit error:", err);
+  }
+}
+
+/**
+ * Tenant just paid a lease move-in charge (security deposit or first month's rent).
+ * Mark the corresponding flag, and if both have cleared, transition the lease to
+ * `paid` status and email the landlord prompting them to countersign.
+ */
+async function handleLeasePaymentCompleted(leaseId: number, kind: "rent" | "deposit") {
+  const lease = await getLeaseById(leaseId);
+  if (!lease) {
+    console.warn(`[Webhook] Lease ${leaseId} not found for ${kind} payment`);
+    return;
+  }
+
+  const patch: Record<string, unknown> = {};
+  if (kind === "rent") patch.firstMonthPaid = 1;
+  if (kind === "deposit") patch.depositPaid = 1;
+
+  const willHaveRent = kind === "rent" || lease.firstMonthPaid === 1;
+  const needsDeposit = (lease.securityDeposit ?? 0) > 0;
+  const willHaveDeposit = !needsDeposit || kind === "deposit" || lease.depositPaid === 1;
+
+  if (willHaveRent && willHaveDeposit) {
+    patch.status = "paid";
+    patch.paidAt = new Date();
+  }
+
+  await updateLeaseAgreement(lease.id, lease.landlordUserId, patch as any);
+  console.log(`[Webhook] 🏠 Lease ${leaseId} ${kind} paid (status=${patch.status ?? lease.status})`);
+
+  // Notify landlord when fully paid so they can countersign
+  if (willHaveRent && willHaveDeposit) {
+    const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+    try {
+      const landlord = await getUserById(lease.landlordUserId);
+      if (landlord?.email) {
+        await sendEmail({
+          to: landlord.email,
+          subject: `Payment Received — Countersign to Execute Lease (${lease.propertyAddress})`,
+          html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+            <h2 style="color:#1B2B5E">Payment Received — Action Required</h2>
+            <p><strong>${lease.tenantName}</strong> has paid first month's rent${needsDeposit ? " and the security deposit" : ""}.</p>
+            <p>The lease is ready for your countersignature to be fully executed.</p>
+            <p style="margin-top:16px"><a href="${APP_URL}/leases" style="background:#00C896;color:#0a2a1f;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:700">Countersign Lease</a></p>
+          </div>`,
+        });
+      }
+    } catch (err) {
+      console.warn("[Webhook] landlord countersign email failed:", err);
+    }
   }
 }
 

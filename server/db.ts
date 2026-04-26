@@ -98,6 +98,58 @@ export async function setAccountType(userId: number, accountType: "renter" | "la
   await db.update(users).set({ accountType }).where(eq(users.id, userId));
 }
 
+// ─── Email verification, password reset, session revocation ───────────────────
+
+export async function setEmailVerifyToken(userId: number, token: string, expires: Date) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ emailVerifyToken: token, emailVerifyExpires: expires }).where(eq(users.id, userId));
+}
+
+export async function getUserByEmailVerifyToken(token: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.emailVerifyToken, token)).limit(1);
+  return result[0];
+}
+
+export async function markEmailVerified(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ emailVerified: 1, emailVerifyToken: null, emailVerifyExpires: null }).where(eq(users.id, userId));
+}
+
+export async function setPasswordResetToken(userId: number, token: string, expires: Date) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ passwordResetToken: token, passwordResetExpires: expires }).where(eq(users.id, userId));
+}
+
+export async function getUserByPasswordResetToken(token: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.passwordResetToken, token)).limit(1);
+  return result[0];
+}
+
+export async function updateUserPassword(userId: number, passwordHash: string) {
+  const db = await getDb();
+  if (!db) return;
+  // Updating password also bumps tokenVersion to revoke any existing sessions
+  await db.update(users).set({
+    passwordHash,
+    passwordResetToken: null,
+    passwordResetExpires: null,
+    tokenVersion: sql`${users.tokenVersion} + 1`,
+  }).where(eq(users.id, userId));
+}
+
+export async function bumpTokenVersion(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ tokenVersion: sql`${users.tokenVersion} + 1` }).where(eq(users.id, userId));
+}
+
 // ─── Subscriptions ────────────────────────────────────────────────────────────
 
 export async function getUserSubscription(userId: number): Promise<UserSubscription | undefined> {

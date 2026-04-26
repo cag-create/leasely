@@ -107,6 +107,8 @@ import {
   createPropertyManagerAccess, getPropertyManagersByOwner, getPropertiesManagedBy, updatePropertyManagerAccess, revokePropertyManagerAccess,
   // Vendor Dispatch
   createVendorDispatchRequest, getDispatchsByWorkOrder, getDispatchsByVendor, updateVendorDispatchRequest,
+  // Auth: session revocation
+  bumpTokenVersion,
 } from "./db";
 import {
   getComplexesByUser, getComplexById, createComplex, updateComplex, deleteComplex,
@@ -574,7 +576,16 @@ export const appRouter = router({
         portalSubdomain: sub?.portalSubdomain ?? null,
       };
     }),
-    logout: publicProcedure.mutation(({ ctx }) => {
+    logout: publicProcedure.mutation(async ({ ctx }) => {
+      // Server-side session revocation: bump tokenVersion so the JWT's tv claim
+      // no longer matches and authenticateRequest will reject it.
+      if (ctx.user) {
+        try {
+          await bumpTokenVersion(ctx.user.id);
+        } catch (err) {
+          console.warn("[Auth] bumpTokenVersion failed on logout:", err);
+        }
+      }
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
@@ -3205,7 +3216,12 @@ export const appRouter = router({
       return { success: true };
     }),
 
-    /** Tenant signs lease (public — tenant uses sign link) */
+    /**
+     * Tenant signs lease (public — tenant uses sign link).
+     * NEW FLOW: Tenant signs FIRST, but the lease is NOT yet fully executed.
+     * Status moves to `tenant_signed` → `awaiting_payment`. Tenant must pay
+     * first month's rent + security deposit before the landlord countersigns.
+     */
     sign: publicProcedure.input(z.object({
       leaseId: z.number(),
       tenantEmail: z.string().email(),
@@ -3219,17 +3235,24 @@ export const appRouter = router({
       }
 
       const now = new Date();
-      await updateLeaseAgreement(lease.id, lease.landlordUserId, { status: "signed", signedAt: now });
+      // Conditional signature: tenant has signed, awaiting payment before landlord countersigns
+      await updateLeaseAgreement(lease.id, lease.landlordUserId, {
+        status: "awaiting_payment",
+        tenantSignedAt: now,
+        firstMonthPaymentSent: 1,
+        depositPaymentSent: lease.securityDeposit ? 1 : 0,
+      });
 
       // Build payment links for tenant
       const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
-      const rentPayUrl = `${APP_URL}/pay/rent/${lease.id}`;
-      const depositPayUrl = lease.securityDeposit ? `${APP_URL}/pay/deposit/${lease.id}` : undefined;
+      const emailParam = encodeURIComponent(lease.tenantEmail);
+      const rentPayUrl = `${APP_URL}/lease-pay/${lease.id}?email=${emailParam}&kind=rent`;
+      const depositPayUrl = lease.securityDeposit ? `${APP_URL}/lease-pay/${lease.id}?email=${emailParam}&kind=deposit` : undefined;
 
-      // Auto-send payment + access info email to tenant
+      // Auto-send payment request email to tenant (lease not yet fully executed)
       sendEmail({
         to: lease.tenantEmail,
-        subject: `Lease Signed! Here's What's Next — ${lease.propertyAddress}`,
+        subject: `Action Required: Pay First Month + Deposit to Activate Your Lease — ${lease.propertyAddress}`,
         html: leaseSignedPaymentEmail({
           tenantName: lease.tenantName,
           propertyAddress: lease.propertyAddress,
@@ -3243,20 +3266,111 @@ export const appRouter = router({
         }),
       }).catch(() => {});
 
-      // Notify landlord
+      // Notify landlord — payment is pending; lease is conditional, NOT executed
       const landlord = await getUserById(lease.landlordUserId);
       if (landlord?.email) {
         sendEmail({
           to: landlord.email,
-          subject: `✅ Lease Signed by ${lease.tenantName} — ${lease.propertyAddress}`,
+          subject: `Tenant Signed (Pending Payment) — ${lease.propertyAddress}`,
           html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
-            <h2 style="color:#1B2B5E">Lease Signed</h2>
+            <h2 style="color:#1B2B5E">Tenant Has Signed — Awaiting Payment</h2>
             <p><strong>${lease.tenantName}</strong> has signed the lease for <strong>${lease.propertyAddress}</strong>.</p>
-            <p>Payment links have been automatically sent to the tenant for first month's rent${lease.securityDeposit ? " and security deposit" : ""}.</p>
+            <p style="background:#fff7ed;border-left:4px solid #f59e0b;padding:12px 14px;border-radius:6px">
+              <strong>Note:</strong> This lease is <strong>conditional</strong> and not fully executed.
+              The tenant must pay <strong>first month's rent</strong>${lease.securityDeposit ? " and the <strong>security deposit</strong>" : ""} before you countersign.
+              You'll receive another email once payment clears, prompting you to add your signature.
+            </p>
             <p style="margin-top:16px"><a href="${APP_URL}/leases" style="background:#1B2B5E;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none">View Lease</a></p>
           </div>`,
         }).catch(() => {});
       }
+
+      return { success: true };
+    }),
+
+    /**
+     * Mark a lease as paid (called by Stripe webhook or admin tooling once
+     * first month + deposit clear). Triggers email to landlord prompting
+     * them to countersign.
+     */
+    markPaid: publicProcedure.input(z.object({
+      leaseId: z.number(),
+      kind: z.enum(["rent", "deposit", "both"]),
+    })).mutation(async ({ input }) => {
+      const lease = await getLeaseById(input.leaseId);
+      if (!lease) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const patch: Record<string, unknown> = {};
+      if (input.kind === "rent" || input.kind === "both") patch.firstMonthPaid = 1;
+      if (input.kind === "deposit" || input.kind === "both") patch.depositPaid = 1;
+
+      // Compute resulting paid state
+      const willHaveRent = patch.firstMonthPaid === 1 || lease.firstMonthPaid === 1;
+      const needsDeposit = (lease.securityDeposit ?? 0) > 0;
+      const willHaveDeposit = !needsDeposit || patch.depositPaid === 1 || lease.depositPaid === 1;
+
+      if (willHaveRent && willHaveDeposit) {
+        patch.status = "paid";
+        patch.paidAt = new Date();
+      }
+      await updateLeaseAgreement(lease.id, lease.landlordUserId, patch as any);
+
+      // If everything is paid, prompt landlord to countersign
+      if (willHaveRent && willHaveDeposit) {
+        const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+        const landlord = await getUserById(lease.landlordUserId);
+        if (landlord?.email) {
+          sendEmail({
+            to: landlord.email,
+            subject: `Payment Received — Countersign to Execute Lease (${lease.propertyAddress})`,
+            html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+              <h2 style="color:#1B2B5E">Payment Received — Action Required</h2>
+              <p><strong>${lease.tenantName}</strong> has paid first month's rent${needsDeposit ? " and the security deposit" : ""}.</p>
+              <p>The lease is ready for your countersignature to be fully executed.</p>
+              <p style="margin-top:16px"><a href="${APP_URL}/leases" style="background:#00C896;color:#0a2a1f;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:700">Countersign Lease</a></p>
+            </div>`,
+          }).catch(() => {});
+        }
+      }
+
+      return { success: true, status: patch.status ?? lease.status };
+    }),
+
+    /** Landlord countersigns the lease (only allowed once payment has cleared). */
+    landlordSign: protectedProcedure.input(z.object({
+      leaseId: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      const lease = await getLeaseById(input.leaseId);
+      if (!lease || lease.landlordUserId !== ctx.user.id) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      if (lease.status !== "paid") {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Lease cannot be countersigned until tenant has paid first month's rent and security deposit.",
+        });
+      }
+      const now = new Date();
+      await updateLeaseAgreement(lease.id, ctx.user.id, {
+        status: "signed",
+        landlordSignedAt: now,
+        signedAt: now,
+      });
+
+      // Notify tenant the lease is fully executed and provide access details
+      const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+      sendEmail({
+        to: lease.tenantEmail,
+        subject: `Lease Fully Executed — Welcome Home (${lease.propertyAddress})`,
+        html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+          <h2 style="color:#1B2B5E">Your Lease Is Fully Executed</h2>
+          <p>Hi ${lease.tenantName},</p>
+          <p>Your landlord has countersigned. The lease for <strong>${lease.propertyAddress}</strong> is now in effect.</p>
+          ${lease.accessMethod === "lockbox" && lease.lockboxCode ? `<p><strong>Lockbox code:</strong> ${lease.lockboxCode}</p>` : ""}
+          ${lease.accessInstructions ? `<p><strong>Move-in instructions:</strong> ${lease.accessInstructions}</p>` : ""}
+          <p style="margin-top:16px"><a href="${APP_URL}/tenant/dashboard" style="background:#00C896;color:#0a2a1f;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:700">Open Tenant Portal</a></p>
+        </div>`,
+      }).catch(() => {});
 
       return { success: true };
     }),
@@ -3273,7 +3387,7 @@ export const appRouter = router({
       lockboxCode: z.string().optional(),
       accessInstructions: z.string().optional(),
       notes: z.string().optional(),
-      status: z.enum(["draft","sent","signed","active","expired","terminated"]).optional(),
+      status: z.enum(["draft","sent","tenant_signed","awaiting_payment","paid","signed","active","expired","terminated"]).optional(),
     })).mutation(async ({ ctx, input }) => {
       const { leaseId, ...data } = input;
       await updateLeaseAgreement(leaseId, ctx.user.id, data as any);
@@ -3288,6 +3402,99 @@ export const appRouter = router({
       if (!tenant) throw new TRPCError({ code: "UNAUTHORIZED" });
       return getLeasesByTenantEmail(tenant.email);
     }),
+
+    /**
+     * Tenant: fetch lease summary by id + email match (no auth needed —
+     * tenant arrives via emailed link). Used by the Lease Pay page.
+     */
+    getForPayment: publicProcedure.input(z.object({
+      leaseId: z.number(),
+      tenantEmail: z.string().email(),
+    })).query(async ({ input }) => {
+      const lease = await getLeaseById(input.leaseId);
+      if (!lease || lease.tenantEmail.toLowerCase() !== input.tenantEmail.toLowerCase()) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      return {
+        id: lease.id,
+        propertyAddress: lease.propertyAddress,
+        tenantName: lease.tenantName,
+        monthlyRent: lease.monthlyRent,
+        securityDeposit: lease.securityDeposit ?? 0,
+        status: lease.status,
+        firstMonthPaid: lease.firstMonthPaid ?? 0,
+        depositPaid: lease.depositPaid ?? 0,
+      };
+    }),
+
+    /**
+     * Tenant: create a Stripe checkout session for either rent or deposit
+     * tied to a specific lease. Webhook calls leases.markPaid on success.
+     */
+    createPaymentSession: publicProcedure
+      .input(z.object({
+        leaseId: z.number(),
+        tenantEmail: z.string().email(),
+        kind: z.enum(["rent", "deposit"]),
+      }))
+      .mutation(async ({ input }) => {
+        const lease = await getLeaseById(input.leaseId);
+        if (!lease || lease.tenantEmail.toLowerCase() !== input.tenantEmail.toLowerCase()) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Lease not found" });
+        }
+        if (lease.status !== "awaiting_payment" && lease.status !== "tenant_signed") {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "This lease is not awaiting payment." });
+        }
+        const sub = await getUserSubscription(lease.landlordUserId);
+        if (!sub || !sub.stripeConnectAccountId) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Landlord has not set up payments yet — please contact them." });
+        }
+        const stripe = getStripe();
+        if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured" });
+
+        const amountCents = input.kind === "rent" ? lease.monthlyRent : (lease.securityDeposit ?? 0);
+        if (amountCents <= 0) throw new TRPCError({ code: "BAD_REQUEST", message: "Nothing to pay for this category." });
+
+        const desc = input.kind === "rent"
+          ? `First month's rent — ${lease.propertyAddress}`
+          : `Security deposit — ${lease.propertyAddress}`;
+
+        // Pro landlords: 0% platform fee. Free tier: 1% Leasely platform fee.
+        const isProLandlord = sub.tier === "paid";
+        const platformFeeCents = isProLandlord ? 0 : Math.round(amountCents * 0.01);
+
+        const paymentIntentData: any = {
+          transfer_data: { destination: sub.stripeConnectAccountId },
+          metadata: {
+            leaselyLeaseId: String(lease.id),
+            leaselyLeasePaymentKind: input.kind,
+          },
+        };
+        if (platformFeeCents > 0) paymentIntentData.application_fee_amount = platformFeeCents;
+
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          mode: "payment",
+          customer_email: lease.tenantEmail,
+          line_items: [{
+            price_data: {
+              currency: "usd",
+              product_data: { name: desc, description: lease.propertyAddress },
+              unit_amount: amountCents,
+            },
+            quantity: 1,
+          }],
+          payment_intent_data: paymentIntentData,
+          success_url: `${APP_URL}/lease-pay/${lease.id}/success?email=${encodeURIComponent(lease.tenantEmail)}`,
+          cancel_url: `${APP_URL}/lease-pay/${lease.id}?email=${encodeURIComponent(lease.tenantEmail)}`,
+          metadata: {
+            leaselyLeaseId: String(lease.id),
+            leaselyLeasePaymentKind: input.kind,
+          },
+        });
+
+        return { sessionUrl: session.url };
+      }),
   }),
 
   // ─── PROPERTY MANAGER ACCESS ─────────────────────────────────────────────────

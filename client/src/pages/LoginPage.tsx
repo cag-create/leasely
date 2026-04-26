@@ -16,12 +16,14 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [info, setInfo] = useState("");
 
   const utils = trpc.useUtils();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setInfo("");
     if (mode === "register" && !agreed) {
       setError("Please agree to the Terms of Service and Privacy Policy to create an account.");
       return;
@@ -48,11 +50,34 @@ export default function LoginPage() {
 
       // Refresh auth state then redirect
       await utils.auth.me.invalidate();
+      // After login, surface a verification banner on the next page if applicable
+      if (mode === "login" && data?.emailVerified === false) {
+        try { sessionStorage.setItem("leasely_show_verify_banner", "1"); } catch {}
+      }
       navigate("/onboarding");
     } catch {
       setError("Network error — please try again");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleResendVerification() {
+    setError("");
+    setInfo("");
+    if (!email) {
+      setError("Enter your email above first, then click resend.");
+      return;
+    }
+    try {
+      await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setInfo("If that email is registered and unverified, a new verification link has been sent.");
+    } catch {
+      setError("Network error — please try again");
     }
   }
 
@@ -134,9 +159,25 @@ export default function LoginPage() {
               </label>
             )}
 
+            {mode === "login" && (
+              <div className="text-right -mt-1">
+                <a
+                  href="/forgot-password"
+                  className="text-xs text-white/50 hover:text-white/80 underline"
+                >
+                  Forgot your password?
+                </a>
+              </div>
+            )}
+
             {error && (
               <p className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">
                 {error}
+              </p>
+            )}
+            {info && (
+              <p className="text-emerald-400 text-sm bg-emerald-400/10 border border-emerald-400/20 rounded-lg px-3 py-2">
+                {info}
               </p>
             )}
 
@@ -150,6 +191,18 @@ export default function LoginPage() {
                 : mode === "login" ? "Sign in" : "Create account"}
             </Button>
           </form>
+
+          {mode === "login" && (
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                className="text-xs text-white/40 hover:text-white/70 underline"
+              >
+                Didn't get a verification email? Resend it
+              </button>
+            </div>
+          )}
 
           <div className="mt-5 text-center text-sm text-white/40">
             {mode === "login" ? (

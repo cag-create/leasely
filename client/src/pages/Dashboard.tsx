@@ -808,7 +808,7 @@ export default function Dashboard() {
                       </div>
                       <div className="flex-1">
                         <div className="font-semibold text-sm text-gray-900">Lease Agreements</div>
-                        <div className="text-xs text-gray-400">State-specific leases · auto payment links</div>
+                        <div className="text-xs text-gray-400">Tenant signs first → pays deposit + 1st month → you countersign</div>
                       </div>
                       <ArrowRight className="h-4 w-4 text-gray-300" />
                     </div>

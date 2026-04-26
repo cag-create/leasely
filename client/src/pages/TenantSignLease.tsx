@@ -27,7 +27,7 @@ export default function TenantSignLease() {
   const signMutation = trpc.leases.sign.useMutation({
     onSuccess: () => {
       setSigned(true);
-      toast.success("Lease signed! Check your email for payment links and move-in details.");
+      toast.success("Signed! Check your email for payment instructions to activate your lease.");
     },
     onError: (e) => toast.error(e.message),
   });
@@ -46,19 +46,23 @@ export default function TenantSignLease() {
   if (signed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center max-w-sm px-6">
+        <div className="text-center max-w-md px-6">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="w-8 h-8 text-green-600" />
           </div>
-          <h2 className="text-2xl font-black text-gray-900 mb-2">Lease Signed!</h2>
+          <h2 className="text-2xl font-black text-gray-900 mb-2">Signature Received</h2>
           <p className="text-gray-600 mb-4">
-            Your lease has been executed. We've sent you an email with:
+            Your signature is on file. To <strong>activate</strong> your lease, please complete the payment steps below — your landlord will countersign once payment clears.
           </p>
-          <ul className="text-left text-sm text-gray-600 space-y-2 mb-6 bg-gray-50 rounded-xl p-4">
-            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" /> Payment link for first month's rent</li>
-            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" /> Payment link for security deposit</li>
-            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" /> Move-in access instructions</li>
-          </ul>
+          <ol className="text-left text-sm text-gray-600 space-y-2 mb-6 bg-gray-50 rounded-xl p-4">
+            <li className="flex items-start gap-2"><span className="font-bold text-emerald-600">1.</span> Pay your <strong>security deposit</strong> via the link in your email</li>
+            <li className="flex items-start gap-2"><span className="font-bold text-emerald-600">2.</span> Pay your <strong>first month's rent</strong> via the link in your email</li>
+            <li className="flex items-start gap-2"><span className="font-bold text-emerald-600">3.</span> Landlord countersigns — lease is then fully executed</li>
+            <li className="flex items-start gap-2"><span className="font-bold text-emerald-600">4.</span> You'll receive move-in access instructions automatically</li>
+          </ol>
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800 mb-4">
+            <strong>Note:</strong> Your signature is conditional. The lease is not legally binding until both deposit and first month's rent are paid <em>and</em> your landlord has countersigned.
+          </div>
           <p className="text-sm text-gray-400">Powered by <strong style={{ color: BRAND }}>Leasely</strong></p>
         </div>
       </div>
@@ -90,10 +94,21 @@ export default function TenantSignLease() {
           </div>
 
           <div className="p-6 space-y-5">
+            {/* Flow explainer */}
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+              <p className="text-xs font-bold text-emerald-900 mb-1.5">How signing works</p>
+              <ol className="text-xs text-emerald-800 leading-relaxed space-y-1">
+                <li><strong>1.</strong> You sign first (right now).</li>
+                <li><strong>2.</strong> You pay your security deposit + first month's rent.</li>
+                <li><strong>3.</strong> Your landlord countersigns — lease is then fully executed.</li>
+              </ol>
+              <p className="text-[11px] text-emerald-900/80 mt-2">Your signature is conditional until payment clears and the landlord countersigns.</p>
+            </div>
+
             {/* Legal disclosure */}
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
               <p className="text-xs text-blue-800 leading-relaxed">
-                <strong>Electronic Signature Notice:</strong> By signing below, you agree that your electronic signature is legally binding and has the same force and effect as a handwritten signature. This lease is compliant with your state's landlord-tenant law.
+                <strong>Electronic Signature Notice:</strong> By signing below, you agree that your electronic signature is legally binding and has the same force and effect as a handwritten signature. This lease becomes effective only after the security deposit and first month's rent are paid and your landlord countersigns. This lease is compliant with your state's landlord-tenant law.
               </p>
             </div>
 

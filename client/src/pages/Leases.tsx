@@ -19,10 +19,25 @@ import {
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
   sent: "bg-blue-100 text-blue-800",
+  tenant_signed: "bg-amber-100 text-amber-800",
+  awaiting_payment: "bg-amber-100 text-amber-800",
+  paid: "bg-cyan-100 text-cyan-800",
   signed: "bg-green-100 text-green-800",
   active: "bg-emerald-100 text-emerald-800",
   expired: "bg-orange-100 text-orange-800",
   terminated: "bg-red-100 text-red-800",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  draft: "Draft",
+  sent: "Sent to tenant",
+  tenant_signed: "Tenant signed",
+  awaiting_payment: "Awaiting payment",
+  paid: "Paid — countersign",
+  signed: "Fully executed",
+  active: "Active",
+  expired: "Expired",
+  terminated: "Terminated",
 };
 
 const US_STATES = [
@@ -96,6 +111,14 @@ export default function Leases() {
     onError: (e) => toast.error(e.message),
   });
 
+  const landlordSignMutation = trpc.leases.landlordSign.useMutation({
+    onSuccess: () => {
+      toast.success("Lease countersigned — tenant has been notified");
+      refetch();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -143,8 +166,9 @@ export default function Leases() {
               </DialogHeader>
               <div className="space-y-4 mt-2">
                 <p className="text-sm bg-blue-50 border border-blue-200 rounded-lg p-3 text-blue-800">
-                  Your lease will be state-specific and compliant. Once created, send it to your tenant for e-signature.
-                  Payment links for rent and deposit are automatically sent after signing.
+                  <strong>How signing works:</strong> Send the lease → <strong>tenant signs first</strong> → tenant pays
+                  security deposit + first month's rent → you countersign to fully execute. The lease is conditional
+                  until you countersign, so funds are guaranteed before the tenancy is binding.
                 </p>
 
                 <div className="grid grid-cols-3 gap-3">
@@ -341,8 +365,8 @@ export default function Leases() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[lease.status]}`}>
-                          {lease.status}
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[lease.status] ?? "bg-gray-100 text-gray-700"}`}>
+                          {STATUS_LABELS[lease.status] ?? lease.status}
                         </span>
                         <span className="text-xs text-gray-400 uppercase">{lease.state}</span>
                         <span className="text-xs text-gray-400">{lease.leaseTerm?.replace(/_/g, " ")}</span>
@@ -401,8 +425,8 @@ export default function Leases() {
               </DialogHeader>
               <div className="space-y-4">
                 <div className="flex gap-2">
-                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${STATUS_COLORS[selectedLease.status]}`}>
-                    {selectedLease.status}
+                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${STATUS_COLORS[selectedLease.status] ?? "bg-gray-100 text-gray-700"}`}>
+                    {STATUS_LABELS[selectedLease.status] ?? selectedLease.status}
                   </span>
                   <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-700">
                     {selectedLease.state} — {selectedLease.leaseTerm?.replace(/_/g, " ")}
@@ -471,6 +495,41 @@ export default function Leases() {
                     <p className="text-sm font-semibold text-blue-800">Awaiting Tenant Signature</p>
                     <p className="text-xs text-blue-600">Tenant will be prompted to sign at the link sent to their email.</p>
                   </div>
+                )}
+
+                {(selectedLease.status === "tenant_signed" || selectedLease.status === "awaiting_payment") && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-semibold text-amber-900">Tenant Signed — Awaiting Payment</p>
+                        <p className="text-xs text-amber-800 mt-0.5">
+                          Tenant has e-signed. Lease is conditional and not yet executed. We'll email you to countersign once
+                          first month's rent and the security deposit clear.
+                        </p>
+                        <ul className="text-xs text-amber-800 mt-2 space-y-0.5">
+                          <li>• First month's rent: {selectedLease.firstMonthPaid ? "✅ paid" : "⏳ pending"}</li>
+                          {(selectedLease.securityDeposit ?? 0) > 0 && (
+                            <li>• Security deposit: {selectedLease.depositPaid ? "✅ paid" : "⏳ pending"}</li>
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedLease.status === "paid" && (
+                  <Button
+                    className="w-full bg-[#00C896] hover:bg-[#00b083] text-[#0a2a1f] gap-2 font-bold"
+                    onClick={() => {
+                      landlordSignMutation.mutate({ leaseId: selectedLease.id });
+                      setSelectedLease({ ...selectedLease, status: "signed" });
+                    }}
+                    disabled={landlordSignMutation.isPending}
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    {landlordSignMutation.isPending ? "Countersigning..." : "Countersign — Execute Lease"}
+                  </Button>
                 )}
               </div>
             </DialogContent>

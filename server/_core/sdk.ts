@@ -1,4 +1,4 @@
-import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { COOKIE_NAME, SESSION_TTL_MS } from "@shared/const";
 import { ForbiddenError } from "@shared/_core/errors";
 import { parse as parseCookieHeader } from "cookie";
 import type { Request } from "express";
@@ -14,6 +14,7 @@ export type SessionPayload = {
   openId: string;
   appId: string;
   name: string;
+  tv: number; // token version — bumped on logout/password change to revoke prior tokens
 };
 
 class SDKServer {
@@ -30,10 +31,10 @@ class SDKServer {
 
   async createSessionToken(
     openId: string,
-    options: { expiresInMs?: number; name?: string } = {}
+    options: { expiresInMs?: number; name?: string; tokenVersion?: number } = {}
   ): Promise<string> {
     return this.signSession(
-      { openId, appId: "leasely", name: options.name || "" },
+      { openId, appId: "leasely", name: options.name || "", tv: options.tokenVersion ?? 0 },
       options
     );
   }
@@ -43,7 +44,7 @@ class SDKServer {
     options: { expiresInMs?: number } = {}
   ): Promise<string> {
     const issuedAt = Date.now();
-    const expiresInMs = options.expiresInMs ?? ONE_YEAR_MS;
+    const expiresInMs = options.expiresInMs ?? SESSION_TTL_MS;
     const expirationSeconds = Math.floor((issuedAt + expiresInMs) / 1000);
     const secretKey = this.getSessionSecret();
 
@@ -51,6 +52,7 @@ class SDKServer {
       openId: payload.openId,
       appId: payload.appId,
       name: payload.name,
+      tv: payload.tv,
     })
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
       .setExpirationTime(expirationSeconds)
@@ -59,7 +61,7 @@ class SDKServer {
 
   async verifySession(
     cookieValue: string | undefined | null
-  ): Promise<{ openId: string; appId: string; name: string } | null> {
+  ): Promise<{ openId: string; appId: string; name: string; tv: number } | null> {
     if (!cookieValue) return null;
 
     try {
@@ -67,13 +69,18 @@ class SDKServer {
       const { payload } = await jwtVerify(cookieValue, secretKey, {
         algorithms: ["HS256"],
       });
-      const { openId, appId, name } = payload as Record<string, unknown>;
+      const { openId, appId, name, tv } = payload as Record<string, unknown>;
 
       if (!isNonEmptyString(openId) || !isNonEmptyString(appId)) {
         return null;
       }
 
-      return { openId, appId, name: isNonEmptyString(name) ? name : "" };
+      return {
+        openId,
+        appId,
+        name: isNonEmptyString(name) ? name : "",
+        tv: typeof tv === "number" ? tv : 0,
+      };
     } catch {
       return null;
     }
@@ -92,6 +99,11 @@ class SDKServer {
 
     if (!user) {
       throw ForbiddenError("User not found");
+    }
+
+    // Enforce token revocation: token's tv claim must match current user.tokenVersion
+    if ((user.tokenVersion ?? 0) !== session.tv) {
+      throw ForbiddenError("Session has been revoked");
     }
 
     return user;

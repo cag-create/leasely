@@ -225,7 +225,8 @@ export function leaseAgreementEmail(opts: {
       Review &amp; Sign Your Lease →
     </a>
     <p style="margin:16px 0 8px;color:#6b7280;font-size:14px">
-      Once you sign, you'll automatically receive payment links for your first month's rent and security deposit.
+      <strong>How signing works:</strong> You sign first. Then you'll be sent payment links for your security deposit and first month's rent.
+      Your landlord countersigns once payment clears, at which point the lease is fully executed and you'll receive move-in instructions.
     </p>
     <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Leasely</a></p>
   </div>
@@ -260,25 +261,31 @@ export function leaseSignedPaymentEmail(opts: {
   return `
 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
   <div style="background:#1B2B5E;padding:20px 24px;border-radius:10px 10px 0 0">
-    <h1 style="color:white;margin:0;font-size:20px">Lease Signed — Complete Your Move-In Payments</h1>
+    <h1 style="color:white;margin:0;font-size:20px">Action Required — Pay to Activate Your Lease</h1>
   </div>
   <div style="background:#f9fafb;padding:24px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px">
     <p style="margin:0 0 16px">Hi ${opts.tenantName},</p>
-    <p style="margin:0 0 16px">
-      Your lease for <strong>${opts.propertyAddress}</strong> has been signed.
-      Please complete your move-in payments below to finalize your tenancy.
+    <p style="margin:0 0 12px">
+      You've signed your lease for <strong>${opts.propertyAddress}</strong>. Your signature is on file but the lease is <strong>conditional</strong> until two steps are complete:
     </p>
+    <ol style="margin:0 0 16px;padding-left:20px;color:#374151">
+      <li style="margin-bottom:6px">Pay your <strong>security deposit</strong> and <strong>first month's rent</strong> using the buttons below.</li>
+      <li>Your landlord will then countersign — at which point the lease is fully executed and we'll send your move-in details.</li>
+    </ol>
     <div style="margin-bottom:12px">
-      <a href="${opts.rentPaymentUrl}"
-         style="display:block;background:#00C896;color:#062018;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;text-align:center;margin-bottom:10px">
-        Pay First Month's Rent — $${opts.monthlyRentDollars.toLocaleString()} →
-      </a>
       <a href="${opts.depositPaymentUrl}"
+         style="display:block;background:#00C896;color:#062018;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;text-align:center;margin-bottom:10px">
+        Step 1: Pay Security Deposit — $${opts.securityDepositDollars.toLocaleString()} →
+      </a>
+      <a href="${opts.rentPaymentUrl}"
          style="display:block;background:#1B2B5E;color:white;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;text-align:center">
-        Pay Security Deposit — $${opts.securityDepositDollars.toLocaleString()} →
+        Step 2: Pay First Month's Rent — $${opts.monthlyRentDollars.toLocaleString()} →
       </a>
     </div>
-    ${accessSection}
+    <p style="margin:8px 0 16px;color:#6b7280;font-size:13px">
+      Move-in instructions are released only after both payments clear and your landlord countersigns.
+    </p>
+    ${accessSection ? `<details style="margin:16px 0"><summary style="cursor:pointer;color:#6b7280;font-size:13px">Pre-arrival reference (released after countersignature)</summary>${accessSection}</details>` : ""}
     <p style="margin:16px 0 0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Leasely</a></p>
   </div>
 </div>`;
@@ -420,6 +427,44 @@ export function vendorJobCompleteEmail(opts: {
       Pay ${opts.vendorName} — $${opts.finalAmountDollars.toLocaleString()} →
     </a>
     <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Leasely</a></p>
+  </div>
+</div>`;
+}
+
+export function emailVerifyEmail(opts: { name: string; verifyUrl: string }) {
+  return `<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto">
+  <div style="background:linear-gradient(135deg,#1B2B5E,#00C896);padding:28px;border-radius:10px 10px 0 0;color:white;text-align:center">
+    <h1 style="margin:0;font-size:22px;font-weight:800">Verify your email</h1>
+  </div>
+  <div style="background:#f9fafb;padding:24px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px">
+    <p style="margin:0 0 16px">Hi ${opts.name || "there"},</p>
+    <p style="margin:0 0 16px">Welcome to Leasely. Please verify your email address to activate full account access. This link expires in 24 hours.</p>
+    <a href="${opts.verifyUrl}"
+       style="display:block;background:#00C896;color:#062018;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;text-align:center;margin-bottom:16px">
+      Verify Email →
+    </a>
+    <p style="margin:0 0 8px;color:#6b7280;font-size:13px">If the button doesn't work, paste this URL into your browser:</p>
+    <p style="margin:0 0 16px;color:#1B2B5E;font-size:12px;word-break:break-all">${opts.verifyUrl}</p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">If you didn't sign up for Leasely, you can safely ignore this email.</p>
+  </div>
+</div>`;
+}
+
+export function passwordResetEmail(opts: { name: string; resetUrl: string }) {
+  return `<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto">
+  <div style="background:linear-gradient(135deg,#1B2B5E,#00C896);padding:28px;border-radius:10px 10px 0 0;color:white;text-align:center">
+    <h1 style="margin:0;font-size:22px;font-weight:800">Reset your password</h1>
+  </div>
+  <div style="background:#f9fafb;padding:24px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px">
+    <p style="margin:0 0 16px">Hi ${opts.name || "there"},</p>
+    <p style="margin:0 0 16px">We received a request to reset the password for your Leasely account. Click below to set a new password. This link expires in 1 hour.</p>
+    <a href="${opts.resetUrl}"
+       style="display:block;background:#00C896;color:#062018;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;text-align:center;margin-bottom:16px">
+      Reset Password →
+    </a>
+    <p style="margin:0 0 8px;color:#6b7280;font-size:13px">If the button doesn't work, paste this URL into your browser:</p>
+    <p style="margin:0 0 16px;color:#1B2B5E;font-size:12px;word-break:break-all">${opts.resetUrl}</p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">If you didn't request a password reset, you can safely ignore this email — your password will remain unchanged.</p>
   </div>
 </div>`;
 }

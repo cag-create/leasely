@@ -57,6 +57,10 @@ const Terms               = lazy(() => import("./pages/Terms"));
 const CCPA                = lazy(() => import("./pages/CCPA"));
 const FairHousing         = lazy(() => import("./pages/FairHousing"));
 const CookiePolicy        = lazy(() => import("./pages/Cookies"));
+const ForgotPassword      = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword       = lazy(() => import("./pages/ResetPassword"));
+const VerifyEmail         = lazy(() => import("./pages/VerifyEmail"));
+const LeasePay            = lazy(() => import("./pages/LeasePay"));
 
 // ── Page-level loading fallback ───────────────────────────────────────────────
 function PageLoader() {
@@ -73,6 +77,9 @@ function Router() {
       <Switch>
         {/* Auth */}
         <Route path="/login" component={LoginPage} />
+        <Route path="/forgot-password" component={ForgotPassword} />
+        <Route path="/reset-password" component={ResetPassword} />
+        <Route path="/verify-email" component={VerifyEmail} />
 
         {/* Public */}
         <Route path="/" component={Home} />
@@ -88,6 +95,10 @@ function Router() {
         {/* Tenant rent payment (public) */}
         <Route path="/pay/:id" component={RentPayment} />
         <Route path="/pay/:id/success" component={RentPaymentSuccess} />
+
+        {/* Lease move-in payments (deposit + first month) */}
+        <Route path="/lease-pay/:id" component={LeasePay} />
+        <Route path="/lease-pay/:id/success" component={LeasePay} />
 
         {/* Auth + Pro required */}
         <Route path="/onboarding" component={Onboarding} />

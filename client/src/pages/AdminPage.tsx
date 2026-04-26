@@ -867,6 +867,52 @@ const SOP_LIST: Sop[] = [
     ],
   },
   {
+    id: "sop-lease-signing",
+    title: "Lease Signing & Move-In Funds Flow",
+    description: "Conditional-signature workflow that protects landlords by requiring payment before the lease is fully executed.",
+    estimatedMinutes: 5,
+    sections: [
+      {
+        heading: "1. The Flow at a Glance",
+        items: [
+          "Step 1 — You create the lease and click Send. Tenant receives an emailed signing link.",
+          "Step 2 — Tenant signs first. The lease is now CONDITIONAL (not fully executed). Status: 'Tenant signed / Awaiting payment'.",
+          "Step 3 — Tenant is automatically prompted to pay (a) security deposit, then (b) first month's rent via Stripe.",
+          "Step 4 — Both payments clear → Leasely emails you to countersign.",
+          "Step 5 — You countersign in the Leases tab → lease becomes fully executed → tenant receives move-in instructions.",
+        ],
+      },
+      {
+        heading: "2. Why This Order",
+        items: [
+          "Tenant signing first commits them legally to the agreement (subject to the conditions).",
+          "Requiring payment before your countersignature protects you from a tenant who signs but never pays — there's nothing to enforce because the lease is not executed.",
+          "Move-in instructions (lockbox codes, key pickup details) are only released AFTER you countersign — never give them out earlier.",
+          "If a tenant signs but does not pay within 7 days, follow up. If 14 days pass with no payment, you may withdraw the lease without prejudice.",
+        ],
+      },
+      {
+        heading: "3. Status Glossary (Leases tab)",
+        items: [
+          "Draft — created but not sent. Edit freely.",
+          "Sent to tenant — emailed; awaiting tenant signature.",
+          "Tenant signed / Awaiting payment — tenant has e-signed; deposit + first month due.",
+          "Paid — countersign — funds cleared; click Countersign to execute.",
+          "Fully executed — both parties signed and funds collected. Move-in can proceed.",
+        ],
+      },
+      {
+        heading: "4. Disputes & Edge Cases",
+        items: [
+          "Tenant disputes a charge after paying: Stripe handles the chargeback flow. Do NOT countersign until the dispute resolves.",
+          "Tenant pays only the deposit, not first month: lease stays in 'Awaiting payment' until both clear. Reach out and offer a payment plan only if you choose.",
+          "Tenant wants to cancel after signing but before paying: nothing to enforce; mark the lease 'Terminated' in Leases.",
+          "You change your mind after the tenant signs: only refunds-via-Stripe are permitted; never collect deposit/rent off-platform.",
+        ],
+      },
+    ],
+  },
+  {
     id: "sop-move-in",
     title: "Move-In / Move-Out Process",
     description: "End-to-end checklist for a smooth tenant transition that protects your security deposit and prevents disputes.",
@@ -885,11 +931,12 @@ const SOP_LIST: Sop[] = [
       {
         heading: "2. Move-In Day",
         items: [
+          "CRITICAL: Move-in only proceeds AFTER the lease is fully executed. Lease execution requires (a) tenant signature, (b) tenant payment of security deposit and first month's rent, and (c) your countersignature. Do NOT release keys before all three are complete — Leasely automatically gates this in the dashboard.",
           "Meet the tenant at the property. Do not just mail keys — a brief in-person walkthrough is your best protection against future disputes.",
           "Walk through the entire unit with the tenant and complete the move-in condition report together. Both parties sign.",
           "Explain the maintenance request process: how to submit via Leasely, expected response times, what constitutes an emergency.",
           "Provide all keys, fobs, parking passes, and mailbox keys. Have the tenant sign a receipt for each item.",
-          "Collect first month's rent and security deposit if not already received. Provide a written receipt.",
+          "Funds are already collected through Leasely's checkout before this step — confirm in the Lease detail view that both 'first month' and 'deposit' show paid.",
         ],
       },
       {
