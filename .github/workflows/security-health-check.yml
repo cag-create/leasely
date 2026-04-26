@@ -1,0 +1,33 @@
+name: Daily security health check
+
+# Pings the production /api/health/security endpoint once a day.
+# Fails the workflow (and notifies via the configured GitHub email/notification
+# settings) if any required env var is missing, secrets are too weak, or
+# Stripe webhook signing is not configured.
+
+on:
+  schedule:
+    # 09:00 UTC ≈ 04:00 ET. Cron is in UTC.
+    - cron: "0 9 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe /api/health/security
+        run: |
+          set -e
+          URL="${SECURITY_HEALTH_URL:-https://leasely.net/api/health/security}"
+          echo "Hitting $URL"
+          # Capture body and status separately
+          BODY=$(mktemp)
+          STATUS=$(curl -sS -o "$BODY" -w "%{http_code}" --max-time 30 "$URL")
+          echo "HTTP $STATUS"
+          cat "$BODY"
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Security health check failed (HTTP $STATUS)"
+            exit 1
+          fi
+        env:
+          SECURITY_HEALTH_URL: ${{ vars.SECURITY_HEALTH_URL }}
