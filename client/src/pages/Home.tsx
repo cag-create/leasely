@@ -149,6 +149,13 @@ export default function Home() {
                 </Link>
               </div>
 
+              <p className="text-sm text-white/50">
+                Already have an account?{" "}
+                <Link href="/login" className="text-white hover:text-[#00C896] font-medium underline underline-offset-4">
+                  Sign in
+                </Link>
+              </p>
+
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-white/50">
                 {["AI fraud screening included", "Instant bank payouts", "$25/mo — no per-unit fees", "First listing free"].map(item => (
                   <span key={item} className="flex items-center gap-1.5">

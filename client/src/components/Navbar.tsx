@@ -307,11 +307,18 @@ export default function Navbar() {
 
             <div className="mt-4 pt-4 border-t border-border">
               {!isAuthenticated ? (
-                <a href={getLoginUrl()} className="block">
-                  <Button className="w-full bg-[#00C896] hover:bg-[#00A87C] text-[#062018] font-semibold gap-2">
-                    <Sparkles className="h-4 w-4" /> Get Started Free
-                  </Button>
-                </a>
+                <div className="space-y-2">
+                  <a href={getLoginUrl()} className="block">
+                    <Button className="w-full bg-[#00C896] hover:bg-[#00A87C] text-[#062018] font-semibold gap-2">
+                      <Sparkles className="h-4 w-4" /> Get Started Free
+                    </Button>
+                  </a>
+                  <a href={getLoginUrl()} className="block">
+                    <Button variant="outline" className="w-full font-medium">
+                      Sign In
+                    </Button>
+                  </a>
+                </div>
               ) : (
                 <div className="space-y-2">
                   <div className="px-4 py-2">

@@ -135,7 +135,18 @@ export function registerAuthRoutes(app: Express) {
         return;
       }
 
-      await db.upsertUser({ openId: user.openId, lastSignedIn: new Date() });
+      // Self-heal: re-promote the owner email to admin if it isn't already.
+      // Covers cases where OWNER_EMAIL was set after this user signed up,
+      // or the role was downgraded somewhere along the way.
+      const isOwner = process.env.OWNER_EMAIL &&
+        normalizedEmail === process.env.OWNER_EMAIL.toLowerCase().trim();
+      const shouldPromote = isOwner && user.role !== "admin";
+
+      await db.upsertUser({
+        openId: user.openId,
+        lastSignedIn: new Date(),
+        ...(shouldPromote ? { role: "admin" as const } : {}),
+      });
 
       const sessionToken = await sdk.createSessionToken(user.openId, {
         name: user.name || "",
