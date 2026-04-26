@@ -20,6 +20,24 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// General API limiter: 300 requests per IP per minute (covers tRPC + chat + misc)
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 300,
+  message: { error: "Too many requests. Please slow down." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Stricter limiter for AI chat endpoint: 30 requests per IP per minute
+const chatLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { error: "Chat rate limit reached. Try again shortly." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 async function startServer() {
   const app = express();
   app.set("trust proxy", 1); // Required for Railway reverse proxy (HTTPS detection, real IP)
@@ -35,15 +53,17 @@ async function startServer() {
   app.use("/api/auth/login", authLimiter);
   app.use("/api/auth/register", authLimiter);
   registerAuthRoutes(app);
-  // Chat API with streaming and tool calling
+  // Chat API with streaming and tool calling (stricter limit)
+  app.use("/api/chat", chatLimiter);
   registerChatRoutes(app);
   // Health check for Railway
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
-  // tRPC API
+  // tRPC API (general rate limit)
   app.use(
     "/api/trpc",
+    apiLimiter,
     createExpressMiddleware({
       router: appRouter,
       createContext,

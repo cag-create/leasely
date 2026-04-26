@@ -12,8 +12,36 @@ import {
   vendorDispatchRequestEmail, vendorQuoteReceivedEmail, vendorJobCompleteEmail,
 } from "./_core/email";
 import Stripe from "stripe";
+import { createHmac, timingSafeEqual } from "crypto";
 import { LEASELY_PRO, LEASELY_PRO_SETUP } from "./products";
 import QRCode from "qrcode";
+
+// Signed tenant session token: base64url(payload).hmac
+const TENANT_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+function tenantTokenSecret() {
+  return process.env.JWT_SECRET || "";
+}
+function signTenantToken(tenantId: number): string {
+  const payload = Buffer.from(JSON.stringify({ id: tenantId, ts: Date.now() })).toString("base64url");
+  const sig = createHmac("sha256", tenantTokenSecret()).update(payload).digest("base64url");
+  return `${payload}.${sig}`;
+}
+function verifyTenantToken(token: string): { id: number; ts: number } | null {
+  const [payload, sig] = token.split(".");
+  if (!payload || !sig) return null;
+  const expected = createHmac("sha256", tenantTokenSecret()).update(payload).digest("base64url");
+  const a = Buffer.from(sig);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+  try {
+    const decoded = JSON.parse(Buffer.from(payload, "base64url").toString()) as { id: number; ts: number };
+    if (typeof decoded.id !== "number" || typeof decoded.ts !== "number") return null;
+    if (Date.now() - decoded.ts > TENANT_TOKEN_TTL_MS) return null;
+    return decoded;
+  } catch {
+    return null;
+  }
+}
 import { storagePut } from "./storage";
 import { affiliates, w9Submissions, affiliateReferrals, affiliatePayouts, marketplaceListings, rentalApplications, leaseAgreements } from "../drizzle/schema";
 import { eq, sql, and } from "drizzle-orm";
@@ -1950,25 +1978,22 @@ export const appRouter = router({
       }
       // Clear token after use
       await updateTenantToken(tenant.id, null, null);
-      // Return a simple signed token (tenant id + timestamp, base64)
-      const sessionToken = Buffer.from(JSON.stringify({ id: tenant.id, ts: Date.now() })).toString("base64");
+      // Return a HMAC-signed session token (30-day TTL)
+      const sessionToken = signTenantToken(tenant.id);
       return { token: sessionToken, tenantId: tenant.id };
     }),
     /** Get tenant portal data by session token (from localStorage) */
     getPortalData: publicProcedure.input(z.object({
       sessionToken: z.string(),
     })).query(async ({ input }) => {
-      try {
-        const decoded = JSON.parse(Buffer.from(input.sessionToken, "base64").toString());
-        const tenant = await getTenantById(decoded.id);
-        if (!tenant) throw new TRPCError({ code: "NOT_FOUND" });
-        // Get payment history for this tenant's listing
-        const payments = tenant.listingId ? await getPaymentsByLandlord(tenant.landlordUserId) : [];
-        const myPayments = payments.filter((p: any) => p.listingId === tenant.listingId);
-        return { tenant, payments: myPayments };
-      } catch {
-        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid session. Please sign in again." });
-      }
+      const decoded = verifyTenantToken(input.sessionToken);
+      if (!decoded) throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid or expired session. Please sign in again." });
+      const tenant = await getTenantById(decoded.id);
+      if (!tenant) throw new TRPCError({ code: "NOT_FOUND" });
+      // Get payment history for this tenant's listing
+      const payments = tenant.listingId ? await getPaymentsByLandlord(tenant.landlordUserId) : [];
+      const myPayments = payments.filter((p: any) => p.listingId === tenant.listingId);
+      return { tenant, payments: myPayments };
     }),
     /** Landlord: list all tenants they've invited */
     listTenants: protectedProcedure.query(async ({ ctx }) => {

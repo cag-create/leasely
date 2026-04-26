@@ -881,10 +881,12 @@ export default function Home() {
             </p>
             <div className="flex items-center gap-4 flex-wrap">
               {[
-                { label: "Privacy Policy", href: "/support" },
-                { label: "Terms of Service", href: "/support" },
+                { label: "Privacy Policy", href: "/legal/privacy" },
+                { label: "Terms of Service", href: "/legal/terms" },
+                { label: "CCPA", href: "/legal/ccpa" },
+                { label: "Cookie Policy", href: "/legal/cookies" },
+                { label: "Fair Housing", href: "/legal/fair-housing" },
                 { label: "Fee Schedule", href: "/fees" },
-                { label: "Affiliate Program", href: "/affiliate/signup" },
               ].map(item => (
                 <Link key={item.label} href={item.href}>
                   <span className="text-white/30 hover:text-white/60 text-xs cursor-pointer transition-colors">{item.label}</span>

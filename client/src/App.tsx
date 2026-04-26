@@ -4,6 +4,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ProGate } from "./components/ProGate";
+import CookieBanner from "./components/CookieBanner";
 import { lazy, Suspense } from "react";
 
 // ── Eager loads (tiny, always needed) ─────────────────────────────────────────
@@ -51,6 +52,11 @@ const FeeSchedule         = lazy(() => import("./pages/FeeSchedule"));
 const Leases              = lazy(() => import("./pages/Leases"));
 const VendorRespond       = lazy(() => import("./pages/VendorRespond"));
 const TenantSignLease     = lazy(() => import("./pages/TenantSignLease"));
+const Privacy             = lazy(() => import("./pages/Privacy"));
+const Terms               = lazy(() => import("./pages/Terms"));
+const CCPA                = lazy(() => import("./pages/CCPA"));
+const FairHousing         = lazy(() => import("./pages/FairHousing"));
+const CookiePolicy        = lazy(() => import("./pages/Cookies"));
 
 // ── Page-level loading fallback ───────────────────────────────────────────────
 function PageLoader() {
@@ -153,6 +159,15 @@ function Router() {
         <Route path="/pro" component={ProPage} />
         <Route path="/fees" component={FeeSchedule} />
 
+        {/* Legal */}
+        <Route path="/legal/privacy" component={Privacy} />
+        <Route path="/legal/terms" component={Terms} />
+        <Route path="/legal/ccpa" component={CCPA} />
+        <Route path="/legal/fair-housing" component={FairHousing} />
+        <Route path="/legal/cookies" component={CookiePolicy} />
+        <Route path="/privacy" component={Privacy} />
+        <Route path="/terms" component={Terms} />
+
         {/* Fallback */}
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
@@ -168,6 +183,7 @@ function App() {
         <TooltipProvider>
           <Toaster position="top-right" />
           <Router />
+          <CookieBanner />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

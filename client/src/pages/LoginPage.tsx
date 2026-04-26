@@ -15,12 +15,17 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   const utils = trpc.useUtils();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (mode === "register" && !agreed) {
+      setError("Please agree to the Terms of Service and Privacy Policy to create an account.");
+      return;
+    }
     setLoading(true);
 
     try {
@@ -114,6 +119,20 @@ export default function LoginPage() {
                 autoComplete={mode === "login" ? "current-password" : "new-password"}
               />
             </div>
+
+            {mode === "register" && (
+              <label className="flex items-start gap-2.5 text-xs text-white/60 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={e => setAgreed(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-white/20 bg-white/5 accent-[#00C896]"
+                />
+                <span>
+                  I agree to the <a href="/legal/terms" target="_blank" rel="noopener" className="text-white/80 underline hover:text-white">Terms of Service</a> and <a href="/legal/privacy" target="_blank" rel="noopener" className="text-white/80 underline hover:text-white">Privacy Policy</a>, and acknowledge Leasely's <a href="/legal/fair-housing" target="_blank" rel="noopener" className="text-white/80 underline hover:text-white">Fair Housing</a> and <a href="/legal/cookies" target="_blank" rel="noopener" className="text-white/80 underline hover:text-white">Cookie</a> policies.
+                </span>
+              </label>
+            )}
 
             {error && (
               <p className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">
