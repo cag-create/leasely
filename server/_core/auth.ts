@@ -283,4 +283,59 @@ export function registerAuthRoutes(app: Express) {
       res.status(500).json({ error: "Could not resend verification" });
     }
   });
+
+  /**
+   * POST /api/auth/claim-admin — bootstrap an admin/Pro account when OWNER_EMAIL
+   * isn't sufficient (e.g., user already existed before OWNER_EMAIL was set, or
+   * you want to promote a specific email without changing env vars).
+   *
+   * Gated by ADMIN_CLAIM_SECRET. If that env var isn't set, the endpoint 404s.
+   * Once you've used it, remove ADMIN_CLAIM_SECRET on Railway to disable.
+   */
+  app.post("/api/auth/claim-admin", async (req: Request, res: Response) => {
+    const claimSecret = process.env.ADMIN_CLAIM_SECRET;
+    if (!claimSecret) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+
+    const { email, secret } = req.body ?? {};
+    if (!email || !secret) {
+      res.status(400).json({ error: "email and secret required" });
+      return;
+    }
+    if (String(secret) !== claimSecret) {
+      res.status(401).json({ error: "Invalid secret" });
+      return;
+    }
+
+    const normalizedEmail = String(email).toLowerCase().trim();
+    try {
+      const user = await db.getUserByEmail(normalizedEmail);
+      if (!user) {
+        res.status(404).json({ error: "User not found" });
+        return;
+      }
+
+      await db.upsertUser({
+        openId: user.openId,
+        role: "admin",
+      });
+
+      await db.upsertUserSubscription({
+        userId: user.id,
+        tier: "paid",
+        status: "active",
+      });
+
+      // Bump tokenVersion so any existing session refreshes its claims on next request.
+      await db.bumpTokenVersion(user.id);
+
+      console.log(`[Auth] Admin claim succeeded for ${normalizedEmail}`);
+      res.json({ success: true, email: normalizedEmail, role: "admin", tier: "paid" });
+    } catch (error) {
+      console.error("[Auth] claim-admin error:", error);
+      res.status(500).json({ error: "Could not claim admin" });
+    }
+  });
 }

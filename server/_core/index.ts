@@ -56,6 +56,7 @@ async function startServer() {
   app.use("/api/auth/reset-password", authLimiter);
   app.use("/api/auth/verify-email", authLimiter);
   app.use("/api/auth/resend-verification", authLimiter);
+  app.use("/api/auth/claim-admin", authLimiter);
   registerAuthRoutes(app);
   // Chat API with streaming and tool calling (stricter limit)
   app.use("/api/chat", chatLimiter);
