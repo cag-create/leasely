@@ -74,7 +74,7 @@ async function startServer() {
       "DATABASE_URL",
       "STRIPE_SECRET_KEY",
       "STRIPE_WEBHOOK_SECRET",
-      "RESEND_API_KEY",
+      "BREVO_API_KEY",
       "APP_URL",
     ];
     const missing = required.filter((k) => !process.env[k]);

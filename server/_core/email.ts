@@ -1,18 +1,19 @@
 /**
- * Email helper using Resend.
- * Falls back to console.log in development when RESEND_API_KEY is not set.
+ * Email helper using Brevo (https://developers.brevo.com/reference/sendtransacemail).
+ * Falls back to console.log in development when BREVO_API_KEY is not set.
  */
-import { Resend } from "resend";
-
-let _resend: Resend | null = null;
-
-function getResend(): Resend | null {
-  if (!process.env.RESEND_API_KEY) return null;
-  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
-  return _resend;
-}
 
 const FROM = process.env.FROM_EMAIL ?? "Leasely <noreply@leasely.net>";
+
+/** Parse "Name <email@host>" or plain "email@host" into Brevo's sender shape. */
+function parseSender(value: string): { name?: string; email: string } {
+  const match = value.match(/^\s*(.*?)\s*<\s*([^>\s]+)\s*>\s*$/);
+  if (match) {
+    const name = match[1].replace(/^"|"$/g, "").trim();
+    return name ? { name, email: match[2] } : { email: match[2] };
+  }
+  return { email: value.trim() };
+}
 
 export interface EmailPayload {
   to: string | string[];
@@ -22,28 +23,43 @@ export interface EmailPayload {
 }
 
 /**
- * Send a transactional email via Resend.
- * Silently skips (logs) when RESEND_API_KEY is not configured.
+ * Send a transactional email via Brevo.
+ * Silently skips (logs) when BREVO_API_KEY is not configured.
  */
 export async function sendEmail(payload: EmailPayload): Promise<boolean> {
-  const resend = getResend();
+  const apiKey = process.env.BREVO_API_KEY;
 
-  if (!resend) {
+  if (!apiKey) {
     console.log(`[Email] Would send to ${payload.to}: ${payload.subject}`);
     return false;
   }
 
+  const recipients = (Array.isArray(payload.to) ? payload.to : [payload.to])
+    .map((email) => ({ email }));
+
+  const body: Record<string, unknown> = {
+    sender: parseSender(FROM),
+    to: recipients,
+    subject: payload.subject,
+    htmlContent: payload.html,
+  };
+
+  if (payload.replyTo) body.replyTo = { email: payload.replyTo };
+
   try {
-    const { error } = await resend.emails.send({
-      from: FROM,
-      to: Array.isArray(payload.to) ? payload.to : [payload.to],
-      subject: payload.subject,
-      html: payload.html,
-      ...(payload.replyTo ? { replyTo: payload.replyTo } : {}),
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": apiKey,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(body),
     });
 
-    if (error) {
-      console.warn("[Email] Resend error:", error.message);
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      console.warn(`[Email] Brevo error ${res.status}: ${text}`);
       return false;
     }
     return true;

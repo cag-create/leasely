@@ -43,7 +43,7 @@ export default function Terms() {
       </LegalSection>
 
       <LegalSection title="8. Third-Party Services">
-        <p>The Services integrate with third-party services (Stripe, Resend, Cloudinary, Twilio, OpenAI/Anthropic, mapping providers, etc.). Your use of those services is governed by the applicable third-party terms. Leasely is not responsible for third-party services.</p>
+        <p>The Services integrate with third-party services (Stripe, Brevo, Cloudinary, Twilio, OpenAI/Anthropic, mapping providers, etc.). Your use of those services is governed by the applicable third-party terms. Leasely is not responsible for third-party services.</p>
       </LegalSection>
 
       <LegalSection title="9. Disclaimers">

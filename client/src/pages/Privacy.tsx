@@ -37,7 +37,7 @@ export default function Privacy() {
       <LegalSection title="4. How We Share Information">
         <p>We do not sell personal information. We share information only as described:</p>
         <ul className="list-disc list-inside space-y-1.5 ml-1">
-          <li><strong className="text-white">Service providers:</strong> hosting (Railway), database, email (Resend), payments (Stripe), file storage (Cloudinary), analytics, and AI providers — under contractual confidentiality and data-protection obligations.</li>
+          <li><strong className="text-white">Service providers:</strong> hosting (Railway), database, email (Brevo), payments (Stripe), file storage (Cloudinary), analytics, and AI providers — under contractual confidentiality and data-protection obligations.</li>
           <li><strong className="text-white">Other users you interact with:</strong> when a tenant submits an application, signs a lease, or pays rent, the relevant landlord receives that information; vendors and contractors receive information needed to complete a work order.</li>
           <li><strong className="text-white">Legal and safety:</strong> when required by subpoena, court order, or to protect rights, safety, or property.</li>
           <li><strong className="text-white">Business transfers:</strong> in connection with a merger, acquisition, or sale of assets, with notice to affected users.</li>
