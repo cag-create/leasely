@@ -89,7 +89,11 @@ declare global {
 // Use VITE_GOOGLE_MAPS_API_KEY for Railway / standalone deployment
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
 
-function loadMapScript() {
+export function loadMapScript() {
+  // Idempotent: if Google Maps is already on window, resolve immediately.
+  if (typeof window !== "undefined" && window.google?.maps) {
+    return Promise.resolve(null);
+  }
   return new Promise(resolve => {
     const script = document.createElement("script");
     script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&v=weekly&libraries=marker,places,geocoding,geometry`;

@@ -133,7 +133,7 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
                 )}
               </Button>
               <Button variant="ghost" size="sm" asChild className="w-full text-muted-foreground">
-                <Link href="/dashboard">Back to Dashboard</Link>
+                <Link href="/">Back to Home</Link>
               </Button>
             </div>
 

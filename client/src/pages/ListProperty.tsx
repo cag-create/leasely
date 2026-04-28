@@ -11,6 +11,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import Navbar from "@/components/Navbar";
+import { loadMapScript } from "@/components/Map";
 import { toast } from "sonner";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
@@ -111,6 +112,12 @@ export default function ListProperty() {
 
     setGeocoding(true);
     try {
+      await loadMapScript();
+      if (!window.google?.maps) {
+        toast.error("Map service unavailable. Your listing will still be created.");
+        setGeocoding(false);
+        return;
+      }
       const geocoder = new google.maps.Geocoder();
       geocoder.geocode({ address: addr }, (results, status) => {
         if (status === "OK" && results?.[0]) {
@@ -122,7 +129,9 @@ export default function ListProperty() {
         }
         setGeocoding(false);
       });
-    } catch {
+    } catch (err) {
+      console.error("[Geocode] error:", err);
+      toast.error("Could not load map service. Your listing will still be created.");
       setGeocoding(false);
     }
   }, [watchedValues.address, watchedValues.city, watchedValues.state, watchedValues.zip]);

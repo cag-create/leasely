@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [info, setInfo] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const utils = trpc.useUtils();
 
@@ -134,17 +136,27 @@ export default function LoginPage() {
 
             <div className="space-y-1.5">
               <Label htmlFor="password" className="text-white/70">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder={mode === "register" ? "Minimum 8 characters" : "••••••••"}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                minLength={mode === "register" ? 8 : undefined}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                autoComplete={mode === "login" ? "current-password" : "new-password"}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder={mode === "register" ? "Minimum 8 characters" : "••••••••"}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  minLength={mode === "register" ? 8 : undefined}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30 pr-10"
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-white/40 hover:text-white/80 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
 
             {mode === "register" && (
