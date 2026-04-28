@@ -14,7 +14,7 @@ import {
   Award, Clock, XCircle, MessageSquare, Bell, Loader2, FileText, BookOpen, Wrench, Sparkles
 } from "lucide-react";
 
-type AdminTab = "overview" | "agents" | "contractors" | "waitlist" | "sop" | "growth" | "intelligence";
+type AdminTab = "overview" | "users" | "listings" | "subs" | "agents" | "contractors" | "waitlist" | "sop" | "growth" | "intelligence";
 
 
 export default function AdminPage() {
@@ -51,6 +51,9 @@ export default function AdminPage() {
 
   const TABS: { key: AdminTab; label: string; icon: any }[] = [
     { key: "overview", label: "Overview", icon: BarChart3 },
+    { key: "users", label: "Users", icon: Users },
+    { key: "listings", label: "Listings", icon: Building2 },
+    { key: "subs", label: "Subscriptions", icon: Crown },
     { key: "agents", label: "Creme Agents", icon: Award },
     { key: "contractors", label: "Contractors", icon: Wrench },
     { key: "waitlist", label: "Waitlist", icon: Bell },
@@ -79,7 +82,7 @@ export default function AdminPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-muted/40 rounded-xl p-1">
+        <div className="flex flex-wrap gap-1 bg-muted/40 rounded-xl p-1">
           {TABS.map(t => (
             <button
               key={t.key}
@@ -96,7 +99,10 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {activeTab === "overview" && <OverviewTab />}
+        {activeTab === "overview" && <OverviewTab onNavigate={setActiveTab} />}
+        {activeTab === "users" && <UsersTab />}
+        {activeTab === "listings" && <ListingsTab />}
+        {activeTab === "subs" && <SubscriptionsTab />}
         {activeTab === "agents" && <AgentsTab />}
         {activeTab === "contractors" && <ContractorsAdminTab />}
         {activeTab === "waitlist" && <WaitlistTab />}
@@ -110,11 +116,11 @@ export default function AdminPage() {
 
 // ─── Overview Tab ────────────────────────────────────────────────────────────
 
-function OverviewTab() {
+function OverviewTab({ onNavigate }: { onNavigate: (tab: AdminTab) => void }) {
   const [searchQuery, setSearchQuery] = useState("");
   return (
     <div className="space-y-8">
-      <AdminStats />
+      <AdminStats onNavigate={onNavigate} />
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="flex items-center justify-between p-5 border-b border-border">
           <div className="flex items-center gap-2">
@@ -141,29 +147,324 @@ function OverviewTab() {
   );
 }
 
-function AdminStats() {
+function AdminStats({ onNavigate }: { onNavigate: (tab: AdminTab) => void }) {
   const { data: stats, isLoading } = trpc.admin.stats.useQuery();
 
-  const items = [
-    { label: "Total Users", value: stats?.totalUsers ?? "—", icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
-    { label: "Pro Subscribers", value: stats?.paidUsers ?? "—", icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10" },
-    { label: "Active Listings", value: stats?.totalListings ?? "—", icon: Building2, color: "text-[#00C896]", bg: "bg-[#00C896]/10" },
-    { label: "MRR (est.)", value: stats?.paidUsers ? `$${(Number(stats.paidUsers) * 25).toFixed(0)}` : "—", icon: DollarSign, color: "text-green-500", bg: "bg-green-500/10" },
+  const items: Array<{ label: string; value: any; icon: any; color: string; bg: string; tab: AdminTab }> = [
+    { label: "Total Users", value: stats?.totalUsers ?? "—", icon: Users, color: "text-blue-500", bg: "bg-blue-500/10", tab: "users" },
+    { label: "Pro Subscribers", value: stats?.paidUsers ?? "—", icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10", tab: "subs" },
+    { label: "Active Listings", value: stats?.totalListings ?? "—", icon: Building2, color: "text-[#00C896]", bg: "bg-[#00C896]/10", tab: "listings" },
+    { label: "MRR (est.)", value: stats?.paidUsers ? `$${(Number(stats.paidUsers) * 25).toFixed(0)}` : "—", icon: DollarSign, color: "text-green-500", bg: "bg-green-500/10", tab: "subs" },
   ];
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {items.map((item, i) => (
-        <div key={i} className="rounded-2xl border border-border bg-card p-5">
-          <div className={`h-10 w-10 rounded-xl ${item.bg} flex items-center justify-center mb-3`}>
-            <item.icon className={`h-5 w-5 ${item.color}`} />
+        <button
+          key={i}
+          onClick={() => onNavigate(item.tab)}
+          className="text-left rounded-2xl border border-border bg-card p-5 hover:border-primary/40 hover:shadow-md hover:bg-muted/20 transition-all group"
+        >
+          <div className="flex items-start justify-between">
+            <div className={`h-10 w-10 rounded-xl ${item.bg} flex items-center justify-center mb-3`}>
+              <item.icon className={`h-5 w-5 ${item.color}`} />
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
           <div className="text-2xl font-bold text-foreground">
             {isLoading ? <div className="h-7 w-16 bg-muted animate-pulse rounded" /> : item.value}
           </div>
           <div className="text-sm text-muted-foreground mt-0.5">{item.label}</div>
-        </div>
+        </button>
       ))}
+    </div>
+  );
+}
+
+// ─── Users Tab ───────────────────────────────────────────────────────────────
+
+function UsersTab() {
+  const [searchQuery, setSearchQuery] = useState("");
+  return (
+    <div className="rounded-2xl border border-border bg-card overflow-hidden">
+      <div className="flex items-center justify-between p-5 border-b border-border">
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <h2 className="font-semibold text-foreground">All Users</h2>
+        </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Search users..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="pl-9 h-8 text-sm w-64"
+          />
+        </div>
+      </div>
+      <AdminUsersTable searchQuery={searchQuery} />
+    </div>
+  );
+}
+
+// ─── Listings Tab ────────────────────────────────────────────────────────────
+
+function ListingsTab() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive" | "pending">("all");
+  const { data: listings, isLoading } = trpc.admin.getAllListings.useQuery({ limit: 200 });
+
+  const filtered = (listings ?? []).filter((l: any) => {
+    if (statusFilter !== "all" && l.status !== statusFilter) return false;
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      l.title?.toLowerCase().includes(q) ||
+      l.address?.toLowerCase().includes(q) ||
+      l.city?.toLowerCase().includes(q) ||
+      l.state?.toLowerCase().includes(q) ||
+      l.zip?.toLowerCase().includes(q) ||
+      l.ownerName?.toLowerCase().includes(q) ||
+      l.ownerEmail?.toLowerCase().includes(q)
+    );
+  });
+
+  const STATUS_BADGE: Record<string, string> = {
+    active: "bg-[#00C896]/10 text-[#00C896]",
+    inactive: "bg-muted text-muted-foreground",
+    pending: "bg-amber-500/10 text-amber-600",
+  };
+
+  return (
+    <div className="rounded-2xl border border-border bg-card overflow-hidden">
+      <div className="flex items-center justify-between p-5 border-b border-border flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-muted-foreground" />
+          <h2 className="font-semibold text-foreground">All Listings</h2>
+          {listings && <Badge variant="secondary" className="text-xs">{filtered.length}</Badge>}
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1 bg-muted/50 rounded-lg p-0.5">
+            {(["all", "active", "pending", "inactive"] as const).map(s => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium capitalize transition-colors ${
+                  statusFilter === s ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search listings..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-9 h-8 text-sm w-64"
+            />
+          </div>
+        </div>
+      </div>
+      {isLoading ? (
+        <div className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
+      ) : !filtered.length ? (
+        <div className="p-10 text-center text-muted-foreground text-sm">
+          {searchQuery || statusFilter !== "all" ? "No listings match your filter." : "No listings yet."}
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/30">
+                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Listing</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Owner</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Address</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Geo</th>
+                <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rent</th>
+                <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Views</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((l: any, i: number) => (
+                <tr key={l.id} className={`border-b border-border last:border-0 hover:bg-muted/20 transition-colors ${i % 2 === 0 ? "" : "bg-muted/5"}`}>
+                  <td className="px-5 py-3">
+                    <div className="font-medium text-foreground">{l.title || "—"}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {l.bedrooms} bd · {l.bathrooms} ba · {l.propertyType}
+                    </div>
+                  </td>
+                  <td className="px-5 py-3">
+                    <div className="text-sm text-foreground">{l.ownerName || "—"}</div>
+                    <div className="text-xs text-muted-foreground">{l.ownerEmail || `User #${l.userId}`}</div>
+                  </td>
+                  <td className="px-5 py-3 text-xs text-muted-foreground">
+                    <div className="text-foreground">{l.address}</div>
+                    <div>{l.city}, {l.state} {l.zip}</div>
+                  </td>
+                  <td className="px-5 py-3 text-xs">
+                    {l.latitude != null && l.longitude != null ? (
+                      <span className="font-mono text-muted-foreground">
+                        {Number(l.latitude).toFixed(4)},<br />{Number(l.longitude).toFixed(4)}
+                      </span>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px]">no geo</Badge>
+                    )}
+                  </td>
+                  <td className="px-5 py-3 text-right font-medium text-foreground">${l.monthlyRent?.toLocaleString() ?? "—"}</td>
+                  <td className="px-5 py-3 text-right text-muted-foreground">{l.viewCount ?? 0}</td>
+                  <td className="px-5 py-3">
+                    <Badge className={`text-xs border-0 ${STATUS_BADGE[l.status] ?? ""}`}>{l.status}</Badge>
+                  </td>
+                  <td className="px-5 py-3 text-xs text-muted-foreground">
+                    {l.createdAt ? new Date(l.createdAt).toLocaleDateString() : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Subscriptions Tab ───────────────────────────────────────────────────────
+
+function SubscriptionsTab() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const { data: subs, isLoading } = trpc.admin.getSubscriptions.useQuery();
+
+  const filtered = (subs ?? []).filter((s: any) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      s.name?.toLowerCase().includes(q) ||
+      s.email?.toLowerCase().includes(q) ||
+      s.brandName?.toLowerCase().includes(q) ||
+      s.portalSubdomain?.toLowerCase().includes(q) ||
+      s.stripeSubscriptionId?.toLowerCase().includes(q)
+    );
+  });
+
+  const totalMRR = filtered.length * 25;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Active Subscribers</div>
+          <div className="text-2xl font-bold text-foreground">{filtered.length}</div>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Est. MRR</div>
+          <div className="text-2xl font-bold text-foreground">${totalMRR.toLocaleString()}</div>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Connect Active</div>
+          <div className="text-2xl font-bold text-foreground">
+            {filtered.filter((s: any) => s.stripeConnectStatus === "active").length}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Branded Portals</div>
+          <div className="text-2xl font-bold text-foreground">
+            {filtered.filter((s: any) => s.portalSubdomain).length}
+          </div>
+        </div>
+      </div>
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="flex items-center justify-between p-5 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Crown className="h-4 w-4 text-amber-400" />
+            <h2 className="font-semibold text-foreground">Pro Subscribers</h2>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search subscribers..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-9 h-8 text-sm w-64"
+            />
+          </div>
+        </div>
+        {isLoading ? (
+          <div className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
+        ) : !filtered.length ? (
+          <div className="p-10 text-center text-muted-foreground text-sm">
+            {searchQuery ? "No subscribers match your search." : "No Pro subscribers yet."}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Subscriber</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Portal</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Connect</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Stripe Sub</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Period End</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((s: any, i: number) => (
+                  <tr key={s.id} className={`border-b border-border last:border-0 hover:bg-muted/20 transition-colors ${i % 2 === 0 ? "" : "bg-muted/5"}`}>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-amber-500/10 flex items-center justify-center text-xs font-bold text-amber-600 shrink-0">
+                          {(s.name || s.email || "?")[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="font-medium text-foreground">{s.name || "—"}</div>
+                          <div className="text-xs text-muted-foreground">{s.email || `User #${s.userId}`}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3">
+                      <Badge className={`text-xs border-0 ${
+                        s.status === "active" ? "bg-[#00C896]/10 text-[#00C896]" :
+                        s.status === "cancelled" ? "bg-red-500/10 text-red-600" :
+                        "bg-muted text-muted-foreground"
+                      }`}>
+                        {s.status}
+                      </Badge>
+                    </td>
+                    <td className="px-5 py-3 text-xs">
+                      {s.portalSubdomain ? (
+                        <div>
+                          <div className="text-foreground font-medium">{s.brandName || s.portalSubdomain}</div>
+                          <div className="text-muted-foreground font-mono">{s.portalSubdomain}.leasely.app</div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3">
+                      <Badge variant="outline" className="text-[10px]">{s.stripeConnectStatus ?? "not_connected"}</Badge>
+                    </td>
+                    <td className="px-5 py-3 font-mono text-xs text-muted-foreground truncate max-w-[180px]">
+                      {s.stripeSubscriptionId ?? "—"}
+                    </td>
+                    <td className="px-5 py-3 text-xs text-muted-foreground">
+                      {s.currentPeriodEnd ? new Date(s.currentPeriodEnd).toLocaleDateString() : "—"}
+                    </td>
+                    <td className="px-5 py-3 text-xs text-muted-foreground">
+                      {s.createdAt ? new Date(s.createdAt).toLocaleDateString() : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

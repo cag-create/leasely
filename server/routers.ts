@@ -79,7 +79,7 @@ import {
   getAreaRentRates, getAreaRentRatesByState,
   // Admin
   getAllUsers, getUserCount, getPaidUserCount, getListingCount, getApplicationCount,
-  setUserRole, getAllSubscriptions,
+  setUserRole, getAllSubscriptions, getAllListingsAdmin,
   // Creme Agents
   getCremeAgentByUserId, getCremeAgentById, getApprovedCremeAgents, getAllCremeAgents,
   upsertCremeAgent, updateCremeAgentStatus,
@@ -2362,6 +2362,13 @@ export const appRouter = router({
     getSubscriptions: protectedProcedure.query(async ({ ctx }) => {
       if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
       return getAllSubscriptions();
+    }),
+
+    getAllListings: protectedProcedure.input(z.object({
+      limit: z.number().default(200),
+    }).optional()).query(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return getAllListingsAdmin(input?.limit ?? 200);
     }),
 
     setUserRole: protectedProcedure.input(z.object({

@@ -1004,7 +1004,55 @@ export async function setUserRole(userId: number, role: "user" | "admin"): Promi
 export async function getAllSubscriptions() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(userSubscriptions).where(eq(userSubscriptions.tier, "paid")).orderBy(desc(userSubscriptions.createdAt));
+  return db.select({
+    id: userSubscriptions.id,
+    userId: userSubscriptions.userId,
+    tier: userSubscriptions.tier,
+    stripeSubscriptionId: userSubscriptions.stripeSubscriptionId,
+    stripeCustomerId: userSubscriptions.stripeCustomerId,
+    status: userSubscriptions.status,
+    currentPeriodEnd: userSubscriptions.currentPeriodEnd,
+    stripeConnectStatus: userSubscriptions.stripeConnectStatus,
+    portalSubdomain: userSubscriptions.portalSubdomain,
+    brandName: userSubscriptions.brandName,
+    createdAt: userSubscriptions.createdAt,
+    name: users.name,
+    email: users.email,
+  })
+    .from(userSubscriptions)
+    .leftJoin(users, eq(userSubscriptions.userId, users.id))
+    .where(eq(userSubscriptions.tier, "paid"))
+    .orderBy(desc(userSubscriptions.createdAt));
+}
+
+export async function getAllListingsAdmin(limit = 200) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    id: marketplaceListings.id,
+    userId: marketplaceListings.userId,
+    title: marketplaceListings.title,
+    propertyType: marketplaceListings.propertyType,
+    address: marketplaceListings.address,
+    city: marketplaceListings.city,
+    state: marketplaceListings.state,
+    zip: marketplaceListings.zip,
+    latitude: marketplaceListings.latitude,
+    longitude: marketplaceListings.longitude,
+    monthlyRent: marketplaceListings.monthlyRent,
+    bedrooms: marketplaceListings.bedrooms,
+    bathrooms: marketplaceListings.bathrooms,
+    status: marketplaceListings.status,
+    viewCount: marketplaceListings.viewCount,
+    saveCount: marketplaceListings.saveCount,
+    createdAt: marketplaceListings.createdAt,
+    ownerName: users.name,
+    ownerEmail: users.email,
+  })
+    .from(marketplaceListings)
+    .leftJoin(users, eq(marketplaceListings.userId, users.id))
+    .orderBy(desc(marketplaceListings.createdAt))
+    .limit(limit);
 }
 
 // ─── Creme Agents ─────────────────────────────────────────────────────────────

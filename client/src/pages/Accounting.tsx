@@ -43,10 +43,14 @@ const EXPENSE_CATEGORIES = [
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2];
 
+// Special filter value sentinel — "all" means no property filter
+const ALL_PROPERTIES = "__all__";
+
 export default function Accounting() {
   const { isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
+  const [propertyFilter, setPropertyFilter] = useState<string>(ALL_PROPERTIES);
   const [createOpen, setCreateOpen] = useState(false);
   const [entryType, setEntryType] = useState<"income" | "expense">("income");
   const [form, setForm] = useState({
@@ -56,6 +60,8 @@ export default function Accounting() {
     date: new Date().toISOString().split("T")[0],
     description: "",
     propertyAddress: "",
+    crmPropertyId: undefined as number | undefined,
+    listingId: undefined as number | undefined,
   });
 
   const { data: entries, refetch } = trpc.accounting.list.useQuery(
@@ -63,11 +69,46 @@ export default function Accounting() {
     { enabled: isAuthenticated, retry: false }
   );
 
+  // Pull user's portfolio (CRM properties + active listings) for the dropdown
+  const { data: crmProperties = [] } = trpc.crm.listProperties.useQuery(
+    undefined,
+    { enabled: isAuthenticated, retry: false }
+  );
+  const { data: myListings = [] } = trpc.marketplace.getMyListings.useQuery(
+    undefined,
+    { enabled: isAuthenticated, retry: false }
+  );
+
+  // Build a unified portfolio list — CRM properties take precedence by id,
+  // listings shown if not already linked to a CRM property.
+  const portfolio = useMemo(() => {
+    const items: { key: string; label: string; crmPropertyId?: number; listingId?: number; address: string }[] = [];
+    crmProperties.forEach((p: any) => {
+      items.push({
+        key: `crm:${p.id}`,
+        label: p.address + (p.city ? `, ${p.city}` : ""),
+        crmPropertyId: p.id,
+        address: [p.address, p.city, p.state].filter(Boolean).join(", "),
+      });
+    });
+    myListings.forEach((l: any) => {
+      // skip if already linked via crm
+      if (crmProperties.some((p: any) => p.listingId === l.id)) return;
+      items.push({
+        key: `listing:${l.id}`,
+        label: l.title || l.address,
+        listingId: l.id,
+        address: [l.address, l.city, l.state].filter(Boolean).join(", "),
+      });
+    });
+    return items;
+  }, [crmProperties, myListings]);
+
   const createMutation = trpc.accounting.create.useMutation({
     onSuccess: () => {
       toast.success("Entry added");
       setCreateOpen(false);
-      setForm({ type: "income", category: "rent", amount: "", date: new Date().toISOString().split("T")[0], description: "", propertyAddress: "" });
+      setForm({ type: "income", category: "rent", amount: "", date: new Date().toISOString().split("T")[0], description: "", propertyAddress: "", crmPropertyId: undefined, listingId: undefined });
       refetch();
     },
     onError: (e) => toast.error(e.message),
@@ -78,15 +119,53 @@ export default function Accounting() {
     onError: (e) => toast.error(e.message),
   });
 
+  // Apply property filter to entries
+  const filteredEntries = useMemo(() => {
+    if (!entries) return [];
+    if (propertyFilter === ALL_PROPERTIES) return entries;
+    if (propertyFilter.startsWith("crm:")) {
+      const id = parseInt(propertyFilter.slice(4));
+      return entries.filter(e => e.crmPropertyId === id);
+    }
+    if (propertyFilter.startsWith("listing:")) {
+      const id = parseInt(propertyFilter.slice(8));
+      return entries.filter(e => e.listingId === id);
+    }
+    return entries;
+  }, [entries, propertyFilter]);
+
   const summary = useMemo(() => {
-    if (!entries) return { totalIncome: 0, totalExpenses: 0, netIncome: 0, byCategory: {} as Record<string, number> };
-    const totalIncome = entries.filter(e => e.type === "income").reduce((sum, e) => sum + e.amount, 0);
-    const totalExpenses = entries.filter(e => e.type === "expense").reduce((sum, e) => sum + e.amount, 0);
+    const totalIncome = filteredEntries.filter(e => e.type === "income").reduce((sum, e) => sum + e.amount, 0);
+    const totalExpenses = filteredEntries.filter(e => e.type === "expense").reduce((sum, e) => sum + e.amount, 0);
     const byCategory: Record<string, number> = {};
-    entries.forEach(e => {
+    filteredEntries.forEach(e => {
       byCategory[e.category] = (byCategory[e.category] ?? 0) + e.amount;
     });
     return { totalIncome, totalExpenses, netIncome: totalIncome - totalExpenses, byCategory };
+  }, [filteredEntries]);
+
+  // Per-property P&L breakdown — keyed by property identity (crmPropertyId, listingId, or address)
+  const perPropertyBreakdown = useMemo(() => {
+    if (!entries) return [];
+    const map = new Map<string, { label: string; income: number; expenses: number; count: number }>();
+    entries.forEach(e => {
+      const key = e.crmPropertyId
+        ? `crm:${e.crmPropertyId}`
+        : e.listingId
+        ? `listing:${e.listingId}`
+        : e.propertyAddress
+        ? `addr:${e.propertyAddress}`
+        : "unassigned";
+      const label = e.propertyAddress || "Unassigned";
+      const cur = map.get(key) ?? { label, income: 0, expenses: 0, count: 0 };
+      if (e.type === "income") cur.income += e.amount;
+      else cur.expenses += e.amount;
+      cur.count += 1;
+      map.set(key, cur);
+    });
+    return Array.from(map.entries())
+      .map(([key, v]) => ({ key, ...v, net: v.income - v.expenses }))
+      .sort((a, b) => b.net - a.net);
   }, [entries]);
 
   const fmt = (cents: number) => `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
@@ -185,8 +264,8 @@ export default function Accounting() {
     );
   }
 
-  const incomeEntries = entries?.filter(e => e.type === "income") ?? [];
-  const expenseEntries = entries?.filter(e => e.type === "expense") ?? [];
+  const incomeEntries = filteredEntries.filter(e => e.type === "income");
+  const expenseEntries = filteredEntries.filter(e => e.type === "expense");
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -201,7 +280,20 @@ export default function Accounting() {
             </h1>
             <p className="text-gray-500 mt-1">Track income and expenses · Export for taxes</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            {portfolio.length > 0 && (
+              <Select value={propertyFilter} onValueChange={setPropertyFilter}>
+                <SelectTrigger className="w-56">
+                  <SelectValue placeholder="All properties" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_PROPERTIES}>All properties</SelectItem>
+                  {portfolio.map(p => (
+                    <SelectItem key={p.key} value={p.key}>{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Select value={selectedYear.toString()} onValueChange={v => setSelectedYear(parseInt(v))}>
               <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -270,8 +362,48 @@ export default function Accounting() {
                     </div>
                   </div>
                   <div>
-                    <Label>Property Address</Label>
-                    <Input value={form.propertyAddress} onChange={e => setForm(f => ({ ...f, propertyAddress: e.target.value }))} placeholder="123 Main St, Charlotte, NC" />
+                    <Label>Property</Label>
+                    {portfolio.length > 0 ? (
+                      <Select
+                        value={
+                          form.crmPropertyId ? `crm:${form.crmPropertyId}`
+                          : form.listingId ? `listing:${form.listingId}`
+                          : "manual"
+                        }
+                        onValueChange={(v) => {
+                          if (v === "manual") {
+                            setForm(f => ({ ...f, crmPropertyId: undefined, listingId: undefined, propertyAddress: "" }));
+                            return;
+                          }
+                          const item = portfolio.find(p => p.key === v);
+                          if (!item) return;
+                          setForm(f => ({
+                            ...f,
+                            crmPropertyId: item.crmPropertyId,
+                            listingId: item.listingId,
+                            propertyAddress: item.address,
+                          }));
+                        }}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Select a property..." /></SelectTrigger>
+                        <SelectContent>
+                          {portfolio.map(p => (
+                            <SelectItem key={p.key} value={p.key}>{p.label}</SelectItem>
+                          ))}
+                          <SelectItem value="manual">— Type address manually —</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input value={form.propertyAddress} onChange={e => setForm(f => ({ ...f, propertyAddress: e.target.value }))} placeholder="123 Main St, Charlotte, NC" />
+                    )}
+                    {!form.crmPropertyId && !form.listingId && portfolio.length > 0 && (
+                      <Input
+                        className="mt-2"
+                        value={form.propertyAddress}
+                        onChange={e => setForm(f => ({ ...f, propertyAddress: e.target.value }))}
+                        placeholder="123 Main St, Charlotte, NC"
+                      />
+                    )}
                   </div>
                   <div>
                     <Label>Description (optional)</Label>
@@ -280,7 +412,13 @@ export default function Accounting() {
                   <Button
                     className="w-full bg-[#1B4332] hover:bg-[#2D6A4F] text-white"
                     onClick={() => createMutation.mutate({
-                      ...form,
+                      type: form.type,
+                      category: form.category,
+                      date: form.date,
+                      description: form.description || undefined,
+                      propertyAddress: form.propertyAddress || undefined,
+                      crmPropertyId: form.crmPropertyId,
+                      listingId: form.listingId,
                       amount: Math.round(parseFloat(form.amount) * 100),
                     })}
                     disabled={!form.amount || !form.date || createMutation.isPending}
@@ -330,10 +468,63 @@ export default function Accounting() {
           </Card>
         </div>
 
+        {/* Per-Property P&L Breakdown — only when no filter is active */}
+        {propertyFilter === ALL_PROPERTIES && perPropertyBreakdown.length > 0 && (
+          <Card className="mb-8">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-[#1B4332]" />
+                Per-Property P&L · {selectedYear}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-gray-50">
+                      <th className="text-left text-xs font-medium text-gray-500 px-3 py-2">Property</th>
+                      <th className="text-right text-xs font-medium text-gray-500 px-3 py-2">Entries</th>
+                      <th className="text-right text-xs font-medium text-gray-500 px-3 py-2">Income</th>
+                      <th className="text-right text-xs font-medium text-gray-500 px-3 py-2">Expenses</th>
+                      <th className="text-right text-xs font-medium text-gray-500 px-3 py-2">Net</th>
+                      <th className="px-3 py-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {perPropertyBreakdown.map(row => (
+                      <tr key={row.key} className="border-b hover:bg-gray-50">
+                        <td className="px-3 py-2 text-sm text-gray-700">{row.label}</td>
+                        <td className="px-3 py-2 text-right text-sm text-gray-500">{row.count}</td>
+                        <td className="px-3 py-2 text-right text-sm text-green-700 font-medium">{fmt(row.income)}</td>
+                        <td className="px-3 py-2 text-right text-sm text-red-700 font-medium">{fmt(row.expenses)}</td>
+                        <td className={`px-3 py-2 text-right text-sm font-bold ${row.net >= 0 ? "text-[#1B4332]" : "text-red-700"}`}>
+                          {fmt(row.net)}
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          {(row.key.startsWith("crm:") || row.key.startsWith("listing:")) && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-xs h-7"
+                              onClick={() => setPropertyFilter(row.key)}
+                            >
+                              View →
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Entries Table */}
         <Tabs defaultValue="all">
           <TabsList className="mb-4">
-            <TabsTrigger value="all">All ({entries?.length ?? 0})</TabsTrigger>
+            <TabsTrigger value="all">All ({filteredEntries.length})</TabsTrigger>
             <TabsTrigger value="income">Income ({incomeEntries.length})</TabsTrigger>
             <TabsTrigger value="expense">Expenses ({expenseEntries.length})</TabsTrigger>
           </TabsList>
@@ -341,7 +532,7 @@ export default function Accounting() {
           {["all", "income", "expense"].map(tab => (
             <TabsContent key={tab} value={tab}>
               {(() => {
-                const rows = tab === "all" ? (entries ?? []) : tab === "income" ? incomeEntries : expenseEntries;
+                const rows = tab === "all" ? filteredEntries : tab === "income" ? incomeEntries : expenseEntries;
                 if (rows.length === 0) {
                   return (
                     <Card className="text-center py-12">
