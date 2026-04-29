@@ -411,11 +411,11 @@ export default function ProPage() {
             {/* Free package badge — the hook */}
             <div className="inline-flex items-center gap-2.5 bg-amber-500/15 border border-amber-500/30 rounded-full px-5 py-2.5 mb-8">
               <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-              <span className="text-amber-300 text-sm font-bold">$299 website + logo + domain — included free with Pro</span>
+              <span className="text-amber-300 text-sm font-bold">$399 website + logo + domain — included free with Pro</span>
             </div>
 
             <h1 className="text-5xl lg:text-7xl font-black text-white mb-5" style={{ fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.03em' }}>
-              Get a $299 website.<br /><span className="text-gradient">Pay $75.</span>
+              Get a $399 website.<br /><span className="text-gradient">Pay $75.</span>
             </h1>
 
             <p className="text-xl text-white/60 mb-4 max-w-2xl mx-auto leading-relaxed">
@@ -465,7 +465,7 @@ export default function ProPage() {
             <div className="flex flex-col md:flex-row items-center gap-10">
               <div className="flex-1">
                 <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
-                  <Star className="w-3.5 h-3.5 fill-amber-500" /> Included Free · $299 Value
+                  <Star className="w-3.5 h-3.5 fill-amber-500" /> Included Free · $399 Value
                 </div>
                 <h2 className="text-3xl font-black text-gray-900 mb-3" style={{ fontFamily: 'Outfit, sans-serif' }}>
                   Your free website, logo & domain
@@ -494,7 +494,7 @@ export default function ProPage() {
                 </div>
               </div>
               <div className="shrink-0 w-full md:w-72 rounded-2xl border-2 border-amber-200 bg-white p-6 shadow-lg text-center">
-                <div className="text-4xl font-black text-amber-500 mb-1">$299</div>
+                <div className="text-4xl font-black text-amber-500 mb-1">$399</div>
                 <div className="text-sm text-gray-500 mb-4 line-through">+ $30/yr domain</div>
                 <div className="text-2xl font-black text-green-600 mb-1">FREE</div>
                 <div className="text-xs text-gray-400 mb-5">with every Leasely Pro subscription</div>
@@ -538,7 +538,7 @@ export default function ProPage() {
                 Pro costs <strong>$75 setup + $25/mo</strong>.
                 One avoided vacancy or bad tenant returns <strong className="text-green-600">52× to 140×</strong> your investment.
               </p>
-              <p className="text-gray-400 text-xs mt-1">Plus you get a $299 free website. It's not even close.</p>
+              <p className="text-gray-400 text-xs mt-1">Plus you get a $399 free website. It's not even close.</p>
             </div>
           </div>
         </div>
