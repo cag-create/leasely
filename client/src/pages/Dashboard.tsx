@@ -454,6 +454,11 @@ export default function Dashboard() {
                           <ExternalLink className="h-3.5 w-3.5" /> View
                         </Button>
                       </Link>
+                      <Link href={`/edit-listing/${listing.id}`}>
+                        <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                          <Edit className="h-3.5 w-3.5" /> Edit
+                        </Button>
+                      </Link>
                       {isPaid && (
                         <Button
                           variant="ghost"
@@ -534,6 +539,9 @@ export default function Dashboard() {
 
           {/* Sidebar */}
           <div className="space-y-6">
+
+            {/* Pro: Onboarding checklist */}
+            {isPaid && <ProOnboardingChecklist />}
 
             {/* Pro: Portal Branding */}
             {isPaid && (
@@ -972,6 +980,73 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Pro Onboarding Checklist ────────────────────────────────────────────────
+
+function ProOnboardingChecklist() {
+  const { user } = useAuth();
+  const { data: myListings = [] } = trpc.marketplace.getMyListings.useQuery();
+  const { data: proCode } = trpc.proCode.getMine.useQuery();
+  const { data: sub } = trpc.marketplace.getMySubscription.useQuery();
+
+  const portalSubdomain = (user as any)?.portalSubdomain;
+  const hasListings = myListings.length > 0;
+  const hasConnect = (sub as any)?.stripeConnectStatus === "active";
+  const claimedCBP = proCode?.status === "redeemed";
+
+  const steps = [
+    { label: "Activate Pro", done: true, href: undefined },
+    { label: "Set up your branded portal", done: !!portalSubdomain, href: "/portal-setup" },
+    { label: "Add your first listing", done: hasListings, href: "/list-property" },
+    { label: "Connect Stripe for rent payouts", done: hasConnect, href: "/dashboard" },
+    { label: "Claim free website + logo (CBP)", done: claimedCBP, href: "/portal-setup" },
+  ];
+
+  const completedCount = steps.filter(s => s.done).length;
+  const allDone = completedCount === steps.length;
+
+  if (allDone) return null;
+
+  return (
+    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-indigo-500" />
+          <span className="font-bold text-gray-900 text-sm">Pro Setup Checklist</span>
+        </div>
+        <span className="text-xs font-semibold text-indigo-600 bg-indigo-100 rounded-full px-2.5 py-0.5">
+          {completedCount}/{steps.length}
+        </span>
+      </div>
+      {/* Progress bar */}
+      <div className="h-1.5 bg-indigo-100 rounded-full mb-4 overflow-hidden">
+        <div
+          className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+          style={{ width: `${(completedCount / steps.length) * 100}%` }}
+        />
+      </div>
+      <div className="space-y-2">
+        {steps.map((s, i) => (
+          <div key={i} className="flex items-center gap-2.5">
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${s.done ? "bg-[#00C896]/20" : "bg-white border border-gray-200"}`}>
+              {s.done
+                ? <CheckCircle2 className="h-3.5 w-3.5 text-[#00C896]" />
+                : <span className="w-1.5 h-1.5 rounded-full bg-gray-300 block" />
+              }
+            </div>
+            {s.href && !s.done ? (
+              <a href={s.href} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium hover:underline underline-offset-2 transition-colors">
+                {s.label}
+              </a>
+            ) : (
+              <span className={`text-sm ${s.done ? "text-gray-400 line-through" : "text-gray-700 font-medium"}`}>{s.label}</span>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

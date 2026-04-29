@@ -28,6 +28,7 @@ import {
   type ContractorProfile, type InsertContractorProfile,
   type ContractorReview, type InsertContractorReview,
   type ContractorLead, type InsertContractorLead,
+  proRedemptionCodes, type ProRedemptionCode,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1023,6 +1024,75 @@ export async function getAllSubscriptions() {
     .leftJoin(users, eq(userSubscriptions.userId, users.id))
     .where(eq(userSubscriptions.tier, "paid"))
     .orderBy(desc(userSubscriptions.createdAt));
+}
+
+// ─── Pro Redemption Codes ─────────────────────────────────────────────────────
+
+function generateProCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no I/O/0/1 for clarity
+  const segment = (n: number) => Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  return `LEASELY-${segment(4)}-${segment(4)}`;
+}
+
+export async function getOrCreateProCode(userId: number): Promise<ProRedemptionCode> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const [existing] = await db.select().from(proRedemptionCodes).where(eq(proRedemptionCodes.userId, userId));
+  if (existing) return existing;
+  let code = generateProCode();
+  // Ensure uniqueness
+  for (let i = 0; i < 5; i++) {
+    const [dupe] = await db.select().from(proRedemptionCodes).where(eq(proRedemptionCodes.code, code));
+    if (!dupe) break;
+    code = generateProCode();
+  }
+  const [row] = await db.insert(proRedemptionCodes).values({ userId, code }).$returningId();
+  const [created] = await db.select().from(proRedemptionCodes).where(eq(proRedemptionCodes.id, row.id));
+  return created;
+}
+
+export async function getProCodeByUserId(userId: number): Promise<ProRedemptionCode | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const [row] = await db.select().from(proRedemptionCodes).where(eq(proRedemptionCodes.userId, userId));
+  return row;
+}
+
+export async function getProCodeByCode(code: string): Promise<ProRedemptionCode | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const [row] = await db.select().from(proRedemptionCodes).where(eq(proRedemptionCodes.code, code.toUpperCase()));
+  return row;
+}
+
+export async function redeemProCode(code: string): Promise<{ success: boolean; error?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, error: "DB unavailable" };
+  const [row] = await db.select().from(proRedemptionCodes).where(eq(proRedemptionCodes.code, code.toUpperCase()));
+  if (!row) return { success: false, error: "Code not found" };
+  if (row.status === "redeemed") return { success: false, error: "Code already redeemed" };
+  if (row.status === "cancelled") return { success: false, error: "Code has been cancelled" };
+  await db.update(proRedemptionCodes)
+    .set({ status: "redeemed", redeemedAt: new Date() })
+    .where(eq(proRedemptionCodes.code, code.toUpperCase()));
+  return { success: true };
+}
+
+export async function getAllProCodes() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    id: proRedemptionCodes.id,
+    userId: proRedemptionCodes.userId,
+    code: proRedemptionCodes.code,
+    status: proRedemptionCodes.status,
+    redeemedAt: proRedemptionCodes.redeemedAt,
+    createdAt: proRedemptionCodes.createdAt,
+    name: users.name,
+    email: users.email,
+  }).from(proRedemptionCodes)
+    .leftJoin(users, eq(proRedemptionCodes.userId, users.id))
+    .orderBy(desc(proRedemptionCodes.createdAt));
 }
 
 export async function getAllListingsAdmin(limit = 200) {

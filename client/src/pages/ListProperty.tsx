@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import {
   MapPin, Upload, ChevronRight, ChevronLeft, CheckCircle2,
-  Building2, DollarSign, Image, User, Sparkles, Lock, ArrowRight
+  Building2, DollarSign, Image, User, Sparkles, Lock, ArrowRight, Loader2
 } from "lucide-react";
 import { PROPERTY_TYPES, BEDROOM_OPTIONS, US_STATES } from "@/lib/marketplace";
 import { Link } from "wouter";
@@ -66,6 +66,7 @@ export default function ListProperty() {
   const { user, isAuthenticated } = useAuth();
   const [step, setStep] = useState(1);
   const [photos, setPhotos] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [geocodedCoords, setGeocodedCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -136,18 +137,31 @@ export default function ListProperty() {
     }
   }, [watchedValues.address, watchedValues.city, watchedValues.state, watchedValues.zip]);
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
-    files.forEach(file => {
+    setUploading(true);
+    for (const file of files) {
       const reader = new FileReader();
-      reader.onload = (ev) => {
-        if (ev.target?.result) {
-          setPhotos(prev => [...prev, ev.target!.result as string]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-  };
+      await new Promise<void>((resolve) => {
+        reader.onload = async (ev) => {
+          try {
+            const res = await fetch("/api/upload", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ dataUrl: ev.target!.result, filename: file.name }),
+            });
+            const data = await res.json();
+            if (data.url) setPhotos(prev => [...prev, data.url]);
+            else toast.error("Photo upload failed");
+          } catch { toast.error("Photo upload failed"); }
+          resolve();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    setUploading(false);
+    e.target.value = "";
+  }, []);
 
   const onSubmit = (data: FormData) => {
     if (!isAuthenticated) {
@@ -179,7 +193,7 @@ export default function ListProperty() {
       airConditioning: data.airConditioning,
       dishwasher: data.dishwasher,
       utilities: data.utilities as any,
-      photos: photos.filter(p => p.startsWith("http")),
+      photos,
       contactName: data.contactName,
       contactEmail: data.contactEmail,
       contactPhone: data.contactPhone,
@@ -504,9 +518,10 @@ export default function ListProperty() {
                       onChange={handlePhotoUpload}
                     />
                     <label htmlFor="photo-upload" className="cursor-pointer">
-                      <Upload className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500 font-medium">Click to upload photos</p>
-                      <p className="text-gray-400 text-sm mt-1">JPG, PNG up to 10MB each</p>
+                      {uploading
+                        ? <><Loader2 className="h-10 w-10 text-emerald-400 mx-auto mb-3 animate-spin" /><p className="text-gray-500 font-medium">Uploading...</p></>
+                        : <><Upload className="h-10 w-10 text-gray-300 mx-auto mb-3" /><p className="text-gray-500 font-medium">Click to upload photos</p><p className="text-gray-400 text-sm mt-1">JPG, PNG, WebP up to 10MB each</p></>
+                      }
                     </label>
                   </div>
                   {photos.length > 0 && (

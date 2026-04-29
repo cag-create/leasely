@@ -80,6 +80,7 @@ import {
   // Admin
   getAllUsers, getUserCount, getPaidUserCount, getListingCount, getApplicationCount,
   setUserRole, getAllSubscriptions, getAllListingsAdmin,
+  getOrCreateProCode, getProCodeByUserId, getAllProCodes, redeemProCode,
   // Creme Agents
   getCremeAgentByUserId, getCremeAgentById, getApprovedCremeAgents, getAllCremeAgents,
   upsertCremeAgent, updateCremeAgentStatus,
@@ -594,6 +595,14 @@ export const appRouter = router({
     }),
   }),
 
+  // ─── Pro Redemption Codes (user-facing) ──────────────────────────────────
+
+  proCode: router({
+    getMine: protectedProcedure.query(async ({ ctx }) => {
+      return getProCodeByUserId(ctx.user.id);
+    }),
+  }),
+
   // ─── Marketplace: Public ──────────────────────────────────────────────────
 
   marketplace: router({
@@ -687,6 +696,10 @@ export const appRouter = router({
       return getListingsByUserId(ctx.user.id);
     }),
 
+    getMySubscription: protectedProcedure.query(async ({ ctx }) => {
+      return getUserSubscription(ctx.user.id);
+    }),
+
     /** Create a new listing (enforces tier limits) */
     createListing: protectedProcedure
       .input(z.object({
@@ -775,27 +788,61 @@ export const appRouter = router({
         title: z.string().min(5).optional(),
         description: z.string().optional(),
         monthlyRent: z.number().min(1).optional(),
+        securityDeposit: z.number().optional(),
         status: z.enum(["active", "inactive"]).optional(),
         photos: z.array(z.string()).optional(),
         petFriendly: z.boolean().optional(),
         isCoLiving: z.boolean().optional(),
+        parkingAvailable: z.boolean().optional(),
+        washerDryer: z.boolean().optional(),
+        airConditioning: z.boolean().optional(),
+        dishwasher: z.boolean().optional(),
+        utilities: z.enum(["included", "not_included", "partial"]).optional(),
         availableDate: z.string().optional(),
+        contactName: z.string().optional(),
         contactEmail: z.string().email().optional(),
         contactPhone: z.string().optional(),
+        address: z.string().optional(),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        zip: z.string().optional(),
+        neighborhood: z.string().optional(),
+        bedrooms: z.string().optional(),
+        bathrooms: z.string().optional(),
+        squareFeet: z.number().optional(),
+        propertyType: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const { id, ...data } = input;
         const updateData: Record<string, unknown> = {};
-        if (data.title !== undefined) updateData.title = data.title;
-        if (data.description !== undefined) updateData.description = data.description;
-        if (data.monthlyRent !== undefined) updateData.monthlyRent = data.monthlyRent;
-        if (data.status !== undefined) updateData.status = data.status;
+        const boolField = (v: boolean | undefined) => v !== undefined ? (v ? 1 : 0) : undefined;
+        const set = (k: string, v: unknown) => { if (v !== undefined) updateData[k] = v; };
+        set("title", data.title);
+        set("description", data.description);
+        set("monthlyRent", data.monthlyRent);
+        set("securityDeposit", data.securityDeposit);
+        set("status", data.status);
         if (data.photos !== undefined) updateData.photos = JSON.stringify(data.photos);
-        if (data.petFriendly !== undefined) updateData.petFriendly = data.petFriendly ? 1 : 0;
-        if (data.isCoLiving !== undefined) updateData.isCoLiving = data.isCoLiving ? 1 : 0;
-        if (data.availableDate !== undefined) updateData.availableDate = data.availableDate;
-        if (data.contactEmail !== undefined) updateData.contactEmail = data.contactEmail;
-        if (data.contactPhone !== undefined) updateData.contactPhone = data.contactPhone;
+        set("petFriendly", boolField(data.petFriendly));
+        set("isCoLiving", boolField(data.isCoLiving));
+        set("parkingAvailable", boolField(data.parkingAvailable));
+        set("washerDryer", boolField(data.washerDryer));
+        set("airConditioning", boolField(data.airConditioning));
+        set("dishwasher", boolField(data.dishwasher));
+        set("utilities", data.utilities);
+        set("availableDate", data.availableDate);
+        set("contactName", data.contactName);
+        set("contactEmail", data.contactEmail);
+        set("contactPhone", data.contactPhone);
+        set("address", data.address);
+        set("city", data.city);
+        set("state", data.state);
+        set("zip", data.zip);
+        set("neighborhood", data.neighborhood);
+        set("bedrooms", data.bedrooms);
+        set("bathrooms", data.bathrooms);
+        set("squareFeet", data.squareFeet);
+        set("propertyType", data.propertyType);
         await updateListing(id, ctx.user.id, updateData as any);
         return { success: true };
       }),
@@ -880,7 +927,7 @@ export const appRouter = router({
         client_reference_id: ctx.user.id.toString(),
         metadata: { user_id: ctx.user.id.toString(), customer_email: ctx.user.email ?? "", customer_name: ctx.user.name ?? "", referral_code: input?.referralCode ?? "" },
         allow_promotion_codes: true,
-        success_url: `${origin}/pro-setup?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${origin}/portal-setup?session_id={CHECKOUT_SESSION_ID}&pro_welcome=1`,
         cancel_url: `${origin}/pro`,
       });
       return { url: session.url };
@@ -2369,6 +2416,17 @@ export const appRouter = router({
     }).optional()).query(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
       return getAllListingsAdmin(input?.limit ?? 200);
+    }),
+
+    getProCodes: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return getAllProCodes();
+    }),
+
+    cancelProCode: protectedProcedure.input(z.object({ code: z.string() })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const result = await redeemProCode(input.code); // reuse mark-as-used; we'll add cancel separately
+      return { success: true };
     }),
 
     setUserRole: protectedProcedure.input(z.object({

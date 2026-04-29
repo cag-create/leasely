@@ -9,7 +9,7 @@ import {
   Globe, CreditCard, Shield, Wrench, BarChart3, Users, QrCode, Building2,
   Zap, CheckCircle2, ArrowRight, Play, Star, DollarSign,
   FileText, Bell, TrendingUp, Sparkles, Award, Lock, ChevronRight,
-  MapPin, Home as HomeIcon, X, ExternalLink
+  MapPin, Home as HomeIcon, X, ExternalLink, Package
 } from "lucide-react";
 
 const BRAND = "#0F1F4B";
@@ -402,30 +402,37 @@ export default function ProPage() {
       {/* ═══════════════════════════════════════════════════════════
           HERO
       ═══════════════════════════════════════════════════════════ */}
-      <section className="pro-bg min-h-[85vh] flex items-center relative">
-        {/* Decorative rings */}
+      <section className="pro-bg min-h-[92vh] flex items-center relative">
         <div className="absolute top-1/2 right-0 w-[700px] h-[700px] rounded-full opacity-[0.05] border border-teal-400 pointer-events-none" style={{ transform: 'translate(35%, -50%)' }} />
         <div className="absolute top-1/2 right-0 w-[500px] h-[500px] rounded-full opacity-[0.07] border border-teal-400 pointer-events-none" style={{ transform: 'translate(35%, -50%)' }} />
 
         <div className="container relative z-10 py-24">
           <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-teal-500/15 border border-teal-500/25 rounded-full px-5 py-2.5 mb-8">
-              <Award className="w-4 h-4 text-teal-400" />
-              <span className="text-teal-300 text-sm font-semibold">Leasely Pro™ — The Complete Landlord OS</span>
+            {/* Free package badge — the hook */}
+            <div className="inline-flex items-center gap-2.5 bg-amber-500/15 border border-amber-500/30 rounded-full px-5 py-2.5 mb-8">
+              <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+              <span className="text-amber-300 text-sm font-bold">$299 website + logo + domain — included free with Pro</span>
             </div>
 
-            <h1 className="text-6xl lg:text-7xl font-black text-white mb-6" style={{ fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.03em' }}>
-              Run Your Rental<br /><span className="text-gradient">Business Like a Pro</span>
+            <h1 className="text-5xl lg:text-7xl font-black text-white mb-5" style={{ fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.03em' }}>
+              Get a $299 website.<br /><span className="text-gradient">Pay $75.</span>
             </h1>
 
-            <p className="text-xl text-white/55 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Your own branded portal. Instant payouts. AI fraud applicant detection. Work order automation. Tax-ready accounting. Everything under your brand for $75 setup + $25/month.
+            <p className="text-xl text-white/60 mb-4 max-w-2xl mx-auto leading-relaxed">
+              Every Leasely Pro member gets a <strong className="text-white">free professional website, custom logo, and 1-year domain</strong> — built by Certify Business Pro.
+              Plus a full landlord OS for $25/month.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            {/* ROI proof */}
+            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-5 py-3 mb-10">
+              <TrendingUp className="w-4 h-4 text-teal-400 shrink-0" />
+              <span className="text-white/70 text-sm">One filled vacancy pays for <strong className="text-white">2 years of Pro</strong> · One avoided eviction saves <strong className="text-white">$3,500+</strong></span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
               <a href={isAuthenticated ? "/dashboard" : getLoginUrl()}>
                 <Button size="lg" className="btn-teal font-black px-10 py-4 text-base gap-2">
-                  <Sparkles className="w-5 h-5" /> Start Pro — $75 setup + $25/mo
+                  <Sparkles className="w-5 h-5" /> Get Pro — $75 setup + $25/mo
                 </Button>
               </a>
               <Button
@@ -438,12 +445,120 @@ export default function ProPage() {
               </Button>
             </div>
 
-            {/* Social proof */}
-            <div className="flex flex-wrap items-center justify-center gap-6 text-white/35 text-sm">
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>$75 one-time setup</span></div>
+            {/* Trust strip */}
+            <div className="flex flex-wrap items-center justify-center gap-5 text-white/40 text-sm">
+              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span className="text-white/60 font-medium">30-day money-back guarantee</span></div>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>Cancel anytime</span></div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>Waived ACH fees</span></div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>Priority 24hr support</span></div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>0% ACH fees</span></div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>5-7 day website delivery</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════
+          FREE PACKAGE CALLOUT
+      ═══════════════════════════════════════════════════════════ */}
+      <section className="py-16 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
+        <div className="container">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex flex-col md:flex-row items-center gap-10">
+              <div className="flex-1">
+                <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
+                  <Star className="w-3.5 h-3.5 fill-amber-500" /> Included Free · $299 Value
+                </div>
+                <h2 className="text-3xl font-black text-gray-900 mb-3" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                  Your free website, logo & domain
+                </h2>
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                  Every Pro member gets a complete online presence package — designed and delivered by
+                  <a href="https://certifybusinesspro.com" target="_blank" rel="noopener" className="text-amber-600 font-semibold hover:underline"> Certify Business Pro</a>.
+                  Delivered in 5–7 business days.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {[
+                    "Custom professional website design",
+                    "7 unique logo concepts",
+                    "1-year domain registration (your choice)",
+                    "1-year managed hosting",
+                    "AI color palette recommendations",
+                    "Mobile-responsive + SEO optimized",
+                    "Contact form + social media links",
+                    "$30/yr domain renewal after year 1",
+                  ].map((f, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span className="text-sm text-gray-700">{f}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="shrink-0 w-full md:w-72 rounded-2xl border-2 border-amber-200 bg-white p-6 shadow-lg text-center">
+                <div className="text-4xl font-black text-amber-500 mb-1">$299</div>
+                <div className="text-sm text-gray-500 mb-4 line-through">+ $30/yr domain</div>
+                <div className="text-2xl font-black text-green-600 mb-1">FREE</div>
+                <div className="text-xs text-gray-400 mb-5">with every Leasely Pro subscription</div>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-5">
+                  <p className="text-xs text-amber-700 font-semibold">You receive a unique one-time redemption code after signup — use it on certifybusinesspro.com</p>
+                </div>
+                <a href={isAuthenticated ? "/dashboard" : getLoginUrl()}>
+                  <Button className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold">
+                    Claim Mine — $75 Setup
+                  </Button>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════
+          ROI CALCULATOR
+      ═══════════════════════════════════════════════════════════ */}
+      <section className="py-16 bg-white border-b border-gray-100">
+        <div className="container">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-3xl font-black text-gray-900 mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>Does Pro pay for itself?</h2>
+            <p className="text-gray-500 mb-10">Almost always in the first 30 days.</p>
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                { scenario: "1 vacancy filled faster", saving: "$1,300", desc: "Avg landlord loses $1,300/mo per vacant unit. Pro listings convert faster.", color: "#00C896" },
+                { scenario: "1 bad tenant avoided", saving: "$3,500", desc: "Average eviction costs $3,500 in legal fees + lost rent. AI screening prevents this.", color: "#6366F1" },
+                { scenario: "Hours saved monthly", saving: "8 hrs", desc: "Automated rent collection, work orders, and accounting saves ~8 hours/month.", color: "#F5A623" },
+              ].map((item, i) => (
+                <div key={i} className="rounded-2xl border border-gray-100 p-6 text-center">
+                  <div className="text-3xl font-black mb-1" style={{ color: item.color }}>{item.saving}</div>
+                  <div className="font-bold text-gray-900 text-sm mb-2">{item.scenario}</div>
+                  <div className="text-xs text-gray-500 leading-relaxed">{item.desc}</div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-8 rounded-2xl bg-gray-50 border border-gray-100 p-6 inline-block w-full">
+              <p className="text-gray-700 font-semibold">
+                Pro costs <strong>$75 setup + $25/mo</strong>.
+                One avoided vacancy or bad tenant returns <strong className="text-green-600">52× to 140×</strong> your investment.
+              </p>
+              <p className="text-gray-400 text-xs mt-1">Plus you get a $299 free website. It's not even close.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════
+          GUARANTEE BADGE
+      ═══════════════════════════════════════════════════════════ */}
+      <section className="py-12 bg-green-50 border-b border-green-100">
+        <div className="container">
+          <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+            <div className="w-20 h-20 rounded-full bg-green-100 border-2 border-green-300 flex items-center justify-center shrink-0">
+              <Shield className="w-9 h-9 text-green-600" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-gray-900 mb-1">30-Day Money-Back Guarantee</h3>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Try Leasely Pro for 30 days. If it doesn't pay for itself — for any reason — we'll refund your $75 setup fee, no questions asked.
+                You keep the website and logo we built for you.
+              </p>
             </div>
           </div>
         </div>

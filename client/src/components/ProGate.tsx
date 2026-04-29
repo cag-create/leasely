@@ -94,14 +94,14 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
             {/* Feature highlights */}
             <div className="grid grid-cols-2 gap-3 text-left">
               {[
-                "Unlimited listings",
+                "Free $299 website + logo",
                 "Branded tenant portal",
-                "Rental applications",
+                "Unlimited listings",
                 "AI fraud screening",
-                "Instant payouts",
-                "Rent rate intelligence",
+                "Instant rent payouts",
                 "Work order management",
                 "Accounting & P&L",
+                "Rent rate intelligence",
               ].map((f) => (
                 <div key={f} className="flex items-center gap-2 text-sm text-foreground">
                   <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 flex-shrink-0" />

@@ -7,7 +7,7 @@ import type { Express, Request, Response } from "express";
 import Stripe from "stripe";
 import {
   upsertUserSubscription, getUserByOpenId, getDb,
-  getLeaseById, updateLeaseAgreement, getUserById,
+  getLeaseById, updateLeaseAgreement, getUserById, getOrCreateProCode,
 } from "./db";
 import { sendEmail } from "./_core/email";
 import { affiliates, affiliateReferrals } from "../drizzle/schema";
@@ -134,6 +134,73 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   });
 
   console.log(`[Webhook] ✅ Pro provisioned for user ${userId} | Customer: ${stripeCustomerId}`);
+
+  // Generate or retrieve the user's CBP redemption code
+  let proCode: string | null = null;
+  try {
+    const codeRow = await getOrCreateProCode(userId);
+    proCode = codeRow.code;
+  } catch (err) {
+    console.warn("[Webhook] Could not generate pro code:", err);
+  }
+
+  // Send welcome email with code
+  try {
+    const user = await getUserById(userId);
+    const APP_URL = process.env.APP_URL ?? process.env.VITE_APP_URL ?? "https://leasely.net";
+    if (user?.email) {
+      const CBP_URL = `https://certifybusinesspro.com`;
+      const codeHtml = proCode
+        ? `
+          <div style="background:#f0fdf4;border:2px solid #00C896;border-radius:12px;padding:24px;text-align:center;margin:24px 0">
+            <p style="margin:0 0 8px;font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Your Free Package Code (One-Time Use)</p>
+            <p style="margin:0;font-size:28px;font-weight:900;font-family:monospace;letter-spacing:.1em;color:#0F1F4B">${proCode}</p>
+          </div>
+          <p style="color:#374151">Redeem this code at <a href="${CBP_URL}" style="color:#00C896;font-weight:600">certifybusinesspro.com</a> to claim your free website, professional logo, and 1-year domain registration — a <strong>$299 value</strong>, yours at no extra charge as a Leasely Pro member.</p>`
+        : "";
+
+      await sendEmail({
+        to: user.email,
+        subject: "Welcome to Leasely Pro 🎉 — Your free $299 package is ready",
+        html: `
+          <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#111827">
+            <div style="background:#0F1F4B;border-radius:16px;padding:32px;text-align:center;margin-bottom:24px">
+              <img src="https://d2xsxph8kpxj0f.cloudfront.net/112528410/Ucb4CaDiJcuyDWNAe95Wyq/leasely-logo-corrected_6f0929ef.png" alt="Leasely" height="40" style="margin-bottom:16px" />
+              <h1 style="margin:0;font-size:26px;font-weight:900;color:#fff">Welcome to Leasely Pro!</h1>
+              <p style="margin:8px 0 0;color:rgba(255,255,255,0.6);font-size:15px">Your landlord operating system is ready.</p>
+            </div>
+
+            <p>Hi ${user.name ?? "there"},</p>
+            <p>You're now a <strong>Leasely Pro</strong> member. Here's everything that's unlocked and ready to go:</p>
+
+            <ul style="color:#374151;line-height:2">
+              <li>✅ <strong>Branded tenant portal</strong> — set your subdomain at /portal-setup</li>
+              <li>✅ <strong>Unlimited listings</strong> with AI fraud screening on every applicant</li>
+              <li>✅ <strong>Stripe Connect</strong> — collect rent directly, 0% ACH fees</li>
+              <li>✅ <strong>Work orders, accounting, lease management</strong></li>
+              <li>✅ <strong>Rent rate intelligence</strong> — know what to charge in any market</li>
+            </ul>
+
+            ${codeHtml}
+
+            <div style="text-align:center;margin:32px 0">
+              <a href="${APP_URL}/portal-setup" style="background:#00C896;color:#0a2a1f;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:900;font-size:16px;display:inline-block">
+                Set Up Your Portal →
+              </a>
+            </div>
+
+            <p style="color:#6b7280;font-size:13px;text-align:center">Questions? Reply to this email or visit <a href="${APP_URL}/support" style="color:#00C896">leasely.net/support</a></p>
+
+            <div style="border-top:1px solid #e5e7eb;margin-top:32px;padding-top:16px;text-align:center">
+              <p style="margin:0;font-size:12px;color:#9ca3af">Leasely · Your Landlord OS · <a href="${APP_URL}" style="color:#00C896">leasely.net</a></p>
+            </div>
+          </div>`,
+      });
+      console.log(`[Webhook] ✉️ Welcome email sent to ${user.email} | Code: ${proCode}`);
+    }
+  } catch (err) {
+    console.warn("[Webhook] Welcome email failed:", err);
+  }
 
   // Credit affiliate referral if this user was referred
   const referralCode = session.metadata?.referral_code;

@@ -1276,3 +1276,17 @@ export const contractorLeads = mysqlTable("contractor_leads", {
 });
 export type ContractorLead = typeof contractorLeads.$inferSelect;
 export type InsertContractorLead = typeof contractorLeads.$inferInsert;
+
+/**
+ * One-time use Pro redemption codes — each Pro subscriber gets one code
+ * redeemable at certifybusinesspro.com for the free $299 website + logo + domain package.
+ */
+export const proRedemptionCodes = mysqlTable("pro_redemption_codes", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  code: varchar("code", { length: 32 }).notNull().unique(),
+  status: mysqlEnum("status", ["unused", "redeemed", "cancelled"]).default("unused").notNull(),
+  redeemedAt: timestamp("redeemedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ProRedemptionCode = typeof proRedemptionCodes.$inferSelect;
