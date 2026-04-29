@@ -53,6 +53,7 @@ export const userSubscriptions = mysqlTable("user_subscriptions", {
   brandLogoUrl: text("brandLogoUrl"),
   brandColor: varchar("brandColor", { length: 20 }),
   portalSubdomain: varchar("portalSubdomain", { length: 100 }),
+  customDomain: varchar("customDomain", { length: 255 }),
   portalTagline: varchar("portalTagline", { length: 255 }),
   portalSocialLinks: text("portalSocialLinks"), // JSON: { facebook, instagram, website }
   // Stripe Connect (for tenant rent payments)

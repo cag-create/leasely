@@ -10,6 +10,7 @@ import {
   workOrderDispatchEmail, tenantMaintenanceConfirmEmail, landlordMaintenanceAlertEmail,
   leaseAgreementEmail, leaseSignedPaymentEmail,
   vendorDispatchRequestEmail, vendorQuoteReceivedEmail, vendorJobCompleteEmail,
+  newInquiryEmail,
 } from "./_core/email";
 import Stripe from "stripe";
 import { createHmac, timingSafeEqual } from "crypto";
@@ -671,8 +672,28 @@ export const appRouter = router({
           message: input.message,
           moveInDate: input.moveInDate ?? null,
         });
-        // Notify the listing owner
-        await notifyOwner({
+        // Email the listing owner
+        const owner = await getUserById(listing.userId);
+        if (owner?.email) {
+          const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+          sendEmail({
+            to: owner.email,
+            subject: `New inquiry for "${listing.title}"`,
+            html: newInquiryEmail({
+              ownerName: owner.name ?? "there",
+              listingTitle: listing.title ?? "your listing",
+              senderName: input.senderName,
+              senderEmail: input.senderEmail,
+              senderPhone: input.senderPhone,
+              message: input.message,
+              moveInDate: input.moveInDate,
+              dashboardUrl: `${APP_URL}/dashboard`,
+            }),
+            replyTo: input.senderEmail,
+          }).catch(() => {});
+        }
+        // Internal notification (best-effort)
+        notifyOwner({
           title: `New inquiry for "${listing.title}"`,
           content: `From: ${input.senderName} (${input.senderEmail})\n\n${input.message}`,
         }).catch(() => {});
@@ -960,6 +981,7 @@ export const appRouter = router({
         brandLogoUrl: z.string().url().optional(),
         brandColor: z.string().optional(),
         portalSubdomain: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/, "Subdomain must be lowercase letters, numbers, and hyphens only").optional(),
+        customDomain: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const sub = await getUserSubscription(ctx.user.id);

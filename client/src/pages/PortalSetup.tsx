@@ -7,8 +7,8 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 import {
-  Globe, Palette, CheckCircle2, ArrowRight, Copy,
-  ExternalLink, Sparkles, Home, Crown, Loader2,
+  Globe, CheckCircle2, ArrowRight, Copy,
+  ExternalLink, Sparkles, Home, Crown, Loader2, Link2,
 } from "lucide-react";
 
 const CBP_URL = "https://certifybusinesspro.com";
@@ -23,6 +23,8 @@ export default function PortalSetup() {
   const [brandName, setBrandName] = useState((user as any)?.brandName ?? "");
   const [subdomain, setSubdomain] = useState((user as any)?.portalSubdomain ?? "");
   const [brandColor, setBrandColor] = useState((user as any)?.brandColor ?? "#1B2B5E");
+  const [domainMode, setDomainMode] = useState<"leasely" | "custom">("leasely");
+  const [customDomain, setCustomDomain] = useState((user as any)?.customDomain ?? "");
   const [saving, setSaving] = useState(false);
 
   const utils = trpc.useUtils();
@@ -41,9 +43,15 @@ export default function PortalSetup() {
 
   async function handleSaveBranding() {
     if (!brandName.trim()) { toast.error("Enter a brand name"); return; }
-    if (!cleanSubdomain) { toast.error("Enter a subdomain"); return; }
+    if (domainMode === "leasely" && !cleanSubdomain) { toast.error("Enter a subdomain"); return; }
+    if (domainMode === "custom" && !customDomain.trim()) { toast.error("Enter your custom domain"); return; }
     setSaving(true);
-    updateBranding.mutate({ brandName: brandName.trim(), portalSubdomain: cleanSubdomain, brandColor });
+    updateBranding.mutate({
+      brandName: brandName.trim(),
+      portalSubdomain: domainMode === "leasely" ? cleanSubdomain : undefined,
+      customDomain: domainMode === "custom" ? customDomain.trim().replace(/^https?:\/\//, "") : undefined,
+      brandColor,
+    });
     setSaving(false);
   }
 
@@ -123,20 +131,72 @@ export default function PortalSetup() {
               </div>
 
               <div>
-                <Label className="text-white/70 text-sm">Your Portal Subdomain</Label>
-                <div className="flex items-center mt-1.5 rounded-xl overflow-hidden border border-white/10">
-                  <Input
-                    value={subdomain}
-                    onChange={e => setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-                    placeholder="sunrise"
-                    className="bg-white/5 border-0 text-white placeholder:text-white/30 rounded-none flex-1"
-                  />
-                  <span className="px-3 py-2 bg-white/5 text-white/40 text-sm font-mono border-l border-white/10">.leasely.net</span>
+                <Label className="text-white/70 text-sm">Domain</Label>
+                {/* Domain mode toggle */}
+                <div className="flex gap-2 mt-1.5 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setDomainMode("leasely")}
+                    className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
+                      domainMode === "leasely"
+                        ? "border-[#00C896] bg-[#00C896]/10 text-[#00C896]"
+                        : "border-white/10 bg-white/5 text-white/50 hover:text-white/70"
+                    }`}
+                  >
+                    <Globe className="h-4 w-4 shrink-0" />
+                    <div className="text-left">
+                      <div>Leasely subdomain</div>
+                      <div className={`text-xs ${domainMode === "leasely" ? "text-[#00C896]/70" : "text-white/30"}`}>yourname.leasely.net · free</div>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDomainMode("custom")}
+                    className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
+                      domainMode === "custom"
+                        ? "border-amber-400 bg-amber-400/10 text-amber-300"
+                        : "border-white/10 bg-white/5 text-white/50 hover:text-white/70"
+                    }`}
+                  >
+                    <Link2 className="h-4 w-4 shrink-0" />
+                    <div className="text-left">
+                      <div>Custom domain</div>
+                      <div className={`text-xs ${domainMode === "custom" ? "text-amber-400/70" : "text-white/30"}`}>yourbrand.com · BYOD or via CBP</div>
+                    </div>
+                  </button>
                 </div>
-                {cleanSubdomain && (
-                  <p className="text-xs text-[#00C896] mt-1.5">
-                    Your portal: <span className="font-mono">{cleanSubdomain}.leasely.net</span>
-                  </p>
+
+                {domainMode === "leasely" ? (
+                  <>
+                    <div className="flex items-center rounded-xl overflow-hidden border border-white/10">
+                      <Input
+                        value={subdomain}
+                        onChange={e => setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                        placeholder="sunrise"
+                        className="bg-white/5 border-0 text-white placeholder:text-white/30 rounded-none flex-1"
+                      />
+                      <span className="px-3 py-2 bg-white/5 text-white/40 text-sm font-mono border-l border-white/10">.leasely.net</span>
+                    </div>
+                    {cleanSubdomain && (
+                      <p className="text-xs text-[#00C896] mt-1.5">
+                        Your portal: <span className="font-mono">{cleanSubdomain}.leasely.net</span>
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Input
+                      value={customDomain}
+                      onChange={e => setCustomDomain(e.target.value)}
+                      placeholder="yourbrand.com"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                    />
+                    <div className="mt-2 rounded-lg bg-amber-500/5 border border-amber-500/20 p-3 text-xs text-amber-300/80 space-y-1">
+                      <p className="font-semibold text-amber-300">DNS setup instructions</p>
+                      <p>Point a <strong>CNAME</strong> record for your domain to <span className="font-mono">portal.leasely.net</span></p>
+                      <p className="text-amber-300/60">Domain included free in your CBP package · $30/yr renewal · or use your own registrar</p>
+                    </div>
+                  </>
                 )}
               </div>
 

@@ -170,7 +170,7 @@ export async function upsertUserSubscription(data: InsertUserSubscription): Prom
 
 export async function updatePortalBranding(
   userId: number,
-  data: { brandName?: string; brandLogoUrl?: string; brandColor?: string; portalSubdomain?: string }
+  data: { brandName?: string; brandLogoUrl?: string; brandColor?: string; portalSubdomain?: string; customDomain?: string }
 ) {
   const db = await getDb();
   if (!db) return;
@@ -179,6 +179,7 @@ export async function updatePortalBranding(
   if (data.brandLogoUrl !== undefined) updateSet.brandLogoUrl = data.brandLogoUrl;
   if (data.brandColor !== undefined) updateSet.brandColor = data.brandColor;
   if (data.portalSubdomain !== undefined) updateSet.portalSubdomain = data.portalSubdomain;
+  if (data.customDomain !== undefined) updateSet.customDomain = data.customDomain;
   if (Object.keys(updateSet).length === 0) return;
   await db.update(userSubscriptions).set(updateSet).where(eq(userSubscriptions.userId, userId));
 }

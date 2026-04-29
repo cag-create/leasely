@@ -466,6 +466,44 @@ export function emailVerifyEmail(opts: { name: string; verifyUrl: string }) {
 </div>`;
 }
 
+export function newInquiryEmail(opts: {
+  ownerName: string;
+  listingTitle: string;
+  senderName: string;
+  senderEmail: string;
+  senderPhone?: string;
+  message: string;
+  moveInDate?: string;
+  dashboardUrl: string;
+}) {
+  return `<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto">
+  <div style="background:linear-gradient(135deg,#1B2B5E,#00C896);padding:28px;border-radius:10px 10px 0 0;color:white;text-align:center">
+    <h1 style="margin:0;font-size:22px;font-weight:800">New Inquiry Received</h1>
+    <p style="margin:8px 0 0;opacity:0.85;font-size:14px">Someone is interested in your property</p>
+  </div>
+  <div style="border:1px solid #e5e7eb;border-top:none;border-radius:0 0 10px 10px;padding:28px">
+    <p style="margin:0 0 16px;color:#374151;font-size:15px">Hi ${opts.ownerName},</p>
+    <p style="margin:0 0 20px;color:#374151;font-size:15px">You have a new inquiry for <strong>${opts.listingTitle}</strong>.</p>
+    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:0 0 20px">
+      <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">From</p>
+      <p style="margin:0 0 4px;color:#111827;font-size:15px;font-weight:600">${opts.senderName}</p>
+      <p style="margin:0 0 4px;color:#374151;font-size:14px">${opts.senderEmail}</p>
+      ${opts.senderPhone ? `<p style="margin:0;color:#374151;font-size:14px">${opts.senderPhone}</p>` : ""}
+      ${opts.moveInDate ? `<p style="margin:8px 0 0;color:#374151;font-size:13px">Desired move-in: <strong>${opts.moveInDate}</strong></p>` : ""}
+    </div>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:0 0 24px">
+      <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:.05em">Message</p>
+      <p style="margin:0;color:#15803d;font-size:15px;white-space:pre-line">${opts.message}</p>
+    </div>
+    <p style="margin:0 0 8px;color:#374151;font-size:14px">Reply directly to this email to reach ${opts.senderName}, or manage all inquiries from your dashboard.</p>
+    <div style="text-align:center;margin:24px 0 0">
+      <a href="${opts.dashboardUrl}" style="background:linear-gradient(135deg,#1B2B5E,#00C896);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block">View Dashboard</a>
+    </div>
+    <p style="margin:20px 0 0;color:#9ca3af;font-size:12px;text-align:center">Leasely · Property Management Made Simple</p>
+  </div>
+</div>`;
+}
+
 export function passwordResetEmail(opts: { name: string; resetUrl: string }) {
   return `<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto">
   <div style="background:linear-gradient(135deg,#1B2B5E,#00C896);padding:28px;border-radius:10px 10px 0 0;color:white;text-align:center">
