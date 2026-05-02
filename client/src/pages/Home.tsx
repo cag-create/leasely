@@ -156,14 +156,32 @@ export default function Home() {
                 </Link>
               </p>
 
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-white/50">
-                {["AI fraud screening included", "Instant bank payouts", "$25/mo — no per-unit fees", "First listing free"].map(item => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm text-white/55">
+                {[
+                  "AI fraud screening",
+                  "Instant bank payouts",
+                  "Branded portal + custom domain",
+                  "Tenant payments (0% ACH)",
+                  "Work orders + AI vendor dispatch",
+                  "Google contractor finder",
+                  "Accounting (IRS Schedule E)",
+                  "Property CRM + lease tracking",
+                  "Background checks (TransUnion)",
+                  "QR codes for sign riders",
+                  "$399 branded website (free)",
+                  "First listing free, $25/mo",
+                ].map(item => (
                   <span key={item} className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-[#00C896]" />
-                    {item}
+                    <CheckCircle2 className="h-3.5 w-3.5 text-[#00C896] shrink-0" />
+                    <span className="truncate">{item}</span>
                   </span>
                 ))}
               </div>
+
+              <Link href="/pro" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#00C896] hover:text-white transition-colors">
+                See all 12 Pro features in detail
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
 
             {/* Right — dashboard preview card */}
