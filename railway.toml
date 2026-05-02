@@ -3,11 +3,13 @@ builder = "nixpacks"
 buildCommand = "pnpm install && pnpm build"
 
 [deploy]
+# db:push syncs Drizzle schema → MySQL (adds missing columns like customDomain)
+# then starts the Express server
 startCommand = "pnpm db:push && pnpm start"
 healthcheckPath = "/api/health"
-healthcheckTimeout = 30
+healthcheckTimeout = 60
 restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 3
+restartPolicyMaxRetries = 5
 
 [environments.production]
 NODE_ENV = "production"

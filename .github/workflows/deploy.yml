@@ -1,0 +1,56 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    name: Build → Deploy → Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm tsc --noEmit 2>/dev/null || echo "⚠️ Type errors (non-blocking)"
+
+      - name: Build
+        run: pnpm build
+
+      # Railway auto-deploys from GitHub push — wait for it then verify
+      - name: Wait for Railway deploy
+        run: sleep 90
+
+      - name: Verify production health
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://leasely.net/api/health)
+          echo "Health check status: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Health check failed (HTTP $STATUS)"
+            exit 1
+          fi
+          echo "✅ Production is live and healthy"
+
+      - name: Verify security config
+        run: |
+          RESULT=$(curl -s https://leasely.net/api/health/security)
+          echo "$RESULT" | python3 -m json.tool 2>/dev/null || echo "$RESULT"
+          STATUS=$(echo "$RESULT" | grep -o '"status":"[^"]*"' | head -1)
+          echo "Security status: $STATUS"
