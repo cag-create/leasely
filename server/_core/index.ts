@@ -13,7 +13,7 @@ import { registerStripeWebhook } from "../stripeWebhook";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { getProCodeByCode, redeemProCode } from "../db";
+import { getProCodeByCode, redeemProCode, getProCodeWithBrief } from "../db";
 
 // Uploads directory — persistent Railway volume in production, local in dev
 const UPLOAD_DIR = process.env.NODE_ENV === "production"
@@ -108,12 +108,22 @@ async function startServer() {
     }
     const code = (req.query.code as string)?.toUpperCase();
     if (!code) return res.status(400).json({ error: "Missing code" });
-    const row = await getProCodeByCode(code);
+    const row = await getProCodeWithBrief(code);
     if (!row) return res.status(404).json({ valid: false, error: "Code not found" });
     return res.json({
       valid: row.status === "unused",
       status: row.status,
       redeemedAt: row.redeemedAt ?? null,
+      // Customer info + brand brief — so CBP team can build website/logo without re-asking
+      customer: {
+        name: row.name,
+        email: row.email,
+        brandName: row.brandName,
+        brandColor: row.brandColor,
+        portalSubdomain: row.portalSubdomain,
+        customDomain: row.customDomain,
+      },
+      brief: row.brief,
     });
   });
 

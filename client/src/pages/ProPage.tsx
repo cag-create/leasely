@@ -464,8 +464,13 @@ export default function ProPage() {
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row items-center gap-10">
               <div className="flex-1">
-                <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
+                <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1.5 rounded-full mb-3">
                   <Star className="w-3.5 h-3.5 fill-amber-500" /> Included Free · $399 Value
+                </div>
+                <div className="inline-flex items-center gap-1.5 text-xs text-amber-700/80 mb-4 pl-1">
+                  <span className="font-semibold">Brand Kit by</span>
+                  <a href="https://certifybusinesspro.com" target="_blank" rel="noopener" className="font-bold text-amber-700 hover:underline">Certify Business Pro</a>
+                  <span className="text-amber-600/60">— Leasely's official design partner</span>
                 </div>
                 <h2 className="text-3xl font-black text-gray-900 mb-3" style={{ fontFamily: 'Outfit, sans-serif' }}>
                   Your free website, logo & domain

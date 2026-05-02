@@ -56,6 +56,8 @@ export const userSubscriptions = mysqlTable("user_subscriptions", {
   customDomain: varchar("customDomain", { length: 255 }),
   portalTagline: varchar("portalTagline", { length: 255 }),
   portalSocialLinks: text("portalSocialLinks"), // JSON: { facebook, instagram, website }
+  // CBP brand brief (Pro deliverable spec the CBP team uses to build the website + logo)
+  brandBrief: text("brandBrief"), // JSON: { tagline, industry, logoStyle, palette[3], domainPrimary, domainBackup1, domainBackup2, notes, submittedAt }
   // Stripe Connect (for tenant rent payments)
   stripeConnectAccountId: varchar("stripeConnectAccountId", { length: 255 }),
   stripeConnectStatus: mysqlEnum("stripeConnectStatus", ["not_connected", "pending", "active"]).default("not_connected"),

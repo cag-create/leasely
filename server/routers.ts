@@ -1075,6 +1075,36 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    /** Save CBP brand brief — the spec the CBP team uses to build the website + logo */
+    saveBrandBrief: protectedProcedure
+      .input(z.object({
+        tagline: z.string().max(200).optional(),
+        industry: z.string().max(100).optional(),
+        logoStyle: z.enum(["modern", "classic", "bold", "minimal", "playful", "professional"]).optional(),
+        palette: z.array(z.string()).max(5).optional(),
+        domainPrimary: z.string().max(100).optional(),
+        domainBackup1: z.string().max(100).optional(),
+        domainBackup2: z.string().max(100).optional(),
+        notes: z.string().max(2000).optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const sub = await getUserSubscription(ctx.user.id);
+        if (!sub || sub.tier !== "paid") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Brand brief requires a Pro subscription" });
+        }
+        const briefJSON = JSON.stringify({ ...input, submittedAt: new Date().toISOString() });
+        await updatePortalBranding(ctx.user.id, { brandBrief: briefJSON } as any);
+        return { success: true };
+      }),
+
+    /** Get current user's brand brief (for prefilling form) */
+    getBrandBrief: protectedProcedure
+      .query(async ({ ctx }) => {
+        const sub = await getUserSubscription(ctx.user.id);
+        if (!sub?.brandBrief) return null;
+        try { return JSON.parse(sub.brandBrief); } catch { return null; }
+      }),
+
     /** Toggle round robin vendor dispatch */
     setRoundRobin: protectedProcedure
       .input(z.object({ enabled: z.boolean() }))

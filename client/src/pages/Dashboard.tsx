@@ -1052,6 +1052,11 @@ function ProOnboardingChecklist() {
           </div>
         ))}
       </div>
+      {/* CBP partnership attribution */}
+      <div className="mt-4 pt-3 border-t border-indigo-100/60 flex items-center gap-1.5 text-xs text-gray-400">
+        <Sparkles className="h-3 w-3 text-amber-500" />
+        <span>Brand kit by <a href="https://certifybusinesspro.com" target="_blank" rel="noopener" className="font-semibold text-amber-600 hover:underline">Certify Business Pro</a> — Leasely partner</span>
+      </div>
     </div>
   );
 }

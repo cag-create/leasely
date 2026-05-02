@@ -170,7 +170,7 @@ export async function upsertUserSubscription(data: InsertUserSubscription): Prom
 
 export async function updatePortalBranding(
   userId: number,
-  data: { brandName?: string; brandLogoUrl?: string; brandColor?: string; portalSubdomain?: string; customDomain?: string }
+  data: { brandName?: string; brandLogoUrl?: string; brandColor?: string; portalSubdomain?: string; customDomain?: string; brandBrief?: string }
 ) {
   const db = await getDb();
   if (!db) return;
@@ -180,6 +180,7 @@ export async function updatePortalBranding(
   if (data.brandColor !== undefined) updateSet.brandColor = data.brandColor;
   if (data.portalSubdomain !== undefined) updateSet.portalSubdomain = data.portalSubdomain;
   if (data.customDomain !== undefined) updateSet.customDomain = data.customDomain;
+  if (data.brandBrief !== undefined) updateSet.brandBrief = data.brandBrief;
   if (Object.keys(updateSet).length === 0) return;
   await db.update(userSubscriptions).set(updateSet).where(eq(userSubscriptions.userId, userId));
 }
@@ -1064,6 +1065,38 @@ export async function getProCodeByCode(code: string): Promise<ProRedemptionCode 
   if (!db) return undefined;
   const [row] = await db.select().from(proRedemptionCodes).where(eq(proRedemptionCodes.code, code.toUpperCase()));
   return row;
+}
+
+/** For CBP API — fetches code + user info + brand brief in one shot */
+export async function getProCodeWithBrief(code: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select({
+      code: proRedemptionCodes.code,
+      status: proRedemptionCodes.status,
+      redeemedAt: proRedemptionCodes.redeemedAt,
+      userId: proRedemptionCodes.userId,
+      name: users.name,
+      email: users.email,
+      brandName: userSubscriptions.brandName,
+      brandColor: userSubscriptions.brandColor,
+      portalSubdomain: userSubscriptions.portalSubdomain,
+      customDomain: userSubscriptions.customDomain,
+      brandBrief: userSubscriptions.brandBrief,
+    })
+    .from(proRedemptionCodes)
+    .leftJoin(users, eq(proRedemptionCodes.userId, users.id))
+    .leftJoin(userSubscriptions, eq(proRedemptionCodes.userId, userSubscriptions.userId))
+    .where(eq(proRedemptionCodes.code, code.toUpperCase()))
+    .limit(1);
+  if (!rows[0]) return undefined;
+  const row = rows[0];
+  let brief: any = null;
+  if (row.brandBrief) {
+    try { brief = JSON.parse(row.brandBrief); } catch {}
+  }
+  return { ...row, brief };
 }
 
 export async function redeemProCode(code: string): Promise<{ success: boolean; error?: string }> {
