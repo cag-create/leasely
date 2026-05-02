@@ -24,5 +24,14 @@ export const LEASELY_PRO_SETUP = {
   priceId: process.env.STRIPE_SETUP_FEE_PRICE_ID ?? undefined,
 };
 
+/** $30.00/year custom domain renewal (charged annually, separate from subscription) */
+export const DOMAIN_RENEWAL_ANNUAL = {
+  name: "Leasely Pro — Custom Domain Renewal",
+  description: "Annual renewal for your custom domain connected to your Leasely branded portal.",
+  annualPrice: 3000, // $30.00 in cents
+  // Set this to your Stripe one-time Price ID once created in the Stripe Dashboard.
+  priceId: process.env.STRIPE_DOMAIN_RENEWAL_PRICE_ID ?? undefined,
+};
+
 // Backwards-compatible alias
 export const LEASELY_PRO = LEASELY_PRO_MONTHLY;

@@ -60,6 +60,7 @@ export default function WorkOrders() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [findVendorData, setFindVendorData] = useState({ trade: "", city: "", state: "" });
   const [aiOutreach, setAiOutreach] = useState("");
+  const [foundVendors, setFoundVendors] = useState<Array<{ name: string; phone: string; address: string; rating?: number; website?: string }>>([]);
   const [payAmount, setPayAmount] = useState("");
   const [payDispatchId, setPayDispatchId] = useState<number | null>(null);
 
@@ -111,7 +112,11 @@ export default function WorkOrders() {
   const findVendorMutation = trpc.workOrders.findVendor.useMutation({
     onSuccess: (data) => {
       setAiOutreach(data.outreachEmail);
-      toast.success("AI outreach email drafted");
+      setFoundVendors(data.vendors ?? []);
+      const vendorCount = data.vendors?.length ?? 0;
+      toast.success(vendorCount > 0
+        ? `Found ${vendorCount} local contractor${vendorCount === 1 ? "" : "s"} — check your email for details`
+        : "AI outreach email drafted — check your email");
       refetch();
     },
     onError: (e) => toast.error(e.message),
@@ -628,29 +633,57 @@ export default function WorkOrders() {
                   </div>
                 </div>
 
-                {/* Find Vendor with AI if none assigned and no bids */}
+                {/* Find Vendor with Google Places + AI when no vendor is on file */}
                 {!selectedOrder.vendorName && (!bids || bids.length === 0) && (
                   <div className="border border-dashed border-gray-300 rounded-lg p-4">
                     <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                      <Search className="w-4 h-4 text-[#1B4332]" /> Find vendor with AI outreach
+                      <Search className="w-4 h-4 text-[#1B4332]" /> Find local contractor — Google search + AI outreach
                     </p>
                     <div className="grid grid-cols-3 gap-2 mb-3">
                       <Input placeholder="Trade (e.g. plumber)" value={findVendorData.trade} onChange={e => setFindVendorData(d => ({ ...d, trade: e.target.value }))} />
                       <Input placeholder="City" value={findVendorData.city} onChange={e => setFindVendorData(d => ({ ...d, city: e.target.value }))} />
-                      <Input placeholder="State" value={findVendorData.state} onChange={e => setFindVendorData(d => ({ ...d, state: e.target.value }))} />
+                      <Input placeholder="State (e.g. TX)" value={findVendorData.state} onChange={e => setFindVendorData(d => ({ ...d, state: e.target.value }))} />
                     </div>
                     <Button
                       size="sm"
                       className="bg-[#1B4332] hover:bg-[#2D6A4F] text-white gap-1"
-                      onClick={() => findVendorMutation.mutate({ workOrderId: selectedOrder.id, ...findVendorData })}
-                      disabled={!findVendorData.trade || !findVendorData.city || findVendorMutation.isPending}
+                      onClick={() => { setFoundVendors([]); setAiOutreach(""); findVendorMutation.mutate({ workOrderId: selectedOrder.id, ...findVendorData }); }}
+                      disabled={!findVendorData.trade || !findVendorData.city || !findVendorData.state || findVendorMutation.isPending}
                     >
                       <Bot className="w-3 h-3" />
-                      {findVendorMutation.isPending ? "Researching..." : "Draft AI Outreach Email"}
+                      {findVendorMutation.isPending ? "Searching Google + drafting email..." : "Find Contractor Near Me"}
                     </Button>
+
+                    {/* Google Places results */}
+                    {foundVendors.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <p className="text-xs font-semibold text-gray-700">Local contractors found — details emailed to you:</p>
+                        {foundVendors.map((v, i) => (
+                          <div key={i} className="bg-white border border-gray-200 rounded-lg p-3 flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-900 truncate">{v.name}</p>
+                              <p className="text-xs text-gray-500 truncate">{v.address}</p>
+                              {v.rating && <p className="text-xs text-amber-600">⭐ {v.rating}</p>}
+                            </div>
+                            <div className="flex flex-col gap-1 items-end shrink-0">
+                              {v.phone && (
+                                <a href={`tel:${v.phone}`} className="text-xs font-mono bg-green-50 text-green-700 px-2 py-0.5 rounded border border-green-200 hover:bg-green-100">
+                                  {v.phone}
+                                </a>
+                              )}
+                              {v.website && (
+                                <a href={v.website} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">website</a>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* AI outreach email */}
                     {aiOutreach && (
                       <div className="mt-3 bg-gray-50 border rounded-lg p-3">
-                        <p className="text-xs font-medium text-gray-600 mb-1">AI-Drafted Outreach Email:</p>
+                        <p className="text-xs font-medium text-gray-600 mb-1">AI-Drafted Outreach Email (also sent to your inbox):</p>
                         <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans">{aiOutreach}</pre>
                       </div>
                     )}

@@ -88,6 +88,10 @@ export default function ListingDetail() {
 
   const handleSendInquiry = (e: React.FormEvent) => {
     e.preventDefault();
+    if (contactMsg.trim().length < 10) {
+      toast.error("Message must be at least 10 characters.");
+      return;
+    }
     sendInquiryMutation.mutate({
       listingId,
       senderName: contactName,
@@ -369,6 +373,7 @@ export default function ListingDetail() {
                     value={contactMsg}
                     onChange={e => setContactMsg(e.target.value)}
                     className="min-h-24"
+                    minLength={10}
                     required
                   />
                   <Button

@@ -14,7 +14,7 @@ import {
 } from "./_core/email";
 import Stripe from "stripe";
 import { createHmac, timingSafeEqual } from "crypto";
-import { LEASELY_PRO, LEASELY_PRO_SETUP } from "./products";
+import { LEASELY_PRO, LEASELY_PRO_SETUP, DOMAIN_RENEWAL_ANNUAL } from "./products";
 import QRCode from "qrcode";
 
 // Signed tenant session token: base64url(payload).hmac
@@ -1037,6 +1037,30 @@ export const appRouter = router({
       return { url: session.url };
     }),
 
+    /** Create Stripe Checkout session for $30/yr domain renewal (Pro users only) */
+    createDomainRenewalCheckout: protectedProcedure.mutation(async ({ ctx }) => {
+      const stripe = getStripe();
+      if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured." });
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Domain renewal requires a Pro subscription." });
+      }
+      const origin = (ctx.req as any).headers?.origin ?? APP_URL;
+      const lineItem = DOMAIN_RENEWAL_ANNUAL.priceId
+        ? { price: DOMAIN_RENEWAL_ANNUAL.priceId, quantity: 1 }
+        : { price_data: { currency: "usd", product_data: { name: DOMAIN_RENEWAL_ANNUAL.name, description: DOMAIN_RENEWAL_ANNUAL.description }, unit_amount: DOMAIN_RENEWAL_ANNUAL.annualPrice }, quantity: 1 };
+      const session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        line_items: [lineItem],
+        customer_email: ctx.user.email ?? undefined,
+        client_reference_id: ctx.user.id.toString(),
+        metadata: { user_id: ctx.user.id.toString(), product: "domain_renewal" },
+        success_url: `${origin}/portal-setup?domain_renewed=1`,
+        cancel_url: `${origin}/portal-setup`,
+      });
+      return { url: session.url };
+    }),
+
     /** Simulate upgrade to paid tier (in production, wire to Stripe) */
     upgradeToPaid: protectedProcedure.mutation(async ({ ctx }) => {
       await upsertUserSubscription({
@@ -1507,7 +1531,7 @@ export const appRouter = router({
       await updateWorkOrder(id, ctx.user.id, updateData);
       return { success: true };
     }),
-    // Research local handymen when no vendor is on file
+    // Research local handymen/contractors via Google Places when no vendor is on file
     findVendor: protectedProcedure.input(z.object({
       workOrderId: z.number(),
       trade: z.string(),
@@ -1517,43 +1541,103 @@ export const appRouter = router({
       const sub = await getUserSubscription(ctx.user.id);
       if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
 
-      // AI researches and composes outreach email
+      // ── Step 1: Google Places search for local contractors ──────────────────
+      type FoundVendor = { name: string; phone: string; address: string; rating?: number; website?: string };
+      const foundVendors: FoundVendor[] = [];
+      const googleApiKey = process.env.GOOGLE_PLACES_API_KEY;
+
+      if (googleApiKey) {
+        try {
+          const query = encodeURIComponent(`${input.trade} contractor ${input.city} ${input.state}`);
+          const placesRes = await fetch(
+            `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&key=${googleApiKey}`
+          );
+          const placesData = await placesRes.json() as { results?: Array<{ place_id: string; name: string; formatted_address?: string; rating?: number }> };
+          const topPlaces = (placesData.results ?? []).slice(0, 4);
+          for (const place of topPlaces) {
+            try {
+              const detailRes = await fetch(
+                `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=name,formatted_phone_number,formatted_address,rating,website&key=${googleApiKey}`
+              );
+              const detailData = await detailRes.json() as { result?: { name?: string; formatted_phone_number?: string; formatted_address?: string; rating?: number; website?: string } };
+              const d = detailData.result ?? {};
+              foundVendors.push({
+                name: d.name ?? place.name,
+                phone: d.formatted_phone_number ?? "",
+                address: d.formatted_address ?? place.formatted_address ?? "",
+                rating: d.rating ?? place.rating,
+                website: d.website ?? "",
+              });
+            } catch { /* skip individual place detail failure */ }
+          }
+        } catch { /* Google Places unavailable — fall through */ }
+      }
+
+      // ── Step 2: AI drafts outreach email ────────────────────────────────────
       let outreachEmail = "";
       try {
         const { createOpenAI } = await import("@ai-sdk/openai");
         const { generateText } = await import("ai");
         const openai = createOpenAI({ baseURL: (process.env.BUILT_IN_FORGE_API_URL ?? "https://api.openai.com") + "/v1", apiKey: process.env.BUILT_IN_FORGE_API_KEY ?? process.env.OPENAI_API_KEY ?? "" });
+        const vendorContext = foundVendors.length > 0
+          ? `We found these local ${input.trade}s: ${foundVendors.map(v => v.name).join(", ")}. `
+          : "";
         const result = await generateText({
           model: openai("gpt-4o-mini"),
-          prompt: `Write a professional outreach email from a property manager looking for a ${input.trade} in ${input.city}, ${input.state}. The email should request availability, pricing, and contact info. Keep it under 150 words. Subject line first, then body.`,
+          prompt: `${vendorContext}Write a short, professional outreach email (under 120 words) from a property manager needing a ${input.trade} in ${input.city}, ${input.state}. Ask about availability and pricing. Subject line first, then body.`,
           maxOutputTokens: 250,
         });
         outreachEmail = result.text;
       } catch { outreachEmail = "AI unavailable — please compose email manually."; }
 
-      // Mark work order as dispatched
+      // ── Step 3: Mark work order dispatched + notify landlord ────────────────
+      const foundCount = foundVendors.length;
       await updateWorkOrder(input.workOrderId, ctx.user.id, {
         status: "dispatched",
         dispatchedAt: new Date(),
-        notes: `AI outreach email drafted for ${input.trade} in ${input.city}, ${input.state}`,
+        notes: foundCount > 0
+          ? `Found ${foundCount} local ${input.trade}(s) via Google: ${foundVendors.map(v => v.name).join(", ")}`
+          : `AI outreach drafted for ${input.trade} in ${input.city}, ${input.state}`,
       });
 
-      // Email the landlord the AI-drafted outreach for their records
       const landlordForOutreach = await getUserByOpenId(ctx.user.openId);
       if (landlordForOutreach?.email) {
+        const vendorRows = foundVendors.length > 0
+          ? `<h3 style="color:#1B2B5E;margin-top:20px">Local ${input.trade}s Found Near ${input.city}, ${input.state}</h3>
+             <table style="width:100%;border-collapse:collapse;font-size:14px">
+               <thead><tr style="background:#f3f4f6">
+                 <th style="text-align:left;padding:8px;border:1px solid #e5e7eb">Business</th>
+                 <th style="text-align:left;padding:8px;border:1px solid #e5e7eb">Phone</th>
+                 <th style="text-align:left;padding:8px;border:1px solid #e5e7eb">Rating</th>
+                 <th style="text-align:left;padding:8px;border:1px solid #e5e7eb">Address</th>
+               </tr></thead>
+               <tbody>${foundVendors.map(v => `
+                 <tr>
+                   <td style="padding:8px;border:1px solid #e5e7eb">${v.name}${v.website ? ` (<a href="${v.website}">website</a>)` : ""}</td>
+                   <td style="padding:8px;border:1px solid #e5e7eb">${v.phone || "—"}</td>
+                   <td style="padding:8px;border:1px solid #e5e7eb">${v.rating ? `⭐ ${v.rating}` : "—"}</td>
+                   <td style="padding:8px;border:1px solid #e5e7eb;font-size:12px;color:#6b7280">${v.address}</td>
+                 </tr>`).join("")}
+               </tbody>
+             </table>`
+          : `<p style="color:#6b7280">No Google Places results — add your own vendors or use the outreach email below.</p>`;
+
         sendEmail({
           to: landlordForOutreach.email,
-          subject: `[Leasely] AI Vendor Outreach Drafted — ${input.trade} in ${input.city}`,
-          html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
-            <h2 style="color:#1B2B5E">Vendor Outreach Email Drafted</h2>
-            <p>Here is the AI-generated outreach email for a <strong>${input.trade}</strong> in ${input.city}, ${input.state}:</p>
+          subject: `[Leasely] ${foundCount > 0 ? `${foundCount} Local ${input.trade}s Found` : "Vendor Outreach Drafted"} — ${input.city}, ${input.state}`,
+          html: `<div style="font-family:sans-serif;max-width:640px;margin:0 auto;padding:24px">
+            <h2 style="color:#1B2B5E">Vendor Research Complete</h2>
+            <p>Leasely searched for a <strong>${input.trade}</strong> near <strong>${input.city}, ${input.state}</strong>.</p>
+            ${vendorRows}
+            <h3 style="color:#1B2B5E;margin-top:24px">AI-Drafted Outreach Email</h3>
+            <p style="color:#6b7280;font-size:13px">Copy and send this to any of the vendors above:</p>
             <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;white-space:pre-wrap;font-size:14px">${outreachEmail}</div>
-            <p style="color:#9ca3af;font-size:12px;margin-top:16px">You can copy this email and send it to local vendors in your area.</p>
+            <p style="color:#9ca3af;font-size:11px;margin-top:16px">Powered by Leasely · Google Places</p>
           </div>`,
         }).catch(() => {});
       }
 
-      return { outreachEmail };
+      return { outreachEmail, vendors: foundVendors };
     }),
 
     // ── Tenant submits a maintenance request (no Leasely login needed) ────────
