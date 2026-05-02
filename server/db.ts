@@ -504,6 +504,45 @@ export async function getPortalBySubdomain(subdomain: string) {
 
   return {
     subdomain: sub.portalSubdomain,
+    userId: sub.userId,
+    brandName: sub.brandName ?? owner[0].name ?? "My Properties",
+    brandLogoUrl: sub.brandLogoUrl ?? null,
+    brandColor: sub.brandColor ?? "#1B2B5E",
+    portalTagline: sub.portalTagline ?? null,
+    portalSocialLinks: sub.portalSocialLinks ? JSON.parse(sub.portalSocialLinks) : {},
+    ownerName: owner[0].name ?? null,
+    ownerEmail: owner[0].email ?? null,
+    listings,
+  };
+}
+
+/**
+ * Look up a paid portal by its custom domain (e.g. atlanta-rentals.com).
+ * Used by /api/portal-leads so external CBP-built landing pages can submit
+ * contact-form leads back into the Leasely inquiry inbox.
+ */
+export async function getPortalByCustomDomain(customDomain: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const subs = await db.select().from(userSubscriptions)
+    .where(and(eq(userSubscriptions.customDomain, customDomain), eq(userSubscriptions.tier, "paid")))
+    .limit(1);
+  if (subs.length === 0) return null;
+  // Re-use the subdomain query path to keep return shape identical
+  return sub_to_portal_shape(subs[0]);
+}
+
+async function sub_to_portal_shape(sub: any) {
+  const db = await getDb();
+  if (!db) return null;
+  const owner = await db.select().from(users).where(eq(users.id, sub.userId)).limit(1);
+  if (owner.length === 0) return null;
+  const listings = await db.select().from(marketplaceListings)
+    .where(and(eq(marketplaceListings.userId, sub.userId), eq(marketplaceListings.status, "active")))
+    .orderBy(desc(marketplaceListings.createdAt));
+  return {
+    subdomain: sub.portalSubdomain,
+    userId: sub.userId,
     brandName: sub.brandName ?? owner[0].name ?? "My Properties",
     brandLogoUrl: sub.brandLogoUrl ?? null,
     brandColor: sub.brandColor ?? "#1B2B5E",

@@ -138,6 +138,81 @@ async function startServer() {
     return res.status(result.success ? 200 : 400).json(result);
   });
 
+  // ── PUBLIC LEAD CAPTURE — CBP-built landing pages POST contact-form leads here ──
+  // CORS-enabled so external custom domains (atlanta-rentals.com, etc.) can submit.
+  // Looks up the landlord by their portalSubdomain or customDomain, emails them
+  // the lead, and creates an inquiry tied to their first active listing so it
+  // flows into Leasely's existing inquiry inbox.
+  const leadLimiter = rateLimit({ windowMs: 60 * 1000, max: 5 });
+  app.post("/api/portal-leads", leadLimiter, async (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    try {
+      const { subdomain, customDomain, name, email, phone, message } = req.body as {
+        subdomain?: string; customDomain?: string;
+        name?: string; email?: string; phone?: string; message?: string;
+      };
+      if (!name || !email || !message) {
+        return res.status(400).json({ error: "name, email, message are required" });
+      }
+      if (!subdomain && !customDomain) {
+        return res.status(400).json({ error: "subdomain or customDomain is required" });
+      }
+      const { getPortalBySubdomain, getPortalByCustomDomain, createInquiry, getUserById } = await import("../db");
+      const portal = subdomain
+        ? await getPortalBySubdomain(subdomain)
+        : await getPortalByCustomDomain(customDomain!);
+      if (!portal) return res.status(404).json({ error: "Portal not found" });
+
+      // Tie lead to their first active listing (so it shows up in inquiry inbox)
+      // If they have no listings yet, just email the landlord directly.
+      const firstListing = (portal.listings as any[])[0];
+      if (firstListing) {
+        await createInquiry({
+          listingId: firstListing.id,
+          senderName: name,
+          senderEmail: email,
+          senderPhone: phone ?? null,
+          message: `[Lead from ${customDomain ?? subdomain}] ${message}`,
+          moveInDate: null,
+        });
+      }
+
+      // Email the landlord
+      const owner = await getUserById((portal as any).userId);
+      if (owner?.email) {
+        const { sendEmail } = await import("./email");
+        sendEmail({
+          to: owner.email,
+          subject: `[Leasely] New lead from your branded site — ${name}`,
+          html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+            <h2 style="color:#1B2B5E">New Lead from ${customDomain ?? `${subdomain}.leasely.net`}</h2>
+            <p><strong>${name}</strong> just submitted a contact form on your branded site:</p>
+            <ul>
+              <li><strong>Email:</strong> <a href="mailto:${email}">${email}</a></li>
+              ${phone ? `<li><strong>Phone:</strong> ${phone}</li>` : ""}
+            </ul>
+            <p style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px">${message}</p>
+            <p style="color:#9ca3af;font-size:12px;margin-top:16px">Reply directly to this email to contact the lead. Lead also saved in your Leasely inquiry inbox.</p>
+          </div>`,
+          replyTo: email,
+        }).catch(() => {});
+      }
+      return res.json({ success: true });
+    } catch (err) {
+      console.error("[portal-leads]", err);
+      return res.status(500).json({ error: "Failed to submit lead" });
+    }
+  });
+  // CORS preflight
+  app.options("/api/portal-leads", (_req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.status(204).end();
+  });
+
   // Health check for Railway (basic — used by Railway's healthcheck)
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
