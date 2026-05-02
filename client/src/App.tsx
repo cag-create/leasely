@@ -37,6 +37,7 @@ const PublicApplication   = lazy(() => import("./pages/PublicApplication"));
 const ProSetup            = lazy(() => import("./pages/ProSetup"));
 const PortalSetup         = lazy(() => import("./pages/PortalSetup"));
 const EditListing         = lazy(() => import("./pages/EditListing"));
+const ImportListings      = lazy(() => import("./pages/ImportListings"));
 const AffiliateSignup     = lazy(() => import("./pages/AffiliateSignup"));
 const AffiliateDashboard  = lazy(() => import("./pages/AffiliateDashboard"));
 const LoginPage           = lazy(() => import("./pages/LoginPage"));
@@ -89,6 +90,7 @@ function Router() {
         <Route path="/pro-setup" component={ProSetup} />
         <Route path="/portal-setup" component={PortalSetup} />
         <Route path="/edit-listing/:id" component={EditListing} />
+        <Route path="/import-listings" component={ImportListings} />
         <Route path="/marketplace" component={Marketplace} />
         <Route path="/marketplace/map" component={MapViewPage} />
         <Route path="/listing/:id" component={ListingDetail} />

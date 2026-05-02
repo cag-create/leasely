@@ -876,6 +876,89 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    /** Bulk import listings from CSV or other platforms */
+    importListings: protectedProcedure
+      .input(z.object({
+        listings: z.array(z.object({
+          title: z.string().min(3),
+          address: z.string().min(1),
+          city: z.string().min(1),
+          state: z.string().min(2),
+          zip: z.string().min(5),
+          monthlyRent: z.number().min(1),
+          bedrooms: z.string(),
+          bathrooms: z.string(),
+          propertyType: z.enum(["apartment", "house", "condo", "townhouse", "co_living", "studio", "room", "other"]).optional(),
+          description: z.string().optional(),
+          securityDeposit: z.number().optional(),
+          squareFeet: z.number().optional(),
+          availableDate: z.string().optional(),
+          petFriendly: z.boolean().optional(),
+          parkingAvailable: z.boolean().optional(),
+          washerDryer: z.boolean().optional(),
+          airConditioning: z.boolean().optional(),
+          dishwasher: z.boolean().optional(),
+          utilities: z.enum(["included", "not_included", "partial"]).optional(),
+          contactName: z.string().optional(),
+          contactPhone: z.string().optional(),
+        })).min(1).max(200),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const sub = await getUserSubscription(ctx.user.id);
+        const tier = sub?.tier ?? "free";
+        const existingCount = await countUserListings(ctx.user.id);
+
+        if (tier === "free" && existingCount >= 1) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "UPGRADE_REQUIRED" });
+        }
+
+        let imported = 0;
+        const errors: string[] = [];
+
+        for (const listing of input.listings) {
+          try {
+            await createListing({
+              userId: ctx.user.id,
+              title: listing.title,
+              description: listing.description ?? null,
+              propertyType: listing.propertyType ?? "apartment",
+              address: listing.address,
+              city: listing.city,
+              state: listing.state,
+              zip: listing.zip,
+              monthlyRent: listing.monthlyRent,
+              securityDeposit: listing.securityDeposit ?? null,
+              bedrooms: listing.bedrooms,
+              bathrooms: listing.bathrooms,
+              squareFeet: listing.squareFeet ?? null,
+              availableDate: listing.availableDate ?? null,
+              petFriendly: listing.petFriendly ? 1 : 0,
+              isCoLiving: 0,
+              parkingAvailable: listing.parkingAvailable ? 1 : 0,
+              washerDryer: listing.washerDryer ? 1 : 0,
+              airConditioning: listing.airConditioning ? 1 : 0,
+              dishwasher: listing.dishwasher ? 1 : 0,
+              utilities: listing.utilities ?? "not_included",
+              photos: null,
+              contactName: listing.contactName ?? ctx.user.name ?? null,
+              contactEmail: ctx.user.email ?? null,
+              contactPhone: listing.contactPhone ?? null,
+              neighborhood: null,
+              latitude: null,
+              longitude: null,
+              status: "active",
+              viewCount: 0,
+              saveCount: 0,
+            });
+            imported++;
+          } catch (err: any) {
+            errors.push(`${listing.address}: ${err?.message ?? "Unknown error"}`);
+          }
+        }
+
+        return { imported, errors };
+      }),
+
     /** Save / favorite a listing */
     saveListing: protectedProcedure
       .input(z.object({ listingId: z.number() }))

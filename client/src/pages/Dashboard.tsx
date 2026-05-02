@@ -299,6 +299,11 @@ export default function Dashboard() {
             >
               {isPaid ? <><Crown className="h-3.5 w-3.5 mr-1.5" />Pro Plan</> : "Free Plan"}
             </Badge>
+            <Link href="/import-listings">
+              <Button variant="outline" className="font-semibold gap-2 text-gray-600">
+                <Download className="h-4 w-4" /> Import
+              </Button>
+            </Link>
             <Link href="/list-property">
               <Button style={{ background: ACCENT, color: "#0a2a1f" }} className="font-bold gap-2">
                 <PlusCircle className="h-4 w-4" /> Add Listing
