@@ -1037,13 +1037,17 @@ export const appRouter = router({
       return { url: session.url };
     }),
 
-    /** Create Stripe Checkout session for $30/yr domain renewal (Pro users only) */
-    createDomainRenewalCheckout: protectedProcedure.mutation(async ({ ctx }) => {
+    /**
+     * Create Stripe Checkout session for $30/yr Pro Annual Portal Renewal (Pro users only).
+     * Applies to all Pro users — covers SSL, branded portal hosting, brand assets, and
+     * (for custom-domain users) registrar fees.
+     */
+    createPortalRenewalCheckout: protectedProcedure.mutation(async ({ ctx }) => {
       const stripe = getStripe();
       if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured." });
       const sub = await getUserSubscription(ctx.user.id);
       if (!sub || sub.tier !== "paid") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Domain renewal requires a Pro subscription." });
+        throw new TRPCError({ code: "FORBIDDEN", message: "Portal renewal requires a Pro subscription." });
       }
       const origin = (ctx.req as any).headers?.origin ?? APP_URL;
       const lineItem = DOMAIN_RENEWAL_ANNUAL.priceId
@@ -1054,8 +1058,8 @@ export const appRouter = router({
         line_items: [lineItem],
         customer_email: ctx.user.email ?? undefined,
         client_reference_id: ctx.user.id.toString(),
-        metadata: { user_id: ctx.user.id.toString(), product: "domain_renewal" },
-        success_url: `${origin}/portal-setup?domain_renewed=1`,
+        metadata: { user_id: ctx.user.id.toString(), product: "portal_renewal" },
+        success_url: `${origin}/portal-setup?portal_renewed=1`,
         cancel_url: `${origin}/portal-setup`,
       });
       return { url: session.url };

@@ -24,14 +24,23 @@ export const LEASELY_PRO_SETUP = {
   priceId: process.env.STRIPE_SETUP_FEE_PRICE_ID ?? undefined,
 };
 
-/** $30.00/year custom domain renewal (charged annually, separate from subscription) */
-export const DOMAIN_RENEWAL_ANNUAL = {
-  name: "Leasely Pro — Custom Domain Renewal",
-  description: "Annual renewal for your custom domain connected to your Leasely branded portal.",
+/**
+ * $30.00/year branded portal renewal — applies to ALL Pro users (subdomain or custom domain).
+ * Covers: SSL/TLS certificate renewal, branded portal hosting allocation, subdomain reservation,
+ * brand asset storage, year-2+ priority support tier, and (for custom-domain users) domain registrar fees.
+ * This is honest recurring revenue regardless of whether the customer is on yourname.leasely.net or
+ * a custom domain — the underlying portal infrastructure is the product they're paying to maintain.
+ */
+export const PRO_ANNUAL_PORTAL_RENEWAL = {
+  name: "Leasely Pro — Annual Portal Renewal",
+  description: "Annual renewal of your branded portal — covers SSL, hosting, brand assets, and (for custom-domain users) domain registration.",
   annualPrice: 3000, // $30.00 in cents
   // Set this to your Stripe one-time Price ID once created in the Stripe Dashboard.
-  priceId: process.env.STRIPE_DOMAIN_RENEWAL_PRICE_ID ?? undefined,
+  priceId: process.env.STRIPE_PORTAL_RENEWAL_PRICE_ID ?? process.env.STRIPE_DOMAIN_RENEWAL_PRICE_ID ?? undefined,
 };
+
+// Backwards-compatible alias — old name still works while callers migrate.
+export const DOMAIN_RENEWAL_ANNUAL = PRO_ANNUAL_PORTAL_RENEWAL;
 
 // Backwards-compatible alias
 export const LEASELY_PRO = LEASELY_PRO_MONTHLY;
