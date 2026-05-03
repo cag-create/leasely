@@ -207,10 +207,10 @@ type ManualRow = ReturnType<typeof csvRowToListing>;
 const EMPTY_ROW = (): ManualRow => ({
   title: "", address: "", city: "", state: "", zip: "",
   monthlyRent: 0, bedrooms: "1", bathrooms: "1", propertyType: "apartment",
-  description: undefined, securityDeposit: undefined, squareFeet: undefined,
-  availableDate: undefined, petFriendly: false, parkingAvailable: false,
+  description: "", securityDeposit: undefined, squareFeet: undefined,
+  availableDate: "", petFriendly: false, parkingAvailable: false,
   washerDryer: false, airConditioning: false, dishwasher: false,
-  utilities: "not_included", contactName: undefined, contactPhone: undefined,
+  utilities: "not_included", contactName: "", contactPhone: "",
 });
 
 // ── Main Component ─────────────────────────────────────────────────────────────
