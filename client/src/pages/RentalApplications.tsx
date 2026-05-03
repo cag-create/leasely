@@ -7,9 +7,14 @@ import DashboardLayout from "@/components/DashboardLayout";
 import {
   FileText, Users, CheckCircle2, Clock, XCircle,
   Search, Eye, Download, Share2, Copy, Filter,
-  Home, Building2, ChevronDown, AlertCircle, Plus
+  Home, Building2, ChevronDown, AlertCircle, Plus, ShieldCheck
 } from "lucide-react";
 import { toast } from "sonner";
+
+// ApplyConnect co-branded background check portal — set in Railway as VITE_APPLYCONNECT_PARTNER_URL
+// once partnership is approved. Until then the button shows a "Coming Soon" state.
+// Earns 25% royalty per completed report (≈$10/check).
+const APPLYCONNECT_URL = import.meta.env.VITE_APPLYCONNECT_PARTNER_URL || "";
 
 const STATE_DISCLOSURES: Record<string, string> = {
   CA: "California: Applicants have the right to receive a copy of any consumer report obtained. Landlord must provide written notice before obtaining a credit report.",
@@ -291,6 +296,38 @@ function ReceivedApplications({
                           Mark {s === "reviewing" ? "Under Review" : s.replace(/\b\w/g, c => c.toUpperCase())}
                         </Button>
                       ))}
+
+                      {/* Background check via ApplyConnect (TransUnion-backed, $39.95 paid by applicant) */}
+                      {app.backgroundCheckConsent ? (
+                        <Button
+                          size="sm"
+                          className="text-xs h-7 gap-1.5 bg-[#00C896] hover:bg-[#00b386] text-[#0a2a1f]"
+                          disabled={!APPLYCONNECT_URL}
+                          onClick={e => {
+                            e.stopPropagation();
+                            if (!APPLYCONNECT_URL) {
+                              toast.info("Background checks launching soon — partnership pending.");
+                              return;
+                            }
+                            // Open co-branded portal with applicant info as URL params (most ApplyConnect
+                            // co-branded portals accept these for prefill; harmless if ignored).
+                            const params = new URLSearchParams({
+                              email: app.applicantEmail ?? "",
+                              firstName: (app.applicantName ?? "").split(" ")[0] ?? "",
+                              lastName: (app.applicantName ?? "").split(" ").slice(1).join(" "),
+                            });
+                            window.open(`${APPLYCONNECT_URL}?${params.toString()}`, "_blank", "noopener");
+                          }}
+                          title={APPLYCONNECT_URL ? "Open ApplyConnect background check (TransUnion-backed)" : "Background check integration launching soon"}
+                        >
+                          <ShieldCheck className="h-3.5 w-3.5" />
+                          {APPLYCONNECT_URL ? "Run Background Check" : "Background Check (Soon)"}
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic px-2 py-1 self-center">
+                          Applicant did not consent to background check
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}
