@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "leasely",
-      "runtimeExecutable": "npm",
+      "name": "leasely-dev",
+      "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "dev"],
-      "port": 3000
+      "port": 5173
     }
   ]
 }
