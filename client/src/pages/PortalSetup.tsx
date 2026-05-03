@@ -481,7 +481,7 @@ export default function PortalSetup() {
                   <span className="text-sm text-white/80">{f}</span>
                 </div>
               ))}
-              <p className="text-xs text-amber-400/70 mt-3">Valued at $399 + $30/yr domain renewal · yours free as a Pro member</p>
+              <p className="text-xs text-amber-400/70 mt-3">Valued at $399 + $30/yr portal renewal · yours free as a Pro member</p>
             </div>
 
             {/* Code */}

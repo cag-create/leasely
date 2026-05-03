@@ -447,10 +447,10 @@ export default function ProPage() {
 
             {/* Trust strip */}
             <div className="flex flex-wrap items-center justify-center gap-5 text-white/40 text-sm">
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span className="text-white/60 font-medium">30-day money-back guarantee</span></div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span className="text-white/60 font-medium">24–72 hour delivery</span></div>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>Cancel anytime</span></div>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>0% ACH fees</span></div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>5-7 day website delivery</span></div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>No contracts</span></div>
             </div>
           </div>
         </div>
@@ -489,7 +489,7 @@ export default function ProPage() {
                     "AI color palette recommendations",
                     "Mobile-responsive + SEO optimized",
                     "Contact form + social media links",
-                    "$30/yr domain renewal after year 1",
+                    "$30/yr portal renewal after year 1",
                   ].map((f, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
@@ -500,7 +500,7 @@ export default function ProPage() {
               </div>
               <div className="shrink-0 w-full md:w-72 rounded-2xl border-2 border-amber-200 bg-white p-6 shadow-lg text-center">
                 <div className="text-4xl font-black text-amber-500 mb-1">$399</div>
-                <div className="text-sm text-gray-500 mb-4 line-through">+ $30/yr domain</div>
+                <div className="text-sm text-gray-500 mb-4 line-through">+ $30/yr portal renewal</div>
                 <div className="text-2xl font-black text-green-600 mb-1">FREE</div>
                 <div className="text-xs text-gray-400 mb-5">with every Leasely Pro subscription</div>
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-5">
@@ -559,10 +559,11 @@ export default function ProPage() {
               <Shield className="w-9 h-9 text-green-600" />
             </div>
             <div>
-              <h3 className="text-xl font-black text-gray-900 mb-1">30-Day Money-Back Guarantee</h3>
+              <h3 className="text-xl font-black text-gray-900 mb-1">No Contracts. Cancel Anytime.</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                Try Leasely Pro for 30 days. If it doesn't pay for itself — for any reason — we'll refund your $75 setup fee, no questions asked.
-                You keep the website and logo we built for you.
+                Your $25/mo Pro subscription is cancellable anytime — no questions, no pro-rated refunds.
+                Setup fee is non-refundable once design work begins (work starts immediately after payment).
+                You keep your website, logo, and domain regardless of subscription status.
               </p>
             </div>
           </div>
@@ -848,6 +849,10 @@ export default function ProPage() {
                 </Button>
               </a>
               <p className="text-center text-white/30 text-sm mt-4">$75 one-time setup (website, logo & URL) · then $25/mo · Cancel anytime</p>
+              <p className="text-center text-white/25 text-xs mt-2 leading-relaxed">
+                Setup fee non-refundable once design begins (work starts immediately, delivered in 24–72 hours).
+                Subscription cancellable anytime. <Link href="/terms" className="underline hover:text-white/50">Terms</Link>.
+              </p>
             </div>
           </div>
           <div className="text-center mt-8">

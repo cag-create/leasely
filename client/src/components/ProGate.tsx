@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -19,6 +20,7 @@ interface ProGateProps {
  */
 export function ProGate({ children, featureName = "this feature" }: ProGateProps) {
   const { user, loading, isAuthenticated } = useAuth();
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const checkoutMutation = trpc.marketplace.createProCheckout.useMutation({
     onSuccess: (data) => {
@@ -110,15 +112,34 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
               ))}
             </div>
 
+            {/* Terms acknowledgement — must be checked before checkout fires */}
+            <label className="flex items-start gap-3 text-left bg-muted/40 border border-border rounded-xl p-4 cursor-pointer hover:bg-muted/60 transition-colors">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded border-border accent-indigo-600 cursor-pointer flex-shrink-0"
+              />
+              <span className="text-xs text-muted-foreground leading-relaxed">
+                I understand: the <strong className="text-foreground">$75 setup fee is non-refundable once design work begins</strong> (work starts immediately after payment, with delivery in 24–72 hours). The $25/mo Pro subscription is cancellable anytime — no contracts, no pro-rated refunds. I keep my website, logo, and domain regardless of subscription status. I agree to Leasely's{" "}
+                <Link href="/terms" className="text-indigo-600 hover:underline" target="_blank">Terms of Service</Link>{" "}and{" "}
+                <Link href="/privacy" className="text-indigo-600 hover:underline" target="_blank">Privacy Policy</Link>.
+              </span>
+            </label>
+
             <div className="space-y-3">
               <Button
                 size="lg"
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => {
+                  if (!termsAccepted) {
+                    toast.error("Please review and accept the terms before continuing.");
+                    return;
+                  }
                   const ref = localStorage.getItem("leasely_ref") ?? undefined;
                   checkoutMutation.mutate(ref ? { referralCode: ref } : undefined);
                 }}
-                disabled={checkoutMutation.isPending}
+                disabled={checkoutMutation.isPending || !termsAccepted}
               >
                 {checkoutMutation.isPending ? (
                   <>

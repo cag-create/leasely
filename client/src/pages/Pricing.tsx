@@ -147,6 +147,15 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 export default function Pricing() {
   const { isAuthenticated } = useAuth();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
+  const handleCheckout = () => {
+    if (!termsAccepted) {
+      toast.error("Please review and accept the terms before continuing.");
+      return;
+    }
+    checkoutMutation.mutate();
+  };
 
   const checkoutMutation = trpc.marketplace.createProCheckout.useMutation({
     onSuccess: (data) => {
@@ -253,18 +262,33 @@ export default function Pricing() {
                 </Button>
               </a>
             ) : (
-              <Button
-                className="w-full font-bold mb-6 gap-2"
-                style={{ background: ACCENT, color: "#0a2a1f" }}
-                onClick={() => checkoutMutation.mutate()}
-                disabled={checkoutMutation.isPending}
-              >
-                {checkoutMutation.isPending ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Opening checkout...</>
-                ) : (
-                  <><Sparkles className="h-4 w-4" /> Get Pro — $75 setup + $25/mo</>
-                )}
-              </Button>
+              <>
+                <label className="flex items-start gap-2.5 mb-4 bg-white/5 border border-white/10 rounded-xl p-3 cursor-pointer hover:bg-white/10 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    className="mt-0.5 w-3.5 h-3.5 rounded cursor-pointer flex-shrink-0"
+                    style={{ accentColor: ACCENT }}
+                  />
+                  <span className="text-xs text-white/65 leading-relaxed">
+                    I agree: <strong className="text-white">$75 setup is non-refundable once design begins</strong> (work starts immediately, delivered in 24–72 hrs). $25/mo cancellable anytime, no pro-rated refunds. I keep my website &amp; logo regardless. <Link href="/terms" className="underline hover:text-white" target="_blank">Terms</Link> ·{" "}
+                    <Link href="/privacy" className="underline hover:text-white" target="_blank">Privacy</Link>.
+                  </span>
+                </label>
+                <Button
+                  className="w-full font-bold mb-6 gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: ACCENT, color: "#0a2a1f" }}
+                  onClick={handleCheckout}
+                  disabled={checkoutMutation.isPending || !termsAccepted}
+                >
+                  {checkoutMutation.isPending ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Opening checkout...</>
+                  ) : (
+                    <><Sparkles className="h-4 w-4" /> Get Pro — $75 setup + $25/mo</>
+                  )}
+                </Button>
+              </>
             )}
             <div className="space-y-3">
               {PRO_FEATURES.map(f => (
@@ -448,9 +472,10 @@ export default function Pricing() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="font-bold px-8 gap-2 border-white/20 text-white hover:bg-white/10"
-                  onClick={() => checkoutMutation.mutate()}
-                  disabled={checkoutMutation.isPending}
+                  className="font-bold px-8 gap-2 border-white/20 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleCheckout}
+                  disabled={checkoutMutation.isPending || !termsAccepted}
+                  title={!termsAccepted ? "Please accept the terms in the Pro pricing card above to continue" : ""}
                 >
                   {checkoutMutation.isPending ? (
                     <><Loader2 className="h-5 w-5 animate-spin" /> Opening checkout...</>
