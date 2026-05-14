@@ -214,8 +214,13 @@ async function startServer() {
   });
 
   // Health check for Railway (basic — used by Railway's healthcheck)
+  // Includes commit SHA so deploy.yml can verify the NEW build is live (not stale).
   app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
+    res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      commit: process.env.RAILWAY_GIT_COMMIT_SHA ?? process.env.GITHUB_SHA ?? "unknown",
+    });
   });
 
   // Comprehensive security & integration health check.
