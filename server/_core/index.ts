@@ -100,6 +100,40 @@ async function startServer() {
     }
   });
 
+  // Lease document upload — accepts PDF / DOC / DOCX up to 25mb. Separate route
+  // from /api/upload so we can use a larger body limit without affecting the
+  // photo endpoint, and so the MIME allowlist is explicit per use case.
+  const leaseUploadJson = express.json({ limit: "30mb" });
+  const leaseUploadLimiter = rateLimit({ windowMs: 60 * 1000, max: 10 });
+  app.post("/api/upload-lease", leaseUploadLimiter, leaseUploadJson, (req, res) => {
+    try {
+      const { dataUrl, filename } = req.body as { dataUrl?: string; filename?: string };
+      if (!dataUrl || typeof dataUrl !== "string") return res.status(400).json({ error: "Missing dataUrl" });
+      const match = dataUrl.match(/^data:([a-zA-Z0-9.+/-]+);base64,(.+)$/);
+      if (!match) return res.status(400).json({ error: "Invalid data URL" });
+      const mimeType = match[1].toLowerCase();
+      const allowed: Record<string, string> = {
+        "application/pdf": "pdf",
+        "application/msword": "doc",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+      };
+      const ext = allowed[mimeType];
+      if (!ext) return res.status(400).json({ error: "Only PDF, DOC, or DOCX files are accepted" });
+      // Approximate decoded size: base64 is ~4/3 the binary size.
+      const approxBytes = Math.floor((match[2].length * 3) / 4);
+      if (approxBytes > 25 * 1024 * 1024) return res.status(413).json({ error: "File exceeds 25 MB limit" });
+      const safeName = (filename ?? "lease").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 60);
+      const unique = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}-${safeName}.${ext}`;
+      const filePath = path.join(UPLOAD_DIR, unique);
+      fs.writeFileSync(filePath, Buffer.from(match[2], "base64"));
+      const APP_URL = process.env.APP_URL ?? process.env.VITE_APP_URL ?? "";
+      return res.json({ url: `${APP_URL}/uploads/${unique}`, filename: filename ?? `${safeName}.${ext}`, mimeType });
+    } catch (err) {
+      console.error("[UploadLease]", err);
+      return res.status(500).json({ error: "Upload failed" });
+    }
+  });
+
   // CBP (Certify Business Pro) code validation API — secured by CBP_API_SECRET header
   app.get("/api/pro-codes/validate", async (req, res) => {
     const secret = process.env.CBP_API_SECRET;
@@ -286,6 +320,11 @@ async function startServer() {
 
   server.listen(port, "0.0.0.0", () => {
     console.log(`Server running on port ${port}`);
+    // Seed lease templates after the server is accepting traffic so DB
+    // hiccups don't block startup. Idempotent: only inserts missing rows.
+    import("../leases/db-helpers")
+      .then(m => m.seedLeaseTemplatesIfEmpty())
+      .catch(err => console.warn("[Leases] template seed failed:", err));
   });
 }
 

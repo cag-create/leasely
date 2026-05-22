@@ -64,6 +64,10 @@ const ForgotPassword      = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword       = lazy(() => import("./pages/ResetPassword"));
 const VerifyEmail         = lazy(() => import("./pages/VerifyEmail"));
 const LeasePay            = lazy(() => import("./pages/LeasePay"));
+const SendLease           = lazy(() => import("./pages/SendLease"));
+const LeaseWizard         = lazy(() => import("./pages/LeaseWizard"));
+const LeasePreview        = lazy(() => import("./pages/LeasePreview"));
+const UploadOwnLease      = lazy(() => import("./pages/UploadOwnLease"));
 
 // ── Page-level loading fallback ───────────────────────────────────────────────
 function PageLoader() {
@@ -132,6 +136,18 @@ function Router() {
         {/* Lease Agreements (Pro) */}
         <Route path="/leases">
           {() => <ProGate featureName="Lease Agreements"><Leases /></ProGate>}
+        </Route>
+        <Route path="/leases/send">
+          {() => <ProGate featureName="Send a Lease"><SendLease /></ProGate>}
+        </Route>
+        <Route path="/leases/send/wizard">
+          {() => <ProGate featureName="Send a Lease"><LeaseWizard /></ProGate>}
+        </Route>
+        <Route path="/leases/send/upload">
+          {() => <ProGate featureName="Send a Lease"><UploadOwnLease /></ProGate>}
+        </Route>
+        <Route path="/leases/draft/:id">
+          {() => <ProGate featureName="Lease Agreements"><LeasePreview /></ProGate>}
         </Route>
 
         {/* Admin only */}

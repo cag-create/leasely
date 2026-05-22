@@ -1113,6 +1113,114 @@ export const leaseAgreements = mysqlTable("lease_agreements", {
 export type LeaseAgreement = typeof leaseAgreements.$inferSelect;
 export type InsertLeaseAgreement = typeof leaseAgreements.$inferInsert;
 
+// ─── Lease Templates (Phase 2) ────────────────────────────────────────────────
+// Admin-editable, state-specific. New states can be added by inserting rows.
+// Core code stays unchanged when states are added — that's the scalability rule.
+
+export const leaseTemplates = mysqlTable("lease_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  // State code ("NC", "TN") OR "ALL" for the multi-state generic template.
+  state: varchar("state", { length: 3 }).notNull(),
+  // standard_residential | coliving_room_rental | generic
+  category: mysqlEnum("category", ["standard_residential", "coliving_room_rental", "generic"]).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  // The currently-active version (FK to lease_template_versions.id). Null if none yet.
+  activeVersionId: int("activeVersionId"),
+  isActive: tinyint("isActive").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LeaseTemplate = typeof leaseTemplates.$inferSelect;
+export type InsertLeaseTemplate = typeof leaseTemplates.$inferInsert;
+
+export const leaseTemplateVersions = mysqlTable("lease_template_versions", {
+  id: int("id").autoincrement().primaryKey(),
+  templateId: int("templateId").notNull(),
+  version: int("version").notNull(),
+  // Body is the HTML/Markdown template with {{variable_name}} placeholders.
+  bodyHtml: text("bodyHtml").notNull(),
+  // JSON array of variable names used in this version (for validation).
+  variables: text("variables"),
+  // JSON array of statute citations baked into this version.
+  citations: text("citations"),
+  // JSON array of state-required disclosures embedded in this version.
+  disclosures: text("disclosures"),
+  changeNote: text("changeNote"),
+  createdByUserId: int("createdByUserId"), // admin who saved this version
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type LeaseTemplateVersion = typeof leaseTemplateVersions.$inferSelect;
+export type InsertLeaseTemplateVersion = typeof leaseTemplateVersions.$inferInsert;
+
+// One rendered/uploaded document per draft. Links to leaseAgreements (the
+// status-tracking row) when the document is part of an active lease flow.
+export const leaseDocuments = mysqlTable("lease_documents", {
+  id: int("id").autoincrement().primaryKey(),
+  leaseAgreementId: int("leaseAgreementId"), // FK to lease_agreements.id once sent
+  landlordUserId: int("landlordUserId").notNull(),
+  source: mysqlEnum("source", ["template", "uploaded"]).notNull(),
+  // template source
+  templateId: int("templateId"),
+  templateVersionId: int("templateVersionId"),
+  // For uploaded leases: the file URL on disk/storage and original filename.
+  uploadedFileUrl: text("uploadedFileUrl"),
+  uploadedFilename: varchar("uploadedFilename", { length: 255 }),
+  uploadedMimeType: varchar("uploadedMimeType", { length: 100 }),
+  // Final rendered HTML (for template path) or null (for uploaded path).
+  renderedHtml: text("renderedHtml"),
+  // Snapshot of the variable values used to render this document (JSON).
+  variableValues: text("variableValues"),
+  // Custom clauses the landlord added before send (JSON array of {title, body}).
+  customClauses: text("customClauses"),
+  // draft | sent | partially_signed | fully_signed | void
+  status: mysqlEnum("status", ["draft", "sent", "partially_signed", "fully_signed", "void"]).default("draft").notNull(),
+  // Path to the generated/uploaded PDF for download (filled when ready).
+  pdfUrl: text("pdfUrl"),
+  // Signed PDF (after both parties sign).
+  signedPdfUrl: text("signedPdfUrl"),
+  // User explicitly checked "I understand Leasely does not provide legal advice."
+  legalDisclaimerAcknowledgedAt: timestamp("legalDisclaimerAcknowledgedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LeaseDocument = typeof leaseDocuments.$inferSelect;
+export type InsertLeaseDocument = typeof leaseDocuments.$inferInsert;
+
+export const leaseSignatures = mysqlTable("lease_signatures", {
+  id: int("id").autoincrement().primaryKey(),
+  leaseDocumentId: int("leaseDocumentId").notNull(),
+  // "landlord" | "tenant" | "guarantor"
+  party: mysqlEnum("party", ["landlord", "tenant", "guarantor"]).notNull(),
+  signerName: varchar("signerName", { length: 255 }).notNull(),
+  signerEmail: varchar("signerEmail", { length: 320 }).notNull(),
+  // Captured signature image (data URL or path).
+  signatureImage: text("signatureImage"),
+  // typed-name fallback if signature drawing wasn't used
+  typedName: varchar("typedName", { length: 255 }),
+  // Audit metadata
+  ipAddress: varchar("ipAddress", { length: 64 }),
+  userAgent: text("userAgent"),
+  signedAt: timestamp("signedAt").defaultNow().notNull(),
+});
+export type LeaseSignature = typeof leaseSignatures.$inferSelect;
+export type InsertLeaseSignature = typeof leaseSignatures.$inferInsert;
+
+export const leaseAuditLogs = mysqlTable("lease_audit_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  leaseDocumentId: int("leaseDocumentId"),
+  leaseAgreementId: int("leaseAgreementId"),
+  actorUserId: int("actorUserId"),
+  // template_created, template_edited, draft_created, draft_edited, lease_sent,
+  // disclaimer_acknowledged, tenant_signed, landlord_signed, pdf_generated, voided
+  event: varchar("event", { length: 64 }).notNull(),
+  details: text("details"), // JSON
+  ipAddress: varchar("ipAddress", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type LeaseAuditLog = typeof leaseAuditLogs.$inferSelect;
+export type InsertLeaseAuditLog = typeof leaseAuditLogs.$inferInsert;
+
 // ─── Property Manager Access ──────────────────────────────────────────────────
 
 export const propertyManagerAccess = mysqlTable("property_manager_access", {

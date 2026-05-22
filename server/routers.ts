@@ -560,8 +560,14 @@ const istayRouter = router({
 });
 
 
+import { leasesRouter, adminLeaseTemplatesRouter } from "./leases/router";
+
 export const appRouter = router({
   system: systemRouter,
+  // Lease document + template system (Phase 2). Distinct from the existing
+  // `leases` router below, which handles the lease_agreements status row.
+  leaseDocs: leasesRouter,
+  adminLeaseTemplates: adminLeaseTemplatesRouter,
 
   auth: router({
     me: publicProcedure.query(async opts => {
