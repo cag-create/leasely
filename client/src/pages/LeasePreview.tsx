@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { Loader2, AlertTriangle, FileText, Send, ShieldAlert } from "lucide-react";
+import { Loader2, AlertTriangle, FileText, Send, ShieldAlert, Download } from "lucide-react";
 
 export default function LeasePreview() {
   const [, params] = useRoute("/leases/draft/:id");
@@ -36,9 +36,49 @@ export default function LeasePreview() {
   })();
   const tenantEmail: string | undefined = vars?.tenant_email;
 
+  // Computed early so the send handlers can guard against unresolved placeholders.
+  const unresolvedCount =
+    typeof doc?.renderedHtml === "string"
+      ? (doc.renderedHtml.match(/class="lease-unresolved"/g) ?? []).length
+      : 0;
+
+  const handleDownload = () => {
+    if (!doc) return;
+    if (doc.source === "uploaded" && doc.uploadedFileUrl) {
+      window.open(doc.uploadedFileUrl, "_blank", "noopener");
+      return;
+    }
+    // Open a print-to-PDF view in a new tab. The user's browser print dialog
+    // can then "Save as PDF" — works on all major desktop browsers without a
+    // server-side headless Chrome dependency.
+    const html = doc.renderedHtml ?? "";
+    const win = window.open("", "_blank");
+    if (!win) {
+      toast.error("Pop-up blocked. Allow pop-ups for this site to download.");
+      return;
+    }
+    win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Lease #${doc.id}</title>
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; max-width: 8.5in; margin: 0.75in auto; line-height: 1.55; color: #111; }
+  h1 { font-size: 1.5rem; margin: 1rem 0 0.75rem; }
+  h2 { font-size: 1.1rem; margin: 1.25rem 0 0.5rem; }
+  section { margin: 0.75rem 0; }
+  p { margin: 0.5rem 0; }
+  .lease-unresolved { background:#fee; color:#b00020; padding:0 4px; border-radius:3px; font-weight:600; }
+  .legal-disclaimer { font-size: 0.85rem; color: #666; margin-top: 1.5rem; border-top: 1px solid #ddd; padding-top: 1rem; }
+  @media print { @page { margin: 0.75in; } }
+</style>
+</head><body>${html}<script>window.onload=()=>setTimeout(()=>window.print(),250)</script></body></html>`);
+    win.document.close();
+  };
+
   const handleSend = async () => {
     if (!acknowledged) {
       toast.error("You must acknowledge the legal disclaimer before sending.");
+      return;
+    }
+    if (unresolvedCount > 0) {
+      toast.error("Fill in the highlighted placeholders before sending.");
       return;
     }
     try {
@@ -47,6 +87,18 @@ export default function LeasePreview() {
     } catch (e: any) {
       // toast handled by onError
     }
+  };
+
+  // Auto-send the lease the moment the landlord ticks the disclaimer.
+  const handleAcknowledge = (checked: boolean) => {
+    setAcknowledged(checked);
+    if (!checked) return;
+    if (unresolvedCount > 0) {
+      toast.error("Fill in the highlighted placeholders before sending.");
+      return;
+    }
+    // Defer one tick so the checkbox state visibly toggles before the send fires.
+    setTimeout(() => { handleSend(); }, 0);
   };
 
   if (!Number.isFinite(id) || id <= 0) {
@@ -83,12 +135,6 @@ export default function LeasePreview() {
   }
 
   const isUploaded = doc.source === "uploaded";
-
-  // Find any unresolved {{var}} placeholders rendered as lease-unresolved spans.
-  const unresolvedCount =
-    typeof doc.renderedHtml === "string"
-      ? (doc.renderedHtml.match(/class="lease-unresolved"/g) ?? []).length
-      : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -175,7 +221,8 @@ export default function LeasePreview() {
             <label className="flex items-start gap-2 cursor-pointer">
               <Checkbox
                 checked={acknowledged}
-                onCheckedChange={v => setAcknowledged(Boolean(v))}
+                onCheckedChange={v => handleAcknowledge(Boolean(v))}
+                disabled={sendMut.isPending || ackMut.isPending}
                 className="mt-0.5"
               />
               <span className="text-sm">
