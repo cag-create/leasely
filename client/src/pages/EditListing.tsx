@@ -19,6 +19,7 @@ import {
   Building2, DollarSign, Image, User, Loader2, X, ArrowLeft
 } from "lucide-react";
 import { PROPERTY_TYPES, BEDROOM_OPTIONS, US_STATES } from "@/lib/marketplace";
+import { prepareImageForUpload } from "@/lib/imageUpload";
 
 type FormData = {
   title: string; propertyType: string; address: string; city: string;
@@ -106,23 +107,22 @@ export default function EditListing() {
     const files = Array.from(e.target.files ?? []);
     setUploading(true);
     for (const file of files) {
-      const reader = new FileReader();
-      await new Promise<void>((resolve) => {
-        reader.onload = async (ev) => {
-          try {
-            const res = await fetch("/api/upload", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ dataUrl: ev.target!.result, filename: file.name }),
-            });
-            const data = await res.json();
-            if (data.url) setPhotos(prev => [...prev, data.url]);
-            else toast.error("Photo upload failed");
-          } catch { toast.error("Photo upload failed"); }
-          resolve();
-        };
-        reader.readAsDataURL(file);
-      });
+      try {
+        const dataUrl = await prepareImageForUpload(file);
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dataUrl, filename: file.name }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.url) {
+          setPhotos(prev => [...prev, data.url]);
+        } else {
+          toast.error(data.error || `Upload failed (${res.status})`);
+        }
+      } catch (err: any) {
+        toast.error(err?.message || "Could not read photo");
+      }
     }
     setUploading(false);
     e.target.value = "";
