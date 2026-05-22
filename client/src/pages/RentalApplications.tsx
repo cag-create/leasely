@@ -7,7 +7,8 @@ import DashboardLayout from "@/components/DashboardLayout";
 import {
   FileText, Users, CheckCircle2, Clock, XCircle,
   Search, Eye, Download, Share2, Copy, Filter,
-  Home, Building2, ChevronDown, AlertCircle, Plus, ShieldCheck
+  Home, Building2, ChevronDown, AlertCircle, Plus, ShieldCheck,
+  Sparkles, ThumbsUp, AlertTriangle, ThumbsDown, Briefcase, DollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -66,6 +67,10 @@ export default function RentalApplications() {
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedApp, setSelectedApp] = useState<number | null>(null);
+  // Tracks which application IDs have had AI screening run this session.
+  // Score + AI summary stay hidden until the landlord clicks "Run AI Screening".
+  const [screenedIds, setScreenedIds] = useState<Set<number>>(new Set());
+  const [screeningId, setScreeningId] = useState<number | null>(null);
 
   const { data: applications, isLoading } = trpc.applications.list.useQuery();
   const { data: listings } = trpc.marketplace.getMyListings.useQuery();
@@ -141,6 +146,10 @@ export default function RentalApplications() {
             statusCounts={statusCounts}
             selectedApp={selectedApp}
             setSelectedApp={setSelectedApp}
+            screenedIds={screenedIds}
+            setScreenedIds={setScreenedIds}
+            screeningId={screeningId}
+            setScreeningId={setScreeningId}
           />
         ) : (
           <SendApplicationTab listings={listings ?? []} />
@@ -152,8 +161,23 @@ export default function RentalApplications() {
 
 function ReceivedApplications({
   applications, isLoading, statusFilter, setStatusFilter,
-  searchQuery, setSearchQuery, statusCounts, selectedApp, setSelectedApp
+  searchQuery, setSearchQuery, statusCounts, selectedApp, setSelectedApp,
+  screenedIds, setScreenedIds, screeningId, setScreeningId,
 }: any) {
+  const runScreening = (id: number) => {
+    if (screenedIds.has(id) || screeningId !== null) return;
+    setScreeningId(id);
+    // Simulated AI screening latency. Replace with real Claude call when wired.
+    setTimeout(() => {
+      setScreenedIds((prev: Set<number>) => {
+        const next = new Set(prev);
+        next.add(id);
+        return next;
+      });
+      setScreeningId(null);
+      toast.success("AI screening complete.");
+    }, 1200);
+  };
   const utils = trpc.useUtils();
   const updateStatus = trpc.applications.updateStatus.useMutation({
     onSuccess: () => utils.applications.list.invalidate(),
@@ -185,10 +209,10 @@ function ReceivedApplications({
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
                 statusFilter === s
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-background text-muted-foreground border-border hover:border-primary/50"
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-muted/40 text-foreground border-border hover:bg-muted hover:border-primary/60"
               }`}
             >
               {s === "all" ? "All" : s.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase())}
@@ -240,7 +264,7 @@ function ReceivedApplications({
                     {isColiving && (
                       <Badge className="bg-purple-500/10 text-purple-600 border-0 text-xs">Member App</Badge>
                     )}
-                    {(() => {
+                    {screenedIds.has(app.id) && (() => {
                       const ts = computeTenantScore(app);
                       return (
                         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${ts.bgColor} ${ts.color}`}>
@@ -248,6 +272,14 @@ function ReceivedApplications({
                         </span>
                       );
                     })()}
+                    {!screenedIds.has(app.id) && screeningId !== app.id && (
+                      <span className="text-[11px] text-muted-foreground italic">Not yet screened</span>
+                    )}
+                    {screeningId === app.id && (
+                      <span className="text-[11px] text-primary font-semibold flex items-center gap-1">
+                        <Sparkles className="h-3 w-3 animate-pulse" /> Screening…
+                      </span>
+                    )}
                     {app.state && (
                       <Badge variant="outline" className="text-xs">{app.state}</Badge>
                     )}
@@ -263,14 +295,44 @@ function ReceivedApplications({
 
                 {/* Expanded detail */}
                 {selectedApp === app.id && (
-                  <div className="mt-4 pt-4 border-t border-border space-y-4">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                      {app.occupation && <InfoRow label="Occupation" value={app.occupation} />}
-                      {app.monthlyIncome && <InfoRow label="Monthly Income" value={`$${app.monthlyIncome}`} />}
-                      {app.employerName && <InfoRow label="Employer" value={app.employerName} />}
-                      {app.currentAddress && <InfoRow label="Current Address" value={app.currentAddress} />}
-                      {app.moveInDate && <InfoRow label="Move-in Date" value={app.moveInDate} />}
-                      {app.hasPets ? <InfoRow label="Pets" value={app.petDescription || "Yes"} /> : null}
+                  <div className="mt-4 pt-4 border-t-2 border-primary/30 space-y-4 bg-muted/30 -mx-4 -mb-4 px-4 pb-4 rounded-b-xl">
+                    {/* AI screening — gated until landlord triggers it */}
+                    {screenedIds.has(app.id) ? (
+                      <AIScreeningPanel app={app} />
+                    ) : (
+                      <div className="rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 p-5 text-center">
+                        <Sparkles className="h-6 w-6 text-primary mx-auto mb-2" />
+                        <h4 className="font-bold text-sm text-foreground mb-1">AI Screening not yet run</h4>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Click below to score this applicant and surface income, employment, and reference signals.
+                        </p>
+                        <Button
+                          size="sm"
+                          disabled={screeningId !== null}
+                          onClick={(e) => { e.stopPropagation(); runScreening(app.id); }}
+                          className="gap-1.5"
+                        >
+                          {screeningId === app.id ? (
+                            <><Sparkles className="h-3.5 w-3.5 animate-pulse" /> Screening…</>
+                          ) : (
+                            <><Sparkles className="h-3.5 w-3.5" /> Run AI Screening</>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+
+                    <div>
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Applicant Details</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                        {app.occupation && <InfoRow label="Occupation" value={app.occupation} />}
+                        {app.monthlyIncome && <InfoRow label="Monthly Income" value={`$${app.monthlyIncome}`} />}
+                        {app.employerName && <InfoRow label="Employer" value={app.employerName} />}
+                        {app.currentAddress && <InfoRow label="Current Address" value={app.currentAddress} />}
+                        {app.moveInDate && <InfoRow label="Move-in Date" value={app.moveInDate} />}
+                        {app.hasPets ? <InfoRow label="Pets" value={app.petDescription || "Yes"} /> : null}
+                        {app.currentLandlordName && <InfoRow label="Current Landlord" value={app.currentLandlordName} />}
+                        {app.emergencyContactName && <InfoRow label="Emergency Contact" value={app.emergencyContactName} />}
+                      </div>
                     </div>
                     {app.state && STATE_DISCLOSURES[app.state] && (
                       <div className="rounded-lg bg-amber-500/5 border border-amber-500/20 p-3 text-xs text-amber-700 dark:text-amber-400">
@@ -345,6 +407,98 @@ function InfoRow({ label, value }: { label: string; value: string }) {
     <div>
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="font-medium text-foreground text-sm">{value}</div>
+    </div>
+  );
+}
+
+// ── AI Screening panel ──────────────────────────────────────────────────────
+// Surfaces the tenant score breakdown + a deterministic recommendation based
+// on the applicant data we already have. Designed to be replaced later by a
+// Claude-powered narrative when we wire the AI screener service in.
+function AIScreeningPanel({ app }: { app: any }) {
+  const income = parseFloat(app.monthlyIncome ?? "0") || 0;
+  const score = computeTenantScore(app);
+
+  const factors: Array<{ label: string; weight: number; ok: boolean; note: string }> = [
+    {
+      label: "Income",
+      weight: 40,
+      ok: income >= 4500,
+      note: income >= 4500
+        ? `Strong: $${income.toLocaleString()}/mo`
+        : income >= 3750
+          ? `Moderate: $${income.toLocaleString()}/mo`
+          : income >= 3000
+            ? `Light: $${income.toLocaleString()}/mo`
+            : income > 0
+              ? `Below threshold: $${income.toLocaleString()}/mo`
+              : "Not provided",
+    },
+    { label: "Employer on file", weight: 15, ok: !!app.employerName, note: app.employerName || "Missing" },
+    { label: "Prior landlord reference", weight: 15, ok: !!app.currentLandlordName, note: app.currentLandlordName || "Missing" },
+    { label: "Background-check consent", weight: 15, ok: !!app.backgroundCheckConsent, note: app.backgroundCheckConsent ? "Consented" : "Not consented" },
+    { label: "Emergency contact", weight: 10, ok: !!app.emergencyContactName, note: app.emergencyContactName || "Missing" },
+    { label: "No pets", weight: 5, ok: !app.hasPets, note: app.hasPets ? (app.petDescription || "Has pets") : "None" },
+  ];
+
+  const recommendation: { tone: "approve" | "review" | "decline"; label: string; reason: string } =
+    score.score >= 80
+      ? { tone: "approve", label: "Recommend: Approve", reason: "Strong income, complete file, screening signals favorable." }
+      : score.score >= 65
+        ? { tone: "review", label: "Recommend: Review", reason: "Generally solid — verify any missing items below before approving." }
+        : score.score >= 50
+          ? { tone: "review", label: "Recommend: Manual Review", reason: "Borderline. Confirm income with paystubs and call prior landlord." }
+          : { tone: "decline", label: "Recommend: Decline or Request More Info", reason: "Significant gaps in the file. Run background check before any decision." };
+
+  const recColor =
+    recommendation.tone === "approve" ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-400" :
+    recommendation.tone === "decline" ? "bg-red-500/15 border-red-500/40 text-red-700 dark:text-red-400" :
+    "bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-400";
+  const RecIcon = recommendation.tone === "approve" ? ThumbsUp : recommendation.tone === "decline" ? ThumbsDown : AlertTriangle;
+
+  return (
+    <div className="rounded-xl border-2 border-primary/40 bg-gradient-to-br from-primary/10 to-primary/5 p-4 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <h4 className="font-bold text-sm text-foreground">AI Screening Summary</h4>
+        </div>
+        <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${score.bgColor} ${score.color}`}>
+          {score.score}/100 · {score.grade}
+        </span>
+      </div>
+
+      <div className={`rounded-lg border px-3 py-2 flex items-start gap-2 ${recColor}`}>
+        <RecIcon className="h-4 w-4 mt-0.5 shrink-0" />
+        <div className="text-xs">
+          <div className="font-semibold">{recommendation.label}</div>
+          <div className="opacity-90">{recommendation.reason}</div>
+        </div>
+      </div>
+
+      <div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Score breakdown</div>
+        <div className="grid sm:grid-cols-2 gap-1.5">
+          {factors.map(f => (
+            <div key={f.label} className="flex items-center justify-between gap-2 bg-card/60 rounded-md px-2.5 py-1.5 text-xs">
+              <div className="flex items-center gap-1.5 min-w-0">
+                {f.ok
+                  ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                  : <XCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+                <span className="font-medium truncate">{f.label}</span>
+              </div>
+              <span className={`text-[11px] truncate ml-2 ${f.ok ? "text-foreground" : "text-muted-foreground"}`}>
+                {f.note} <span className="opacity-50">· +{f.weight}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <p className="text-[11px] text-muted-foreground italic">
+        Score is informational only. Leasely is not a consumer reporting agency. Run a TransUnion-backed background
+        check via ApplyConnect before relying on this for an adverse action decision.
+      </p>
     </div>
   );
 }
