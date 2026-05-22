@@ -321,19 +321,7 @@ function ReceivedApplications({
                       </div>
                     )}
 
-                    <div>
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Applicant Details</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                        {app.occupation && <InfoRow label="Occupation" value={app.occupation} />}
-                        {app.monthlyIncome && <InfoRow label="Monthly Income" value={`$${app.monthlyIncome}`} />}
-                        {app.employerName && <InfoRow label="Employer" value={app.employerName} />}
-                        {app.currentAddress && <InfoRow label="Current Address" value={app.currentAddress} />}
-                        {app.moveInDate && <InfoRow label="Move-in Date" value={app.moveInDate} />}
-                        {app.hasPets ? <InfoRow label="Pets" value={app.petDescription || "Yes"} /> : null}
-                        {app.currentLandlordName && <InfoRow label="Current Landlord" value={app.currentLandlordName} />}
-                        {app.emergencyContactName && <InfoRow label="Emergency Contact" value={app.emergencyContactName} />}
-                      </div>
-                    </div>
+                    <FullApplicationReview app={app} />
                     {app.state && STATE_DISCLOSURES[app.state] && (
                       <div className="rounded-lg bg-amber-500/5 border border-amber-500/20 p-3 text-xs text-amber-700 dark:text-amber-400">
                         <div className="font-semibold mb-1 flex items-center gap-1.5">
@@ -417,7 +405,9 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 // Claude-powered narrative when we wire the AI screener service in.
 function AIScreeningPanel({ app }: { app: any }) {
   const income = parseFloat(app.monthlyIncome ?? "0") || 0;
+  const currentRent = parseFloat(app.currentRent ?? "0") || 0;
   const score = computeTenantScore(app);
+  const issues = computeScreeningIssues(app);
 
   const factors: Array<{ label: string; weight: number; ok: boolean; note: string }> = [
     {
@@ -495,10 +485,181 @@ function AIScreeningPanel({ app }: { app: any }) {
         </div>
       </div>
 
+      {issues.length > 0 && (
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1.5">
+            <AlertTriangle className="h-3.5 w-3.5" /> Issues Found ({issues.length})
+          </div>
+          <ul className="space-y-1.5">
+            {issues.map((iss, i) => {
+              const color =
+                iss.severity === "high" ? "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400" :
+                iss.severity === "medium" ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400" :
+                "border-blue-500/40 bg-blue-500/10 text-blue-700 dark:text-blue-400";
+              return (
+                <li key={i} className={`rounded-md border px-2.5 py-1.5 text-xs ${color}`}>
+                  <span className="font-semibold">{iss.title}.</span>{" "}
+                  <span className="opacity-90">{iss.detail}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
       <p className="text-[11px] text-muted-foreground italic">
-        Score is informational only. Leasely is not a consumer reporting agency. Run a TransUnion-backed background
-        check via ApplyConnect before relying on this for an adverse action decision.
+        Score and issues are informational only. Leasely is not a consumer reporting agency. Run a TransUnion-backed
+        background check via ApplyConnect before relying on this for an adverse action decision.
       </p>
+    </div>
+  );
+}
+
+// Deterministic "issues found" list — replaceable later by a Claude narrative.
+// Severity: high = decline-worthy, medium = needs verification, low = informational.
+function computeScreeningIssues(app: any): Array<{ severity: "high" | "medium" | "low"; title: string; detail: string }> {
+  const issues: Array<{ severity: "high" | "medium" | "low"; title: string; detail: string }> = [];
+  const income = parseFloat(app.monthlyIncome ?? "0") || 0;
+  const currentRent = parseFloat(app.currentRent ?? "0") || 0;
+
+  if (income === 0) {
+    issues.push({ severity: "high", title: "No monthly income reported", detail: "Cannot evaluate ability to pay. Request paystubs or offer letter before proceeding." });
+  } else if (income < 3000) {
+    issues.push({ severity: "medium", title: "Income below typical 3× rent threshold", detail: `Stated income $${income.toLocaleString()}/mo. Verify with paystubs and consider a co-signer or guarantor.` });
+  }
+
+  if (currentRent > 0 && income > 0 && currentRent > income * 0.5) {
+    issues.push({ severity: "medium", title: "Current rent is >50% of stated income", detail: `Current rent $${currentRent.toLocaleString()} vs income $${income.toLocaleString()}. Cost-burdened applicant — verify support sources.` });
+  }
+
+  if (!app.employerName) {
+    issues.push({ severity: "medium", title: "No employer on file", detail: "Self-employment or gap in employment? Ask for tax returns or recent bank statements." });
+  }
+  if (!app.currentLandlordName) {
+    issues.push({ severity: "medium", title: "No prior landlord reference", detail: "First-time renter or undisclosed history. Call references from elsewhere or require larger deposit where state law allows." });
+  }
+  if (!app.backgroundCheckConsent) {
+    issues.push({ severity: "high", title: "Did not consent to background check", detail: "Cannot run criminal/eviction history through ApplyConnect. Strongly consider requesting consent before approving." });
+  }
+  if (!app.creditCheckConsent && app.creditCheckConsent !== undefined) {
+    issues.push({ severity: "low", title: "No credit-check consent", detail: "Credit pull is unavailable. Rely on income verification + references." });
+  }
+  if (!app.emergencyContactName) {
+    issues.push({ severity: "low", title: "No emergency contact provided", detail: "Required for most state move-in checklists. Request before lease signing." });
+  }
+  if (!app.signedAt && !app.signatureDataUrl) {
+    issues.push({ severity: "low", title: "Application not e-signed", detail: "Applicant submitted data but didn't complete signature step. The submitted info is not certified." });
+  }
+
+  // Reason-for-leaving red flags
+  if (typeof app.reasonForLeaving === "string") {
+    const t = app.reasonForLeaving.toLowerCase();
+    if (/evict|notice to vacate|breach|nonpayment|non-payment|behind on rent/.test(t)) {
+      issues.push({ severity: "high", title: "Reason for leaving flagged", detail: `Self-disclosed terms like "${t.slice(0, 80)}" — investigate via background check + landlord reference.` });
+    }
+  }
+
+  return issues;
+}
+
+// ── Full application review panel ───────────────────────────────────────────
+// Shows every populated field on the application, grouped by category, so the
+// Pro member can review the full application in one place.
+function FullApplicationReview({ app }: { app: any }) {
+  const isColiving = app.applicationFormType === "coliving_member";
+  let additionalOccupants: any[] = [];
+  try {
+    if (app.additionalOccupants) {
+      const parsed = JSON.parse(app.additionalOccupants);
+      if (Array.isArray(parsed)) additionalOccupants = parsed;
+    }
+  } catch { /* ignore */ }
+
+  return (
+    <div className="space-y-4">
+      <ReviewSection title="Personal" icon={<Users className="h-3.5 w-3.5" />}>
+        <ReviewField label="Full Name" value={app.applicantName} />
+        <ReviewField label="Email" value={app.applicantEmail} />
+        <ReviewField label="Phone" value={app.applicantPhone} />
+        <ReviewField label="Date of Birth" value={app.applicantDob} />
+      </ReviewSection>
+
+      <ReviewSection title="Current Housing" icon={<Home className="h-3.5 w-3.5" />}>
+        <ReviewField label="Current Address" value={app.currentAddress} span={2} />
+        <ReviewField label="Current Landlord" value={app.currentLandlordName} />
+        <ReviewField label="Landlord Phone" value={app.currentLandlordPhone} />
+        <ReviewField label="Current Rent" value={app.currentRent ? `$${app.currentRent}/mo` : undefined} />
+        <ReviewField label="Reason for Leaving" value={app.reasonForLeaving} span={3} />
+      </ReviewSection>
+
+      <ReviewSection title="Employment & Income" icon={<Briefcase className="h-3.5 w-3.5" />}>
+        <ReviewField label="Employer" value={app.employerName} />
+        <ReviewField label="Employer Phone" value={app.employerPhone} />
+        <ReviewField label="Occupation" value={app.occupation} />
+        <ReviewField label="Monthly Income" value={app.monthlyIncome ? `$${app.monthlyIncome}` : undefined} />
+      </ReviewSection>
+
+      <ReviewSection title={isColiving ? "Co-Living Details" : "Move-In"} icon={<DollarSign className="h-3.5 w-3.5" />}>
+        <ReviewField label="Move-in Date" value={app.moveInDate} />
+        {isColiving && <ReviewField label="Room Preference" value={app.roomPreference} />}
+        {isColiving && <ReviewField label="Lifestyle Notes" value={app.lifestyleNotes} span={3} />}
+        <ReviewField label="Property State" value={app.state} />
+      </ReviewSection>
+
+      <ReviewSection title="Pets, Vehicles, Occupants" icon={<Building2 className="h-3.5 w-3.5" />}>
+        <ReviewField label="Has Pets" value={app.hasPets ? "Yes" : "No"} />
+        <ReviewField label="Pet Description" value={app.petDescription} span={2} />
+        <ReviewField label="Vehicle Info" value={app.vehicleInfo} span={3} />
+        {additionalOccupants.length > 0 && (
+          <div className="col-span-3">
+            <div className="text-xs text-muted-foreground mb-1">Additional Occupants ({additionalOccupants.length})</div>
+            <ul className="text-sm space-y-0.5">
+              {additionalOccupants.map((o: any, i: number) => (
+                <li key={i} className="text-foreground">
+                  {typeof o === "string" ? o : `${o.name ?? "Unnamed"}${o.relation ? ` (${o.relation})` : ""}${o.age ? `, age ${o.age}` : ""}`}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </ReviewSection>
+
+      <ReviewSection title="Emergency Contact" icon={<AlertCircle className="h-3.5 w-3.5" />}>
+        <ReviewField label="Name" value={app.emergencyContactName} />
+        <ReviewField label="Phone" value={app.emergencyContactPhone} />
+        <ReviewField label="Relationship" value={app.emergencyContactRelation} />
+      </ReviewSection>
+
+      <ReviewSection title="Consents & Signature" icon={<ShieldCheck className="h-3.5 w-3.5" />}>
+        <ReviewField label="Background-check consent" value={app.backgroundCheckConsent ? "Yes" : "No"} />
+        <ReviewField label="Credit-check consent" value={app.creditCheckConsent ? "Yes" : "No"} />
+        <ReviewField label="Signed at" value={app.signedAt ? new Date(app.signedAt).toLocaleString() : (app.signatureDataUrl ? "Signature on file" : "Unsigned")} />
+        {app.notes && <ReviewField label="Applicant Notes" value={app.notes} span={3} />}
+      </ReviewSection>
+    </div>
+  );
+}
+
+function ReviewSection({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border border-border bg-card/60 p-3">
+      <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+        {icon} {title}
+      </h4>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function ReviewField({ label, value, span }: { label: string; value?: string | null; span?: number }) {
+  if (value === undefined || value === null || value === "") return null;
+  const colSpan = span === 2 ? "col-span-2" : span === 3 ? "col-span-2 md:col-span-3" : "";
+  return (
+    <div className={colSpan}>
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className="text-sm text-foreground break-words">{value}</div>
     </div>
   );
 }
