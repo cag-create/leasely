@@ -23,6 +23,7 @@ import {
 import { PROPERTY_TYPES, BEDROOM_OPTIONS, US_STATES } from "@/lib/marketplace";
 import { prepareImageForUpload } from "@/lib/imageUpload";
 import { Link } from "wouter";
+import RentSuggestionWidget from "@/components/RentSuggestionWidget";
 
 const BRAND = "#1B2B5E";
 const ACCENT = "#00C896";
@@ -428,6 +429,14 @@ export default function ListProperty() {
             {step === 3 && (
               <div className="space-y-6">
                 <h2 className="text-xl font-black text-gray-900">Pricing & Specs</h2>
+
+                <RentSuggestionWidget
+                  zip={watchedValues.zip}
+                  bedrooms={watchedValues.bedrooms}
+                  proposedRent={Number(watchedValues.monthlyRent) || 0}
+                  onAccept={(rent) => setValue("monthlyRent", rent as any)}
+                />
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="monthlyRent">Monthly Rent ($) *</Label>
