@@ -3018,6 +3018,70 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       });
       // Activate affiliate
       await db.update(affiliates).set({ status: "active" }).where(eq(affiliates.id, aff.id));
+
+      // ── Notifications ────────────────────────────────────────────────────
+      // 1) Admin gets the W-9 on file (summary only — never email full TIN).
+      // 2) Affiliate gets their referral code + dashboard link.
+      const adminEmail = process.env.ADMIN_EMAIL ?? process.env.FROM_EMAIL?.match(/<([^>]+)>/)?.[1];
+      const certifiedAtISO = new Date().toISOString();
+      const w9SummaryHtml = `
+        <h2 style="font-family:system-ui">New affiliate W-9 — ${input.legalName}</h2>
+        <p>Affiliate <strong>${ctx.user.email ?? ctx.user.name ?? `user#${ctx.user.id}`}</strong> just submitted their W-9 and is now <strong>active</strong>.</p>
+        <table style="font-family:system-ui;border-collapse:collapse">
+          <tr><td style="padding:4px 12px 4px 0"><strong>Legal name</strong></td><td>${input.legalName}</td></tr>
+          ${input.businessName ? `<tr><td style="padding:4px 12px 4px 0"><strong>Business / DBA</strong></td><td>${input.businessName}</td></tr>` : ""}
+          <tr><td style="padding:4px 12px 4px 0"><strong>Tax classification</strong></td><td>${input.taxClassification}</td></tr>
+          <tr><td style="padding:4px 12px 4px 0"><strong>Address</strong></td><td>${input.address}, ${input.city}, ${input.state} ${input.zipCode}</td></tr>
+          <tr><td style="padding:4px 12px 4px 0"><strong>TIN type</strong></td><td>${input.tinType.toUpperCase()}</td></tr>
+          <tr><td style="padding:4px 12px 4px 0"><strong>TIN last 4</strong></td><td>•••-••-${tinLast4}</td></tr>
+          <tr><td style="padding:4px 12px 4px 0"><strong>Certified at</strong></td><td>${certifiedAtISO}</td></tr>
+          <tr><td style="padding:4px 12px 4px 0"><strong>Referral code</strong></td><td><code>${aff.referralCode}</code></td></tr>
+        </table>
+        <p style="color:#6b7280;font-size:12px;margin-top:24px">
+          Full TIN is encrypted in DB. Pull it via the admin panel if 1099-NEC issuance requires it.
+        </p>
+      `;
+      if (adminEmail) {
+        try {
+          await sendEmail({
+            to: adminEmail,
+            subject: `[Leasely] New affiliate W-9 — ${input.legalName}`,
+            html: w9SummaryHtml,
+          });
+        } catch (err) {
+          console.warn("[affiliate.submitW9] admin notification failed:", err);
+        }
+      }
+
+      // Affiliate confirmation
+      if (ctx.user.email) {
+        const refLink = `https://leasely.net/?ref=${aff.referralCode}`;
+        const affiliateHtml = `
+          <h2 style="font-family:system-ui">You're in — your affiliate account is active 🎉</h2>
+          <p>Thanks for completing your W-9, ${input.legalName.split(" ")[0]}. Your affiliate account is now active and you can start earning <strong>$50 per landlord</strong> you refer to Leasely Pro.</p>
+          <p><strong>Your referral link:</strong><br/>
+          <a href="${refLink}" style="color:#00A87C">${refLink}</a></p>
+          <p><strong>Your referral code:</strong> <code>${aff.referralCode}</code></p>
+          <p style="margin-top:16px">
+            <a href="https://leasely.net/affiliate/dashboard" style="display:inline-block;background:#00C896;color:#062018;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:700">
+              Open my affiliate dashboard
+            </a>
+          </p>
+          <p style="color:#6b7280;font-size:12px;margin-top:24px">
+            We'll issue a 1099-NEC at year-end if you earn $600 or more. Your full TIN is encrypted; only the last 4 (${tinLast4}) is shown in our admin panel.
+          </p>
+        `;
+        try {
+          await sendEmail({
+            to: ctx.user.email,
+            subject: "Welcome to the Leasely Affiliate Program — your link is ready",
+            html: affiliateHtml,
+          });
+        } catch (err) {
+          console.warn("[affiliate.submitW9] affiliate confirmation failed:", err);
+        }
+      }
+
       return { success: true };
     }),
 

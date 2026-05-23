@@ -347,22 +347,22 @@ export default function ProGuide() {
         <div className="min-w-0">
           {/* Hero */}
           <div
-            className="relative overflow-hidden rounded-3xl p-8 mb-8 border"
+            className="relative overflow-hidden rounded-3xl p-8 mb-8 border border-[#00C896]/40"
             style={{
-              borderColor: `${ACCENT}30`,
-              background: `radial-gradient(120% 80% at 100% 0%, ${ACCENT}18 0%, transparent 55%), linear-gradient(180deg, rgba(15,23,42,0.4) 0%, rgba(15,23,42,0) 100%)`,
+              background: `linear-gradient(135deg, #0f3a2a 0%, #1b2b5e 100%)`,
             }}
           >
-            <div className="absolute -top-12 -right-12 h-48 w-48 rounded-full blur-3xl opacity-30" style={{ background: ACCENT }} />
+            <div className="absolute -top-12 -right-12 h-56 w-56 rounded-full blur-3xl opacity-40" style={{ background: ACCENT }} />
+            <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full blur-3xl opacity-20" style={{ background: "#4F46E5" }} />
             <div className="relative">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3"
-                style={{ background: `${ACCENT}20`, color: ACCENT }}>
+                style={{ background: `${ACCENT}30`, color: ACCENT }}>
                 <Sparkles className="h-3 w-3" /> Pro Member Guide
               </div>
-              <h1 className="text-3xl md:text-4xl font-black tracking-tight" style={{ fontFamily: "Outfit, sans-serif" }}>
+              <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white" style={{ fontFamily: "Outfit, sans-serif" }}>
                 Run your rental business from one screen.
               </h1>
-              <p className="text-sm md:text-base text-muted-foreground mt-2 max-w-2xl">
+              <p className="text-sm md:text-base text-white/75 mt-2 max-w-2xl">
                 Everything you need to set up, operate, and grow on Leasely Pro — written by the people who built it.
                 Use the table of contents to jump around, or read it top-to-bottom in about 8 minutes.
               </p>
@@ -396,12 +396,12 @@ export default function ProGuide() {
             {filtered.map(s => (
               <section key={s.id} id={s.id} className="scroll-mt-6">
                 <div className="flex items-center gap-2 mb-1">
-                  <s.icon className="h-4 w-4" style={{ color: ACCENT }} />
-                  <h2 className="text-xl font-black tracking-tight" style={{ fontFamily: "Outfit, sans-serif" }}>
+                  <s.icon className="h-5 w-5" style={{ color: ACCENT }} />
+                  <h2 className="text-2xl font-black tracking-tight text-white" style={{ fontFamily: "Outfit, sans-serif" }}>
                     {s.title}
                   </h2>
                 </div>
-                {s.intro && <p className="text-sm text-muted-foreground mb-4">{s.intro}</p>}
+                {s.intro && <p className="text-sm text-white/70 mb-4">{s.intro}</p>}
                 {s.body}
               </section>
             ))}

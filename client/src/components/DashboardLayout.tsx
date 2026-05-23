@@ -199,7 +199,7 @@ function DashboardLayoutContent({
         <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar" disableTransition={isResizing}>
 
           {/* ── Sidebar Header ── */}
-          <SidebarHeader className="h-[60px] border-b border-sidebar-border">
+          <SidebarHeader className="h-[72px] border-b border-sidebar-border">
             <div className="flex items-center gap-3 px-3 h-full">
               <button
                 onClick={toggleSidebar}
@@ -209,9 +209,14 @@ function DashboardLayoutContent({
                 <PanelLeft className="h-4 w-4 text-muted-foreground" />
               </button>
               {!isCollapsed && (
-                <div className="flex items-center gap-2 min-w-0">
-                  <img src={LOGO_URL} alt="Leasely" className="h-6 w-auto" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                  <span className="font-bold text-sm text-sidebar-foreground tracking-tight truncate">Leasely</span>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <img
+                    src={LOGO_URL}
+                    alt="Leasely"
+                    className="h-9 w-auto rounded-md bg-white p-1 shadow-sm"
+                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                  <span className="font-black text-base text-sidebar-foreground tracking-tight truncate" style={{ fontFamily: "Outfit, sans-serif" }}>Leasely</span>
                   {isPro && (
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#00C896]/15 text-[#00A87C] border border-[#00C896]/20 shrink-0">
                       PRO

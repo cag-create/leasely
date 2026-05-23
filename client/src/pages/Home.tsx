@@ -119,11 +119,11 @@ export default function Home() {
             {/* Left — copy */}
             <div className="space-y-8">
               <div>
-                <a href="/pro-guide" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00C896]/25 bg-[#00C896]/8 text-[#00C896] text-xs font-semibold mb-6 hover:bg-[#00C896]/15 transition-colors">
+                <Link href="/list-property" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00C896]/25 bg-[#00C896]/8 text-[#00C896] text-xs font-semibold mb-6 hover:bg-[#00C896]/15 transition-colors">
                   <Sparkles className="h-3.5 w-3.5" />
-                  Now with Leasely Market Intelligence
+                  New: Leasely Market Intelligence — try it on any listing
                   <ChevronRight className="h-3 w-3" />
-                </a>
+                </Link>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight">
                   Your rental business,
                   <br />
