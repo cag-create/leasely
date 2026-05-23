@@ -2670,8 +2670,13 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       });
 
       try {
+        // gpt-4o-mini is supported on both vanilla OpenAI (default) and the Manus
+        // Forge proxy. The previous `claude-sonnet-4-6` model name only resolves
+        // through the Forge proxy and silently 404s against api.openai.com,
+        // which is why screening would hang when BUILT_IN_FORGE_API_URL wasn't
+        // set.
         const { object } = await generateObject({
-          model: openai("claude-sonnet-4-6"),
+          model: openai("gpt-4o-mini"),
           schema: ScreeningSchema,
           system: systemPrompt,
           prompt: userPrompt,

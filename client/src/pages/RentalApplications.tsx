@@ -82,6 +82,9 @@ export default function RentalApplications() {
   // Score + AI summary stay hidden until the landlord clicks "Run AI Screening".
   const [screenedIds, setScreenedIds] = useState<Set<number>>(new Set());
   const [screeningId, setScreeningId] = useState<number | null>(null);
+  // Per-app error message so the empty-state banner can show *why* a previous
+  // attempt failed (missing API key, timeout, etc.) instead of just toasting.
+  const [screeningErrors, setScreeningErrors] = useState<Record<number, string>>({});
 
   const { data: applications, isLoading } = trpc.applications.list.useQuery();
   const { data: listings } = trpc.marketplace.getMyListings.useQuery();
@@ -161,6 +164,8 @@ export default function RentalApplications() {
             setScreenedIds={setScreenedIds}
             screeningId={screeningId}
             setScreeningId={setScreeningId}
+            screeningErrors={screeningErrors}
+            setScreeningErrors={setScreeningErrors}
           />
         ) : (
           <SendApplicationTab listings={listings ?? []} />
@@ -174,6 +179,7 @@ function ReceivedApplications({
   applications, isLoading, statusFilter, setStatusFilter,
   searchQuery, setSearchQuery, statusCounts, selectedApp, setSelectedApp,
   screenedIds, setScreenedIds, screeningId, setScreeningId,
+  screeningErrors, setScreeningErrors,
 }: any) {
   const utils = trpc.useUtils();
   const updateStatus = trpc.applications.updateStatus.useMutation({
@@ -187,24 +193,38 @@ function ReceivedApplications({
         return next;
       });
       setScreeningId(null);
+      setScreeningErrors((prev: Record<number, string>) => {
+        const next = { ...prev };
+        delete next[vars.id];
+        return next;
+      });
       utils.applications.list.invalidate();
       toast.success("AI screening complete.");
     },
-    onError: (e: any) => {
+    onError: (e: any, vars: { id: number }) => {
       setScreeningId(null);
-      toast.error(e?.message ?? "AI screening failed — try again.");
+      const msg = e?.message ?? "AI screening failed — try again.";
+      setScreeningErrors((prev: Record<number, string>) => ({ ...prev, [vars.id]: msg }));
+      toast.error(msg);
     },
   });
   const runScreening = (id: number) => {
     if (screenedIds.has(id) || screeningId !== null) return;
     setScreeningId(id);
+    setScreeningErrors((prev: Record<number, string>) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
     // Client-side safety net: if the screening call hangs (network stall,
     // missing OPENAI key on server, etc.), clear the spinner after 90s and
     // surface an actionable error rather than leaving the user stuck.
     const timeoutHandle = window.setTimeout(() => {
       setScreeningId((current: number | null) => {
         if (current === id) {
-          toast.error("AI screening took too long. Check that OPENAI_API_KEY is configured on the server, then try again.");
+          const msg = "AI screening took too long. Check that OPENAI_API_KEY is configured on the server, then try again.";
+          toast.error(msg);
+          setScreeningErrors((prev: Record<number, string>) => ({ ...prev, [id]: msg }));
           return null;
         }
         return current;
@@ -336,12 +356,21 @@ function ReceivedApplications({
                     {screenedIds.has(app.id) || app.aiScreeningResult ? (
                       <AIScreeningPanel app={app} />
                     ) : (
-                      <div className="rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 p-5 text-center">
-                        <Sparkles className="h-6 w-6 text-primary mx-auto mb-2" />
-                        <h4 className="font-bold text-sm text-foreground mb-1">AI Screening not yet run</h4>
+                      <div className={`rounded-xl border-2 border-dashed p-5 text-center ${screeningErrors[app.id] ? "border-red-400/50 bg-red-500/5" : "border-primary/40 bg-primary/5"}`}>
+                        <Sparkles className={`h-6 w-6 mx-auto mb-2 ${screeningErrors[app.id] ? "text-red-500" : "text-primary"}`} />
+                        <h4 className="font-bold text-sm text-foreground mb-1">
+                          {screeningErrors[app.id] ? "AI Screening failed" : "AI Screening not yet run"}
+                        </h4>
                         <p className="text-xs text-muted-foreground mb-3">
-                          Click below to score this applicant and surface income, employment, and reference signals.
+                          {screeningErrors[app.id]
+                            ? "The last attempt didn't complete. See the reason below — fix it on the server, then retry."
+                            : "Click below to score this applicant and surface income, employment, and reference signals."}
                         </p>
+                        {screeningErrors[app.id] && (
+                          <div className="mb-3 text-left max-w-md mx-auto rounded-lg bg-red-500/10 border border-red-500/30 px-3 py-2 text-[11px] font-mono text-red-700 dark:text-red-400 break-words">
+                            {screeningErrors[app.id]}
+                          </div>
+                        )}
                         <Button
                           size="sm"
                           disabled={screeningId !== null}
@@ -351,7 +380,7 @@ function ReceivedApplications({
                           {screeningId === app.id ? (
                             <><Sparkles className="h-3.5 w-3.5 animate-pulse" /> Screening…</>
                           ) : (
-                            <><Sparkles className="h-3.5 w-3.5" /> Run AI Screening</>
+                            <><Sparkles className="h-3.5 w-3.5" /> {screeningErrors[app.id] ? "Retry AI Screening" : "Run AI Screening"}</>
                           )}
                         </Button>
                       </div>
