@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc";
 import {
   BookOpen, BadgeCheck, UserCheck, Phone, Award, Scale,
   ShieldOff, AlertTriangle, TrendingUp, ChevronRight, Sparkles,
-  ArrowRight, Search, ExternalLink, Briefcase,
+  ArrowRight, Search, Briefcase,
 } from "lucide-react";
 
 const ACCENT = "#00C896";
@@ -23,8 +23,10 @@ type Section = {
  * docs/sops/creme-agent.md. This is what agents actually read.
  */
 export default function AgentGuide() {
-  const [active, setActive] = useState("welcome");
+  const [active, setActive] = useState("register");
   const [search, setSearch] = useState("");
+  // Only "register" open by default — the most relevant first action for new agents.
+  const [openId, setOpenId] = useState<string | null>("register");
 
   // Pull the agent's status (if registered) so we can show context
   const { data: myProfile } = trpc.cremeAgent.getMyProfile.useQuery();
@@ -384,78 +386,85 @@ export default function AgentGuide() {
 
         {/* Content */}
         <div className="min-w-0">
-          <div
-            className="relative overflow-hidden rounded-3xl p-8 mb-8 border border-[#00C896]/40"
-            style={{
-              background: `linear-gradient(135deg, #1b2b5e 0%, #0f3a2a 100%)`,
-            }}
-          >
-            <div className="absolute -top-12 -left-12 h-56 w-56 rounded-full blur-3xl opacity-40" style={{ background: ACCENT }} />
-            <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full blur-3xl opacity-20" style={{ background: "#4F46E5" }} />
-            <div className="relative">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3"
-                style={{ background: `${ACCENT}30`, color: ACCENT }}>
-                <Award className="h-3 w-3" /> Creme Agent Guide
-              </div>
-              <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white" style={{ fontFamily: "Outfit, sans-serif" }}>
-                Close more deals. Skip the cold outreach.
-              </h1>
-              <p className="text-sm md:text-base text-white/75 mt-2 max-w-2xl">
-                Leasely brings the lead. You bring the license. Everything you need to register, work leads, stay
-                compliant, and grow on the Creme Agent Network is below.
-              </p>
-              <div className="flex flex-wrap gap-2 mt-5">
-                {!myProfile && (
-                  <Link
-                    href="/agents"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg transition-colors"
-                    style={{ background: ACCENT, color: "#062018" }}
-                  >
-                    Register as a Creme Agent <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                )}
-                {myProfile && (
-                  <Link
-                    href={`/agents/${(myProfile as any).id}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg transition-colors"
-                    style={{ background: ACCENT, color: "#062018" }}
-                  >
-                    View my public profile <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                )}
+          {/* Hero — minimal */}
+          <div className="mb-8">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3"
+              style={{ background: `${ACCENT}20`, color: ACCENT }}>
+              <Award className="h-3 w-3" /> Creme Agent Guide
+            </div>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white" style={{ fontFamily: "Outfit, sans-serif" }}>
+              Close more deals. Skip the cold outreach.
+            </h1>
+            <p className="text-sm md:text-base text-white/70 mt-2 max-w-xl">
+              Leasely brings the lead. You bring the license. Click any section to expand.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-4">
+              {!myProfile && (
                 <Link
                   href="/agents"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg border border-border hover:bg-muted/40 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg transition-colors"
+                  style={{ background: ACCENT, color: "#062018" }}
                 >
-                  Browse directory
+                  Register as a Creme Agent <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
-                <a
-                  href="https://github.com/leasely-net/leasely/blob/main/docs/sops/creme-agent.md"
-                  target="_blank" rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg border border-border hover:bg-muted/40 transition-colors"
+              )}
+              {myProfile && (
+                <Link
+                  href={`/agents/${(myProfile as any).id}`}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg transition-colors"
+                  style={{ background: ACCENT, color: "#062018" }}
                 >
-                  Markdown version <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
+                  View my public profile <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              )}
             </div>
           </div>
 
-          <div className="space-y-12">
-            {filtered.map(s => (
-              <section key={s.id} id={s.id} className="scroll-mt-6">
-                <div className="flex items-center gap-2 mb-1">
-                  <s.icon className="h-5 w-5" style={{ color: ACCENT }} />
-                  <h2 className="text-2xl font-black tracking-tight text-white" style={{ fontFamily: "Outfit, sans-serif" }}>
-                    {s.title}
-                  </h2>
-                </div>
-                {s.intro && <p className="text-sm text-white/70 mb-4">{s.intro}</p>}
-                {s.body}
-              </section>
-            ))}
+          {/* Sections — accordion */}
+          <div className="space-y-3">
+            {filtered.map(s => {
+              const isOpen = openId === s.id || search.trim().length > 0;
+              return (
+                <section
+                  key={s.id}
+                  id={s.id}
+                  className="scroll-mt-6 rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden transition-colors hover:border-white/15"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenId(isOpen && search.trim().length === 0 ? null : s.id)}
+                    className="w-full flex items-center gap-3 px-5 py-4 text-left"
+                    aria-expanded={isOpen}
+                  >
+                    <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ background: isOpen ? ACCENT : `${ACCENT}20`, color: isOpen ? "#062018" : ACCENT }}>
+                      <s.icon className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-base md:text-lg font-bold tracking-tight text-white truncate" style={{ fontFamily: "Outfit, sans-serif" }}>
+                        {s.title}
+                      </h2>
+                      {s.intro && !isOpen && (
+                        <p className="text-xs text-white/55 mt-0.5 truncate">{s.intro}</p>
+                      )}
+                    </div>
+                    <ChevronRight
+                      className="h-4 w-4 text-white/40 shrink-0 transition-transform"
+                      style={{ transform: isOpen ? "rotate(90deg)" : "none" }}
+                    />
+                  </button>
+                  {isOpen && (
+                    <div className="px-5 pb-5 pt-1 border-t border-white/5">
+                      {s.intro && <p className="text-sm text-white/70 mb-4 mt-3">{s.intro}</p>}
+                      {s.body}
+                    </div>
+                  )}
+                </section>
+              );
+            })}
             {filtered.length === 0 && (
-              <div className="p-8 text-center rounded-xl border border-dashed border-border/50">
-                <p className="text-sm text-muted-foreground">No sections match "{search}".</p>
+              <div className="p-8 text-center rounded-xl border border-dashed border-white/10">
+                <p className="text-sm text-white/50">No sections match "{search}".</p>
               </div>
             )}
           </div>
