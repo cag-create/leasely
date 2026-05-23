@@ -286,8 +286,25 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-black text-gray-900">My Dashboard</h1>
-            <p className="text-gray-500 mt-1">Welcome back, {user?.name?.split(" ")[0] ?? "there"}!</p>
+            {(() => {
+              const hr = new Date().getHours();
+              const greeting = hr < 5 ? "Burning the midnight oil" : hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : hr < 22 ? "Good evening" : "Working late";
+              const firstName = user?.name?.split(" ")[0] ?? "there";
+              return (
+                <>
+                  <p className="text-xs uppercase tracking-widest text-gray-400 font-semibold mb-1">{greeting}</p>
+                  <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight" style={{ fontFamily: "Outfit, sans-serif" }}>
+                    {firstName}.
+                  </h1>
+                  <p className="text-gray-500 mt-1 text-sm">
+                    {activeListings.length > 0
+                      ? `${activeListings.length} active listing${activeListings.length === 1 ? "" : "s"} · ${totalViews} views this period`
+                      : "Ready to list your first property?"
+                    }
+                  </p>
+                </>
+              );
+            })()}
           </div>
           <div className="flex items-center gap-3">
             <Badge

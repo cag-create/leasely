@@ -27,7 +27,7 @@ import { trpc } from "@/lib/trpc";
 import {
   LayoutDashboard, LogOut, PanelLeft, Home, Building2,
   Briefcase, Calculator, UserCircle, HeadphonesIcon, Heart,
-  FileText, Sparkles, Shield, ChevronDown, Wrench
+  FileText, Sparkles, Shield, ChevronDown, Wrench, BookOpen, Award
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -56,6 +56,8 @@ const directoryMenuItems = [
 ];
 
 const supportMenuItems = [
+  { icon: BookOpen, label: "Pro Guide", path: "/pro-guide", group: "support" },
+  { icon: Award, label: "Agent Guide", path: "/agent-guide", group: "support" },
   { icon: HeadphonesIcon, label: "Support", path: "/support", group: "support" },
 ];
 

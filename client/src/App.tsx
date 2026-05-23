@@ -69,6 +69,8 @@ const SendLease           = lazy(() => import("./pages/SendLease"));
 const LeaseWizard         = lazy(() => import("./pages/LeaseWizard"));
 const LeasePreview        = lazy(() => import("./pages/LeasePreview"));
 const UploadOwnLease      = lazy(() => import("./pages/UploadOwnLease"));
+const ProGuide            = lazy(() => import("./pages/ProGuide"));
+const AgentGuide          = lazy(() => import("./pages/AgentGuide"));
 
 // ── Page-level loading fallback ───────────────────────────────────────────────
 function PageLoader() {
@@ -169,7 +171,11 @@ function Router() {
 
         {/* Creme Agent Network */}
         <Route path="/agents" component={AgentDirectory} />
+        <Route path="/agent-guide" component={AgentGuide} />
         <Route path="/agents/:id" component={AgentProfile} />
+
+        {/* In-app Pro guide */}
+        <Route path="/pro-guide" component={ProGuide} />
 
         {/* Contractor / Handyman Directory */}
         <Route path="/contractors" component={ContractorDirectory} />

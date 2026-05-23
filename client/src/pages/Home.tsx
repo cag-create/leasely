@@ -119,20 +119,36 @@ export default function Home() {
             {/* Left — copy */}
             <div className="space-y-8">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00C896]/25 bg-[#00C896]/8 text-[#00C896] text-xs font-semibold mb-6">
+                <a href="/pro-guide" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00C896]/25 bg-[#00C896]/8 text-[#00C896] text-xs font-semibold mb-6 hover:bg-[#00C896]/15 transition-colors">
                   <Sparkles className="h-3.5 w-3.5" />
-                  The AI-Powered Landlord OS
-                </div>
+                  Now with Leasely Market Intelligence
+                  <ChevronRight className="h-3 w-3" />
+                </a>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight">
-                  One platform.
+                  Your rental business,
                   <br />
-                  <span className="text-gradient">One flat price.</span>
+                  <span className="text-gradient">on autopilot.</span>
                 </h1>
               </div>
 
               <p className="text-lg md:text-xl text-white/65 leading-relaxed max-w-lg">
-                List properties, screen tenants with AI, collect rent, dispatch vendors, manage work orders, and close deals through the Creme Agent Network — all for <span className="text-white font-semibold">$25/month</span>. No per-unit fees. Ever.
+                List, screen, sign, collect, and dispatch — every step of the lease lifecycle on a single screen. <span className="text-white font-semibold">$25/month flat.</span> No per-unit fees. Ever.
               </p>
+
+              {/* Competitive strip */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-white/40">
+                <span className="text-white/60 font-semibold">vs.</span>
+                {[
+                  { name: "AppFolio", price: "$1.40/unit + $400/mo min" },
+                  { name: "Buildium", price: "$58/mo + $1.25/unit" },
+                  { name: "Avail", price: "$5/unit/mo (Premium)" },
+                ].map(c => (
+                  <span key={c.name} className="inline-flex items-center gap-1">
+                    <span className="text-white/70 font-medium">{c.name}</span>
+                    <span className="text-white/35">{c.price}</span>
+                  </span>
+                ))}
+              </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <a href={getLoginUrl()}>
