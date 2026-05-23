@@ -44,9 +44,20 @@ const US_STATES = [
 
 type ApplicationStatus = "submitted" | "under_review" | "approved" | "denied" | "all";
 
+// Applicants enter money as free-text ("$6,000", "6000", "6,000/mo"). parseFloat
+// stops at the first comma, so "6,000" becomes 6 — strip everything that isn't
+// a digit or a decimal point before parsing.
+function parseMoney(raw: unknown): number {
+  if (raw === null || raw === undefined) return 0;
+  const cleaned = String(raw).replace(/[^0-9.]/g, "");
+  if (!cleaned) return 0;
+  const n = parseFloat(cleaned);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function computeTenantScore(app: any): { score: number; grade: string; color: string; bgColor: string } {
   let score = 0;
-  const income = parseFloat(app.monthlyIncome ?? "0");
+  const income = parseMoney(app.monthlyIncome);
   if (income >= 4500) score += 40;
   else if (income >= 3750) score += 25;
   else if (income >= 3000) score += 10;
@@ -404,8 +415,10 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 // on the applicant data we already have. Designed to be replaced later by a
 // Claude-powered narrative when we wire the AI screener service in.
 function AIScreeningPanel({ app }: { app: any }) {
-  const income = parseFloat(app.monthlyIncome ?? "0") || 0;
-  const currentRent = parseFloat(app.currentRent ?? "0") || 0;
+  const income = parseMoney(app.monthlyIncome);
+  const currentRent = parseMoney(app.currentRent);
+  const targetRent = parseMoney(app.listingRent ?? app.targetRent ?? app.rentAmount);
+  const incomeToRentRatio = targetRent > 0 ? income / targetRent : 0;
   const score = computeTenantScore(app);
   const issues = computeScreeningIssues(app);
 
@@ -519,31 +532,101 @@ function AIScreeningPanel({ app }: { app: any }) {
 // Severity: high = decline-worthy, medium = needs verification, low = informational.
 function computeScreeningIssues(app: any): Array<{ severity: "high" | "medium" | "low"; title: string; detail: string }> {
   const issues: Array<{ severity: "high" | "medium" | "low"; title: string; detail: string }> = [];
-  const income = parseFloat(app.monthlyIncome ?? "0") || 0;
-  const currentRent = parseFloat(app.currentRent ?? "0") || 0;
+  const income = parseMoney(app.monthlyIncome);
+  const currentRent = parseMoney(app.currentRent);
+  const targetRent = parseMoney(app.listingRent ?? app.targetRent ?? app.rentAmount);
 
+  // ── Income / affordability ────────────────────────────────────────────────
   if (income === 0) {
     issues.push({ severity: "high", title: "No monthly income reported", detail: "Cannot evaluate ability to pay. Request paystubs or offer letter before proceeding." });
-  } else if (income < 3000) {
+  } else if (targetRent > 0 && income < targetRent * 3) {
+    const ratio = (income / targetRent).toFixed(1);
+    issues.push({ severity: "medium", title: `Income only ${ratio}× target rent (under 3× standard)`, detail: `Stated income $${income.toLocaleString()}/mo vs rent $${targetRent.toLocaleString()}/mo. Industry rule of thumb is ≥3× rent. Consider co-signer or guarantor.` });
+  } else if (targetRent === 0 && income < 3000) {
     issues.push({ severity: "medium", title: "Income below typical 3× rent threshold", detail: `Stated income $${income.toLocaleString()}/mo. Verify with paystubs and consider a co-signer or guarantor.` });
   }
 
   if (currentRent > 0 && income > 0 && currentRent > income * 0.5) {
-    issues.push({ severity: "medium", title: "Current rent is >50% of stated income", detail: `Current rent $${currentRent.toLocaleString()} vs income $${income.toLocaleString()}. Cost-burdened applicant — verify support sources.` });
+    issues.push({ severity: "medium", title: "Current rent is >50% of stated income", detail: `Current rent $${currentRent.toLocaleString()} vs income $${income.toLocaleString()}/mo. Cost-burdened applicant — verify support sources.` });
   }
 
+  // ── Employment ────────────────────────────────────────────────────────────
   if (!app.employerName) {
-    issues.push({ severity: "medium", title: "No employer on file", detail: "Self-employment or gap in employment? Ask for tax returns or recent bank statements." });
+    issues.push({ severity: "medium", title: "No employer on file", detail: "Self-employment or gap in employment? Ask for tax returns or 3 months of bank statements." });
+  } else if (app.employerStartDate) {
+    const months = monthsBetween(app.employerStartDate, new Date().toISOString().slice(0, 10));
+    if (months >= 0 && months < 3) {
+      issues.push({ severity: "medium", title: `Employed only ${months} month${months === 1 ? "" : "s"}`, detail: "Short tenure at current job. Ask for offer letter and prior employer reference." });
+    }
   }
+  if (app.employerName && !app.employerPhone) {
+    issues.push({ severity: "low", title: "Employer phone missing", detail: "Cannot verify employment without a contact number. Request before approving." });
+  }
+
+  // ── Rental history ────────────────────────────────────────────────────────
   if (!app.currentLandlordName) {
     issues.push({ severity: "medium", title: "No prior landlord reference", detail: "First-time renter or undisclosed history. Call references from elsewhere or require larger deposit where state law allows." });
+  } else if (!app.currentLandlordPhone) {
+    issues.push({ severity: "low", title: "Landlord phone missing", detail: "Reference is unverifiable without contact info. Request before approving." });
   }
+  if (!app.currentAddress) {
+    issues.push({ severity: "low", title: "No current address provided", detail: "Mailing history can't be verified. Request prior 2-year address history." });
+  }
+
+  // ── Reason for leaving red flags ──────────────────────────────────────────
+  if (typeof app.reasonForLeaving === "string") {
+    const t = app.reasonForLeaving.toLowerCase();
+    if (/evict|notice to vacate|breach|nonpayment|non-payment|behind on rent|kicked out|asked to leave/.test(t)) {
+      issues.push({ severity: "high", title: "Reason for leaving flagged", detail: `Self-disclosed terms like "${t.slice(0, 80)}" — investigate via background check + landlord reference.` });
+    }
+  }
+
+  // ── Background / credit consent ───────────────────────────────────────────
   if (!app.backgroundCheckConsent) {
     issues.push({ severity: "high", title: "Did not consent to background check", detail: "Cannot run criminal/eviction history through ApplyConnect. Strongly consider requesting consent before approving." });
   }
-  if (!app.creditCheckConsent && app.creditCheckConsent !== undefined) {
-    issues.push({ severity: "low", title: "No credit-check consent", detail: "Credit pull is unavailable. Rely on income verification + references." });
+  if (app.creditCheckConsent === false) {
+    issues.push({ severity: "medium", title: "No credit-check consent", detail: "Credit pull is unavailable. Rely on income verification + references, or request consent before approving." });
   }
+
+  // ── Self-disclosed history ────────────────────────────────────────────────
+  if (app.hasBankruptcy) {
+    issues.push({ severity: "medium", title: "Self-disclosed bankruptcy", detail: "Applicant disclosed a prior bankruptcy. Verify discharge date and confirm post-discharge rental history." });
+  }
+  if (app.hasEviction) {
+    issues.push({ severity: "high", title: "Self-disclosed prior eviction", detail: "Applicant disclosed a prior eviction. Investigate circumstances, judgment, and whether the matter is resolved." });
+  }
+  if (app.hasCriminalRecord) {
+    issues.push({ severity: "high", title: "Self-disclosed criminal record", detail: "Applicant disclosed criminal history. Review HUD guidance — blanket bans are discriminatory; assess nature, severity, and time elapsed individually." });
+  }
+
+  // ── Identity / fair-housing safe checks ───────────────────────────────────
+  if (!app.applicantPhone) {
+    issues.push({ severity: "low", title: "No phone number on file", detail: "Hard to reach for verification. Request before scheduling tour or lease send." });
+  }
+  if (app.applicantEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(app.applicantEmail)) {
+    issues.push({ severity: "low", title: "Email format looks invalid", detail: "Double-check the email — typo could mean signing links bounce." });
+  }
+  if (!app.applicantDob) {
+    issues.push({ severity: "low", title: "Date of birth missing", detail: "Required for background-check matching through ApplyConnect / TransUnion." });
+  }
+
+  // ── Pets ──────────────────────────────────────────────────────────────────
+  if (app.hasPets && !app.petDescription) {
+    issues.push({ severity: "low", title: "Pets disclosed but no description", detail: "Get breed, weight, and vaccination records before approving — required by most insurance carriers." });
+  }
+
+  // ── Occupants ────────────────────────────────────────────────────────────
+  if (typeof app.additionalOccupants === "string" && app.additionalOccupants.length > 2) {
+    try {
+      const occ = JSON.parse(app.additionalOccupants);
+      if (Array.isArray(occ) && occ.length >= 3) {
+        issues.push({ severity: "low", title: `${occ.length + 1} total occupants disclosed`, detail: "Confirm the unit's max-occupancy limit complies with HUD's 2-per-bedroom guidance." });
+      }
+    } catch { /* ignore */ }
+  }
+
+  // ── File completeness ─────────────────────────────────────────────────────
   if (!app.emergencyContactName) {
     issues.push({ severity: "low", title: "No emergency contact provided", detail: "Required for most state move-in checklists. Request before lease signing." });
   }
@@ -551,15 +634,17 @@ function computeScreeningIssues(app: any): Array<{ severity: "high" | "medium" |
     issues.push({ severity: "low", title: "Application not e-signed", detail: "Applicant submitted data but didn't complete signature step. The submitted info is not certified." });
   }
 
-  // Reason-for-leaving red flags
-  if (typeof app.reasonForLeaving === "string") {
-    const t = app.reasonForLeaving.toLowerCase();
-    if (/evict|notice to vacate|breach|nonpayment|non-payment|behind on rent/.test(t)) {
-      issues.push({ severity: "high", title: "Reason for leaving flagged", detail: `Self-disclosed terms like "${t.slice(0, 80)}" — investigate via background check + landlord reference.` });
-    }
-  }
-
   return issues;
+}
+
+// Coarse months-between helper used to flag short employment tenure.
+function monthsBetween(startISO: string, endISO: string): number {
+  try {
+    const s = new Date(startISO);
+    const e = new Date(endISO);
+    if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return -1;
+    return (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth());
+  } catch { return -1; }
 }
 
 // ── Full application review panel ───────────────────────────────────────────

@@ -255,7 +255,7 @@ export default function PublicApplication() {
               </FormRow>
               <FormRow>
                 <FormField label="Current Monthly Rent">
-                  <Input value={form.currentRent} onChange={e => update("currentRent", e.target.value)} placeholder="$1,200" className="form-input-dark" />
+                  <Input value={form.currentRent} onChange={e => update("currentRent", e.target.value.replace(/[^0-9.]/g, ""))} placeholder="1200" inputMode="numeric" className="form-input-dark" />
                 </FormField>
               </FormRow>
               <FormField label="Reason for Leaving">
@@ -283,7 +283,13 @@ export default function PublicApplication() {
                   <Input value={form.occupation} onChange={e => update("occupation", e.target.value)} placeholder="Software Engineer" className="form-input-dark" />
                 </FormField>
                 <FormField label="Gross Monthly Income">
-                  <Input value={form.monthlyIncome} onChange={e => update("monthlyIncome", e.target.value)} placeholder="$5,000" className="form-input-dark" />
+                  <Input
+                    value={form.monthlyIncome}
+                    onChange={e => update("monthlyIncome", e.target.value.replace(/[^0-9.]/g, ""))}
+                    placeholder="5000"
+                    inputMode="numeric"
+                    className="form-input-dark"
+                  />
                 </FormField>
               </FormRow>
             </FormCard>
