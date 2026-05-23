@@ -1404,3 +1404,85 @@ export const proRedemptionCodes = mysqlTable("pro_redemption_codes", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type ProRedemptionCode = typeof proRedemptionCodes.$inferSelect;
+
+/**
+ * Rent benchmarks — automated nationwide rent intelligence keyed by zip code.
+ *
+ * Data sources (all free, no manual upload):
+ *  • Census ACS B25064 (median gross rent) — pulled by ZCTA, ~33k rows
+ *  • HUD Fair Market Rents (FMR) — pulled by county, joined via HUD zip↔county crosswalk
+ *  • Leasely's own listings — computed in-app as a rolling median per zip
+ *
+ * Refresh cadence: monthly check on server boot + a setInterval pass every
+ * 30 days. Census/HUD only publish new data once a year, but checking
+ * monthly catches mid-year corrections and gives a clean upgrade path
+ * when we add more frequent sources (e.g., Apartment List vacancy index).
+ *
+ * Indexed by zip (PK) + state for region rollups. Use rentBenchmarkHistory
+ * for trend lines; current snapshot stays here for fast point lookups.
+ */
+export const rentBenchmarks = mysqlTable("rent_benchmarks", {
+  zip: varchar("zip", { length: 5 }).primaryKey(),
+  state: varchar("state", { length: 2 }).notNull(),
+  countyFips: varchar("countyFips", { length: 5 }), // 2-digit state + 3-digit county
+  cbsaCode: varchar("cbsaCode", { length: 5 }), // Census CBSA / HUD Metro area
+  // Census ACS 5-year medians (B25064_001E = median gross rent, all unit sizes)
+  acsMedianRent: int("acsMedianRent"),
+  acsMarginOfError: int("acsMarginOfError"),
+  acsSampleSize: int("acsSampleSize"),
+  // HUD FMR by bedroom count (FMR is what HUD pays for Section 8 vouchers
+  // and is the canonical "fair market" reference rent published annually).
+  hudFmrStudio: int("hudFmrStudio"),
+  hudFmr1br: int("hudFmr1br"),
+  hudFmr2br: int("hudFmr2br"),
+  hudFmr3br: int("hudFmr3br"),
+  hudFmr4br: int("hudFmr4br"),
+  // Year these snapshots represent (ACS publishes Dec for prior year; HUD
+  // publishes Oct for the upcoming fiscal year — track separately).
+  acsDataYear: int("acsDataYear"),
+  hudDataYear: int("hudDataYear"),
+  // Source-of-truth timestamps so we can tell why a value is stale.
+  acsRefreshedAt: timestamp("acsRefreshedAt"),
+  hudRefreshedAt: timestamp("hudRefreshedAt"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type RentBenchmark = typeof rentBenchmarks.$inferSelect;
+export type InsertRentBenchmark = typeof rentBenchmarks.$inferInsert;
+
+/**
+ * Append-only history of rent benchmark snapshots — used for trend lines
+ * ("rents in 30303 are up 8% YoY") and to detect when a refresh job
+ * produced anomalous data (-50% drop = ingest bug, not a real signal).
+ *
+ * Keyed by (zip, snapshotDate). Old rows can be pruned after ~5 years.
+ */
+export const rentBenchmarkHistory = mysqlTable("rent_benchmark_history", {
+  id: int("id").autoincrement().primaryKey(),
+  zip: varchar("zip", { length: 5 }).notNull(),
+  snapshotDate: timestamp("snapshotDate").defaultNow().notNull(),
+  source: mysqlEnum("source", ["acs", "hud", "leasely"]).notNull(),
+  bedrooms: varchar("bedrooms", { length: 8 }), // "studio" | "1" | "2" | "3" | "4" | "all"
+  rent: int("rent").notNull(),
+  sampleSize: int("sampleSize"),
+  dataYear: int("dataYear"),
+});
+export type RentBenchmarkHistory = typeof rentBenchmarkHistory.$inferSelect;
+export type InsertRentBenchmarkHistory = typeof rentBenchmarkHistory.$inferInsert;
+
+/**
+ * Ingest job audit log — one row per refresh run, success or failure.
+ * Lets the dashboard surface "Last data refresh: 3 days ago" and
+ * troubleshoot when a source goes dark.
+ */
+export const rentBenchmarkRuns = mysqlTable("rent_benchmark_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  source: mysqlEnum("source", ["acs", "hud", "leasely"]).notNull(),
+  status: mysqlEnum("status", ["running", "success", "failed"]).notNull(),
+  rowsUpserted: int("rowsUpserted").default(0).notNull(),
+  errorMessage: text("errorMessage"),
+  startedAt: timestamp("startedAt").defaultNow().notNull(),
+  finishedAt: timestamp("finishedAt"),
+});
+export type RentBenchmarkRun = typeof rentBenchmarkRuns.$inferSelect;
+export type InsertRentBenchmarkRun = typeof rentBenchmarkRuns.$inferInsert;

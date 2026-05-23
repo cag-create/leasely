@@ -325,6 +325,12 @@ async function startServer() {
     import("../leases/db-helpers")
       .then(m => m.seedLeaseTemplatesIfEmpty())
       .catch(err => console.warn("[Leases] template seed failed:", err));
+    // Kick off the rent-benchmark scheduler — checks once a day whether
+    // the ACS / HUD data is older than 27 days and refreshes nationwide.
+    // Fully automatic; no manual CSV upload required.
+    import("./rentBenchmarks")
+      .then(m => m.startRentBenchmarkScheduler())
+      .catch(err => console.warn("[rentBenchmarks] scheduler init failed:", err));
   });
 }
 

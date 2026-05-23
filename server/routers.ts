@@ -4093,6 +4093,51 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       return getLeasesByLandlord(input.ownerUserId);
     }),
   }),
+
+  /**
+   * Rent intelligence — automated, nationwide rent benchmarks.
+   *
+   * Data is refreshed in the background by server/_core/rentBenchmarks.ts:
+   * Census ACS + HUD FMR are pulled monthly from their public APIs (no
+   * manual CSV upload). This router only reads the cached snapshot and
+   * exposes an admin-only manual refresh trigger.
+   */
+  rentIntelligence: router({
+    /** Public: get the rent benchmark for a single zip code. */
+    getBenchmark: publicProcedure.input(z.object({ zip: z.string() })).query(async ({ input }) => {
+      const { lookupBenchmarkByZip } = await import("./_core/rentBenchmarks");
+      return await lookupBenchmarkByZip(input.zip);
+    }),
+
+    /** Admin: surface the last successful run for each source. */
+    runStatus: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) return [];
+      const { rentBenchmarkRuns } = await import("../drizzle/schema");
+      return await db
+        .select()
+        .from(rentBenchmarkRuns)
+        .orderBy(sql`${rentBenchmarkRuns.startedAt} DESC`)
+        .limit(20);
+    }),
+
+    /** Admin: force a refresh now (don't wait for the scheduler). */
+    refreshNow: protectedProcedure
+      .input(z.object({ source: z.enum(["acs", "hud", "both"]).default("both") }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        const { refreshAcsRentBenchmarks, refreshHudFmrs } = await import("./_core/rentBenchmarks");
+        const results: Record<string, { rowsUpserted: number; errors: string[] }> = {};
+        if (input.source === "acs" || input.source === "both") {
+          results.acs = await refreshAcsRentBenchmarks();
+        }
+        if (input.source === "hud" || input.source === "both") {
+          results.hud = await refreshHudFmrs();
+        }
+        return results;
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
