@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Heart, MapPin, Bed, Bath, Square, Users, PawPrint, Eye, Bookmark, Zap } from "lucide-react";
+import { Heart, MapPin, Bed, Bath, Square, Users, PawPrint, Eye, Bookmark, Zap, Camera, Sparkles as SparkIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { toast } from "sonner";
-import { formatRent, getListingImage, PROPERTY_TYPE_LABELS } from "@/lib/marketplace";
+import { formatRent, getListingImage, parsePhotos, PROPERTY_TYPE_LABELS } from "@/lib/marketplace";
 
 type MarketplaceListing = {
   id: number;
@@ -92,6 +92,10 @@ export default function PropertyCard({ listing, view = "grid", isSaved = false, 
 
   const photo = getListingImage(listing.photos, listing.id);
   const typeLabel = PROPERTY_TYPE_LABELS[listing.propertyType] ?? listing.propertyType;
+  const photoCount = parsePhotos(listing.photos).length;
+  const isNew = listing.createdAt
+    ? Date.now() - new Date(listing.createdAt).getTime() < 7 * 24 * 3600 * 1000
+    : false;
 
   // Determine badge color by type
   const typeBadgeStyle = listing.isCoLiving === 1
@@ -125,6 +129,18 @@ export default function PropertyCard({ listing, view = "grid", isSaved = false, 
               <div className="absolute bottom-3 left-3">
                 <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: ACCENT, color: "#0a2a1f" }}>
                   Co-Living
+                </span>
+              </div>
+            )}
+            {photoCount > 1 && (
+              <div className="absolute bottom-3 right-3 flex items-center gap-1 text-white text-xs font-semibold px-2 py-1 rounded-full" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)" }}>
+                <Camera className="h-3 w-3" />{photoCount}
+              </div>
+            )}
+            {isNew && (
+              <div className="absolute top-3 left-3">
+                <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full shadow-md" style={{ background: ACCENT, color: "#0a2a1f" }}>
+                  <SparkIcon className="h-3 w-3" />New
                 </span>
               </div>
             )}
@@ -199,7 +215,7 @@ export default function PropertyCard({ listing, view = "grid", isSaved = false, 
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
           {/* Top badges */}
-          <div className="absolute top-3 left-3 flex gap-2">
+          <div className="absolute top-3 left-3 flex flex-wrap gap-2">
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-md" style={{ background: "rgba(255,255,255,0.92)", color: BRAND }}>
               {typeLabel}
             </span>
@@ -208,7 +224,19 @@ export default function PropertyCard({ listing, view = "grid", isSaved = false, 
                 Co-Living
               </span>
             )}
+            {isNew && (
+              <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full shadow-md" style={{ background: ACCENT, color: "#0a2a1f" }}>
+                <SparkIcon className="h-3 w-3" />New
+              </span>
+            )}
           </div>
+
+          {/* Photo count badge */}
+          {photoCount > 1 && (
+            <div className="absolute bottom-16 right-3 flex items-center gap-1 text-white text-xs font-semibold px-2 py-1 rounded-full" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)" }}>
+              <Camera className="h-3 w-3" />{photoCount}
+            </div>
+          )}
 
           {/* Save button */}
           <button

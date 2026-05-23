@@ -305,20 +305,37 @@ export async function createListing(data: InsertMarketplaceListing): Promise<num
   return Number((result as any)[0].insertId);
 }
 
-export async function updateListing(id: number, userId: number, data: Partial<InsertMarketplaceListing>) {
+// Listing edit/delete: ownership-locked by default. Admins can pass {isAdmin:true}
+// to bypass the userId filter — used by the admin dashboard listings table.
+export async function updateListing(
+  id: number,
+  userId: number,
+  data: Partial<InsertMarketplaceListing>,
+  opts?: { isAdmin?: boolean },
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const where = opts?.isAdmin
+    ? eq(marketplaceListings.id, id)
+    : and(eq(marketplaceListings.id, id), eq(marketplaceListings.userId, userId));
   await db.update(marketplaceListings)
     .set({ ...data, updatedAt: new Date() })
-    .where(and(eq(marketplaceListings.id, id), eq(marketplaceListings.userId, userId)));
+    .where(where);
 }
 
-export async function deleteListing(id: number, userId: number) {
+export async function deleteListing(
+  id: number,
+  userId: number,
+  opts?: { isAdmin?: boolean },
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const where = opts?.isAdmin
+    ? eq(marketplaceListings.id, id)
+    : and(eq(marketplaceListings.id, id), eq(marketplaceListings.userId, userId));
   await db.update(marketplaceListings)
     .set({ status: "inactive" })
-    .where(and(eq(marketplaceListings.id, id), eq(marketplaceListings.userId, userId)));
+    .where(where);
 }
 
 export async function incrementViewCount(listingId: number, viewerIp?: string) {

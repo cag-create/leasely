@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -9,7 +9,7 @@ import {
   Globe, CreditCard, Shield, Wrench, BarChart3, Users, QrCode, Building2,
   Zap, CheckCircle2, ArrowRight, Play, Star, DollarSign,
   FileText, Bell, TrendingUp, Sparkles, Award, Lock, ChevronRight,
-  MapPin, Home as HomeIcon, X, ExternalLink, Package
+  MapPin, Home as HomeIcon, X, ExternalLink, Package, ArrowLeft,
 } from "lucide-react";
 
 const BRAND = "#0F1F4B";
@@ -391,13 +391,43 @@ const FEATURES = [
 
 export default function ProPage() {
   const { isAuthenticated } = useAuth();
+  const [, navigate] = useLocation();
   const [videoOpen, setVideoOpen] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
+
+  // Back-nav target: prefer ?from= (deep-linked from a feature gate), then
+  // browser history (came from inside the app), then dashboard as the final
+  // fallback. We avoid the public home screen — landlords on the Pro page
+  // almost always came from inside the product.
+  const handleBack = () => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const from = params.get("from");
+    if (from && from.startsWith("/")) {
+      navigate(from);
+      return;
+    }
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    navigate(isAuthenticated ? "/dashboard" : "/");
+  };
 
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
       <VideoModal open={videoOpen} onClose={() => setVideoOpen(false)} />
+
+      {/* Sticky back button — returns to the screen the user came from (e.g. a
+          Pro-gated feature page) instead of dumping them on the marketing home. */}
+      <button
+        onClick={handleBack}
+        className="fixed top-20 left-4 z-40 flex items-center gap-1.5 rounded-full bg-white/10 backdrop-blur border border-white/20 text-white text-xs font-semibold px-3 py-1.5 hover:bg-white/20 transition"
+        aria-label="Go back"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" /> Back
+      </button>
 
       {/* ═══════════════════════════════════════════════════════════
           HERO

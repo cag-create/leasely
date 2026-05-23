@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useParams, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import {
   MapPin, Bed, Bath, Square, Heart, Share2, ChevronLeft,
   ChevronRight, Phone, Mail, User, PawPrint, Users, Car,
   Zap, Wind, Utensils, Calendar, DollarSign, Eye, Bookmark,
-  Building2, ExternalLink, CheckCircle2, X
+  Building2, ExternalLink, CheckCircle2, X, Image as ImageIcon, Camera,
 } from "lucide-react";
 import { formatRent, getListingImage, parsePhotos, PROPERTY_TYPE_LABELS, PLACEHOLDER_IMAGES } from "@/lib/marketplace";
 
@@ -27,6 +27,8 @@ export default function ListingDetail() {
   const listingId = parseInt(params.id ?? "0");
   const { isAuthenticated } = useAuth();
   const [photoIdx, setPhotoIdx] = useState(0);
+  // Lightbox: open + which photo to start on. -1 means closed.
+  const [lightboxIdx, setLightboxIdx] = useState<number>(-1);
   const [saved, setSaved] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
@@ -164,63 +166,27 @@ export default function ListingDetail() {
           <span className="text-gray-600 truncate max-w-48">{listing.title}</span>
         </div>
 
-        {/* Photo Gallery */}
-        <div className="relative rounded-3xl overflow-hidden mb-8 bg-gray-900 h-96 lg:h-[500px]">
-          <img
-            src={allPhotos[photoIdx]}
-            alt={listing.title}
-            className="w-full h-full object-cover"
+        {/* Photo Gallery — Zillow/Redfin-style 1+4 grid.
+            Click any tile to open the fullscreen lightbox; mobile shows a swipeable hero. */}
+        <PhotoGrid
+          photos={allPhotos}
+          title={listing.title}
+          saved={saved}
+          onSave={handleSave}
+          onShare={handleShare}
+          onOpenLightbox={(i) => setLightboxIdx(i)}
+          viewCount={listing.viewCount ?? 0}
+          saveCount={listing.saveCount ?? 0}
+        />
+
+        {lightboxIdx >= 0 && (
+          <Lightbox
+            photos={allPhotos}
+            startIdx={lightboxIdx}
+            title={listing.title}
+            onClose={() => setLightboxIdx(-1)}
           />
-          {allPhotos.length > 1 && (
-            <>
-              <button
-                onClick={() => setPhotoIdx(i => (i - 1 + allPhotos.length) % allPhotos.length)}
-                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/90 rounded-full shadow-lg hover:bg-white transition-all"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => setPhotoIdx(i => (i + 1) % allPhotos.length)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/90 rounded-full shadow-lg hover:bg-white transition-all"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-                {allPhotos.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setPhotoIdx(i)}
-                    className={`h-2 rounded-full transition-all ${i === photoIdx ? "w-6 bg-white" : "w-2 bg-white/50"}`}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-          {/* Action buttons */}
-          <div className="absolute top-4 right-4 flex gap-2">
-            <button
-              onClick={handleSave}
-              className="p-3 bg-white/90 rounded-full shadow-lg hover:bg-white transition-all"
-            >
-              <Heart className={`h-5 w-5 ${saved ? "fill-red-500 text-red-500" : "text-gray-600"}`} />
-            </button>
-            <button
-              onClick={handleShare}
-              className="p-3 bg-white/90 rounded-full shadow-lg hover:bg-white transition-all"
-            >
-              <Share2 className="h-5 w-5 text-gray-600" />
-            </button>
-          </div>
-          {/* Stats */}
-          <div className="absolute bottom-4 left-4 flex gap-2">
-            <div className="flex items-center gap-1.5 bg-black/50 text-white text-sm px-3 py-1.5 rounded-full backdrop-blur-sm">
-              <Eye className="h-4 w-4" /> {listing.viewCount} views
-            </div>
-            <div className="flex items-center gap-1.5 bg-black/50 text-white text-sm px-3 py-1.5 rounded-full backdrop-blur-sm">
-              <Bookmark className="h-4 w-4" /> {listing.saveCount} saves
-            </div>
-          </div>
-        </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
@@ -436,6 +402,205 @@ export default function ListingDetail() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Photo grid (Zillow/Redfin-style hero) ──────────────────────────────────
+// Layout rules:
+//  - 1 photo → single full-width hero
+//  - 2 photos → 50/50 split
+//  - 3 photos → 1 large left + 2 stacked right
+//  - 4+ photos → 1 large left + 4 tiles right (2x2). On the bottom-right tile,
+//    if there are more photos, show a "+N photos" overlay.
+//  Mobile collapses to a single hero with a "View all" button overlay.
+function PhotoGrid({
+  photos, title, saved, onSave, onShare, onOpenLightbox, viewCount, saveCount,
+}: {
+  photos: string[];
+  title: string;
+  saved: boolean;
+  onSave: () => void;
+  onShare: () => void;
+  onOpenLightbox: (i: number) => void;
+  viewCount: number;
+  saveCount: number;
+}) {
+  const visible = photos.slice(0, 5);
+  const remaining = Math.max(0, photos.length - 5);
+
+  return (
+    <div className="relative mb-8">
+      {/* Mobile / 1 photo fallback */}
+      <div className={`relative rounded-3xl overflow-hidden bg-gray-900 h-80 ${visible.length > 1 ? "md:hidden" : ""}`}>
+        <img
+          src={visible[0]}
+          alt={title}
+          className="w-full h-full object-cover cursor-pointer"
+          onClick={() => onOpenLightbox(0)}
+        />
+        {photos.length > 1 && (
+          <button
+            onClick={() => onOpenLightbox(0)}
+            className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-white text-gray-900 text-xs font-semibold px-3 py-2 rounded-full shadow-lg"
+          >
+            <Camera className="h-3.5 w-3.5" /> View all {photos.length} photos
+          </button>
+        )}
+      </div>
+
+      {/* Desktop grid (≥ md) */}
+      {visible.length > 1 && (
+        <div className="hidden md:grid grid-cols-4 grid-rows-2 gap-2 h-[500px] rounded-3xl overflow-hidden">
+          {/* Hero tile — spans 2 cols × 2 rows on the left */}
+          <button
+            type="button"
+            onClick={() => onOpenLightbox(0)}
+            className="col-span-2 row-span-2 relative group bg-gray-900"
+          >
+            <img src={visible[0]} alt={title} className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform" />
+          </button>
+          {/* Right-side 4 tiles */}
+          {[1, 2, 3, 4].map(i => {
+            const src = visible[i];
+            if (!src) {
+              return <div key={i} className="bg-gray-100" />;
+            }
+            const isLastVisible = i === 4 && remaining > 0;
+            return (
+              <button
+                type="button"
+                key={i}
+                onClick={() => onOpenLightbox(i)}
+                className="relative group bg-gray-900"
+              >
+                <img src={src} alt={`${title} photo ${i + 1}`} className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform" />
+                {isLastVisible && (
+                  <div className="absolute inset-0 bg-black/55 flex items-center justify-center text-white">
+                    <div className="flex items-center gap-1.5 text-sm font-semibold">
+                      <ImageIcon className="h-4 w-4" /> +{remaining} more
+                    </div>
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* "View all photos" button — bottom-right of the grid */}
+      {photos.length > 1 && (
+        <button
+          onClick={() => onOpenLightbox(0)}
+          className="hidden md:flex absolute bottom-4 right-4 items-center gap-1.5 bg-white text-gray-900 text-xs font-semibold px-3 py-2 rounded-full shadow-lg hover:shadow-xl transition"
+        >
+          <Camera className="h-3.5 w-3.5" /> View all {photos.length} photos
+        </button>
+      )}
+
+      {/* Save & share — always present, top-right */}
+      <div className="absolute top-4 right-4 flex gap-2">
+        <button
+          onClick={onSave}
+          className="p-2.5 bg-white/95 rounded-full shadow-md hover:bg-white transition-all"
+          aria-label="Save listing"
+        >
+          <Heart className={`h-4 w-4 ${saved ? "fill-red-500 text-red-500" : "text-gray-600"}`} />
+        </button>
+        <button
+          onClick={onShare}
+          className="p-2.5 bg-white/95 rounded-full shadow-md hover:bg-white transition-all"
+          aria-label="Share listing"
+        >
+          <Share2 className="h-4 w-4 text-gray-600" />
+        </button>
+      </div>
+
+      {/* Stats — top-left */}
+      <div className="absolute top-4 left-4 flex gap-2">
+        <div className="flex items-center gap-1.5 bg-black/55 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur-sm">
+          <Eye className="h-3 w-3" /> {viewCount}
+        </div>
+        <div className="flex items-center gap-1.5 bg-black/55 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur-sm">
+          <Bookmark className="h-3 w-3" /> {saveCount}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Lightbox — fullscreen photo viewer with keyboard + click navigation ────
+function Lightbox({
+  photos, startIdx, title, onClose,
+}: {
+  photos: string[];
+  startIdx: number;
+  title: string;
+  onClose: () => void;
+}) {
+  const [idx, setIdx] = useState(startIdx);
+
+  // Keyboard nav: ← → to flip, Esc to close. Body scroll is locked while open.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      else if (e.key === "ArrowRight") setIdx(i => (i + 1) % photos.length);
+      else if (e.key === "ArrowLeft") setIdx(i => (i - 1 + photos.length) % photos.length);
+    };
+    window.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [photos.length, onClose]);
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col" onClick={onClose}>
+      <div className="flex items-center justify-between px-5 py-3 text-white text-sm">
+        <span className="font-semibold truncate">{title}</span>
+        <div className="flex items-center gap-4">
+          <span className="text-white/70">{idx + 1} / {photos.length}</span>
+          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-white/10" aria-label="Close">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+      <div className="flex-1 relative flex items-center justify-center px-4 pb-4" onClick={e => e.stopPropagation()}>
+        <img src={photos[idx]} alt={`${title} ${idx + 1}`} className="max-h-full max-w-full object-contain" />
+        {photos.length > 1 && (
+          <>
+            <button
+              onClick={() => setIdx(i => (i - 1 + photos.length) % photos.length)}
+              className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full text-white"
+              aria-label="Previous photo"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+            <button
+              onClick={() => setIdx(i => (i + 1) % photos.length)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full text-white"
+              aria-label="Next photo"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </button>
+          </>
+        )}
+      </div>
+      {photos.length > 1 && (
+        <div className="px-5 py-3 flex gap-2 overflow-x-auto bg-black/60" onClick={e => e.stopPropagation()}>
+          {photos.map((p, i) => (
+            <button
+              key={i}
+              onClick={() => setIdx(i)}
+              className={`shrink-0 h-16 w-24 rounded overflow-hidden border-2 transition ${i === idx ? "border-white" : "border-transparent opacity-60 hover:opacity-100"}`}
+            >
+              <img src={p} alt="" className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

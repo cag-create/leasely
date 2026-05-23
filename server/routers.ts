@@ -652,12 +652,19 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .query(async ({ input, ctx }) => {
         const listing = await getListingById(input.id);
-        if (!listing || listing.status !== "active") {
+        if (!listing) throw new TRPCError({ code: "NOT_FOUND", message: "Listing not found" });
+        // Owners and admins can fetch any status (so they can edit inactive listings).
+        // The public must only see active listings.
+        const isOwner = ctx.user && (ctx.user as any).id === listing.userId;
+        const isAdmin = ctx.user && (ctx.user as any).role === "admin";
+        if (listing.status !== "active" && !isOwner && !isAdmin) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Listing not found" });
         }
-        // Increment view count async (fire and forget)
-        const ip = (ctx.req as any).ip ?? (ctx.req as any).headers?.["x-forwarded-for"] ?? undefined;
-        incrementViewCount(input.id, ip).catch(() => {});
+        // Increment view count async (fire and forget) — only for public viewers.
+        if (!isOwner && !isAdmin) {
+          const ip = (ctx.req as any).ip ?? (ctx.req as any).headers?.["x-forwarded-for"] ?? undefined;
+          incrementViewCount(input.id, ip).catch(() => {});
+        }
         return listing;
       }),
 
@@ -874,15 +881,18 @@ export const appRouter = router({
         set("bathrooms", data.bathrooms);
         set("squareFeet", data.squareFeet);
         set("propertyType", data.propertyType);
-        await updateListing(id, ctx.user.id, updateData as any);
+        // Admins can edit any listing; owners can only edit their own.
+        const isAdmin = ctx.user.role === "admin";
+        await updateListing(id, ctx.user.id, updateData as any, { isAdmin });
         return { success: true };
       }),
 
-    /** Deactivate / delete a listing (owner only) */
+    /** Deactivate / delete a listing (owner or admin). Soft-delete via status=inactive. */
     deleteListing: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
-        await deleteListing(input.id, ctx.user.id);
+        const isAdmin = ctx.user.role === "admin";
+        await deleteListing(input.id, ctx.user.id, { isAdmin });
         return { success: true };
       }),
 

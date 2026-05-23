@@ -11,7 +11,8 @@ import {
   Users, Building2, DollarSign, TrendingUp, Shield,
   Search, ChevronRight, Crown, CheckCircle2,
   RefreshCw, BarChart3, Zap, Globe, Star,
-  Award, Clock, XCircle, MessageSquare, Bell, Loader2, FileText, BookOpen, Wrench, Sparkles
+  Award, Clock, XCircle, MessageSquare, Bell, Loader2, FileText, BookOpen, Wrench, Sparkles,
+  Pencil, Trash2, ExternalLink,
 } from "lucide-react";
 
 type AdminTab = "overview" | "users" | "listings" | "subs" | "agents" | "contractors" | "waitlist" | "sop" | "growth" | "intelligence";
@@ -210,9 +211,22 @@ function UsersTab() {
 // ─── Listings Tab ────────────────────────────────────────────────────────────
 
 function ListingsTab() {
+  const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive" | "pending">("all");
   const { data: listings, isLoading } = trpc.admin.getAllListings.useQuery({ limit: 200 });
+  const utils = trpc.useUtils();
+  const deleteListing = trpc.marketplace.deleteListing.useMutation({
+    onSuccess: () => {
+      toast.success("Listing removed.");
+      utils.admin.getAllListings.invalidate();
+    },
+    onError: (e) => toast.error(e.message ?? "Failed to delete listing"),
+  });
+  const handleDelete = (id: number, title: string) => {
+    if (!confirm(`Permanently deactivate "${title}"? This hides it from the public marketplace.`)) return;
+    deleteListing.mutate({ id });
+  };
 
   const filtered = (listings ?? []).filter((l: any) => {
     if (statusFilter !== "all" && l.status !== statusFilter) return false;
@@ -287,6 +301,7 @@ function ListingsTab() {
                 <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Views</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Created</th>
+                <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -322,6 +337,38 @@ function ListingsTab() {
                   </td>
                   <td className="px-5 py-3 text-xs text-muted-foreground">
                     {l.createdAt ? new Date(l.createdAt).toLocaleDateString() : "—"}
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <div className="flex items-center gap-1 justify-end">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0"
+                        title="View public listing"
+                        onClick={() => window.open(`/listing/${l.id}`, "_blank", "noopener")}
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0"
+                        title="Edit listing"
+                        onClick={() => navigate(`/edit-listing/${l.id}`)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                        title="Deactivate listing"
+                        disabled={l.status === "inactive" || deleteListing.isPending}
+                        onClick={() => handleDelete(l.id, l.title || `Listing #${l.id}`)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
