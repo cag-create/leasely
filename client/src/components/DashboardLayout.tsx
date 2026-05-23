@@ -38,7 +38,7 @@ const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/112528410/Ucb4CaDiJcuyDW
 
 const coreMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", group: "main" },
-  { icon: Home, label: "My Listings", path: "/list-property", group: "main" },
+  { icon: Home, label: "My Listings", path: "/my-listings", group: "main" },
   { icon: Heart, label: "Saved", path: "/saved", group: "main" },
 ];
 

@@ -38,6 +38,7 @@ const ProSetup            = lazy(() => import("./pages/ProSetup"));
 const PortalSetup         = lazy(() => import("./pages/PortalSetup"));
 const EditListing         = lazy(() => import("./pages/EditListing"));
 const ImportListings      = lazy(() => import("./pages/ImportListings"));
+const MyListings          = lazy(() => import("./pages/MyListings"));
 const AffiliateSignup     = lazy(() => import("./pages/AffiliateSignup"));
 const AffiliateDashboard  = lazy(() => import("./pages/AffiliateDashboard"));
 const LoginPage           = lazy(() => import("./pages/LoginPage"));
@@ -113,6 +114,7 @@ function Router() {
         {/* Auth + Pro required */}
         <Route path="/onboarding" component={Onboarding} />
         <Route path="/list-property" component={ListProperty} />
+        <Route path="/my-listings" component={MyListings} />
         <Route path="/dashboard">
           {() => <ProGate featureName="your dashboard"><Dashboard /></ProGate>}
         </Route>

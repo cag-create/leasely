@@ -2657,6 +2657,12 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
 
       // Reuse the same Forge-API-backed OpenAI provider the chat handler uses.
       const baseURL = ENV.forgeApiUrl.endsWith("/v1") ? ENV.forgeApiUrl : `${ENV.forgeApiUrl}/v1`;
+      if (!ENV.forgeApiKey) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "AI screening is not configured on this server (missing API key). Ask your admin to set BUILT_IN_FORGE_API_KEY or OPENAI_API_KEY in the environment.",
+        });
+      }
       const openai = createOpenAI({
         baseURL,
         apiKey: ENV.forgeApiKey,
@@ -2669,6 +2675,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
           schema: ScreeningSchema,
           system: systemPrompt,
           prompt: userPrompt,
+          abortSignal: AbortSignal.timeout(75_000),
         });
         await updateApplicationAiScreening(input.id, ctx.user.id, object);
         return { success: true, result: object };
@@ -2676,7 +2683,13 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         // Don't poison the DB with a half-baked result; surface the error to the UI
         // so the user can retry. The deterministic rule-based panel stays as the
         // fallback in the meantime.
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: e?.message ?? "AI screening failed" });
+        const isAbort = e?.name === "AbortError" || /aborted|timeout/i.test(e?.message ?? "");
+        throw new TRPCError({
+          code: isAbort ? "TIMEOUT" : "INTERNAL_SERVER_ERROR",
+          message: isAbort
+            ? "AI screening timed out after 75 seconds. The model may be overloaded — please try again."
+            : (e?.message ?? "AI screening failed"),
+        });
       }
     }),
   }),

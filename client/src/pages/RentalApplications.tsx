@@ -198,7 +198,24 @@ function ReceivedApplications({
   const runScreening = (id: number) => {
     if (screenedIds.has(id) || screeningId !== null) return;
     setScreeningId(id);
-    screenMut.mutate({ id });
+    // Client-side safety net: if the screening call hangs (network stall,
+    // missing OPENAI key on server, etc.), clear the spinner after 90s and
+    // surface an actionable error rather than leaving the user stuck.
+    const timeoutHandle = window.setTimeout(() => {
+      setScreeningId((current: number | null) => {
+        if (current === id) {
+          toast.error("AI screening took too long. Check that OPENAI_API_KEY is configured on the server, then try again.");
+          return null;
+        }
+        return current;
+      });
+    }, 90_000);
+    screenMut.mutate(
+      { id },
+      {
+        onSettled: () => window.clearTimeout(timeoutHandle),
+      },
+    );
   };
 
   const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
