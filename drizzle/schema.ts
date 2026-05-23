@@ -848,6 +848,9 @@ export const rentalApplications = mysqlTable("rental_applications", {
   // Status
   status: mysqlEnum("status", ["submitted", "reviewing", "approved", "denied", "withdrawn"]).default("submitted").notNull(),
   notes: text("notes"),
+  // AI screening output (JSON string conforming to ScreeningSchema in routers.ts)
+  aiScreeningResult: text("aiScreeningResult"),
+  aiScreenedAt: timestamp("aiScreenedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

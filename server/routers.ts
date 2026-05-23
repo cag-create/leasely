@@ -16,6 +16,10 @@ import Stripe from "stripe";
 import { createHmac, timingSafeEqual } from "crypto";
 import { LEASELY_PRO, LEASELY_PRO_SETUP, DOMAIN_RENEWAL_ANNUAL } from "./products";
 import QRCode from "qrcode";
+import { generateObject } from "ai";
+import { createOpenAI } from "@ai-sdk/openai";
+import { ENV } from "./_core/env";
+import { createPatchedFetch } from "./_core/patchedFetch";
 
 // Signed tenant session token: base64url(payload).hmac
 const TENANT_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -73,7 +77,7 @@ import {
   createSupportReply, getSupportReplies,
   // Rental applications
   createRentalApplication, getRentalApplicationsByLandlord, getRentalApplicationsByListing,
-  getRentalApplicationById, updateRentalApplicationStatus,
+  getRentalApplicationById, updateRentalApplicationStatus, updateApplicationAiScreening,
   // Custom templates
   getCustomTemplatesByUser, createCustomTemplate, deleteCustomTemplate,
   // Rent rates
@@ -2533,6 +2537,137 @@ export const appRouter = router({
       }
 
       return { success: true };
+    }),
+
+    /**
+     * Landlord: run an LLM-backed screening review of an application.
+     * Produces a structured rubric (income/employment/rental history/identity
+     * verdicts + risk factors + a verification checklist) and stores it on
+     * the application row so it survives reloads.
+     *
+     * The model is instructed to flag fair-housing-protected categories as
+     * informational only, not as automatic decline triggers — the landlord
+     * still owns the decision.
+     */
+    runAiScreening: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const app = await getRentalApplicationById(input.id);
+      if (!app || app.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const listing = await getListingById(app.listingId);
+      const targetRentRaw = (listing as any)?.rentAmount ?? (listing as any)?.price ?? "0";
+      const targetRent = parseFloat(String(targetRentRaw).replace(/[^0-9.]/g, "")) || 0;
+      const propertyAddress = listing
+        ? `${listing.address ?? ""} ${listing.city ?? ""}, ${listing.state ?? ""} ${(listing as any).zipCode ?? ""}`.trim()
+        : "Unknown property";
+
+      const ScreeningSchema = z.object({
+        overallScore: z.number().min(0).max(100).describe("0-100 composite — higher = stronger applicant"),
+        recommendation: z.enum(["approve", "approve_with_conditions", "manual_review", "decline"]),
+        recommendationReason: z.string().describe("One-paragraph plain-English summary justifying the recommendation"),
+        income: z.object({
+          rentToIncomeRatio: z.number().nullable().describe("Monthly rent / monthly gross income. null if unverifiable."),
+          affordabilityVerdict: z.enum(["strong", "adequate", "tight", "insufficient", "unverifiable"]),
+          notes: z.string(),
+        }),
+        employment: z.object({
+          employerVerificationStatus: z.enum(["likely_real", "likely_fake", "unverifiable", "no_employer"]).describe("Realism check on employer name + occupation. 'likely_fake' if employer name looks fabricated, generic, or contradicts the stated income."),
+          tenureConcern: z.enum(["none", "short_tenure", "very_short_tenure", "no_start_date"]),
+          notes: z.string(),
+        }),
+        rentalHistory: z.object({
+          landlordReferenceQuality: z.enum(["verifiable", "thin", "missing", "suspicious"]),
+          redFlags: z.array(z.string()),
+          notes: z.string(),
+        }),
+        identity: z.object({
+          completeness: z.enum(["complete", "minor_gaps", "major_gaps"]),
+          notes: z.string(),
+        }),
+        riskFactors: z.array(z.object({
+          severity: z.enum(["high", "medium", "low"]),
+          category: z.enum(["affordability", "employment", "rental_history", "identity", "background", "fair_housing_compliance"]),
+          title: z.string(),
+          detail: z.string(),
+          actionRecommended: z.string(),
+        })),
+        verificationChecklist: z.array(z.object({
+          item: z.string(),
+          priority: z.enum(["required", "recommended", "optional"]),
+          rationale: z.string(),
+        })),
+      });
+
+      // Compact applicant payload for the model — keep just what's screening-relevant.
+      const applicantPayload = {
+        applicantName: app.applicantName,
+        applicantEmail: app.applicantEmail,
+        applicantPhone: app.applicantPhone,
+        applicantDob: app.applicantDob,
+        currentAddress: app.currentAddress,
+        currentLandlordName: app.currentLandlordName,
+        currentLandlordPhone: app.currentLandlordPhone,
+        currentRent: app.currentRent,
+        reasonForLeaving: app.reasonForLeaving,
+        employerName: app.employerName,
+        employerPhone: app.employerPhone,
+        occupation: app.occupation,
+        monthlyIncome: app.monthlyIncome,
+        moveInDate: app.moveInDate,
+        state: app.state,
+        hasPets: app.hasPets,
+        petDescription: app.petDescription,
+        vehicleInfo: app.vehicleInfo,
+        emergencyContactName: app.emergencyContactName,
+        emergencyContactPhone: app.emergencyContactPhone,
+        additionalOccupants: app.additionalOccupants,
+        backgroundCheckConsent: app.backgroundCheckConsent,
+        creditCheckConsent: app.creditCheckConsent,
+        notes: app.notes,
+      };
+
+      const systemPrompt = `You are an experienced US residential leasing screener evaluating a rental application for a landlord. Your job is to surface risk signals and produce an actionable verification checklist — NOT to make the final decision.
+
+Hard rules:
+- The 3x-rent rule of thumb is a guideline; rent-to-income at or below 0.33 is "strong", 0.34–0.40 is "adequate", 0.41–0.50 is "tight", above 0.50 is "insufficient".
+- Treat the applicant's self-reported employer as a realism check: generic names ("ABC LLC", "Self", single-word entities) or a stated income that's wildly out of line with the occupation should be flagged 'likely_fake' or 'unverifiable' — NEVER as fact, always as something the landlord should verify.
+- Fair-housing protected categories (race, color, national origin, religion, sex, familial status, disability, age in some states, source of income in many states/cities) MUST NOT influence the recommendation. If the data hints at any of them, record it under riskFactors with category "fair_housing_compliance" and severity "low", titled to remind the landlord to ignore it.
+- Number of occupants: HUD informal guideline is roughly 2 per bedroom. Flag overcrowding for the landlord's review; don't auto-decline.
+- Pets without a description, missing phone numbers, missing DOB, vague move-in dates, and "self-employed" with no employer phone are all 'manual_review' triggers, not 'decline' triggers.
+- Be specific. Don't say "verify employment" — say "Call (employerPhone) and ask for HR or the applicant's supervisor; confirm start date and gross monthly pay."
+- If the applicant did not consent to background or credit checks, that alone is enough for "manual_review" until obtained.
+
+Be terse. Notes fields are 1–2 sentences each, not paragraphs.`;
+
+      const userPrompt = `PROPERTY
+${propertyAddress}
+Target monthly rent: $${targetRent.toFixed(2)}
+
+APPLICATION
+${JSON.stringify(applicantPayload, null, 2)}`;
+
+      // Reuse the same Forge-API-backed OpenAI provider the chat handler uses.
+      const baseURL = ENV.forgeApiUrl.endsWith("/v1") ? ENV.forgeApiUrl : `${ENV.forgeApiUrl}/v1`;
+      const openai = createOpenAI({
+        baseURL,
+        apiKey: ENV.forgeApiKey,
+        fetch: createPatchedFetch(fetch),
+      });
+
+      try {
+        const { object } = await generateObject({
+          model: openai("claude-sonnet-4-6"),
+          schema: ScreeningSchema,
+          system: systemPrompt,
+          prompt: userPrompt,
+        });
+        await updateApplicationAiScreening(input.id, ctx.user.id, object);
+        return { success: true, result: object };
+      } catch (e: any) {
+        // Don't poison the DB with a half-baked result; surface the error to the UI
+        // so the user can retry. The deterministic rule-based panel stays as the
+        // fallback in the meantime.
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: e?.message ?? "AI screening failed" });
+      }
     }),
   }),
 

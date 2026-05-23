@@ -175,24 +175,31 @@ function ReceivedApplications({
   searchQuery, setSearchQuery, statusCounts, selectedApp, setSelectedApp,
   screenedIds, setScreenedIds, screeningId, setScreeningId,
 }: any) {
-  const runScreening = (id: number) => {
-    if (screenedIds.has(id) || screeningId !== null) return;
-    setScreeningId(id);
-    // Simulated AI screening latency. Replace with real Claude call when wired.
-    setTimeout(() => {
-      setScreenedIds((prev: Set<number>) => {
-        const next = new Set(prev);
-        next.add(id);
-        return next;
-      });
-      setScreeningId(null);
-      toast.success("AI screening complete.");
-    }, 1200);
-  };
   const utils = trpc.useUtils();
   const updateStatus = trpc.applications.updateStatus.useMutation({
     onSuccess: () => utils.applications.list.invalidate(),
   });
+  const screenMut = (trpc as any).applications.runAiScreening.useMutation({
+    onSuccess: (_res: any, vars: { id: number }) => {
+      setScreenedIds((prev: Set<number>) => {
+        const next = new Set(prev);
+        next.add(vars.id);
+        return next;
+      });
+      setScreeningId(null);
+      utils.applications.list.invalidate();
+      toast.success("AI screening complete.");
+    },
+    onError: (e: any) => {
+      setScreeningId(null);
+      toast.error(e?.message ?? "AI screening failed — try again.");
+    },
+  });
+  const runScreening = (id: number) => {
+    if (screenedIds.has(id) || screeningId !== null) return;
+    setScreeningId(id);
+    screenMut.mutate({ id });
+  };
 
   const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
     submitted: { label: "Submitted", color: "bg-blue-500/10 text-blue-600", icon: Clock },
@@ -307,8 +314,9 @@ function ReceivedApplications({
                 {/* Expanded detail */}
                 {selectedApp === app.id && (
                   <div className="mt-4 pt-4 border-t-2 border-primary/30 space-y-4 bg-muted/30 -mx-4 -mb-4 px-4 pb-4 rounded-b-xl">
-                    {/* AI screening — gated until landlord triggers it */}
-                    {screenedIds.has(app.id) ? (
+                    {/* AI screening — gated until landlord triggers it.
+                        Already-screened apps (stored aiScreeningResult) auto-show. */}
+                    {screenedIds.has(app.id) || app.aiScreeningResult ? (
                       <AIScreeningPanel app={app} />
                     ) : (
                       <div className="rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 p-5 text-center">
@@ -411,10 +419,24 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 // ── AI Screening panel ──────────────────────────────────────────────────────
-// Surfaces the tenant score breakdown + a deterministic recommendation based
-// on the applicant data we already have. Designed to be replaced later by a
-// Claude-powered narrative when we wire the AI screener service in.
+// Renders the LLM-generated screening rubric (income/employment/rental-history/
+// identity verdicts + risk factors + verification checklist) when one is stored
+// on the application. Falls back to the deterministic score + issue list when
+// the LLM call hasn't been made yet or failed.
 function AIScreeningPanel({ app }: { app: any }) {
+  // Try the stored LLM result first.
+  const llm = (() => {
+    if (!app?.aiScreeningResult) return null;
+    try {
+      return typeof app.aiScreeningResult === "string"
+        ? JSON.parse(app.aiScreeningResult)
+        : app.aiScreeningResult;
+    } catch {
+      return null;
+    }
+  })();
+  if (llm) return <AiScreeningLlmView llm={llm} screenedAt={app.aiScreenedAt} />;
+
   const income = parseMoney(app.monthlyIncome);
   const currentRent = parseMoney(app.currentRent);
   const targetRent = parseMoney(app.listingRent ?? app.targetRent ?? app.rentAmount);
@@ -528,7 +550,213 @@ function AIScreeningPanel({ app }: { app: any }) {
   );
 }
 
-// Deterministic "issues found" list — replaceable later by a Claude narrative.
+// LLM-generated screening view. Conforms to the ScreeningSchema produced by
+// the applications.runAiScreening tRPC mutation in server/routers.ts.
+function AiScreeningLlmView({ llm, screenedAt }: { llm: any; screenedAt?: string | Date | null }) {
+  const recTone =
+    llm.recommendation === "approve" ? "approve" :
+    llm.recommendation === "decline" ? "decline" : "review";
+  const recColor =
+    recTone === "approve" ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-400" :
+    recTone === "decline" ? "bg-red-500/15 border-red-500/40 text-red-700 dark:text-red-400" :
+    "bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-400";
+  const RecIcon = recTone === "approve" ? ThumbsUp : recTone === "decline" ? ThumbsDown : AlertTriangle;
+  const recLabel = {
+    approve: "Recommend: Approve",
+    approve_with_conditions: "Recommend: Approve with Conditions",
+    manual_review: "Recommend: Manual Review",
+    decline: "Recommend: Decline",
+  }[llm.recommendation as string] ?? "Recommend: Manual Review";
+
+  const score = Math.round(llm.overallScore ?? 0);
+  const scoreColor =
+    score >= 80 ? "text-[#00C896] bg-[#00C896]/10 border-[#00C896]/20" :
+    score >= 65 ? "text-blue-500 bg-blue-500/10 border-blue-500/20" :
+    score >= 50 ? "text-amber-500 bg-amber-500/10 border-amber-500/20" :
+    "text-red-500 bg-red-500/10 border-red-500/20";
+
+  const verdictBadge = (v: string) => {
+    const map: Record<string, string> = {
+      strong: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+      adequate: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+      tight: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+      insufficient: "bg-red-500/15 text-red-700 dark:text-red-400",
+      unverifiable: "bg-muted text-muted-foreground",
+      likely_real: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+      likely_fake: "bg-red-500/15 text-red-700 dark:text-red-400",
+      no_employer: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+      none: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+      short_tenure: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+      very_short_tenure: "bg-red-500/15 text-red-700 dark:text-red-400",
+      no_start_date: "bg-muted text-muted-foreground",
+      verifiable: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+      thin: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+      missing: "bg-red-500/15 text-red-700 dark:text-red-400",
+      suspicious: "bg-red-500/15 text-red-700 dark:text-red-400",
+      complete: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+      minor_gaps: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+      major_gaps: "bg-red-500/15 text-red-700 dark:text-red-400",
+    };
+    return map[v] ?? "bg-muted text-muted-foreground";
+  };
+
+  const sevColor = (s: string) =>
+    s === "high" ? "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400" :
+    s === "medium" ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400" :
+    "border-blue-500/40 bg-blue-500/10 text-blue-700 dark:text-blue-400";
+
+  const priColor = (p: string) =>
+    p === "required" ? "bg-red-500/15 text-red-700 dark:text-red-400" :
+    p === "recommended" ? "bg-amber-500/15 text-amber-700 dark:text-amber-400" :
+    "bg-muted text-muted-foreground";
+
+  const ratio = llm.income?.rentToIncomeRatio;
+
+  return (
+    <div className="rounded-xl border-2 border-primary/40 bg-gradient-to-br from-primary/10 to-primary/5 p-4 space-y-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <h4 className="font-bold text-sm text-foreground">AI Screening Summary</h4>
+          {screenedAt && (
+            <span className="text-[10px] text-muted-foreground">
+              · {new Date(screenedAt).toLocaleString()}
+            </span>
+          )}
+        </div>
+        <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${scoreColor}`}>
+          {score}/100
+        </span>
+      </div>
+
+      <div className={`rounded-lg border px-3 py-2 flex items-start gap-2 ${recColor}`}>
+        <RecIcon className="h-4 w-4 mt-0.5 shrink-0" />
+        <div className="text-xs">
+          <div className="font-semibold">{recLabel}</div>
+          <div className="opacity-90">{llm.recommendationReason}</div>
+        </div>
+      </div>
+
+      {/* Four rubric cards */}
+      <div className="grid sm:grid-cols-2 gap-2">
+        <div className="rounded-lg border bg-card/60 px-3 py-2">
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <DollarSign className="h-3 w-3" /> Income
+            </div>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${verdictBadge(llm.income?.affordabilityVerdict ?? "")}`}>
+              {llm.income?.affordabilityVerdict?.replace(/_/g, " ")}
+            </span>
+          </div>
+          {ratio != null && (
+            <div className="text-[11px] text-muted-foreground mb-1">
+              Rent / income: <span className="font-semibold text-foreground">{(ratio * 100).toFixed(0)}%</span>
+            </div>
+          )}
+          <p className="text-xs">{llm.income?.notes}</p>
+        </div>
+
+        <div className="rounded-lg border bg-card/60 px-3 py-2">
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Briefcase className="h-3 w-3" /> Employment
+            </div>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${verdictBadge(llm.employment?.employerVerificationStatus ?? "")}`}>
+              {llm.employment?.employerVerificationStatus?.replace(/_/g, " ")}
+            </span>
+          </div>
+          {llm.employment?.tenureConcern && llm.employment.tenureConcern !== "none" && (
+            <div className="text-[11px] text-amber-600 dark:text-amber-400 mb-1">
+              ⚠ {llm.employment.tenureConcern.replace(/_/g, " ")}
+            </div>
+          )}
+          <p className="text-xs">{llm.employment?.notes}</p>
+        </div>
+
+        <div className="rounded-lg border bg-card/60 px-3 py-2">
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Home className="h-3 w-3" /> Rental History
+            </div>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${verdictBadge(llm.rentalHistory?.landlordReferenceQuality ?? "")}`}>
+              {llm.rentalHistory?.landlordReferenceQuality}
+            </span>
+          </div>
+          {Array.isArray(llm.rentalHistory?.redFlags) && llm.rentalHistory.redFlags.length > 0 && (
+            <ul className="text-[11px] text-red-600 dark:text-red-400 mb-1 list-disc list-inside">
+              {llm.rentalHistory.redFlags.map((rf: string, i: number) => <li key={i}>{rf}</li>)}
+            </ul>
+          )}
+          <p className="text-xs">{llm.rentalHistory?.notes}</p>
+        </div>
+
+        <div className="rounded-lg border bg-card/60 px-3 py-2">
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <ShieldCheck className="h-3 w-3" /> Identity
+            </div>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${verdictBadge(llm.identity?.completeness ?? "")}`}>
+              {llm.identity?.completeness?.replace(/_/g, " ")}
+            </span>
+          </div>
+          <p className="text-xs">{llm.identity?.notes}</p>
+        </div>
+      </div>
+
+      {Array.isArray(llm.riskFactors) && llm.riskFactors.length > 0 && (
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1.5">
+            <AlertTriangle className="h-3.5 w-3.5" /> Risk Factors ({llm.riskFactors.length})
+          </div>
+          <ul className="space-y-1.5">
+            {llm.riskFactors.map((rf: any, i: number) => (
+              <li key={i} className={`rounded-md border px-2.5 py-1.5 text-xs ${sevColor(rf.severity)}`}>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="font-semibold">{rf.title}</span>
+                  <span className="text-[10px] opacity-70 uppercase">· {rf.category?.replace(/_/g, " ")}</span>
+                </div>
+                <div className="opacity-90">{rf.detail}</div>
+                {rf.actionRecommended && (
+                  <div className="mt-1 text-[11px] opacity-80"><span className="font-semibold">Action:</span> {rf.actionRecommended}</div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {Array.isArray(llm.verificationChecklist) && llm.verificationChecklist.length > 0 && (
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1.5">
+            <CheckCircle2 className="h-3.5 w-3.5" /> Verification Checklist
+          </div>
+          <ul className="space-y-1">
+            {llm.verificationChecklist.map((v: any, i: number) => (
+              <li key={i} className="flex items-start gap-2 text-xs bg-card/60 rounded-md px-2.5 py-1.5">
+                <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${priColor(v.priority)}`}>
+                  {v.priority}
+                </span>
+                <div className="min-w-0">
+                  <div className="font-medium">{v.item}</div>
+                  {v.rationale && <div className="text-[11px] text-muted-foreground">{v.rationale}</div>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <p className="text-[11px] text-muted-foreground italic">
+        AI screening is informational. Leasely is not a consumer reporting agency. Run a TransUnion-backed background
+        check via ApplyConnect before relying on this for any adverse action decision. Fair-housing protected
+        categories must never influence the decision.
+      </p>
+    </div>
+  );
+}
+
+// Deterministic "issues found" list — fallback for when the LLM screening
+// hasn't been run yet or failed.
 // Severity: high = decline-worthy, medium = needs verification, low = informational.
 function computeScreeningIssues(app: any): Array<{ severity: "high" | "medium" | "low"; title: string; detail: string }> {
   const issues: Array<{ severity: "high" | "medium" | "low"; title: string; detail: string }> = [];

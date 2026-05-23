@@ -967,6 +967,15 @@ export async function updateRentalApplicationStatus(id: number, landlordUserId: 
   await db.update(rentalApplications).set({ status: status as any, notes, updatedAt: new Date() }).where(and(eq(rentalApplications.id, id), eq(rentalApplications.landlordUserId, landlordUserId)));
 }
 
+export async function updateApplicationAiScreening(id: number, landlordUserId: number, result: unknown): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(rentalApplications)
+    .set({ aiScreeningResult: JSON.stringify(result), aiScreenedAt: new Date(), updatedAt: new Date() })
+    .where(and(eq(rentalApplications.id, id), eq(rentalApplications.landlordUserId, landlordUserId)));
+}
+
 // ─── Custom Application Templates ────────────────────────────────────────────
 export async function getCustomTemplatesByUser(userId: number) {
   const db = await getDb();
