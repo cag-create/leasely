@@ -13,8 +13,8 @@ import {
   ChevronDown, ChevronUp, ArrowRight, Zap, Loader2
 } from "lucide-react";
 
-const BRAND = "#0d3d2e";
-const ACCENT = "#b8f04a";
+const BRAND = "#1F1A12";
+const ACCENT = "#F5A623";
 
 const FREE_FEATURES = [
   { label: "1 property listing on marketplace", included: true },
@@ -179,7 +179,7 @@ export default function Pricing() {
       <Navbar />
 
       {/* Hero */}
-      <section className="pt-20 pb-16 px-4 text-center" style={{ background: `linear-gradient(160deg, ${BRAND} 0%, #0a2a1f 100%)` }}>
+      <section className="pt-20 pb-16 px-4 text-center" style={{ background: `linear-gradient(160deg, ${BRAND} 0%, #3A2410 100%)` }}>
         <Badge className="mb-4 font-bold text-xs px-3 py-1 border-0" style={{ background: `${ACCENT}20`, color: ACCENT }}>
           Simple, Transparent Pricing
         </Badge>
@@ -238,9 +238,9 @@ export default function Pricing() {
           </div>
 
           {/* Pro card */}
-          <div className="rounded-3xl border-2 p-8 relative overflow-hidden" style={{ borderColor: ACCENT, background: `linear-gradient(160deg, ${BRAND} 0%, #0a2a1f 100%)` }}>
+          <div className="rounded-3xl border-2 p-8 relative overflow-hidden" style={{ borderColor: ACCENT, background: `linear-gradient(160deg, ${BRAND} 0%, #3A2410 100%)` }}>
             <div className="absolute top-4 right-4">
-              <Badge className="font-bold text-xs border-0" style={{ background: ACCENT, color: "#0a2a1f" }}>
+              <Badge className="font-bold text-xs border-0" style={{ background: ACCENT, color: "#3A2410" }}>
                 <Sparkles className="h-3 w-3 mr-1" /> Most Popular
               </Badge>
             </div>
@@ -257,7 +257,7 @@ export default function Pricing() {
             </div>
             {!isAuthenticated ? (
               <a href={getLoginUrl()}>
-                <Button className="w-full font-bold mb-6 gap-2" style={{ background: ACCENT, color: "#0a2a1f" }}>
+                <Button className="w-full font-bold mb-6 gap-2" style={{ background: ACCENT, color: "#3A2410" }}>
                   <Sparkles className="h-4 w-4" /> Get Started — Sign In First
                 </Button>
               </a>
@@ -278,7 +278,7 @@ export default function Pricing() {
                 </label>
                 <Button
                   className="w-full font-bold mb-6 gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ background: ACCENT, color: "#0a2a1f" }}
+                  style={{ background: ACCENT, color: "#3A2410" }}
                   onClick={handleCheckout}
                   disabled={checkoutMutation.isPending || !termsAccepted}
                 >
@@ -437,7 +437,7 @@ export default function Pricing() {
       </section>
 
       {/* Final CTA */}
-      <section className="py-20 px-4 text-center" style={{ background: `linear-gradient(135deg, ${BRAND}, #0a2a1f)` }}>
+      <section className="py-20 px-4 text-center" style={{ background: `linear-gradient(135deg, ${BRAND}, #3A2410)` }}>
         <div className="max-w-2xl mx-auto">
           <Badge className="mb-4 font-bold text-xs px-3 py-1 border-0" style={{ background: `${ACCENT}20`, color: ACCENT }}>
             <Zap className="h-3 w-3 mr-1" /> Start in 2 minutes
@@ -452,7 +452,7 @@ export default function Pricing() {
             {!isAuthenticated ? (
               <>
                 <a href={getLoginUrl()}>
-                  <Button size="lg" className="font-bold px-8 gap-2" style={{ background: ACCENT, color: "#0a2a1f" }}>
+                  <Button size="lg" className="font-bold px-8 gap-2" style={{ background: ACCENT, color: "#3A2410" }}>
                     <Building2 className="h-5 w-5" /> Start Free — List a Property
                   </Button>
                 </a>
@@ -465,7 +465,7 @@ export default function Pricing() {
             ) : (
               <>
                 <Link href="/list-property">
-                  <Button size="lg" className="font-bold px-8 gap-2" style={{ background: ACCENT, color: "#0a2a1f" }}>
+                  <Button size="lg" className="font-bold px-8 gap-2" style={{ background: ACCENT, color: "#3A2410" }}>
                     <Building2 className="h-5 w-5" /> List a Property
                   </Button>
                 </Link>
@@ -497,13 +497,13 @@ export default function Pricing() {
 
       {/* Affiliate CTA */}
       <div className="py-10 px-4 bg-background border-t border-border">
-        <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 rounded-2xl bg-gradient-to-r from-[#00C896]/8 to-[#4F46E5]/8 border border-[#00C896]/15 px-8 py-6">
+        <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 rounded-2xl bg-gradient-to-r from-[#F5A623]/8 to-[#4F46E5]/8 border border-[#F5A623]/15 px-8 py-6">
           <div className="text-center md:text-left">
             <p className="text-foreground font-bold text-base">Refer landlords. Earn $50 one-time per signup.</p>
             <p className="text-muted-foreground text-sm mt-1">No cap, no expiry. Earn a $50 one-time bonus for every landlord who signs up using your affiliate code and pays their first full month plus setup fee.</p>
           </div>
           <Link href="/affiliate/signup">
-            <Button className="bg-[#00C896] hover:bg-[#00A87C] text-[#062018] font-bold gap-2 whitespace-nowrap shrink-0">
+            <Button className="bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] font-bold gap-2 whitespace-nowrap shrink-0">
               <Sparkles className="h-4 w-4" /> Join Affiliate Program
             </Button>
           </Link>
@@ -517,7 +517,7 @@ export default function Pricing() {
           {" · "}
           <Link href="/support" className="text-muted-foreground hover:underline font-medium">Support Center</Link>
           {" · "}
-          <Link href="/fees" className="text-[#00C896] hover:underline font-medium">Fee Schedule</Link>
+          <Link href="/fees" className="text-[#F5A623] hover:underline font-medium">Fee Schedule</Link>
         </p>
       </div>
     </div>

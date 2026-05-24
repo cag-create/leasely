@@ -16,7 +16,7 @@ import {
 import Navbar from "@/components/Navbar";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 
 const FAQ_CATEGORIES = [
   {
@@ -167,7 +167,7 @@ export default function Support() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-black text-gray-900">Pro Priority Support</span>
-                    <Badge className="text-xs font-bold" style={{ background: ACCENT, color: "#0a2a1f", border: "none" }}>ACTIVE</Badge>
+                    <Badge className="text-xs font-bold" style={{ background: ACCENT, color: "#3A2410", border: "none" }}>ACTIVE</Badge>
                   </div>
                   <p className="text-sm text-gray-500">24-hour response SLA · Dedicated support queue · Live chat access</p>
                 </div>
@@ -186,7 +186,7 @@ export default function Support() {
           </div>
           {!isPro && isAuthenticated && (
             <Link href="/dashboard">
-              <Button size="sm" className="font-bold gap-1.5 shrink-0" style={{ background: ACCENT, color: "#0a2a1f" }}>
+              <Button size="sm" className="font-bold gap-1.5 shrink-0" style={{ background: ACCENT, color: "#3A2410" }}>
                 <Zap className="h-3.5 w-3.5" /> Upgrade for Priority Support
               </Button>
             </Link>
@@ -300,7 +300,7 @@ export default function Support() {
                     <div>
                       <div className="font-bold text-sm text-gray-900 flex items-center gap-1.5">
                         Priority Queue
-                        <Badge className="text-xs" style={{ background: ACCENT, color: "#0a2a1f", border: "none" }}>PRO</Badge>
+                        <Badge className="text-xs" style={{ background: ACCENT, color: "#3A2410", border: "none" }}>PRO</Badge>
                       </div>
                       <div className="text-xs text-gray-500 mt-0.5">Your tickets go to the front of the queue</div>
                     </div>
@@ -396,7 +396,7 @@ export default function Support() {
                   type="submit"
                   disabled={submitMutation.isPending}
                   className="w-full h-12 font-bold gap-2"
-                  style={{ background: ACCENT, color: "#0a2a1f" }}
+                  style={{ background: ACCENT, color: "#3A2410" }}
                 >
                   {submitMutation.isPending ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> Submitting...</>

@@ -11,7 +11,7 @@ import {
   Layers
 } from "lucide-react";
 
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 const BRAND = "#1B2B5E";
 
 // ── CSV Template ──────────────────────────────────────────────────────────────
@@ -455,7 +455,7 @@ export default function ImportListings() {
                       <Plus className="h-3.5 w-3.5" /> Add Another Property
                     </Button>
                   </div>
-                  <Button style={{ background: ACCENT, color: "#0a2a1f" }} className="font-bold w-full gap-2"
+                  <Button style={{ background: ACCENT, color: "#3A2410" }} className="font-bold w-full gap-2"
                     onClick={handleManualNext}>
                     Preview Import <ArrowRight className="h-4 w-4" />
                   </Button>
@@ -541,7 +541,7 @@ export default function ImportListings() {
                 <ArrowLeft className="h-4 w-4" /> Back
               </Button>
               <Button
-                style={{ background: ACCENT, color: "#0a2a1f" }}
+                style={{ background: ACCENT, color: "#3A2410" }}
                 className="font-bold flex-1 gap-2"
                 disabled={validCount === 0 || importing}
                 onClick={handleImport}
@@ -574,7 +574,7 @@ export default function ImportListings() {
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/dashboard">
-                <Button style={{ background: ACCENT, color: "#0a2a1f" }} className="font-bold gap-2 w-full sm:w-auto">
+                <Button style={{ background: ACCENT, color: "#3A2410" }} className="font-bold gap-2 w-full sm:w-auto">
                   <BarChart3 className="h-4 w-4" /> View Dashboard
                 </Button>
               </Link>

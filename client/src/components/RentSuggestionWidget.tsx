@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Sparkles, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 
 interface RentSuggestionWidgetProps {
   zip: string;
@@ -113,7 +113,7 @@ export default function RentSuggestionWidget({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="h-7 w-7 rounded-lg flex items-center justify-center" style={{ background: ACCENT }}>
-            <Sparkles className="h-4 w-4 text-[#0a2a1f]" />
+            <Sparkles className="h-4 w-4 text-[#3A2410]" />
           </div>
           <div>
             <div className="text-xs font-bold text-gray-900">Leasely Market Intelligence</div>

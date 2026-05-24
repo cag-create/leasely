@@ -67,7 +67,7 @@ function computeTenantScore(app: any): { score: number; grade: string; color: st
   if (!app.hasPets) score += 5;
   if (app.backgroundCheckConsent) score += 15;
 
-  if (score >= 80) return { score, grade: "Excellent", color: "text-[#00C896]", bgColor: "bg-[#00C896]/10 border-[#00C896]/20" };
+  if (score >= 80) return { score, grade: "Excellent", color: "text-[#F5A623]", bgColor: "bg-[#F5A623]/10 border-[#F5A623]/20" };
   if (score >= 65) return { score, grade: "Good", color: "text-blue-500", bgColor: "bg-blue-500/10 border-blue-500/20" };
   if (score >= 50) return { score, grade: "Fair", color: "text-amber-500", bgColor: "bg-amber-500/10 border-amber-500/20" };
   return { score, grade: "Review", color: "text-red-500", bgColor: "bg-red-500/10 border-red-500/20" };
@@ -122,7 +122,7 @@ export default function RentalApplications() {
             </p>
           </div>
           <Button
-            className="gap-2 bg-[#00C896] hover:bg-[#00A87C] text-[#062018] font-semibold"
+            className="gap-2 bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] font-semibold"
             onClick={() => setActiveTab("send")}
           >
             <Plus className="h-4 w-4" /> Send Application Link
@@ -418,7 +418,7 @@ function ReceivedApplications({
                       {app.backgroundCheckConsent ? (
                         <Button
                           size="sm"
-                          className="text-xs h-7 gap-1.5 bg-[#00C896] hover:bg-[#00b386] text-[#0a2a1f]"
+                          className="text-xs h-7 gap-1.5 bg-[#F5A623] hover:bg-[#E8951A] text-[#3A2410]"
                           disabled={!APPLYCONNECT_URL}
                           onClick={e => {
                             e.stopPropagation();
@@ -625,7 +625,7 @@ function AiScreeningLlmView({ llm, screenedAt }: { llm: any; screenedAt?: string
     score >= 86 ? "text-red-500 bg-red-500/10 border-red-500/20" :
     score >= 61 ? "text-amber-500 bg-amber-500/10 border-amber-500/20" :
     score >= 31 ? "text-blue-500 bg-blue-500/10 border-blue-500/20" :
-    "text-[#00C896] bg-[#00C896]/10 border-[#00C896]/20";
+    "text-[#F5A623] bg-[#F5A623]/10 border-[#F5A623]/20";
 
   const verdictBadge = (v: string) => {
     const map: Record<string, string> = {
@@ -1159,7 +1159,7 @@ function SendApplicationTab({ listings }: { listings: any[] }) {
                 </Button>
               </div>
               <Button
-                className="w-full gap-2 bg-[#00C896] hover:bg-[#00A87C] text-[#062018] font-semibold"
+                className="w-full gap-2 bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] font-semibold"
                 onClick={shareLink}
               >
                 <Share2 className="h-4 w-4" />
@@ -1181,7 +1181,7 @@ function SendApplicationTab({ listings }: { listings: any[] }) {
       <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-foreground">Form Preview</h3>
-          <Badge className={formType === "coliving_member" ? "bg-purple-500/10 text-purple-600 border-0" : "bg-[#00C896]/10 text-[#00C896] border-0"}>
+          <Badge className={formType === "coliving_member" ? "bg-purple-500/10 text-purple-600 border-0" : "bg-[#F5A623]/10 text-[#F5A623] border-0"}>
             {formType === "coliving_member" ? "Members Application" : "Standard Application"}
           </Badge>
         </div>
@@ -1209,7 +1209,7 @@ function SectionPreview({ title, fields, highlight }: { title: string; fields: s
       <div className="grid grid-cols-2 gap-1">
         {fields.map(f => (
           <div key={f} className="flex items-center gap-1.5 text-xs text-foreground">
-            <div className={`w-1 h-1 rounded-full ${highlight ? "bg-purple-500" : "bg-[#00C896]"}`} />
+            <div className={`w-1 h-1 rounded-full ${highlight ? "bg-purple-500" : "bg-[#F5A623]"}`} />
             {f}
           </div>
         ))}

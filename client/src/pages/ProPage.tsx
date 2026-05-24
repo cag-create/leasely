@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 const BRAND = "#0F1F4B";
-const TEAL = "#00C896";
+const TEAL = "#F5A623";
 
 // ─── Animated Counter ───────────────────────────────────────────────────────
 function AnimatedCounter({ end, suffix = "", prefix = "" }: { end: number; suffix?: string; prefix?: string }) {
@@ -128,7 +128,7 @@ function VideoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
               ← Prev
             </button>
             <button onClick={() => setSlide(s => (s + 1) % DEMO_SLIDES.length)}
-              className="px-4 py-2 rounded-xl text-sm font-bold transition-colors" style={{ background: TEAL, color: '#0a2a1f' }}>
+              className="px-4 py-2 rounded-xl text-sm font-bold transition-colors" style={{ background: TEAL, color: '#3A2410' }}>
               Next →
             </button>
           </div>
@@ -163,7 +163,7 @@ const FEATURES = [
         </div>
         <div className="p-5">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm text-[#0a2a1f]" style={{ background: TEAL }}>SR</div>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm text-[#3A2410]" style={{ background: TEAL }}>SR</div>
             <div><div className="text-white font-bold text-sm">Sunrise Realty LLC</div><div className="text-white/40 text-xs">Premium Rentals · Atlanta, GA</div></div>
             <Badge className="ml-auto bg-teal-500/20 text-teal-300 border-0 text-xs">Pro</Badge>
           </div>
@@ -176,7 +176,7 @@ const FEATURES = [
             ))}
           </div>
           <div className="flex gap-2">
-            <div className="flex-1 rounded-lg py-2 text-center text-xs font-bold text-[#0a2a1f]" style={{ background: TEAL }}>Apply Now</div>
+            <div className="flex-1 rounded-lg py-2 text-center text-xs font-bold text-[#3A2410]" style={{ background: TEAL }}>Apply Now</div>
             <div className="flex-1 bg-white/10 rounded-lg py-2 text-center text-xs text-white/60">Contact</div>
           </div>
         </div>
@@ -216,7 +216,7 @@ const FEATURES = [
           <div className="mt-3 bg-teal-500/15 border border-teal-500/30 rounded-xl p-3 flex items-center gap-2">
             <Zap className="w-4 h-4 text-teal-400 shrink-0"/>
             <div className="flex-1"><div className="text-teal-300 text-xs font-bold">Instant Payout Available</div><div className="text-white/40 text-xs">$8,600 · hits bank in seconds</div></div>
-            <div className="rounded-lg px-3 py-1 text-xs font-bold text-[#0a2a1f]" style={{ background: TEAL }}>Pay Out</div>
+            <div className="rounded-lg px-3 py-1 text-xs font-bold text-[#3A2410]" style={{ background: TEAL }}>Pay Out</div>
           </div>
         </div>
       </div>
@@ -380,7 +380,7 @@ const FEATURES = [
           <div className="text-white/60 text-sm font-medium mb-1">123 Maple St, Unit 2B</div>
           <div className="text-white/35 text-xs mb-4">Scan to view listing & apply</div>
           <div className="flex gap-2 justify-center">
-            <div className="rounded-lg px-4 py-2 text-xs font-bold text-[#0a2a1f]" style={{ background: TEAL }}>Download PNG</div>
+            <div className="rounded-lg px-4 py-2 text-xs font-bold text-[#3A2410]" style={{ background: TEAL }}>Download PNG</div>
             <div className="bg-white/10 rounded-lg px-4 py-2 text-xs text-white/60">Print Flyer</div>
           </div>
         </div>
@@ -557,7 +557,7 @@ export default function ProPage() {
             <p className="text-gray-500 mb-10">Almost always in the first 30 days.</p>
             <div className="grid md:grid-cols-3 gap-6">
               {[
-                { scenario: "1 vacancy filled faster", saving: "$1,300", desc: "Avg landlord loses $1,300/mo per vacant unit. Pro listings convert faster.", color: "#00C896" },
+                { scenario: "1 vacancy filled faster", saving: "$1,300", desc: "Avg landlord loses $1,300/mo per vacant unit. Pro listings convert faster.", color: "#F5A623" },
                 { scenario: "1 bad tenant avoided", saving: "$3,500", desc: "Average eviction costs $3,500 in legal fees + lost rent. AI screening prevents this.", color: "#6366F1" },
                 { scenario: "Hours saved monthly", saving: "8 hrs", desc: "Automated rent collection, work orders, and accounting saves ~8 hours/month.", color: "#F5A623" },
               ].map((item, i) => (
@@ -607,7 +607,7 @@ export default function ProPage() {
         <div className="container">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { value: "$0", label: "First Listing Free", sub: "No credit card needed", icon: Building2, color: "#00C896" },
+              { value: "$0", label: "First Listing Free", sub: "No credit card needed", icon: Building2, color: "#F5A623" },
               { value: "0%", label: "ACH Fees for Pro", sub: "Tenants pay at no cost", icon: DollarSign, color: "#F5A623" },
               { value: "∞", label: "Listings Allowed", sub: "Unlimited on Pro plan", icon: Globe, color: "#6366F1" },
               { value: "$25", label: "Per Month", sub: "Cancel anytime", icon: Star, color: "#10B981" },
@@ -717,11 +717,13 @@ export default function ProPage() {
               <p className="text-white/50 text-xl">Watch a complete walkthrough of every Pro feature — from branded portal to instant payouts</p>
             </div>
 
-            {/* Video thumbnail */}
+            {/* Video thumbnail — warm-amber gradient, lighter than before */}
             <div className="relative rounded-3xl overflow-hidden shadow-2xl cursor-pointer group" onClick={() => setVideoOpen(true)}>
-              <div className="aspect-video bg-gradient-to-br from-[#0F1F4B] via-[#1B2B5E] to-[#0D3B5E] flex items-center justify-center relative">
+              <div className="aspect-video bg-gradient-to-br from-[#2C2418] via-[#3A2A14] to-[#1F1A12] flex items-center justify-center relative">
+                {/* Subtle radial highlight to keep the placeholder from feeling muddy */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(245,166,35,0.18),transparent_65%)] pointer-events-none" />
                 {/* Background portal mockup */}
-                <div className="absolute inset-0 opacity-20">
+                <div className="absolute inset-0 opacity-30">
                   <div className="grid grid-cols-3 gap-4 p-8 h-full">
                     {FEATURES.slice(0, 6).map((f, i) => (
                       <div key={i} className="bg-white/10 rounded-2xl p-4 flex flex-col items-center justify-center gap-2">
@@ -736,7 +738,7 @@ export default function ProPage() {
                 <div className="relative z-10 flex flex-col items-center gap-4">
                   <div className="w-24 h-24 rounded-full flex items-center justify-center shadow-2xl transition-transform group-hover:scale-110 duration-300"
                     style={{ background: TEAL }}>
-                    <Play className="w-10 h-10 text-[#0a2a1f] fill-[#0a2a1f] ml-1" />
+                    <Play className="w-10 h-10 text-[#3A2410] fill-[#3A2410] ml-1" />
                   </div>
                   <div className="text-center">
                     <div className="text-white font-black text-2xl mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>Watch Full Demo</div>
@@ -764,7 +766,7 @@ export default function ProPage() {
       <section className="section-padding" style={{ background: "linear-gradient(135deg, #0a1628 0%, #0d1f3c 100%)" }}>
         <div className="container">
           <div className="text-center mb-12">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest" style={{ background: "rgba(0,200,150,0.15)", color: "#00C896", border: "1px solid rgba(0,200,150,0.3)" }}>
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest" style={{ background: "rgba(245,166,35,0.15)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.3)" }}>
               Real Stories
             </span>
             <h2 className="text-3xl md:text-4xl font-black text-white mt-4" style={{ fontFamily: 'Outfit, sans-serif' }}>Built from experience, not guesswork</h2>
@@ -779,7 +781,7 @@ export default function ProPage() {
                 &ldquo;I caught a fraudulent applicant using Leasely&apos;s AI fraud detector. It flagged a fake pay stub, a fabricated employer address, a disconnected phone number, and a virtual office address &mdash; all in seconds. That one catch alone was worth more than a year of the subscription.&rdquo;
               </p>
               <div className="mt-5 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0" style={{ background: "linear-gradient(135deg, #1B2B5E, #00C896)", color: "white" }}>C</div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0" style={{ background: "linear-gradient(135deg, #1B2B5E, #F5A623)", color: "white" }}>C</div>
                 <div>
                   <div className="font-bold text-white text-sm">Chad</div>
                   <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Property Manager &amp; Leasely Founder</div>
@@ -798,7 +800,7 @@ export default function ProPage() {
                 &ldquo;Having my own branded portal at my name dot leasely dot net changed how tenants see me. I went from sharing random links to sending people to a professional website that looks like I spent thousands building it. My inquiry rate doubled the first week.&rdquo;
               </p>
               <div className="mt-5 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0" style={{ background: "linear-gradient(135deg, #1B2B5E, #00C896)", color: "white" }}>C</div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0" style={{ background: "linear-gradient(135deg, #1B2B5E, #F5A623)", color: "white" }}>C</div>
                 <div>
                   <div className="font-bold text-white text-sm">Chad</div>
                   <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Property Manager &amp; Leasely Founder</div>
@@ -817,7 +819,7 @@ export default function ProPage() {
                 &ldquo;Instant payouts are a game changer. Rent hits my bank account the same day it&apos;s paid &mdash; no waiting 3 business days, no chasing. And with zero ACH fees on Pro, I&apos;m keeping every dollar my tenants send me. It pays for itself every single month.&rdquo;
               </p>
               <div className="mt-5 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0" style={{ background: "linear-gradient(135deg, #1B2B5E, #00C896)", color: "white" }}>C</div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0" style={{ background: "linear-gradient(135deg, #1B2B5E, #F5A623)", color: "white" }}>C</div>
                 <div>
                   <div className="font-bold text-white text-sm">Chad</div>
                   <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Property Manager &amp; Leasely Founder</div>
@@ -849,9 +851,9 @@ export default function ProPage() {
                     <span className="text-5xl font-black text-white" style={{ fontFamily:'Outfit,sans-serif' }}>$25.00</span>
                     <span className="text-white/40">/month</span>
                   </div>
-                  <div className="text-sm font-semibold mt-1" style={{ color: '#00C896' }}>+ $75 one-time setup fee</div>
+                  <div className="text-sm font-semibold mt-1" style={{ color: '#F5A623' }}>+ $75 one-time setup fee</div>
                 </div>
-                <Badge className="bg-teal-500 text-[#0a2a1f] font-bold border-0">Most Popular</Badge>
+                <Badge className="bg-teal-500 text-[#3A2410] font-bold border-0">Most Popular</Badge>
               </div>
               <div className="grid grid-cols-2 gap-2.5 mb-8">
                 {[

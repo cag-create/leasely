@@ -44,10 +44,11 @@ type MarketplaceListing = {
   saveCount: number;
   createdAt: Date;
   updatedAt: Date;
+  isSample?: boolean;
 };
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 
 interface PropertyCardProps {
   listing: MarketplaceListing;
@@ -96,6 +97,28 @@ export default function PropertyCard({ listing, view = "grid", isSaved = false, 
   const isNew = listing.createdAt
     ? Date.now() - new Date(listing.createdAt).getTime() < 7 * 24 * 3600 * 1000
     : false;
+  const isSample = listing.isSample === true || listing.id < 0;
+
+  // Sample listings don't navigate to a detail page (there's no row in the
+  // DB). Instead, show a toast so the visitor understands the badge.
+  const handleSampleClick = (e: React.MouseEvent) => {
+    if (!isSample) return;
+    e.preventDefault();
+    e.stopPropagation();
+    toast.info("This is a sample listing — preview of how your property will appear.", {
+      description: "List your own property free to claim a real card here.",
+    });
+  };
+
+  const SampleBadge = () => (
+    <span
+      className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-md"
+      style={{ background: "rgba(255,255,255,0.95)", color: "#3A2410", border: "1px solid rgba(245,166,35,0.4)" }}
+      title="Sample listing — illustrative content, not a real rental"
+    >
+      <SparkIcon className="h-3 w-3" style={{ color: "#F5A623" }} />Sample listing
+    </span>
+  );
 
   // Determine badge color by type
   const typeBadgeStyle = listing.isCoLiving === 1
@@ -108,7 +131,7 @@ export default function PropertyCard({ listing, view = "grid", isSaved = false, 
 
   if (view === "list") {
     return (
-      <Link href={`/listing/${listing.id}`}>
+      <Link href={isSample ? "#" : `/listing/${listing.id}`} onClick={handleSampleClick as any}>
         <div className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex cursor-pointer"
           style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}>
           {/* Image */}
@@ -127,7 +150,7 @@ export default function PropertyCard({ listing, view = "grid", isSaved = false, 
             </button>
             {listing.isCoLiving === 1 && (
               <div className="absolute bottom-3 left-3">
-                <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: ACCENT, color: "#0a2a1f" }}>
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: ACCENT, color: "#3A2410" }}>
                   Co-Living
                 </span>
               </div>
@@ -137,12 +160,15 @@ export default function PropertyCard({ listing, view = "grid", isSaved = false, 
                 <Camera className="h-3 w-3" />{photoCount}
               </div>
             )}
-            {isNew && (
+            {isNew && !isSample && (
               <div className="absolute top-3 left-3">
-                <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full shadow-md" style={{ background: ACCENT, color: "#0a2a1f" }}>
+                <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full shadow-md" style={{ background: ACCENT, color: "#3A2410" }}>
                   <SparkIcon className="h-3 w-3" />New
                 </span>
               </div>
+            )}
+            {isSample && (
+              <div className="absolute top-3 left-3"><SampleBadge /></div>
             )}
           </div>
 
@@ -191,7 +217,7 @@ export default function PropertyCard({ listing, view = "grid", isSaved = false, 
 
   // Grid view — premium card
   return (
-    <Link href={`/listing/${listing.id}`}>
+    <Link href={isSample ? "#" : `/listing/${listing.id}`} onClick={handleSampleClick as any}>
       <div
         className="group bg-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1.5"
         style={{
@@ -220,15 +246,16 @@ export default function PropertyCard({ listing, view = "grid", isSaved = false, 
               {typeLabel}
             </span>
             {listing.isCoLiving === 1 && (
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: ACCENT, color: "#0a2a1f" }}>
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: ACCENT, color: "#3A2410" }}>
                 Co-Living
               </span>
             )}
-            {isNew && (
-              <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full shadow-md" style={{ background: ACCENT, color: "#0a2a1f" }}>
+            {isNew && !isSample && (
+              <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full shadow-md" style={{ background: ACCENT, color: "#3A2410" }}>
                 <SparkIcon className="h-3 w-3" />New
               </span>
             )}
+            {isSample && <SampleBadge />}
           </div>
 
           {/* Photo count badge */}

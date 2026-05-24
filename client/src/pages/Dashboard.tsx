@@ -26,7 +26,7 @@ import { formatRent, getListingImage, PROPERTY_TYPE_LABELS } from "@/lib/marketp
 import TenantInviteDialog from "@/components/TenantInviteDialog";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 
 // Rent Rate Intelligence Widget (Pro only)
 function RentRateWidget() {
@@ -67,7 +67,7 @@ function RentRateWidget() {
         <Button
           size="sm"
           className="font-bold gap-1"
-          style={{ background: ACCENT, color: "#0a2a1f" }}
+          style={{ background: ACCENT, color: "#3A2410" }}
           onClick={() => { if (city.length > 1) { setQueried(true); refetch(); } }}
         >
           <Search className="h-3.5 w-3.5" />
@@ -236,7 +236,7 @@ export default function Dashboard() {
             <p className="text-gray-500 mb-6">Your dashboard is your saved listings. Browse properties and save the ones you love.</p>
             <div className="flex flex-col gap-3">
               <Link href="/saved">
-                <Button size="lg" className="w-full font-bold gap-2" style={{ background: ACCENT, color: "#0a2a1f" }}>
+                <Button size="lg" className="w-full font-bold gap-2" style={{ background: ACCENT, color: "#3A2410" }}>
                   <Heart className="h-4 w-4" /> View Saved Listings
                 </Button>
               </Link>
@@ -262,7 +262,7 @@ export default function Dashboard() {
             <h2 className="text-2xl font-black text-gray-900 mb-3">Sign In to Access Dashboard</h2>
             <p className="text-gray-500 mb-6">Manage your listings and track performance.</p>
             <a href={getLoginUrl()}>
-              <Button size="lg" className="w-full font-bold" style={{ background: ACCENT, color: "#0a2a1f" }}>
+              <Button size="lg" className="w-full font-bold" style={{ background: ACCENT, color: "#3A2410" }}>
                 Sign In / Create Account
               </Button>
             </a>
@@ -322,7 +322,7 @@ export default function Dashboard() {
               </Button>
             </Link>
             <Link href="/list-property">
-              <Button style={{ background: ACCENT, color: "#0a2a1f" }} className="font-bold gap-2">
+              <Button style={{ background: ACCENT, color: "#3A2410" }} className="font-bold gap-2">
                 <PlusCircle className="h-4 w-4" /> Add Listing
               </Button>
             </Link>
@@ -350,7 +350,7 @@ export default function Dashboard() {
               }}
               disabled={upgradeMutation.isPending}
               className="shrink-0 font-bold px-6"
-              style={{ background: ACCENT, color: "#0a2a1f" }}
+              style={{ background: ACCENT, color: "#3A2410" }}
             >
               {upgradeMutation.isPending ? "Upgrading..." : "Upgrade to Pro — $25/mo"}
               <ArrowRight className="h-4 w-4 ml-2" />
@@ -411,7 +411,7 @@ export default function Dashboard() {
                 <h3 className="font-bold text-gray-700 mb-2">No listings yet</h3>
                 <p className="text-gray-400 text-sm mb-5">Create your first listing — it's free!</p>
                 <Link href="/list-property">
-                  <Button style={{ background: ACCENT, color: "#0a2a1f" }} className="font-bold gap-2">
+                  <Button style={{ background: ACCENT, color: "#3A2410" }} className="font-bold gap-2">
                     <PlusCircle className="h-4 w-4" /> Create Listing
                   </Button>
                 </Link>
@@ -548,7 +548,7 @@ export default function Dashboard() {
                     <Button
                       size="sm"
                       onClick={() => upgradeMutation.mutate()}
-                      style={{ background: ACCENT, color: "#0a2a1f" }}
+                      style={{ background: ACCENT, color: "#3A2410" }}
                       className="font-bold"
                     >
                       Upgrade — $25/mo
@@ -647,7 +647,7 @@ export default function Dashboard() {
                       </li>
                     ))}
                   </ul>
-                  <Button className="w-full font-bold" style={{ background: ACCENT, color: "#0a2a1f" }} onClick={() => upgradeMutation.mutate()} disabled={upgradeMutation.isPending}>
+                  <Button className="w-full font-bold" style={{ background: ACCENT, color: "#3A2410" }} onClick={() => upgradeMutation.mutate()} disabled={upgradeMutation.isPending}>
                     {upgradeMutation.isPending ? "Upgrading..." : "Upgrade to Pro"}
                   </Button>
                   <p className="text-xs text-gray-400 text-center mt-2">$25/month · Cancel anytime</p>
@@ -694,7 +694,7 @@ export default function Dashboard() {
                           onClick={() => instantPayoutMutation.mutate({})}
                           disabled={instantPayoutMutation.isPending || (balanceData?.availableCents ?? 0) < 100}
                           className="font-bold gap-1.5"
-                          style={{ background: ACCENT, color: "#0a2a1f" }}
+                          style={{ background: ACCENT, color: "#3A2410" }}
                         >
                           <Zap className="h-3.5 w-3.5" />
                           {instantPayoutMutation.isPending ? "Processing..." : "Instant Payout"}
@@ -741,7 +741,7 @@ export default function Dashboard() {
                         </div>
                       ))}
                     </div>
-                    <Button size="sm" className="w-full font-bold gap-2" onClick={() => stripeConnectMutation.mutate()} disabled={stripeConnectMutation.isPending} style={{ background: ACCENT, color: "#0a2a1f" }}>
+                    <Button size="sm" className="w-full font-bold gap-2" onClick={() => stripeConnectMutation.mutate()} disabled={stripeConnectMutation.isPending} style={{ background: ACCENT, color: "#3A2410" }}>
                       <CreditCard className="h-3.5 w-3.5" /> {stripeConnectMutation.isPending ? "Connecting..." : "Connect Bank Account"}
                     </Button>
                     <p className="text-xs text-gray-400 text-center mt-2">Powered by Stripe Connect · Bank-level security</p>
@@ -791,7 +791,7 @@ export default function Dashboard() {
                   <Button
                     size="sm"
                     className="font-bold gap-1.5 text-xs"
-                    style={{ background: ACCENT, color: "#0a2a1f" }}
+                    style={{ background: ACCENT, color: "#3A2410" }}
                     onClick={() => setTenantInviteOpen(true)}
                   >
                     <Users className="h-3.5 w-3.5" /> Invite Tenant
@@ -1053,9 +1053,9 @@ function ProOnboardingChecklist() {
       <div className="space-y-2">
         {steps.map((s, i) => (
           <div key={i} className="flex items-center gap-2.5">
-            <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${s.done ? "bg-[#00C896]/20" : "bg-white border border-gray-200"}`}>
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${s.done ? "bg-[#F5A623]/20" : "bg-white border border-gray-200"}`}>
               {s.done
-                ? <CheckCircle2 className="h-3.5 w-3.5 text-[#00C896]" />
+                ? <CheckCircle2 className="h-3.5 w-3.5 text-[#F5A623]" />
                 : <span className="w-1.5 h-1.5 rounded-full bg-gray-300 block" />
               }
             </div>

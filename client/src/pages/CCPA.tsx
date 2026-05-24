@@ -4,7 +4,7 @@ export default function CCPA() {
   return (
     <LegalLayout title="Your California Privacy Rights (CCPA / CPRA)" effectiveDate="April 25, 2026">
       <p>
-        This notice supplements our <a href="/legal/privacy" className="text-[#00C896] hover:underline">Privacy Policy</a> and applies to California residents under the California Consumer Privacy Act of 2018, as amended by the California Privacy Rights Act ("CCPA/CPRA"). It also describes how Leasely responds to similar rights granted by Virginia (VCDPA), Colorado (CPA), Connecticut (CTDPA), Utah (UCPA), and Texas (TDPSA), among other U.S. state privacy laws.
+        This notice supplements our <a href="/legal/privacy" className="text-[#F5A623] hover:underline">Privacy Policy</a> and applies to California residents under the California Consumer Privacy Act of 2018, as amended by the California Privacy Rights Act ("CCPA/CPRA"). It also describes how Leasely responds to similar rights granted by Virginia (VCDPA), Colorado (CPA), Connecticut (CTDPA), Utah (UCPA), and Texas (TDPSA), among other U.S. state privacy laws.
       </p>
 
       <LegalSection title="1. Categories of Personal Information We Collect">
@@ -48,7 +48,7 @@ export default function CCPA() {
       </LegalSection>
 
       <LegalSection title="6. How to Exercise Your Rights">
-        <p>Email <a href="mailto:support@leasely.net" className="text-[#00C896] hover:underline">support@leasely.net</a> with the subject "Privacy Rights Request" and include the right(s) you wish to exercise, the email associated with your account, and your state of residence. We will verify your identity (typically by confirming control of the registered email and/or matching account details) before responding. We will respond within 45 days, with one 45-day extension where reasonably necessary.</p>
+        <p>Email <a href="mailto:support@leasely.net" className="text-[#F5A623] hover:underline">support@leasely.net</a> with the subject "Privacy Rights Request" and include the right(s) you wish to exercise, the email associated with your account, and your state of residence. We will verify your identity (typically by confirming control of the registered email and/or matching account details) before responding. We will respond within 45 days, with one 45-day extension where reasonably necessary.</p>
         <p>You may also send a <strong className="text-white">Global Privacy Control (GPC)</strong> signal from your browser; we will treat a valid GPC signal as a request to opt out of any sale or sharing.</p>
       </LegalSection>
 
@@ -61,7 +61,7 @@ export default function CCPA() {
       </LegalSection>
 
       <LegalSection title="9. Contact">
-        <p>For privacy questions or to submit a rights request: <a href="mailto:support@leasely.net" className="text-[#00C896] hover:underline">support@leasely.net</a></p>
+        <p>For privacy questions or to submit a rights request: <a href="mailto:support@leasely.net" className="text-[#F5A623] hover:underline">support@leasely.net</a></p>
       </LegalSection>
     </LegalLayout>
   );

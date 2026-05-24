@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/112528410/Ucb4CaDiJcuyDWNAe95Wyq/leasely-logo-corrected_6f0929ef.png";
 
 function formatCents(cents: number) {
@@ -100,7 +100,7 @@ export default function TenantDashboard() {
           <h2 className="text-xl font-bold text-gray-900 mb-2">Session Expired</h2>
           <p className="text-gray-500 mb-6">Your session has expired. Please sign in again.</p>
           <Link href="/tenant/login">
-            <Button style={{ background: ACCENT, color: "#0a2a1f" }} className="font-bold">Sign In Again</Button>
+            <Button style={{ background: ACCENT, color: "#3A2410" }} className="font-bold">Sign In Again</Button>
           </Link>
         </div>
       </div>
@@ -169,7 +169,7 @@ export default function TenantDashboard() {
               )}
               {tenant?.listingId && (
                 <Link href={`/pay/${tenant.listingId}`}>
-                  <Button size="sm" className="font-bold gap-1.5" style={{ background: ACCENT, color: "#0a2a1f" }}>
+                  <Button size="sm" className="font-bold gap-1.5" style={{ background: ACCENT, color: "#3A2410" }}>
                     <CreditCard className="h-3.5 w-3.5" /> Pay Rent Now
                   </Button>
                 </Link>
@@ -213,7 +213,7 @@ export default function TenantDashboard() {
               )}
               {tenant?.listingId && (
                 <Link href={`/pay/${tenant.listingId}`}>
-                  <Button className="w-full mt-4 font-bold gap-2" style={{ background: ACCENT, color: "#0a2a1f" }}>
+                  <Button className="w-full mt-4 font-bold gap-2" style={{ background: ACCENT, color: "#3A2410" }}>
                     <CreditCard className="h-4 w-4" /> Pay Rent
                   </Button>
                 </Link>
@@ -296,7 +296,7 @@ export default function TenantDashboard() {
               <h2 className="font-black text-gray-900 text-xl">Payment History</h2>
               {tenant?.listingId && (
                 <Link href={`/pay/${tenant.listingId}`}>
-                  <Button size="sm" className="font-bold gap-1.5" style={{ background: ACCENT, color: "#0a2a1f" }}>
+                  <Button size="sm" className="font-bold gap-1.5" style={{ background: ACCENT, color: "#3A2410" }}>
                     <CreditCard className="h-3.5 w-3.5" /> Make a Payment
                   </Button>
                 </Link>

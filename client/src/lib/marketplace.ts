@@ -1,7 +1,7 @@
 // Shared constants and helpers for the marketplace
 
 export const BRAND = "#1B2B5E";
-export const ACCENT = "#00C896";
+export const ACCENT = "#F5A623";
 
 export const PROPERTY_TYPES = [
   { value: "all", label: "All Types" },

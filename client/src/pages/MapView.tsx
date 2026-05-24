@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { formatRent, getListingImage, PROPERTY_TYPE_LABELS } from "@/lib/marketplace";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 
 type MapListing = {
   id: number;
@@ -171,7 +171,7 @@ export default function MapViewPage() {
               className="pl-9 h-9"
             />
           </div>
-          <Button type="submit" size="sm" style={{ background: ACCENT, color: "#0a2a1f" }}>
+          <Button type="submit" size="sm" style={{ background: ACCENT, color: "#3A2410" }}>
             Go
           </Button>
         </form>
@@ -259,7 +259,7 @@ export default function MapViewPage() {
             <h3 className="font-bold text-gray-700 mb-2">No listings on map yet</h3>
             <p className="text-gray-400 text-sm mb-4">Be the first to add a property with a location!</p>
             <Link href="/list-property">
-              <Button style={{ background: ACCENT, color: "#0a2a1f" }} className="font-bold">
+              <Button style={{ background: ACCENT, color: "#3A2410" }} className="font-bold">
                 List Your Property
               </Button>
             </Link>

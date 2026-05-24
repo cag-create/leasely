@@ -20,7 +20,7 @@ import {
 import { formatRent, getListingImage, parsePhotos, PROPERTY_TYPE_LABELS, PLACEHOLDER_IMAGES } from "@/lib/marketplace";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 
 export default function ListingDetail() {
   const params = useParams<{ id: string }>();
@@ -132,7 +132,7 @@ export default function ListingDetail() {
           <h2 className="text-2xl font-black text-gray-900 mb-2">Listing Not Found</h2>
           <p className="text-gray-500 mb-6">This listing may have been removed or deactivated.</p>
           <Link href="/marketplace">
-            <Button style={{ background: ACCENT, color: "#0a2a1f" }}>Browse All Listings</Button>
+            <Button style={{ background: ACCENT, color: "#3A2410" }}>Browse All Listings</Button>
           </Link>
         </div>
       </div>
@@ -345,7 +345,7 @@ export default function ListingDetail() {
                   <Button
                     type="submit"
                     className="w-full font-bold"
-                    style={{ background: ACCENT, color: "#0a2a1f" }}
+                    style={{ background: ACCENT, color: "#3A2410" }}
                     disabled={sendInquiryMutation.isPending}
                   >
                     {sendInquiryMutation.isPending ? "Sending..." : "Send Message"}

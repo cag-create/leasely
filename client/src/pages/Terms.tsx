@@ -13,7 +13,7 @@ export default function Terms() {
       </LegalSection>
 
       <LegalSection title="2. Accounts">
-        <p>You are responsible for maintaining the confidentiality of your account credentials and for all activity under your account. Notify us immediately of any unauthorized access at <a href="mailto:support@leasely.net" className="text-[#00C896] hover:underline">support@leasely.net</a>. Sharing accounts is prohibited.</p>
+        <p>You are responsible for maintaining the confidentiality of your account credentials and for all activity under your account. Notify us immediately of any unauthorized access at <a href="mailto:support@leasely.net" className="text-[#F5A623] hover:underline">support@leasely.net</a>. Sharing accounts is prohibited.</p>
       </LegalSection>
 
       <LegalSection title="3. Subscription, Setup Fee, and Payments">
@@ -28,7 +28,7 @@ export default function Terms() {
       </LegalSection>
 
       <LegalSection title="5. Listings, Applications, and Leases">
-        <p><strong className="text-white">Landlord obligations:</strong> You are responsible for the accuracy of listings, application screening criteria, and lease terms. You must comply with all applicable federal, state, and local landlord-tenant laws, including the Fair Housing Act and equivalent state laws. See our <a href="/legal/fair-housing" className="text-[#00C896] hover:underline">Fair Housing Statement</a>.</p>
+        <p><strong className="text-white">Landlord obligations:</strong> You are responsible for the accuracy of listings, application screening criteria, and lease terms. You must comply with all applicable federal, state, and local landlord-tenant laws, including the Fair Housing Act and equivalent state laws. See our <a href="/legal/fair-housing" className="text-[#F5A623] hover:underline">Fair Housing Statement</a>.</p>
         <p><strong className="text-white">Tenant obligations:</strong> You are responsible for the accuracy of application information you submit and the lease commitments you sign through the Services. Electronic signatures captured through the Services have the same legal effect as a handwritten signature under the U.S. ESIGN Act and UETA.</p>
         <p><strong className="text-white">Leasely's role:</strong> Leasely provides software tools. Leasely is not a party to any lease, application, or transaction between landlords, tenants, vendors, or other users; is not a real estate broker, property manager, lender, or attorney; and does not provide legal, tax, or financial advice.</p>
       </LegalSection>
@@ -63,7 +63,7 @@ export default function Terms() {
       </LegalSection>
 
       <LegalSection title="13. Dispute Resolution; Arbitration; Class Waiver">
-        <p>Most concerns can be resolved by emailing <a href="mailto:support@leasely.net" className="text-[#00C896] hover:underline">support@leasely.net</a>. Any dispute arising out of or relating to these Terms or the Services shall be resolved by binding individual arbitration administered by the American Arbitration Association under its Consumer Arbitration Rules, in the state where Leasely maintains its principal place of business, except that either party may bring claims in small-claims court. <strong className="text-white uppercase tracking-wide">You and Leasely waive the right to participate in a class action or class arbitration.</strong> You may opt out of arbitration within 30 days of accepting these Terms by emailing the support address with the subject "Arbitration Opt-Out."</p>
+        <p>Most concerns can be resolved by emailing <a href="mailto:support@leasely.net" className="text-[#F5A623] hover:underline">support@leasely.net</a>. Any dispute arising out of or relating to these Terms or the Services shall be resolved by binding individual arbitration administered by the American Arbitration Association under its Consumer Arbitration Rules, in the state where Leasely maintains its principal place of business, except that either party may bring claims in small-claims court. <strong className="text-white uppercase tracking-wide">You and Leasely waive the right to participate in a class action or class arbitration.</strong> You may opt out of arbitration within 30 days of accepting these Terms by emailing the support address with the subject "Arbitration Opt-Out."</p>
       </LegalSection>
 
       <LegalSection title="14. Governing Law">
@@ -75,7 +75,7 @@ export default function Terms() {
       </LegalSection>
 
       <LegalSection title="16. Contact">
-        <p>Leasely, Inc. — <a href="mailto:support@leasely.net" className="text-[#00C896] hover:underline">support@leasely.net</a></p>
+        <p>Leasely, Inc. — <a href="mailto:support@leasely.net" className="text-[#F5A623] hover:underline">support@leasely.net</a></p>
       </LegalSection>
     </LegalLayout>
   );

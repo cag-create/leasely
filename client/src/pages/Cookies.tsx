@@ -4,7 +4,7 @@ export default function Cookies() {
   return (
     <LegalLayout title="Cookie Policy" effectiveDate="April 25, 2026">
       <p>
-        This Cookie Policy explains how Leasely, Inc. uses cookies and similar tracking technologies on our website and platform. It supplements our <a href="/legal/privacy" className="text-[#00C896] hover:underline">Privacy Policy</a>.
+        This Cookie Policy explains how Leasely, Inc. uses cookies and similar tracking technologies on our website and platform. It supplements our <a href="/legal/privacy" className="text-[#F5A623] hover:underline">Privacy Policy</a>.
       </p>
 
       <LegalSection title="What Are Cookies?">
@@ -43,7 +43,7 @@ export default function Cookies() {
       </LegalSection>
 
       <LegalSection title="Contact">
-        <p><a href="mailto:support@leasely.net" className="text-[#00C896] hover:underline">support@leasely.net</a></p>
+        <p><a href="mailto:support@leasely.net" className="text-[#F5A623] hover:underline">support@leasely.net</a></p>
       </LegalSection>
     </LegalLayout>
   );

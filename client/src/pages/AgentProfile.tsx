@@ -111,7 +111,7 @@ export default function AgentProfile() {
                       {agent.dealCount ?? 0} deals
                     </Badge>
                     <Badge variant="secondary" className="gap-1">
-                      <CheckCircle2 className="h-3 w-3 text-[#00C896]" />
+                      <CheckCircle2 className="h-3 w-3 text-[#F5A623]" />
                       Verified Agent
                     </Badge>
                   </div>
@@ -293,8 +293,8 @@ function ContactForm({ agentId, agentName }: { agentId: number; agentName: strin
 
   if (sent) {
     return (
-      <div className="rounded-2xl border border-[#00C896]/30 bg-[#00C896]/5 p-6 text-center space-y-3 sticky top-8">
-        <CheckCircle2 className="h-10 w-10 text-[#00C896] mx-auto" />
+      <div className="rounded-2xl border border-[#F5A623]/30 bg-[#F5A623]/5 p-6 text-center space-y-3 sticky top-8">
+        <CheckCircle2 className="h-10 w-10 text-[#F5A623] mx-auto" />
         <h3 className="font-bold text-foreground">Request Sent!</h3>
         <p className="text-sm text-muted-foreground">
           {agentName} will be in touch with you shortly.

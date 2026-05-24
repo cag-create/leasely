@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Home, Building2, Search, Heart, Shield, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 
 export default function Onboarding() {
   const [, navigate] = useLocation();
@@ -148,7 +148,7 @@ export default function Onboarding() {
           onClick={handleContinue}
           disabled={!selected || saving}
           className="w-full h-12 font-bold text-base gap-2"
-          style={{ background: selected ? ACCENT : undefined, color: selected ? "#0a2a1f" : undefined }}
+          style={{ background: selected ? ACCENT : undefined, color: selected ? "#3A2410" : undefined }}
         >
           {saving ? "Setting up..." : "Continue"}
           {!saving && <ArrowRight className="h-5 w-5" />}

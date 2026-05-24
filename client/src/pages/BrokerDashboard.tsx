@@ -103,7 +103,7 @@ function OverviewTab({ profile, profileLoading }: { profile: any; profileLoading
   const utils = trpc.useUtils();
 
   const stats = [
-    { label: "Agent Status", value: profile?.status ?? "Not registered", icon: Award, color: profile?.status === "approved" ? "text-[#00C896]" : "text-amber-500", bg: "bg-amber-500/10" },
+    { label: "Agent Status", value: profile?.status ?? "Not registered", icon: Award, color: profile?.status === "approved" ? "text-[#F5A623]" : "text-amber-500", bg: "bg-amber-500/10" },
     { label: "Deals Closed", value: profile?.dealCount ?? 0, icon: TrendingUp, color: "text-blue-500", bg: "bg-blue-500/10" },
     { label: "Avg Rating", value: profile?.averageRating ? Number(profile.averageRating).toFixed(1) : "—", icon: Star, color: "text-amber-400", bg: "bg-amber-500/10" },
     { label: "Reviews", value: profile?.reviewCount ?? 0, icon: MessageSquare, color: "text-purple-500", bg: "bg-purple-500/10" },
@@ -168,7 +168,7 @@ function LeadsTab() {
     new: "bg-blue-500/10 text-blue-600",
     contacted: "bg-amber-500/10 text-amber-600",
     qualified: "bg-purple-500/10 text-purple-600",
-    closed: "bg-[#00C896]/10 text-[#00C896]",
+    closed: "bg-[#F5A623]/10 text-[#F5A623]",
     lost: "bg-red-500/10 text-red-600",
   };
 
@@ -393,15 +393,15 @@ function SopTab() {
           return (
             <div
               key={sop.id}
-              className={`rounded-xl border bg-card p-4 flex gap-3 ${read ? "border-[#00C896]/30 bg-[#00C896]/5" : "border-border"}`}
+              className={`rounded-xl border bg-card p-4 flex gap-3 ${read ? "border-[#F5A623]/30 bg-[#F5A623]/5" : "border-border"}`}
             >
-              <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${read ? "bg-[#00C896]/20" : "bg-muted"}`}>
-                <BookOpen className={`h-4 w-4 ${read ? "text-[#00C896]" : "text-muted-foreground"}`} />
+              <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${read ? "bg-[#F5A623]/20" : "bg-muted"}`}>
+                <BookOpen className={`h-4 w-4 ${read ? "text-[#F5A623]" : "text-muted-foreground"}`} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm text-foreground">{sop.title}</span>
-                  {read && <CheckCircle2 className="h-3.5 w-3.5 text-[#00C896] shrink-0" />}
+                  {read && <CheckCircle2 className="h-3.5 w-3.5 text-[#F5A623] shrink-0" />}
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">{sop.desc}</p>
                 {!read && (
@@ -453,9 +453,9 @@ function TrainingTab() {
           return (
             <div
               key={vid.id}
-              className={`rounded-xl border bg-card p-4 flex items-center gap-4 ${done ? "border-[#00C896]/30 bg-[#00C896]/5" : "border-border"}`}
+              className={`rounded-xl border bg-card p-4 flex items-center gap-4 ${done ? "border-[#F5A623]/30 bg-[#F5A623]/5" : "border-border"}`}
             >
-              <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 font-bold text-sm ${done ? "bg-[#00C896]/20 text-[#00C896]" : "bg-muted text-muted-foreground"}`}>
+              <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 font-bold text-sm ${done ? "bg-[#F5A623]/20 text-[#F5A623]" : "bg-muted text-muted-foreground"}`}>
                 {done ? <CheckCircle2 className="h-5 w-5" /> : i + 1}
               </div>
               <div className="flex-1 min-w-0">

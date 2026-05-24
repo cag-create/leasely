@@ -21,9 +21,10 @@ import {
 } from "@/components/ui/sheet";
 import { Link } from "wouter";
 import { PROPERTY_TYPES, BEDROOM_OPTIONS, US_STATES, formatRent } from "@/lib/marketplace";
+import { SAMPLE_LISTINGS } from "@/lib/sampleListings";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 
 export default function Marketplace() {
   const [location] = useLocation();
@@ -73,6 +74,28 @@ export default function Marketplace() {
 
   const hasFilters = appliedCity || selectedState !== "all" || propertyType !== "all" ||
     bedrooms !== "any" || priceRange[0] > 0 || priceRange[1] < 10000 || petFriendly || isCoLiving;
+
+  // Inject sample listings client-side so the marketplace doesn't look empty
+  // on a fresh install. They respect the active filters so a search for
+  // "Miami" doesn't return Boston samples. Real listings are always shown
+  // first; samples fill the remaining space.
+  const filteredSamples = SAMPLE_LISTINGS.filter(s => {
+    if (appliedCity && !s.city.toLowerCase().includes(appliedCity.toLowerCase())) return false;
+    if (selectedState !== "all" && s.state !== selectedState) return false;
+    if (propertyType !== "all" && s.propertyType !== propertyType) return false;
+    if (bedrooms !== "any") {
+      if (bedrooms === "studio" && s.bedrooms !== "studio") return false;
+      if (bedrooms !== "studio" && s.bedrooms !== bedrooms) return false;
+    }
+    if (priceRange[0] > 0 && s.monthlyRent < priceRange[0]) return false;
+    if (priceRange[1] < 10000 && s.monthlyRent > priceRange[1]) return false;
+    if (petFriendly && s.petFriendly !== 1) return false;
+    if (isCoLiving && s.isCoLiving !== 1) return false;
+    return true;
+  });
+
+  // Merge for rendering — real listings first, then samples to pad.
+  const displayListings = [...listings, ...filteredSamples];
 
   const FilterPanel = () => (
     <div className="space-y-6">
@@ -174,7 +197,7 @@ export default function Marketplace() {
         </div>
       </div>
 
-      <Button onClick={applySearch} className="w-full font-bold" style={{ background: ACCENT, color: "#0a2a1f" }}>
+      <Button onClick={applySearch} className="w-full font-bold" style={{ background: ACCENT, color: "#3A2410" }}>
         Apply Filters
       </Button>
       {hasFilters && (
@@ -198,7 +221,7 @@ export default function Marketplace() {
                 {appliedCity ? `Rentals in ${appliedCity}` : "Browse All Rentals"}
               </h1>
               <p className="text-gray-500 text-sm mt-1">
-                {isLoading ? "Loading..." : `${listings.length} listings found`}
+                {isLoading ? "Loading..." : `${displayListings.length} listings`}{!isLoading && filteredSamples.length > 0 && <span className="text-xs text-gray-400 font-normal"> · includes {filteredSamples.length} sample{filteredSamples.length === 1 ? "" : "s"}</span>}
                 {hasFilters && " · Filters applied"}
               </p>
             </div>
@@ -291,7 +314,7 @@ export default function Marketplace() {
                   <Button variant="outline" size="sm" className="lg:hidden gap-2">
                     <SlidersHorizontal className="h-4 w-4" />
                     Filters
-                    {hasFilters && <Badge className="h-5 w-5 p-0 flex items-center justify-center text-xs" style={{ background: ACCENT, color: "#0a2a1f" }}>!</Badge>}
+                    {hasFilters && <Badge className="h-5 w-5 p-0 flex items-center justify-center text-xs" style={{ background: ACCENT, color: "#3A2410" }}>!</Badge>}
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-80 overflow-y-auto">
@@ -330,10 +353,10 @@ export default function Marketplace() {
                   </div>
                 ))}
               </div>
-            ) : listings.length > 0 ? (
+            ) : displayListings.length > 0 ? (
               <div className={`grid gap-6 ${view === "grid" ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" : "grid-cols-1"}`}>
-                {listings.map(listing => (
-                  <PropertyCard key={listing.id} listing={listing} view={view} />
+                {displayListings.map(listing => (
+                  <PropertyCard key={listing.id} listing={listing as any} view={view} />
                 ))}
               </div>
             ) : (
@@ -344,7 +367,7 @@ export default function Marketplace() {
                 <div className="flex gap-3 justify-center">
                   <Button variant="outline" onClick={clearFilters}>Clear Filters</Button>
                   <Link href="/list-property">
-                    <Button style={{ background: ACCENT, color: "#0a2a1f" }} className="font-bold gap-2">
+                    <Button style={{ background: ACCENT, color: "#3A2410" }} className="font-bold gap-2">
                       <PlusCircle className="h-4 w-4" /> List Your Property
                     </Button>
                   </Link>

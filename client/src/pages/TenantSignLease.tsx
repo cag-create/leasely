@@ -11,7 +11,7 @@ import {
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/112528410/Ucb4CaDiJcuyDWNAe95Wyq/leasely-logo-corrected_6f0929ef.png";
 const BRAND = "#1B2B5E";
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 
 function formatCents(cents: number) {
   return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
@@ -142,7 +142,7 @@ export default function TenantSignLease() {
             <div className="flex gap-3 pt-2">
               <Button
                 className="flex-1 font-bold gap-2 py-3"
-                style={{ background: ACCENT, color: "#0a2a1f" }}
+                style={{ background: ACCENT, color: "#3A2410" }}
                 disabled={!email.trim() || !confirmed || signMutation.isPending}
                 onClick={() => {
                   if (!leaseId) return;

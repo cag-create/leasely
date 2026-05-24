@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { CheckCircle2, Lock, Loader2, Home, Wallet, Receipt } from "lucide-react";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/112528410/Ucb4CaDiJcuyDWNAe95Wyq/leasely-logo-corrected_6f0929ef.png";
 
 function fmt(cents: number) {
@@ -84,7 +84,7 @@ export default function LeasePay() {
             disabled={!email.trim()}
             onClick={() => setConfirmed(true)}
             className="w-full font-bold"
-            style={{ background: ACCENT, color: "#0a2a1f" }}
+            style={{ background: ACCENT, color: "#3A2410" }}
           >
             Continue
           </Button>
@@ -161,7 +161,7 @@ export default function LeasePay() {
                     size="sm"
                     onClick={() => pay("deposit")}
                     disabled={!!submitting}
-                    style={{ background: ACCENT, color: "#0a2a1f" }}
+                    style={{ background: ACCENT, color: "#3A2410" }}
                     className="font-bold"
                   >
                     {submitting === "deposit" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Pay"}
@@ -184,7 +184,7 @@ export default function LeasePay() {
                   size="sm"
                   onClick={() => pay("rent")}
                   disabled={!!submitting}
-                  style={{ background: ACCENT, color: "#0a2a1f" }}
+                  style={{ background: ACCENT, color: "#3A2410" }}
                   className="font-bold"
                 >
                   {submitting === "rent" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Pay"}

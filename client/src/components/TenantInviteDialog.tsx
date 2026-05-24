@@ -123,7 +123,7 @@ export default function TenantInviteDialog({ open, onOpenChange, listings = [] }
                 <p className="text-gray-400 text-sm mt-1">Invite your first tenant to give them portal access.</p>
                 <Button
                   className="mt-4 font-bold gap-2"
-                  style={{ background: ACCENT, color: "#0a2a1f" }}
+                  style={{ background: ACCENT, color: "#3A2410" }}
                   onClick={() => setView("invite")}
                 >
                   <UserPlus className="h-4 w-4" /> Invite First Tenant
@@ -186,7 +186,7 @@ export default function TenantInviteDialog({ open, onOpenChange, listings = [] }
                 ))}
                 <Button
                   className="w-full font-bold gap-2 mt-2"
-                  style={{ background: ACCENT, color: "#0a2a1f" }}
+                  style={{ background: ACCENT, color: "#3A2410" }}
                   onClick={() => setView("invite")}
                 >
                   <UserPlus className="h-4 w-4" /> Invite Another Tenant

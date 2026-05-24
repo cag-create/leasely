@@ -2,7 +2,7 @@ import { Link, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Home, Receipt, ArrowRight } from "lucide-react";
 
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 
 export default function RentPaymentSuccess() {
   const { id } = useParams<{ id: string }>();
@@ -31,7 +31,7 @@ export default function RentPaymentSuccess() {
 
         <div className="flex flex-col gap-3">
           <Link href={`/listing/${id}`}>
-            <Button className="w-full font-bold gap-2" style={{ background: ACCENT, color: "#0a2a1f" }}>
+            <Button className="w-full font-bold gap-2" style={{ background: ACCENT, color: "#3A2410" }}>
               Back to Listing <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>

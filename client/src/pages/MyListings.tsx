@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { formatRent, getListingImage, parsePhotos, PROPERTY_TYPE_LABELS } from "@/lib/marketplace";
 
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 const BRAND = "#1B2B5E";
 
 type StatusFilter = "all" | "active" | "inactive";
@@ -71,7 +71,7 @@ export default function MyListings() {
               </Button>
             </Link>
             <Link href="/list-property" className="flex-1 sm:flex-initial">
-              <Button className="w-full" style={{ background: ACCENT, color: "#0a2a1f" }}>
+              <Button className="w-full" style={{ background: ACCENT, color: "#3A2410" }}>
                 <Plus className="h-4 w-4 mr-2" /> Add Listing
               </Button>
             </Link>
@@ -205,7 +205,7 @@ function ListingRow({
               {typeLabel}
             </span>
             {listing.isCoLiving === 1 && (
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: ACCENT, color: "#0a2a1f" }}>
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: ACCENT, color: "#3A2410" }}>
                 Co-Living
               </span>
             )}
@@ -290,7 +290,7 @@ function EmptyState({ hasFilters, onClear }: { hasFilters: boolean; onClear: () 
           </p>
           <div className="flex items-center justify-center gap-2">
             <Link href="/list-property">
-              <Button style={{ background: ACCENT, color: "#0a2a1f" }}>
+              <Button style={{ background: ACCENT, color: "#3A2410" }}>
                 <Plus className="h-4 w-4 mr-2" /> Add your first listing
               </Button>
             </Link>

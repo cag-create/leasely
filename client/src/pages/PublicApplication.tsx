@@ -154,8 +154,8 @@ export default function PublicApplication() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "linear-gradient(135deg, #0a1628 0%, #0d1f3c 100%)" }}>
         <div className="text-center max-w-sm">
-          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: "rgba(0,200,150,0.15)", border: "2px solid #00C896" }}>
-            <CheckCircle2 className="w-10 h-10" style={{ color: "#00C896" }} />
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: "rgba(245,166,35,0.15)", border: "2px solid #F5A623" }}>
+            <CheckCircle2 className="w-10 h-10" style={{ color: "#F5A623" }} />
           </div>
           <h2 className="text-2xl font-black text-white mb-3" style={{ fontFamily: 'Outfit, sans-serif' }}>Application Submitted!</h2>
           <p className="text-white/60 mb-2">Your application for <span className="text-white font-semibold">{listing.title}</span> has been received.</p>
@@ -191,7 +191,7 @@ export default function PublicApplication() {
           </div>
           {/* Progress bar */}
           <div className="w-full h-1.5 rounded-full bg-white/10">
-            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${(step / STEPS.length) * 100}%`, background: "#00C896" }} />
+            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${(step / STEPS.length) * 100}%`, background: "#F5A623" }} />
           </div>
         </div>
       </div>
@@ -202,7 +202,7 @@ export default function PublicApplication() {
         {/* Step 1: Personal Info */}
         {step === 1 && (
           <div className="space-y-5">
-            <SectionHeader icon={UserCheck} title={isCoLiving ? "Member Information" : "Personal Information"} color="#00C896" />
+            <SectionHeader icon={UserCheck} title={isCoLiving ? "Member Information" : "Personal Information"} color="#F5A623" />
             <FormCard>
               <FormRow>
                 <FormField label="Full Legal Name *" required>
@@ -336,7 +336,7 @@ export default function PublicApplication() {
         {/* Step 5: Review & Sign */}
         {step === 5 && (
           <div className="space-y-5">
-            <SectionHeader icon={Shield} title="Review & Authorization" color="#00C896" />
+            <SectionHeader icon={Shield} title="Review & Authorization" color="#F5A623" />
 
             {/* State disclosure */}
             <div className="rounded-2xl p-5" style={{ background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.3)" }}>
@@ -387,7 +387,7 @@ export default function PublicApplication() {
             </FormCard>
 
             {/* Summary */}
-            <div className="rounded-2xl p-5 space-y-2" style={{ background: "rgba(0,200,150,0.05)", border: "1px solid rgba(0,200,150,0.2)" }}>
+            <div className="rounded-2xl p-5 space-y-2" style={{ background: "rgba(245,166,35,0.05)", border: "1px solid rgba(245,166,35,0.2)" }}>
               <p className="text-teal-400 font-semibold text-sm mb-3">Application Summary</p>
               {[
                 ["Applicant", form.applicantName || "—"],
@@ -419,7 +419,7 @@ export default function PublicApplication() {
               if (step === 1 && !form.applicantName) { toast.error("Please enter your full name."); return; }
               if (step === 1 && !form.applicantEmail) { toast.error("Please enter your email."); return; }
               setStep(s => s + 1);
-            }} className="gap-2 font-bold" style={{ background: "#00C896", color: "#0a2a1f" }}>
+            }} className="gap-2 font-bold" style={{ background: "#F5A623", color: "#3A2410" }}>
               Continue <ChevronRight className="w-4 h-4" />
             </Button>
           ) : (
@@ -427,7 +427,7 @@ export default function PublicApplication() {
               onClick={handleSubmit}
               disabled={submitMutation.isPending}
               className="gap-2 font-bold px-8"
-              style={{ background: "#00C896", color: "#0a2a1f" }}
+              style={{ background: "#F5A623", color: "#3A2410" }}
             >
               {submitMutation.isPending ? "Submitting..." : "Submit Application"}
               {!submitMutation.isPending && <CheckCircle2 className="w-4 h-4" />}
@@ -448,7 +448,7 @@ export default function PublicApplication() {
           color: white !important;
         }
         .form-input-dark::placeholder { color: rgba(255,255,255,0.3) !important; }
-        .form-input-dark:focus { border-color: rgba(0,200,150,0.5) !important; box-shadow: 0 0 0 2px rgba(0,200,150,0.1) !important; }
+        .form-input-dark:focus { border-color: rgba(245,166,35,0.5) !important; box-shadow: 0 0 0 2px rgba(245,166,35,0.1) !important; }
       `}</style>
     </div>
   );

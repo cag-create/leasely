@@ -94,7 +94,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           <Button
             onClick={() => { window.location.href = getLoginUrl(); }}
-            className="w-full bg-[#00C896] hover:bg-[#00A87C] text-[#062018] font-semibold"
+            className="w-full bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] font-semibold"
             size="lg"
           >
             Sign In
@@ -182,7 +182,7 @@ function DashboardLayoutContent({
             }
           `}
         >
-          <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-[#00C896]" : ""}`} />
+          <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-[#F5A623]" : ""}`} />
           <span>{item.label}</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -218,7 +218,7 @@ function DashboardLayoutContent({
                   />
                   <span className="font-black text-base text-sidebar-foreground tracking-tight truncate" style={{ fontFamily: "Outfit, sans-serif" }}>Leasely</span>
                   {isPro && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#00C896]/15 text-[#00A87C] border border-[#00C896]/20 shrink-0">
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#F5A623]/15 text-[#E8951A] border border-[#F5A623]/20 shrink-0">
                       PRO
                     </span>
                   )}
@@ -259,7 +259,7 @@ function DashboardLayoutContent({
                         <item.icon className="h-4 w-4 shrink-0 opacity-50" />
                         <span className="opacity-50">{item.label}</span>
                         {!isCollapsed && (
-                          <Sparkles className="h-3 w-3 ml-auto text-[#00C896]/60 shrink-0" />
+                          <Sparkles className="h-3 w-3 ml-auto text-[#F5A623]/60 shrink-0" />
                         )}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -317,12 +317,12 @@ function DashboardLayoutContent({
 
             {/* Upgrade CTA for free users */}
             {!isPro && !isCollapsed && (
-              <div className="mx-3 mt-3 mb-1 p-3 rounded-xl bg-gradient-to-br from-[#00C896]/8 to-[#4F46E5]/8 border border-[#00C896]/15">
+              <div className="mx-3 mt-3 mb-1 p-3 rounded-xl bg-gradient-to-br from-[#F5A623]/8 to-[#4F46E5]/8 border border-[#F5A623]/15">
                 <p className="text-xs font-semibold text-foreground">Unlock Pro Portal</p>
                 <p className="text-[11px] text-muted-foreground mt-0.5 mb-2">Applications, payouts, AI screening & more</p>
                 <button
                   onClick={() => setLocation("/pricing")}
-                  className="w-full text-xs font-semibold py-1.5 px-3 rounded-lg bg-[#00C896] hover:bg-[#00A87C] text-[#062018] transition-colors flex items-center justify-center gap-1.5"
+                  className="w-full text-xs font-semibold py-1.5 px-3 rounded-lg bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] transition-colors flex items-center justify-center gap-1.5"
                 >
                   <Sparkles className="h-3 w-3" /> Upgrade — $25/mo
                 </button>
@@ -375,7 +375,7 @@ function DashboardLayoutContent({
         {/* Resize handle */}
         {!isCollapsed && (
           <div
-            className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-[#00C896]/30 active:bg-[#00C896]/50 transition-colors z-50"
+            className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-[#F5A623]/30 active:bg-[#F5A623]/50 transition-colors z-50"
             onMouseDown={() => setIsResizing(true)}
           />
         )}
@@ -392,7 +392,7 @@ function DashboardLayoutContent({
               </span>
             </div>
             {isPro && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#00C896]/10 text-[#00A87C] border border-[#00C896]/20">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F5A623]/10 text-[#E8951A] border border-[#F5A623]/20">
                 PRO
               </span>
             )}

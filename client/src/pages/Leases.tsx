@@ -520,7 +520,7 @@ export default function Leases() {
 
                 {selectedLease.status === "paid" && (
                   <Button
-                    className="w-full bg-[#00C896] hover:bg-[#00b083] text-[#0a2a1f] gap-2 font-bold"
+                    className="w-full bg-[#F5A623] hover:bg-[#00b083] text-[#3A2410] gap-2 font-bold"
                     onClick={() => {
                       landlordSignMutation.mutate({ leaseId: selectedLease.id });
                       setSelectedLease({ ...selectedLease, status: "signed" });

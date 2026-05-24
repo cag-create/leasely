@@ -26,7 +26,7 @@ import { Link } from "wouter";
 import RentSuggestionWidget from "@/components/RentSuggestionWidget";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 
 const STEPS = [
   { id: 1, title: "Property Details", icon: Building2 },
@@ -220,7 +220,7 @@ export default function ListProperty() {
             <h2 className="text-2xl font-black text-gray-900 mb-3">Sign In to List Your Property</h2>
             <p className="text-gray-500 mb-6">Create a free account to list your first property on the Leasely marketplace.</p>
             <a href={getLoginUrl()}>
-              <Button size="lg" className="w-full font-bold" style={{ background: ACCENT, color: "#0a2a1f" }}>
+              <Button size="lg" className="w-full font-bold" style={{ background: ACCENT, color: "#3A2410" }}>
                 Sign In / Create Account
               </Button>
             </a>
@@ -265,7 +265,7 @@ export default function ListProperty() {
                 Maybe Later
               </Button>
               <Link href="/dashboard">
-                <Button className="flex-1 font-bold" style={{ background: ACCENT, color: "#0a2a1f" }}>
+                <Button className="flex-1 font-bold" style={{ background: ACCENT, color: "#3A2410" }}>
                   Upgrade Now <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
               </Link>
@@ -610,7 +610,7 @@ export default function ListProperty() {
                   type="submit"
                   disabled={createMutation.isPending}
                   className="gap-2 font-bold px-8"
-                  style={{ background: ACCENT, color: "#0a2a1f" }}
+                  style={{ background: ACCENT, color: "#3A2410" }}
                 >
                   {createMutation.isPending ? "Publishing..." : "Publish Listing 🚀"}
                 </Button>

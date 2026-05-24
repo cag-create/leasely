@@ -62,7 +62,7 @@ export default function LegalLayout({ title, effectiveDate, children }: LegalLay
           </div>
           <div className="mt-12 pt-6 border-t border-white/8 text-xs text-white/40">
             <p>This document is provided for informational purposes and does not constitute legal advice. Consult a qualified attorney for guidance specific to your situation.</p>
-            <p className="mt-2">Questions: <a href="mailto:support@leasely.net" className="text-[#00C896] hover:underline">support@leasely.net</a></p>
+            <p className="mt-2">Questions: <a href="mailto:support@leasely.net" className="text-[#F5A623] hover:underline">support@leasely.net</a></p>
           </div>
         </main>
       </div>

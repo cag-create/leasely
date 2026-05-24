@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Mail, Home, ArrowRight, Building2, Shield, CheckCircle2, Loader2 } from "lucide-react";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/112528410/Ucb4CaDiJcuyDWNAe95Wyq/leasely-logo-corrected_6f0929ef.png";
 
 export default function TenantLogin() {
@@ -138,7 +138,7 @@ export default function TenantLogin() {
                   type="submit"
                   disabled={sendLoginMutation.isPending || !email.trim()}
                   className="w-full h-12 text-base font-bold gap-2"
-                  style={{ background: ACCENT, color: "#0a2a1f" }}
+                  style={{ background: ACCENT, color: "#3A2410" }}
                 >
                   {sendLoginMutation.isPending ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> Sending...</>
@@ -182,7 +182,7 @@ export default function TenantLogin() {
                   type="submit"
                   disabled={verifying || token.length < 6}
                   className="w-full h-12 text-base font-bold gap-2"
-                  style={{ background: ACCENT, color: "#0a2a1f" }}
+                  style={{ background: ACCENT, color: "#3A2410" }}
                 >
                   {verifying ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> Verifying...</>

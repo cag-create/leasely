@@ -154,7 +154,7 @@ function AdminStats({ onNavigate }: { onNavigate: (tab: AdminTab) => void }) {
   const items: Array<{ label: string; value: any; icon: any; color: string; bg: string; tab: AdminTab }> = [
     { label: "Total Users", value: stats?.totalUsers ?? "—", icon: Users, color: "text-blue-500", bg: "bg-blue-500/10", tab: "users" },
     { label: "Pro Subscribers", value: stats?.paidUsers ?? "—", icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10", tab: "subs" },
-    { label: "Active Listings", value: stats?.totalListings ?? "—", icon: Building2, color: "text-[#00C896]", bg: "bg-[#00C896]/10", tab: "listings" },
+    { label: "Active Listings", value: stats?.totalListings ?? "—", icon: Building2, color: "text-[#F5A623]", bg: "bg-[#F5A623]/10", tab: "listings" },
     { label: "MRR (est.)", value: stats?.paidUsers ? `$${(Number(stats.paidUsers) * 25).toFixed(0)}` : "—", icon: DollarSign, color: "text-green-500", bg: "bg-green-500/10", tab: "subs" },
   ];
 
@@ -244,7 +244,7 @@ function ListingsTab() {
   });
 
   const STATUS_BADGE: Record<string, string> = {
-    active: "bg-[#00C896]/10 text-[#00C896]",
+    active: "bg-[#F5A623]/10 text-[#F5A623]",
     inactive: "bg-muted text-muted-foreground",
     pending: "bg-amber-500/10 text-amber-600",
   };
@@ -476,7 +476,7 @@ function SubscriptionsTab() {
                     </td>
                     <td className="px-5 py-3">
                       <Badge className={`text-xs border-0 ${
-                        s.status === "active" ? "bg-[#00C896]/10 text-[#00C896]" :
+                        s.status === "active" ? "bg-[#F5A623]/10 text-[#F5A623]" :
                         s.status === "cancelled" ? "bg-red-500/10 text-red-600" :
                         "bg-muted text-muted-foreground"
                       }`}>
@@ -644,7 +644,7 @@ function RecentSubscriptions() {
                   <div className="text-xs text-muted-foreground">{s.email}</div>
                 </div>
               </div>
-              <Badge className="bg-[#00C896]/10 text-[#00C896] border-0 text-xs">Pro</Badge>
+              <Badge className="bg-[#F5A623]/10 text-[#F5A623] border-0 text-xs">Pro</Badge>
             </div>
           ))}
         </div>
@@ -665,14 +665,14 @@ function PlatformHealth() {
   return (
     <div className="rounded-2xl border border-border bg-card p-5">
       <div className="flex items-center gap-2 mb-4">
-        <BarChart3 className="h-4 w-4 text-[#00C896]" />
+        <BarChart3 className="h-4 w-4 text-[#F5A623]" />
         <h3 className="font-semibold text-foreground">Platform Health</h3>
       </div>
       <div className="space-y-2.5">
         {checks.map((c, i) => (
           <div key={i} className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <CheckCircle2 className="h-4 w-4 text-[#00C896]" />
+              <CheckCircle2 className="h-4 w-4 text-[#F5A623]" />
               <span className="text-sm text-foreground">{c.label}</span>
             </div>
             <span className="text-xs text-muted-foreground">{c.detail}</span>
@@ -730,7 +730,7 @@ function AdminAgentsList() {
 
   const STATUS_BADGE: Record<string, string> = {
     pending: "bg-amber-500/10 text-amber-600",
-    approved: "bg-[#00C896]/10 text-[#00C896]",
+    approved: "bg-[#F5A623]/10 text-[#F5A623]",
     rejected: "bg-red-500/10 text-red-600",
   };
 
@@ -766,7 +766,7 @@ function AdminAgentsList() {
               </div>
               <div className="flex gap-2 shrink-0">
                 {a.status !== "approved" && (
-                  <Button size="sm" className="h-7 text-xs bg-[#00C896] hover:bg-[#00C896]/90 text-white"
+                  <Button size="sm" className="h-7 text-xs bg-[#F5A623] hover:bg-[#F5A623]/90 text-white"
                     onClick={() => approve.mutate({ agentId: a.id })} disabled={approve.isPending}>
                     <CheckCircle2 className="h-3 w-3 mr-1" /> Approve
                   </Button>
@@ -793,7 +793,7 @@ function AdminLeadsList() {
     new: "bg-blue-500/10 text-blue-600",
     contacted: "bg-amber-500/10 text-amber-600",
     qualified: "bg-purple-500/10 text-purple-600",
-    closed: "bg-[#00C896]/10 text-[#00C896]",
+    closed: "bg-[#F5A623]/10 text-[#F5A623]",
     lost: "bg-red-500/10 text-red-600",
   };
 
@@ -877,7 +877,7 @@ function AdminReviewsList() {
                     ))}
                   </div>
                   {r.approved ? (
-                    <Badge className="text-xs bg-[#00C896]/10 text-[#00C896] border-0">Approved</Badge>
+                    <Badge className="text-xs bg-[#F5A623]/10 text-[#F5A623] border-0">Approved</Badge>
                   ) : (
                     <Badge className="text-xs bg-amber-500/10 text-amber-600 border-0">Pending</Badge>
                   )}
@@ -886,7 +886,7 @@ function AdminReviewsList() {
               </div>
               <div className="flex gap-2 shrink-0">
                 {!r.approved && (
-                  <Button size="sm" className="h-7 text-xs bg-[#00C896] hover:bg-[#00C896]/90 text-white"
+                  <Button size="sm" className="h-7 text-xs bg-[#F5A623] hover:bg-[#F5A623]/90 text-white"
                     onClick={() => moderate.mutate({ reviewId: r.id, approved: true })} disabled={moderate.isPending}>
                     Approve
                   </Button>
@@ -961,7 +961,7 @@ function WaitlistTab() {
                   </td>
                   <td className="px-4 py-3">
                     {e.contactedAt ? (
-                      <Badge className="text-xs bg-[#00C896]/10 text-[#00C896] border-0 gap-1">
+                      <Badge className="text-xs bg-[#F5A623]/10 text-[#F5A623] border-0 gap-1">
                         <CheckCircle2 className="h-3 w-3" /> Contacted
                       </Badge>
                     ) : (
@@ -1002,7 +1002,7 @@ function GrowthTab() {
   const metrics = [
     { label: "Total Users", value: stats?.totalUsers, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
     { label: "Pro Subscribers", value: stats?.paidUsers, icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10" },
-    { label: "Active Listings", value: stats?.totalListings, icon: Building2, color: "text-[#00C896]", bg: "bg-[#00C896]/10" },
+    { label: "Active Listings", value: stats?.totalListings, icon: Building2, color: "text-[#F5A623]", bg: "bg-[#F5A623]/10" },
     { label: "Applications", value: stats?.totalApplications, icon: CheckCircle2, color: "text-purple-500", bg: "bg-purple-500/10" },
     { label: "Waitlist Entries", value: stats?.totalWaitlist, icon: Bell, color: "text-orange-500", bg: "bg-orange-500/10" },
     { label: "Agent Leads", value: stats?.totalLeads, icon: TrendingUp, color: "text-pink-500", bg: "bg-pink-500/10" },
@@ -1445,7 +1445,7 @@ function SopViewerModal({ sop, onClose }: { sop: Sop; onClose: () => void }) {
               <ul className="space-y-2.5">
                 {section.items.map((item, ii) => (
                   <li key={ii} className="flex gap-3 text-sm text-muted-foreground leading-relaxed">
-                    <span className="h-5 w-5 rounded-full bg-[#00C896]/15 text-[#00C896] flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                    <span className="h-5 w-5 rounded-full bg-[#F5A623]/15 text-[#F5A623] flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
                       {ii + 1}
                     </span>
                     <span>{item}</span>
@@ -1460,7 +1460,7 @@ function SopViewerModal({ sop, onClose }: { sop: Sop; onClose: () => void }) {
         <div className="p-4 border-t border-border shrink-0 flex justify-end">
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-[#00C896] hover:bg-[#00A87C] text-[#062018] font-semibold text-sm transition-colors"
+            className="px-5 py-2 rounded-xl bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] font-semibold text-sm transition-colors"
           >
             Done Reading
           </button>
@@ -1628,12 +1628,12 @@ function SopAdminTab() {
                           <div className="flex items-center gap-2">
                             <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden max-w-[120px]">
                               <div
-                                className={`h-full rounded-full ${pct === 100 ? "bg-[#00C896]" : "bg-[#1B2B5E]"}`}
+                                className={`h-full rounded-full ${pct === 100 ? "bg-[#F5A623]" : "bg-[#1B2B5E]"}`}
                                 style={{ width: `${pct}%` }}
                               />
                             </div>
                             <span className="text-xs text-muted-foreground w-8">{pct}%</span>
-                            {pct === 100 && <CheckCircle2 className="h-3.5 w-3.5 text-[#00C896]" />}
+                            {pct === 100 && <CheckCircle2 className="h-3.5 w-3.5 text-[#F5A623]" />}
                           </div>
                         </td>
                       </tr>
@@ -1655,14 +1655,14 @@ function IntelligenceTab() {
   const { data: leaseOutcomes, isLoading: loadingLeases } = trpc.admin.getLeaseOutcomes.useQuery();
 
   const scoreItems = scoreStats ? [
-    { label: "Excellent", range: "80–100", count: scoreStats.excellent, color: "bg-[#00C896]", textColor: "text-[#00C896]" },
+    { label: "Excellent", range: "80–100", count: scoreStats.excellent, color: "bg-[#F5A623]", textColor: "text-[#F5A623]" },
     { label: "Good", range: "65–79", count: scoreStats.good, color: "bg-blue-500", textColor: "text-blue-500" },
     { label: "Fair", range: "50–64", count: scoreStats.fair, color: "bg-amber-500", textColor: "text-amber-500" },
     { label: "Review", range: "< 50", count: scoreStats.review, color: "bg-red-400", textColor: "text-red-400" },
   ] : [];
 
   const leaseStatusConfig: Record<string, { label: string; color: string }> = {
-    active: { label: "Active", color: "bg-[#00C896]/80" },
+    active: { label: "Active", color: "bg-[#F5A623]/80" },
     signed: { label: "Signed", color: "bg-blue-500/80" },
     draft: { label: "Draft", color: "bg-muted" },
     sent: { label: "Sent (Awaiting Signature)", color: "bg-amber-500/80" },
@@ -1674,10 +1674,10 @@ function IntelligenceTab() {
     <div className="space-y-6">
 
       {/* Header banner */}
-      <div className="rounded-2xl bg-gradient-to-br from-[#00C896]/10 to-blue-500/10 border border-[#00C896]/20 p-5">
+      <div className="rounded-2xl bg-gradient-to-br from-[#F5A623]/10 to-blue-500/10 border border-[#F5A623]/20 p-5">
         <div className="flex items-start gap-3">
-          <div className="h-10 w-10 rounded-xl bg-[#00C896]/15 flex items-center justify-center shrink-0">
-            <Sparkles className="h-5 w-5 text-[#00C896]" />
+          <div className="h-10 w-10 rounded-xl bg-[#F5A623]/15 flex items-center justify-center shrink-0">
+            <Sparkles className="h-5 w-5 text-[#F5A623]" />
           </div>
           <div>
             <h3 className="font-bold text-foreground">Platform Intelligence</h3>
@@ -1771,10 +1771,10 @@ function IntelligenceTab() {
                   <tr key={i} className={`border-b border-border last:border-0 ${i % 2 === 0 ? "" : "bg-muted/5"}`}>
                     <td className="px-5 py-3 font-mono text-xs font-semibold text-foreground">{row.state ?? "—"}</td>
                     <td className="px-5 py-3 font-mono text-sm text-foreground">{row.zip ?? "—"}</td>
-                    <td className="px-5 py-3 font-semibold text-[#00C896]">${Number(row.avgRent ?? 0).toLocaleString()}/mo</td>
+                    <td className="px-5 py-3 font-semibold text-[#F5A623]">${Number(row.avgRent ?? 0).toLocaleString()}/mo</td>
                     <td className="px-5 py-3 text-muted-foreground">{row.count}</td>
                     <td className="px-5 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${Number(row.count) >= 5 ? "bg-[#00C896]/10 text-[#00C896]" : Number(row.count) >= 2 ? "bg-amber-500/10 text-amber-600" : "bg-muted text-muted-foreground"}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${Number(row.count) >= 5 ? "bg-[#F5A623]/10 text-[#F5A623]" : Number(row.count) >= 2 ? "bg-amber-500/10 text-amber-600" : "bg-muted text-muted-foreground"}`}>
                         {Number(row.count) >= 5 ? "High confidence" : Number(row.count) >= 2 ? "Growing" : "Limited"}
                       </span>
                     </td>

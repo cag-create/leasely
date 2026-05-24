@@ -53,8 +53,8 @@ export default function JoinWaitlist() {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center space-y-5">
-          <div className="h-20 w-20 rounded-full bg-[#00C896]/10 flex items-center justify-center">
-            <CheckCircle2 className="h-10 w-10 text-[#00C896]" />
+          <div className="h-20 w-20 rounded-full bg-[#F5A623]/10 flex items-center justify-center">
+            <CheckCircle2 className="h-10 w-10 text-[#F5A623]" />
           </div>
           <h1 className="text-3xl font-black text-foreground">You're on the list!</h1>
           <p className="text-muted-foreground max-w-md text-lg">
@@ -75,7 +75,7 @@ export default function JoinWaitlist() {
       {/* Hero */}
       <div className="bg-[#1B2B5E] text-white py-14 px-4">
         <div className="max-w-2xl mx-auto text-center space-y-3">
-          <Badge className="bg-[#00C896]/20 text-[#00C896] border-[#00C896]/30 text-xs">
+          <Badge className="bg-[#F5A623]/20 text-[#F5A623] border-[#F5A623]/30 text-xs">
             Renter Waitlist
           </Badge>
           <h1 className="text-3xl font-black">Get Notified First</h1>
@@ -94,7 +94,7 @@ export default function JoinWaitlist() {
             { icon: Home, label: "Off-market properties" },
           ].map(({ icon: Icon, label }) => (
             <div key={label} className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Icon className="h-4 w-4 text-[#00C896]" />
+              <Icon className="h-4 w-4 text-[#F5A623]" />
               {label}
             </div>
           ))}

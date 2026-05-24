@@ -26,7 +26,7 @@ const STEPS = [
 ];
 
 const PRESET_COLORS = [
-  "#00C896", "#1B2B5E", "#6366F1", "#F5A623",
+  "#F5A623", "#1B2B5E", "#6366F1", "#F5A623",
   "#EC4899", "#10B981", "#3B82F6", "#EF4444",
   "#8B5CF6", "#F59E0B", "#06B6D4", "#84CC16",
 ];
@@ -56,7 +56,7 @@ export default function ProSetup() {
 
   const [form, setForm] = useState({
     businessName: user?.name ? `${user.name.split(" ")[0]}'s Properties` : "",
-    brandColor: "#00C896",
+    brandColor: "#F5A623",
     subdomain: "",
     tagline: "",
     state: "",
@@ -120,7 +120,7 @@ export default function ProSetup() {
             <Button
               onClick={() => navigate("/list-property")}
               className="font-bold py-3"
-              style={{ background: form.brandColor, color: "#0a2a1f" }}
+              style={{ background: form.brandColor, color: "#3A2410" }}
             >
               <Home className="w-4 h-4 mr-2" /> Add Your First Listing
             </Button>
@@ -166,7 +166,7 @@ export default function ProSetup() {
         {step === 1 && (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(0,200,150,0.15)" }}>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(245,166,35,0.15)" }}>
                 <Building2 className="w-8 h-8 text-teal-400" />
               </div>
               <h1 className="text-3xl font-black text-white mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>What's your business called?</h1>
@@ -234,7 +234,7 @@ export default function ProSetup() {
                 <Input
                   value={form.brandColor}
                   onChange={e => update("brandColor", e.target.value)}
-                  placeholder="#00C896"
+                  placeholder="#F5A623"
                   className="font-mono"
                   style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.12)", color: "white" }}
                 />
@@ -281,7 +281,7 @@ export default function ProSetup() {
               <p className="text-white/30 text-xs">Only lowercase letters, numbers, and hyphens. Min 2 characters.</p>
             </div>
             {form.subdomain.length >= 2 && (
-              <div className="rounded-2xl p-4" style={{ background: "rgba(0,200,150,0.08)", border: "1px solid rgba(0,200,150,0.2)" }}>
+              <div className="rounded-2xl p-4" style={{ background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.2)" }}>
                 <p className="text-teal-400 text-sm font-semibold">Your portal will be live at:</p>
                 <p className="text-white font-mono text-sm mt-1">leasely.net/portal/<strong>{form.subdomain}</strong></p>
               </div>
@@ -365,7 +365,7 @@ export default function ProSetup() {
                 </div>
               ))}
             </div>
-            <div className="rounded-2xl p-4 text-center" style={{ background: "rgba(0,200,150,0.08)", border: "1px solid rgba(0,200,150,0.2)" }}>
+            <div className="rounded-2xl p-4 text-center" style={{ background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.2)" }}>
               <p className="text-teal-400 text-sm">
                 🎉 All Pro features unlock instantly — no waiting, no manual setup.
               </p>
@@ -389,7 +389,7 @@ export default function ProSetup() {
                 setStep(s => s + 1);
               }}
               className="gap-2 font-bold px-8"
-              style={{ background: form.brandColor, color: "#0a2a1f" }}
+              style={{ background: form.brandColor, color: "#3A2410" }}
             >
               Continue <ChevronRight className="w-4 h-4" />
             </Button>
@@ -398,7 +398,7 @@ export default function ProSetup() {
               onClick={handleFinish}
               disabled={updateMutation.isPending}
               className="gap-2 font-bold px-8"
-              style={{ background: form.brandColor, color: "#0a2a1f" }}
+              style={{ background: form.brandColor, color: "#3A2410" }}
             >
               {updateMutation.isPending ? "Launching..." : "Launch My Portal 🚀"}
             </Button>

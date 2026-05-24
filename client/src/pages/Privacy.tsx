@@ -53,7 +53,7 @@ export default function Privacy() {
       </LegalSection>
 
       <LegalSection title="7. Your Rights">
-        <p>Depending on your location, you may have the right to access, correct, port, or delete your personal information, restrict or object to certain processing, and withdraw consent. California residents have additional rights described in our <a href="/legal/ccpa" className="text-[#00C896] hover:underline">CCPA Notice</a>. EEA / UK residents have rights under GDPR and UK GDPR. To exercise rights, email <a href="mailto:support@leasely.net" className="text-[#00C896] hover:underline">support@leasely.net</a>.</p>
+        <p>Depending on your location, you may have the right to access, correct, port, or delete your personal information, restrict or object to certain processing, and withdraw consent. California residents have additional rights described in our <a href="/legal/ccpa" className="text-[#F5A623] hover:underline">CCPA Notice</a>. EEA / UK residents have rights under GDPR and UK GDPR. To exercise rights, email <a href="mailto:support@leasely.net" className="text-[#F5A623] hover:underline">support@leasely.net</a>.</p>
       </LegalSection>
 
       <LegalSection title="8. Children's Privacy">
@@ -65,7 +65,7 @@ export default function Privacy() {
       </LegalSection>
 
       <LegalSection title="10. Cookies">
-        <p>See our <a href="/legal/cookies" className="text-[#00C896] hover:underline">Cookie Policy</a> for details on the cookies and similar technologies we use, and how to control them.</p>
+        <p>See our <a href="/legal/cookies" className="text-[#F5A623] hover:underline">Cookie Policy</a> for details on the cookies and similar technologies we use, and how to control them.</p>
       </LegalSection>
 
       <LegalSection title="11. Changes to This Policy">
@@ -73,7 +73,7 @@ export default function Privacy() {
       </LegalSection>
 
       <LegalSection title="12. Contact">
-        <p>Leasely, Inc. — Privacy contact: <a href="mailto:support@leasely.net" className="text-[#00C896] hover:underline">support@leasely.net</a></p>
+        <p>Leasely, Inc. — Privacy contact: <a href="mailto:support@leasely.net" className="text-[#F5A623] hover:underline">support@leasely.net</a></p>
       </LegalSection>
     </LegalLayout>
   );

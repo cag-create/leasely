@@ -13,7 +13,7 @@ import {
 import { formatRent, getListingImage } from "@/lib/marketplace";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 
 export default function RentPayment() {
   const { id } = useParams<{ id: string }>();
@@ -213,7 +213,7 @@ export default function RentPayment() {
                   type="submit"
                   disabled={submitting}
                   className="w-full h-12 font-bold text-base gap-2"
-                  style={{ background: ACCENT, color: "#0a2a1f" }}
+                  style={{ background: ACCENT, color: "#3A2410" }}
                 >
                   {submitting ? (
                     <><Loader2 className="h-5 w-5 animate-spin" /> Redirecting to Stripe...</>

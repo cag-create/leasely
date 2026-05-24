@@ -19,7 +19,7 @@ import {
 import { getLoginUrl } from "@/const";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
@@ -227,7 +227,7 @@ export default function ContractorRegister() {
             <div key={s} className="flex items-center gap-2 flex-1">
               <div
                 className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-all ${
-                  s < step ? "bg-[#00C896] text-[#062018]" : s === step ? "bg-[#1B2B5E] text-white" : "bg-muted text-muted-foreground"
+                  s < step ? "bg-[#F5A623] text-[#062018]" : s === step ? "bg-[#1B2B5E] text-white" : "bg-muted text-muted-foreground"
                 }`}
               >
                 {s < step ? <CheckCircle2 className="h-4 w-4" /> : s}
@@ -364,8 +364,8 @@ export default function ContractorRegister() {
                     onClick={() => toggleTrade(t.value)}
                     className={`px-3 py-2 rounded-xl text-sm font-medium border transition-all text-left ${
                       form.trades.includes(t.value)
-                        ? "border-[#00C896] bg-[#00C896]/10 text-[#00C896]"
-                        : "border-border bg-card text-muted-foreground hover:border-[#00C896]/50"
+                        ? "border-[#F5A623] bg-[#F5A623]/10 text-[#F5A623]"
+                        : "border-border bg-card text-muted-foreground hover:border-[#F5A623]/50"
                     }`}
                   >
                     {t.label}

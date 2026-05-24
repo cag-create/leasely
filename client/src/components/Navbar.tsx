@@ -107,7 +107,7 @@ export default function Navbar() {
                 </>
               )}
 
-              <NavLink href="/pro" className="text-[#00C896] hover:text-[#00A87C]">
+              <NavLink href="/pro" className="text-[#F5A623] hover:text-[#E8951A]">
                 <span className="flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5" />Pro</span>
               </NavLink>
               <NavLink href="/contractors"><span className="flex items-center gap-1.5"><Wrench className="h-3.5 w-3.5" />Contractors</span></NavLink>
@@ -137,7 +137,7 @@ export default function Navbar() {
                     </Button>
                   </a>
                   <a href={getLoginUrl()}>
-                    <Button size="sm" className="text-sm font-semibold bg-[#00C896] hover:bg-[#00A87C] text-[#062018] gap-1.5 shadow-sm">
+                    <Button size="sm" className="text-sm font-semibold bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] gap-1.5 shadow-sm">
                       <Sparkles className="h-3.5 w-3.5" />
                       Get Started Free
                     </Button>
@@ -146,7 +146,7 @@ export default function Navbar() {
               ) : (
                 <>
                   {isPro && (
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-[#00C896]/10 text-[#00A87C] border border-[#00C896]/20">
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-[#F5A623]/10 text-[#E8951A] border border-[#F5A623]/20">
                       <Sparkles className="h-3 w-3" /> Pro
                     </span>
                   )}
@@ -180,7 +180,7 @@ export default function Navbar() {
                         <div className="mt-2">
                           {isRenter && <Badge variant="secondary" className="text-xs">Renter</Badge>}
                           {isLandlord && !isPro && <Badge variant="secondary" className="text-xs">Free Plan</Badge>}
-                          {isPro && <Badge className="text-xs font-semibold bg-[#00C896]/10 text-[#00A87C] border-[#00C896]/20">Pro Landlord</Badge>}
+                          {isPro && <Badge className="text-xs font-semibold bg-[#F5A623]/10 text-[#E8951A] border-[#F5A623]/20">Pro Landlord</Badge>}
                           {isAdmin && <Badge className="text-xs font-semibold bg-amber-100 text-amber-700 border-amber-200 ml-1">Admin</Badge>}
                         </div>
                       </div>
@@ -228,7 +228,7 @@ export default function Navbar() {
                           )}
                           {!isPro && (
                             <DropdownMenuItem asChild>
-                              <Link href="/pricing" className="flex items-center gap-2.5 cursor-pointer text-sm font-semibold text-[#00A87C]">
+                              <Link href="/pricing" className="flex items-center gap-2.5 cursor-pointer text-sm font-semibold text-[#E8951A]">
                                 <Sparkles className="h-4 w-4" /> Upgrade to Pro — $25/mo
                               </Link>
                             </DropdownMenuItem>
@@ -309,7 +309,7 @@ export default function Navbar() {
               {!isAuthenticated ? (
                 <div className="space-y-2">
                   <a href={getLoginUrl()} className="block">
-                    <Button className="w-full bg-[#00C896] hover:bg-[#00A87C] text-[#062018] font-semibold gap-2">
+                    <Button className="w-full bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] font-semibold gap-2">
                       <Sparkles className="h-4 w-4" /> Get Started Free
                     </Button>
                   </a>

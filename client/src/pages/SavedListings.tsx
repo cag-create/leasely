@@ -7,7 +7,7 @@ import Navbar from "@/components/Navbar";
 import PropertyCard from "@/components/PropertyCard";
 import { Heart, Lock, Building2, ArrowRight } from "lucide-react";
 
-const ACCENT = "#00C896";
+const ACCENT = "#F5A623";
 
 export default function SavedListings() {
   const { isAuthenticated } = useAuth();
@@ -26,7 +26,7 @@ export default function SavedListings() {
             <h2 className="text-2xl font-black text-gray-900 mb-3">Sign In to View Saved Listings</h2>
             <p className="text-gray-500 mb-6">Save properties you love and revisit them anytime.</p>
             <a href={getLoginUrl()}>
-              <Button size="lg" className="w-full font-bold" style={{ background: ACCENT, color: "#0a2a1f" }}>
+              <Button size="lg" className="w-full font-bold" style={{ background: ACCENT, color: "#3A2410" }}>
                 Sign In / Create Account
               </Button>
             </a>
@@ -77,7 +77,7 @@ export default function SavedListings() {
             <h3 className="text-xl font-bold text-gray-600 mb-2">No saved listings yet</h3>
             <p className="text-gray-400 mb-6">Browse the marketplace and tap the heart icon to save properties you love.</p>
             <Link href="/marketplace">
-              <Button style={{ background: ACCENT, color: "#0a2a1f" }} className="font-bold gap-2">
+              <Button style={{ background: ACCENT, color: "#3A2410" }} className="font-bold gap-2">
                 Browse Listings <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
