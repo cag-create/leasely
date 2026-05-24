@@ -491,20 +491,40 @@ function ReceivedApplications({
                     )}
 
                     <div className="flex gap-2 flex-wrap">
-                   {(["reviewing", "approved", "denied"] as const).map(s => (                        <Button
-                          key={s}
-                          variant="outline"
-                          size="sm"
-                          className="text-xs h-7"
-                          disabled={app.status === s || updateStatus.isPending}
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleStatusClick(app, s);
-                          }}
-                        >
-                          Mark {s === "reviewing" ? "Under Review" : s.replace(/\b\w/g, c => c.toUpperCase())}
-                        </Button>
-                      ))}
+                      {(["reviewing", "approved", "denied"] as const).map(s => {
+                        const isCurrent = app.status === s;
+                        // Color-coded high-contrast styling per action — readable
+                        // against the dark dashboard background. The current
+                        // state is dimmed to 50% so it's obvious which is active.
+                        const style =
+                          s === "reviewing"
+                            ? "text-xs h-8 bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/40 font-semibold gap-1.5"
+                            : s === "approved"
+                            ? "text-xs h-8 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-700 dark:text-emerald-300 border border-emerald-500/50 font-semibold gap-1.5"
+                            : "text-xs h-8 bg-red-500/15 hover:bg-red-500/25 text-red-700 dark:text-red-300 border border-red-500/40 font-semibold gap-1.5";
+                        const Icon =
+                          s === "reviewing" ? Eye : s === "approved" ? CheckCircle2 : XCircle;
+                        const label =
+                          s === "reviewing" ? "Mark Under Review" :
+                          s === "approved" ? "Mark Approved" :
+                          "Mark Denied";
+                        return (
+                          <Button
+                            key={s}
+                            variant="outline"
+                            size="sm"
+                            className={`${style} ${isCurrent ? "opacity-50" : ""}`}
+                            disabled={isCurrent || updateStatus.isPending}
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleStatusClick(app, s);
+                            }}
+                          >
+                            <Icon className="h-3.5 w-3.5" />
+                            {label}
+                          </Button>
+                        );
+                      })}
 
                       {/* Background check via ApplyConnect (TransUnion-backed, $39.95 paid by applicant) */}
                       {app.backgroundCheckConsent ? (
