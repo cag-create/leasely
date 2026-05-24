@@ -216,15 +216,55 @@ function ReceivedApplications({
 
   // Override modal state — opened when a landlord clicks "Mark Approved"
   // on an application the AI flagged for decline or manual_review. We stash
-  // `state` here so the confirmation toast can name the state ("Draft lease
-  // created for TN") without re-looking up the application.
+  // the full `app` row so the next step (Lease Details modal) can prefill
+  // address/rent/deposit from the listing without a re-fetch.
   const [override, setOverride] = useState<{
     appId: number;
     recommendation: string;
     state: string | null;
+    app: any;
   } | null>(null);
   const [overrideReason, setOverrideReason] = useState("");
   const overrideValid = overrideReason.trim().length >= 10;
+
+  // Lease Details modal — opened after Mark Approved (and after the override
+  // modal, if applicable). Landlord confirms address / rent / deposit /
+  // start date / term before the draft lease is created. The form holds
+  // dollars as strings so the inputs display naturally; we convert to
+  // cents before sending to the server.
+  const [leaseDetails, setLeaseDetails] = useState<{
+    appId: number;
+    overrideReason?: string;
+    overrideRecommendation?: string;
+    propertyAddress: string;
+    monthlyRent: string;     // dollars, user-facing
+    securityDeposit: string; // dollars, user-facing
+    leaseStartDate: string;  // YYYY-MM-DD
+    leaseTerm: "12_months" | "6_months" | "month_to_month";
+    applicantMoveInDate: string | null;
+  } | null>(null);
+
+  const openLeaseDetails = (
+    app: any,
+    overrideMeta?: { reason: string; recommendation: string },
+  ) => {
+    const listingRent = app.listingMonthlyRent ?? 0;
+    const listingDeposit = app.listingSecurityDeposit ?? listingRent;
+    const addr = [app.listingAddress, app.listingCity, app.listingState, app.listingZip]
+      .filter(Boolean)
+      .join(", ");
+    setLeaseDetails({
+      appId: app.id,
+      overrideReason: overrideMeta?.reason,
+      overrideRecommendation: overrideMeta?.recommendation,
+      propertyAddress: addr,
+      monthlyRent: listingRent > 0 ? (listingRent / 100).toFixed(2) : "",
+      securityDeposit: listingDeposit > 0 ? (listingDeposit / 100).toFixed(2) : "",
+      leaseStartDate: app.moveInDate ?? "",
+      leaseTerm: "12_months",
+      applicantMoveInDate: app.moveInDate ?? null,
+    });
+  };
 
   // Draft leases open at /leases/draft/:id (LeasePreview component). The
   // backend writes the lease id back onto rentalApplications.draftLeaseId
@@ -232,85 +272,93 @@ function ReceivedApplications({
   // it without a join.
   const draftLeaseHref = (id: number) => `/leases/draft/${id}`;
 
+  // Override modal "Confirm" no longer fires the mutation directly — it hands
+  // off to the Lease Details modal so the landlord can verify rent/address
+  // before the draft lease is created. Override metadata is carried forward
+  // and submitted alongside the lease details in one updateStatus call.
   const confirmOverride = () => {
     if (!override || !overrideValid) return;
-    const stateLabel = override.state ?? "this property";
+    const carriedApp = override.app;
+    const reason = overrideReason.trim();
+    const recommendation = override.recommendation;
+    setOverride(null);
+    setOverrideReason("");
+    openLeaseDetails(carriedApp, { reason, recommendation });
+  };
+
+  const handleStatusClick = (app: any, target: "reviewing" | "approved" | "denied") => {
+    // Approval path: if the AI flagged decline/manual_review, gate through
+    // the override modal first; otherwise jump straight to Lease Details.
+    // Mark Under Review and Mark Denied fire the mutation immediately.
+    if (target === "approved") {
+      const rec = getAiRecommendation(app);
+      if (rec === "decline" || rec === "manual_review") {
+        setOverrideReason("");
+        setOverride({ appId: app.id, recommendation: rec, state: app.state ?? null, app });
+        return;
+      }
+      openLeaseDetails(app);
+      return;
+    }
+    updateStatus.mutate(
+      { id: app.id, status: target },
+      {
+        onSuccess: () => {
+          toast.success(`Application marked ${target === "reviewing" ? "under review" : target}.`);
+        },
+        onError: (e: any) => {
+          toast.error(e?.message ?? `Failed to mark ${target}.`);
+        },
+      },
+    );
+  };
+
+  const confirmLeaseDetails = () => {
+    if (!leaseDetails) return;
+    const rentCents = Math.round(parseFloat(leaseDetails.monthlyRent || "0") * 100);
+    const depositCents = Math.round(parseFloat(leaseDetails.securityDeposit || "0") * 100);
+    if (rentCents <= 0 || !leaseDetails.propertyAddress.trim() || !leaseDetails.leaseStartDate) {
+      toast.error("Address, rent, and start date are required.");
+      return;
+    }
     updateStatus.mutate(
       {
-        id: override.appId,
+        id: leaseDetails.appId,
         status: "approved",
-        overrideReason: overrideReason.trim(),
-        overrideRecommendation: override.recommendation,
+        ...(leaseDetails.overrideReason && {
+          overrideReason: leaseDetails.overrideReason,
+          overrideRecommendation: leaseDetails.overrideRecommendation,
+        }),
+        leaseDetails: {
+          propertyAddress: leaseDetails.propertyAddress.trim(),
+          monthlyRentCents: rentCents,
+          securityDepositCents: depositCents,
+          leaseStartDate: leaseDetails.leaseStartDate,
+          leaseTerm: leaseDetails.leaseTerm,
+        },
       },
       {
         onSuccess: (data: any) => {
           if (data?.draftLeaseId) {
             toast.success(
               <span>
-                Override saved. Draft lease created for {stateLabel}.{" "}
+                Draft lease created.{" "}
                 <a href={draftLeaseHref(data.draftLeaseId)} className="underline font-semibold">
                   Review &amp; send →
                 </a>
               </span>,
               { duration: 10000 },
             );
-          } else {
-            toast.success("Application approved. Override reason saved to audit trail.");
-          }
-          setOverride(null);
-          setOverrideReason("");
-        },
-        onError: (e: any) => {
-          toast.error(e?.message ?? "Failed to save override.");
-        },
-      },
-    );
-  };
-
-  const handleStatusClick = (app: any, target: "reviewing" | "approved" | "denied") => {
-    // Only "approved" gates through the override modal — and only when the AI
-    // flagged the applicant for decline/manual_review. All other transitions
-    // (denying, marking under review, approving an AI-approved applicant)
-    // fire the mutation immediately.
-    if (target === "approved") {
-      const rec = getAiRecommendation(app);
-      if (rec === "decline" || rec === "manual_review") {
-        setOverrideReason("");
-        setOverride({ appId: app.id, recommendation: rec, state: app.state ?? null });
-        return;
-      }
-    }
-    updateStatus.mutate(
-      { id: app.id, status: target },
-      {
-        onSuccess: (data: any) => {
-          if (target === "approved" && data?.draftLeaseId) {
-            const stateLabel = app.state ?? "this property";
-            toast.success(
-              <span>
-                Application approved. Draft lease created for {stateLabel}.{" "}
-                <a href={draftLeaseHref(data.draftLeaseId)} className="underline font-semibold">
-                  Review &amp; send →
-                </a>
-              </span>,
-              { duration: 10000 },
-            );
-            // Auto-open the draft after a short pause so the landlord lands
-            // on the editor where they almost always want to go next. The
-            // delay gives them time to read the toast or click Undo on the
-            // browser tab if they want to stay.
+            setLeaseDetails(null);
             setTimeout(() => {
               window.location.href = draftLeaseHref(data.draftLeaseId);
             }, 1500);
-          } else if (target === "approved") {
-            toast.success("Application approved.");
           } else {
-            toast.success(`Application marked ${target === "reviewing" ? "under review" : target}.`);
+            toast.success("Application approved.");
+            setLeaseDetails(null);
           }
         },
-        onError: (e: any) => {
-          toast.error(e?.message ?? `Failed to mark ${target}.`);
-        },
+        onError: (e: any) => toast.error(e?.message ?? "Failed to create lease."),
       },
     );
   };
@@ -699,6 +747,112 @@ function ReceivedApplications({
               disabled={!overrideValid || updateStatus.isPending}
             >
               {updateStatus.isPending ? "Saving…" : "Confirm Approval"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Lease Details modal — opens after Mark Approved (and after the
+          override modal, when applicable). Lets the landlord confirm
+          address, rent, deposit, start date, and term before the draft
+          lease is created. Values prefill from the listing and the
+          applicant's requested move-in date but are all editable. */}
+      <Dialog open={!!leaseDetails} onOpenChange={open => { if (!open) setLeaseDetails(null); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-amber-500" />
+              Set Lease Details
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-sm">
+              Review and adjust before the draft lease is created. These values pre-fill the lease — you can still edit them on the lease editor before sending.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Property address</Label>
+              <Input
+                value={leaseDetails?.propertyAddress ?? ""}
+                onChange={e => setLeaseDetails(d => d && ({ ...d, propertyAddress: e.target.value }))}
+                placeholder="123 Main St, Nashville, TN 37201"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Verify this is the rental property — not the applicant's current address.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Monthly rent</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className="pl-7"
+                    value={leaseDetails?.monthlyRent ?? ""}
+                    onChange={e => setLeaseDetails(d => d && ({ ...d, monthlyRent: e.target.value }))}
+                    placeholder="1800.00"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Security deposit</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className="pl-7"
+                    value={leaseDetails?.securityDeposit ?? ""}
+                    onChange={e => setLeaseDetails(d => d && ({ ...d, securityDeposit: e.target.value }))}
+                    placeholder="1800.00"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Lease start date</Label>
+              <Input
+                type="date"
+                value={leaseDetails?.leaseStartDate ?? ""}
+                onChange={e => setLeaseDetails(d => d && ({ ...d, leaseStartDate: e.target.value }))}
+              />
+              {leaseDetails?.applicantMoveInDate && (
+                <p className="text-[11px] text-muted-foreground">
+                  Applicant requested {new Date(leaseDetails.applicantMoveInDate).toLocaleDateString()} — change to your desired start date.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Lease term</Label>
+              <select
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                value={leaseDetails?.leaseTerm ?? "12_months"}
+                onChange={e => setLeaseDetails(d => d && ({ ...d, leaseTerm: e.target.value as any }))}
+              >
+                <option value="12_months">12 months</option>
+                <option value="6_months">6 months</option>
+                <option value="month_to_month">Month-to-month</option>
+              </select>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setLeaseDetails(null)} disabled={updateStatus.isPending}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-[#F5A623] hover:bg-[#E8951A] text-[#3A2410] font-semibold"
+              onClick={confirmLeaseDetails}
+              disabled={updateStatus.isPending}
+            >
+              {updateStatus.isPending ? "Creating…" : "Create Draft Lease"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -946,6 +946,7 @@ export async function getSupportReplies(ticketId: number) {
 }
 
 // ─── Rental Applications ──────────────────────────────────────────────────────
+// marketplaceListings is already imported at the top of this file.
 import {
   rentalApplications, InsertRentalApplication, RentalApplication,
   customApplicationTemplates, InsertCustomApplicationTemplate,
@@ -959,10 +960,44 @@ export async function createRentalApplication(data: Omit<InsertRentalApplication
   return (result[0] as any).insertId;
 }
 
-export async function getRentalApplicationsByLandlord(landlordUserId: number): Promise<RentalApplication[]> {
+// Application list rows are extended with a few listing fields so the
+// Lease Details modal can prefill without an extra round-trip. Cents are
+// preserved as ints; nullable when the listing was deleted/inactive.
+export type RentalApplicationWithListing = RentalApplication & {
+  listingMonthlyRent: number | null;
+  listingSecurityDeposit: number | null;
+  listingAddress: string | null;
+  listingCity: string | null;
+  listingState: string | null;
+  listingZip: string | null;
+};
+
+export async function getRentalApplicationsByLandlord(landlordUserId: number): Promise<RentalApplicationWithListing[]> {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(rentalApplications).where(eq(rentalApplications.landlordUserId, landlordUserId)).orderBy(desc(rentalApplications.createdAt));
+  const rows = await db
+    .select({
+      app: rentalApplications,
+      listingMonthlyRent: marketplaceListings.monthlyRent,
+      listingSecurityDeposit: marketplaceListings.securityDeposit,
+      listingAddress: marketplaceListings.address,
+      listingCity: marketplaceListings.city,
+      listingState: marketplaceListings.state,
+      listingZip: marketplaceListings.zip,
+    })
+    .from(rentalApplications)
+    .leftJoin(marketplaceListings, eq(rentalApplications.listingId, marketplaceListings.id))
+    .where(eq(rentalApplications.landlordUserId, landlordUserId))
+    .orderBy(desc(rentalApplications.createdAt));
+  return rows.map(r => ({
+    ...r.app,
+    listingMonthlyRent: r.listingMonthlyRent ?? null,
+    listingSecurityDeposit: r.listingSecurityDeposit ?? null,
+    listingAddress: r.listingAddress ?? null,
+    listingCity: r.listingCity ?? null,
+    listingState: r.listingState ?? null,
+    listingZip: r.listingZip ?? null,
+  }));
 }
 
 export async function getRentalApplicationsByListing(listingId: number): Promise<RentalApplication[]> {

@@ -2489,6 +2489,17 @@ export const appRouter = router({
       // documented justification for every override.
       overrideReason: z.string().optional(),
       overrideRecommendation: z.string().optional(),
+      // Landlord-confirmed lease terms. When approving, the client now
+      // opens a Lease Details modal so the landlord can verify address,
+      // rent, deposit, start date, and term before the draft is created.
+      // Falls back to listing-derived defaults if absent.
+      leaseDetails: z.object({
+        propertyAddress: z.string().min(1),
+        monthlyRentCents: z.number().int().positive(),
+        securityDepositCents: z.number().int().nonnegative(),
+        leaseStartDate: z.string(),
+        leaseTerm: z.enum(["12_months", "6_months", "month_to_month"]),
+      }).optional(),
     })).mutation(async ({ ctx, input }) => {
       const override = input.overrideReason && input.overrideRecommendation
         ? { reason: input.overrideReason, recommendation: input.overrideRecommendation }
@@ -2499,18 +2510,31 @@ export const appRouter = router({
       if (input.status === "approved") {
         const app = await getRentalApplicationById(input.id);
         if (app) {
-          // Pull property info from listing
+          // Pull property info from listing — used as defaults if the
+          // landlord didn't open the Lease Details modal (e.g. older
+          // client, scripted approvals). marketplaceListings.monthlyRent
+          // is an int in cents; securityDeposit is nullable int in cents.
           let propertyAddress = "Property address TBD";
           let state = app.state ?? "XX";
           let monthlyRentCents = 0;
+          let securityDepositCents = 0;
           const listing = await getListingById(app.listingId);
           if (listing) {
             propertyAddress = `${listing.address ?? ""} ${listing.city ?? ""}, ${listing.state ?? ""}`.trim();
             state = listing.state?.slice(0, 2).toUpperCase() ?? state;
-            // rent is stored as a string in listings, convert to cents
-            const rentStr = (listing as any).rentAmount ?? (listing as any).price ?? "0";
-            monthlyRentCents = Math.round(parseFloat(String(rentStr).replace(/[^0-9.]/g, "")) * 100) || 0;
+            monthlyRentCents = (listing as any).monthlyRent ?? 0;
+            securityDepositCents = (listing as any).securityDeposit ?? monthlyRentCents;
           }
+
+          // Landlord-confirmed values from the Lease Details modal take
+          // precedence over listing-derived defaults.
+          const finalAddress = input.leaseDetails?.propertyAddress ?? propertyAddress;
+          const finalRent = input.leaseDetails?.monthlyRentCents ?? monthlyRentCents;
+          const finalDeposit = input.leaseDetails?.securityDepositCents ?? securityDepositCents;
+          const finalStartDate = input.leaseDetails?.leaseStartDate
+            ?? app.moveInDate
+            ?? new Date().toISOString().split("T")[0];
+          const finalTerm = input.leaseDetails?.leaseTerm ?? "12_months";
 
           const leaseId = await createLeaseAgreement({
             landlordUserId: ctx.user.id,
@@ -2519,11 +2543,11 @@ export const appRouter = router({
             tenantEmail: app.applicantEmail,
             tenantPhone: app.applicantPhone ?? undefined,
             state,
-            propertyAddress,
-            monthlyRent: monthlyRentCents,
-            securityDeposit: monthlyRentCents, // default 1 month's rent
-            leaseStartDate: app.moveInDate ?? new Date().toISOString().split("T")[0],
-            leaseTerm: "12_months",
+            propertyAddress: finalAddress,
+            monthlyRent: finalRent,
+            securityDeposit: finalDeposit,
+            leaseStartDate: finalStartDate,
+            leaseTerm: finalTerm,
             accessMethod: "key_pickup",
             status: "draft",
             notes: `Auto-created from application #${app.id}. Review and send when ready.`,
