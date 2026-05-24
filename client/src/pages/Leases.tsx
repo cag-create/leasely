@@ -404,7 +404,7 @@ export default function Leases() {
         {/* Stats / Filter Tabs */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           <Card
-            className={`border-gray-200 cursor-pointer transition-shadow hover:shadow-md ${statusFilter === null ? "ring-2 ring-[#1B2B5E]" : ""}`}
+            className={`cursor-pointer transition-all hover:shadow-md ${statusFilter === null ? "border-[#1B2B5E] bg-[#1B2B5E]/5 ring-2 ring-[#1B2B5E]" : "border-gray-200"}`}
             onClick={() => setStatusFilter(null)}
           >
             <CardContent className="pt-4 pb-4 flex items-center gap-3">
@@ -416,7 +416,7 @@ export default function Leases() {
             </CardContent>
           </Card>
           <Card
-            className={`border-blue-200 bg-blue-50 cursor-pointer transition-shadow hover:shadow-md ${statusFilter === "draft" ? "ring-2 ring-blue-500" : ""}`}
+            className={`cursor-pointer transition-all hover:shadow-md ${statusFilter === "draft" ? "border-blue-500 bg-blue-100 ring-2 ring-blue-500" : "border-blue-200 bg-blue-50"}`}
             onClick={() => setStatusFilter(f => f === "draft" ? null : "draft")}
           >
             <CardContent className="pt-4 pb-4 flex items-center gap-3">
@@ -428,7 +428,7 @@ export default function Leases() {
             </CardContent>
           </Card>
           <Card
-            className={`border-green-200 bg-green-50 cursor-pointer transition-shadow hover:shadow-md ${statusFilter === "active" ? "ring-2 ring-green-500" : ""}`}
+            className={`cursor-pointer transition-all hover:shadow-md ${statusFilter === "active" ? "border-green-500 bg-green-100 ring-2 ring-green-500" : "border-green-200 bg-green-50"}`}
             onClick={() => setStatusFilter(f => f === "active" ? null : "active")}
           >
             <CardContent className="pt-4 pb-4 flex items-center gap-3">
@@ -462,7 +462,7 @@ export default function Leases() {
         ) : (
           <div className="space-y-3">
             {displayed.map(lease => (
-              <Card key={lease.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedLease(lease)}>
+              <Card key={lease.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="py-4 px-5">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
@@ -503,23 +503,39 @@ export default function Leases() {
                           >
                             <Pencil className="w-3 h-3" /> Edit
                           </Button>
-                          <Button
-                            size="sm"
-                            className="bg-[#1B2B5E] text-white gap-1 text-xs"
-                            onClick={e => {
-                              e.stopPropagation();
-                              sendMutation.mutate({ leaseId: lease.id });
-                            }}
-                            disabled={sendMutation.isPending}
-                          >
-                            <Send className="w-3 h-3" /> Send
-                          </Button>
+                          {(lease as any).leaseDocumentId ? (
+                            <Button
+                              size="sm"
+                              className="bg-[#1B2B5E] text-white gap-1 text-xs"
+                              onClick={() => navigate(`/leases/draft/${(lease as any).leaseDocumentId}`)}
+                            >
+                              <FileText className="w-3 h-3" /> Review →
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              className="bg-[#1B2B5E] text-white gap-1 text-xs"
+                              onClick={() => sendMutation.mutate({ leaseId: lease.id })}
+                              disabled={sendMutation.isPending}
+                            >
+                              <Send className="w-3 h-3" /> Send
+                            </Button>
+                          )}
                         </>
+                      )}
+                      {lease.status !== "draft" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1 text-xs"
+                          onClick={() => setSelectedLease(lease)}
+                        >
+                          <ChevronRight className="w-3 h-3" /> Details
+                        </Button>
                       )}
                       <span className="text-xs text-gray-400">
                         {new Date(lease.createdAt).toLocaleDateString()}
                       </span>
-                      <ChevronRight className="w-4 h-4 text-gray-400" />
                     </div>
                   </div>
                 </CardContent>
