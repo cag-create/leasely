@@ -476,6 +476,20 @@ export default function Leases() {
                   </div>
                 )}
 
+                {selectedLease.status === "draft" && (selectedLease as any).leaseDocumentId && (
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={() => {
+                      setSelectedLease(null);
+                      navigate(`/leases/draft/${(selectedLease as any).leaseDocumentId}`);
+                    }}
+                  >
+                    <FileText className="w-4 h-4" />
+                    Review Lease Document →
+                  </Button>
+                )}
+
                 {selectedLease.status === "draft" && (
                   <Button
                     className="w-full bg-[#1B2B5E] hover:bg-[#2D3F7C] text-white gap-2"

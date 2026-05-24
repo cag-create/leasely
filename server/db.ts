@@ -1782,6 +1782,7 @@ export async function getAllContractorLeads(): Promise<ContractorLead[]> {
 // ─── Lease Agreements ─────────────────────────────────────────────────────────
 import {
   leaseAgreements, InsertLeaseAgreement, LeaseAgreement,
+  leaseDocuments,
   propertyManagerAccess, InsertPropertyManagerAccess, PropertyManagerAccess,
   vendorDispatchRequests, InsertVendorDispatchRequest, VendorDispatchRequest,
 } from "../drizzle/schema";
@@ -1793,12 +1794,20 @@ export async function createLeaseAgreement(data: Omit<InsertLeaseAgreement, "id"
   return (result[0] as any).insertId;
 }
 
-export async function getLeasesByLandlord(landlordUserId: number): Promise<LeaseAgreement[]> {
+export async function getLeasesByLandlord(landlordUserId: number): Promise<(LeaseAgreement & { leaseDocumentId: number | null })[]> {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(leaseAgreements)
+  const rows = await db
+    .select({
+      lease: leaseAgreements,
+      leaseDocumentId: sql<number | null>`MAX(${leaseDocuments.id})`,
+    })
+    .from(leaseAgreements)
+    .leftJoin(leaseDocuments, eq(leaseDocuments.leaseAgreementId, leaseAgreements.id))
     .where(eq(leaseAgreements.landlordUserId, landlordUserId))
+    .groupBy(leaseAgreements.id)
     .orderBy(desc(leaseAgreements.createdAt));
+  return rows.map(r => ({ ...r.lease, leaseDocumentId: r.leaseDocumentId ?? null }));
 }
 
 export async function getLeasesByTenantEmail(email: string): Promise<LeaseAgreement[]> {
