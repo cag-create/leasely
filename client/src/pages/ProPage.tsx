@@ -477,7 +477,7 @@ export default function ProPage() {
 
             {/* Trust strip */}
             <div className="flex flex-wrap items-center justify-center gap-5 text-white/40 text-sm">
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span className="text-white/60 font-medium">24–72 hour delivery</span></div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span className="text-white/60 font-medium">1–2 business day delivery</span></div>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>Cancel anytime</span></div>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>0% ACH fees</span></div>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>No contracts</span></div>
@@ -508,7 +508,7 @@ export default function ProPage() {
                 <p className="text-gray-600 mb-6 leading-relaxed">
                   Every Pro member gets a complete online presence package — designed and delivered by
                   <a href="https://certifybusinesspro.com" target="_blank" rel="noopener" className="text-amber-600 font-semibold hover:underline"> Certify Business Pro</a>.
-                  Delivered in 5–7 business days.
+                  Delivered in 1–2 business days.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {[
@@ -882,7 +882,7 @@ export default function ProPage() {
               </a>
               <p className="text-center text-white/30 text-sm mt-4">$75 one-time setup (website, logo & URL) · then $25/mo · Cancel anytime</p>
               <p className="text-center text-white/25 text-xs mt-2 leading-relaxed">
-                Setup fee non-refundable once design begins (work starts immediately, delivered in 24–72 hours).
+                Setup fee non-refundable once design begins (work starts immediately, delivered in 1–2 business days).
                 Subscription cancellable anytime. <Link href="/terms" className="underline hover:text-white/50">Terms</Link>.
               </p>
             </div>

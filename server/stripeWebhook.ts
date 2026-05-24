@@ -152,16 +152,26 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       const CBP_URL = `https://certifybusinesspro.com`;
       const codeHtml = proCode
         ? `
-          <div style="background:#f0fdf4;border:2px solid #00C896;border-radius:12px;padding:24px;text-align:center;margin:24px 0">
-            <p style="margin:0 0 8px;font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Your Free Package Code (One-Time Use)</p>
-            <p style="margin:0;font-size:28px;font-weight:900;font-family:monospace;letter-spacing:.1em;color:#0F1F4B">${proCode}</p>
+          <div style="background:#fffaf0;border:2px solid #F5A623;border-radius:12px;padding:24px;text-align:center;margin:24px 0">
+            <p style="margin:0 0 8px;font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Your Brand Kit Code (One-Time Use)</p>
+            <p style="margin:0;font-size:28px;font-weight:900;font-family:monospace;letter-spacing:.1em;color:#3A2410">${proCode}</p>
           </div>
-          <p style="color:#374151">Redeem this code at <a href="${CBP_URL}" style="color:#00C896;font-weight:600">certifybusinesspro.com</a> to claim your free website, professional logo, and 1-year domain registration — a <strong>$299 value</strong>, yours at no extra charge as a Leasely Pro member.</p>`
+          <p style="color:#374151">Redeem this code at <a href="${CBP_URL}" style="color:#E8951A;font-weight:600">certifybusinesspro.com</a> to claim your free brand kit. <strong>Delivery: 1–2 business days.</strong> You'll receive:</p>
+          <ul style="color:#374151;line-height:1.9;margin:8px 0 16px">
+            <li>7 unique logo concepts to choose from</li>
+            <li>Custom professional website design</li>
+            <li>1-year domain registration (your choice)</li>
+            <li>1-year managed website hosting</li>
+          </ul>
+          <p style="color:#6b7280;font-size:13px">A <strong>$299 value</strong>, yours at no extra charge as a Leasely Pro member.</p>`
         : "";
 
+      // Primary welcome email — includes the brand kit code and the explicit
+      // 1–2 business day delivery promise so the member knows exactly what's
+      // arriving and when.
       await sendEmail({
         to: user.email,
-        subject: "Welcome to Leasely Pro 🎉 — Your free $299 package is ready",
+        subject: "Your Certify Business Pro brand kit code 🎨",
         html: `
           <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#111827">
             <div style="background:#0F1F4B;border-radius:16px;padding:32px;text-align:center;margin-bottom:24px">
@@ -184,21 +194,24 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
             ${codeHtml}
 
             <div style="text-align:center;margin:32px 0">
-              <a href="${APP_URL}/portal-setup" style="background:#00C896;color:#0a2a1f;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:900;font-size:16px;display:inline-block">
+              <a href="${APP_URL}/portal-setup" style="background:#F5A623;color:#3A2410;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:900;font-size:16px;display:inline-block">
                 Set Up Your Portal →
               </a>
             </div>
 
-            <p style="color:#6b7280;font-size:13px;text-align:center">Questions? Reply to this email or visit <a href="${APP_URL}/support" style="color:#00C896">leasely.net/support</a></p>
+            <p style="color:#6b7280;font-size:13px;text-align:center">Questions? Reply to this email or visit <a href="${APP_URL}/support" style="color:#E8951A">leasely.net/support</a></p>
 
             <div style="border-top:1px solid #e5e7eb;margin-top:32px;padding-top:16px;text-align:center">
-              <p style="margin:0;font-size:12px;color:#9ca3af">Leasely · Your Landlord OS · <a href="${APP_URL}" style="color:#00C896">leasely.net</a></p>
+              <p style="margin:0;font-size:12px;color:#9ca3af">Leasely · Your Landlord OS · <a href="${APP_URL}" style="color:#E8951A">leasely.net</a></p>
             </div>
           </div>`,
       });
       console.log(`[Webhook] ✉️ Welcome email sent to ${user.email} | Code: ${proCode}`);
     }
   } catch (err) {
+    // Never let an email-send failure block the success response — the user
+    // is already provisioned, this just means we couldn't deliver the code
+    // via Brevo. The code is still retrievable from the dashboard.
     console.warn("[Webhook] Welcome email failed:", err);
   }
 

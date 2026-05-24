@@ -113,9 +113,27 @@ export default function ProSetup() {
               leasely.net/portal/{form.subdomain}
             </p>
           </div>
-          <p className="text-white/40 text-sm mb-8">
+          <p className="text-white/40 text-sm mb-6">
             All Pro features are now unlocked. Start by adding your first listing.
           </p>
+
+          {/* CBP delivery callout — bridges the 1–2 day window between
+              "portal live" and "branded logo replaces the monogram". */}
+          <div
+            className="rounded-2xl p-4 mb-6 text-left"
+            style={{
+              background: "rgba(245,166,35,0.08)",
+              border: "1px solid rgba(245,166,35,0.25)",
+            }}
+          >
+            <p className="text-[#FFD166] text-xs font-bold uppercase tracking-widest mb-1.5">
+              Brand kit in production
+            </p>
+            <p className="text-white/75 text-sm leading-relaxed">
+              Your custom logo from <a href="https://certifybusinesspro.com" target="_blank" rel="noopener" className="underline hover:text-white">Certify Business Pro</a> is in production — <strong className="text-white">7 unique concepts arriving within 1–2 business days</strong>. We'll email you the redemption code shortly. In the meantime your portal uses a clean monogram.
+            </p>
+          </div>
+
           <div className="flex flex-col gap-3">
             <Button
               onClick={() => navigate("/list-property")}
@@ -252,6 +270,9 @@ export default function ProSetup() {
                   <p className="text-white/40 text-xs">leasely.net/portal/{form.subdomain || "yourname"}</p>
                 </div>
               </div>
+              <p className="text-white/35 text-[11px] mt-3 italic">
+                Preview only — your CBP-designed logo replaces this within 1–2 business days.
+              </p>
             </div>
           </div>
         )}

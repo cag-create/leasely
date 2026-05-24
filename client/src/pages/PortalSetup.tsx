@@ -468,7 +468,7 @@ export default function PortalSetup() {
             <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
               <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-3">What's included in your free package</p>
               {[
-                "Custom professional website design (5-7 business days)",
+                "Custom professional website design (1–2 business days)",
                 "7 unique logo concepts to choose from",
                 "1-year domain registration (URL of your choice)",
                 "1-year managed website hosting",

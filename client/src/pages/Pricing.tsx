@@ -272,7 +272,7 @@ export default function Pricing() {
                     style={{ accentColor: ACCENT }}
                   />
                   <span className="text-xs text-white/65 leading-relaxed">
-                    I agree: <strong className="text-white">$75 setup is non-refundable once design begins</strong> (work starts immediately, delivered in 24–72 hrs). $25/mo cancellable anytime, no pro-rated refunds. I keep my website &amp; logo regardless. <Link href="/terms" className="underline hover:text-white" target="_blank">Terms</Link> ·{" "}
+                    I agree: <strong className="text-white">$75 setup is non-refundable once design begins</strong> (work starts immediately, delivered in 1–2 business days). $25/mo cancellable anytime, no pro-rated refunds. I keep my website &amp; logo regardless. <Link href="/terms" className="underline hover:text-white" target="_blank">Terms</Link> ·{" "}
                     <Link href="/privacy" className="underline hover:text-white" target="_blank">Privacy</Link>.
                   </span>
                 </label>
