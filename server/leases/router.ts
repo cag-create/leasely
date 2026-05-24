@@ -169,6 +169,45 @@ export const leasesRouter = router({
       return { ok: true };
     }),
 
+  // Merge new field values into existing variables and re-render from the
+  // stored template version. Used by the inline "Fill Required Fields" panel
+  // on the lease preview page.
+  fillFields: protectedProcedure
+    .input(z.object({
+      id: z.number().int().positive(),
+      variables: z.record(z.string(), z.string()),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const doc = await getLeaseDocument(input.id);
+      if (!doc || doc.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+      if (doc.status !== "draft") throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot edit a non-draft document" });
+
+      const oldVars: Record<string, unknown> = doc.variableValues ? JSON.parse(doc.variableValues) : {};
+      const mergedVars = { ...oldVars, ...input.variables };
+
+      let newHtml = doc.renderedHtml ?? "";
+      if (doc.templateVersionId) {
+        const tv = await getTemplateVersion(doc.templateVersionId);
+        if (tv) {
+          const citations: string[] = tv.citations ? JSON.parse(tv.citations) : [];
+          const rendered = renderTemplate(tv.bodyHtml, mergedVars as any, citations);
+          newHtml = rendered.html;
+        }
+      }
+
+      await updateLeaseDocument(input.id, {
+        variableValues: JSON.stringify(mergedVars),
+        renderedHtml: newHtml,
+      });
+      await logLeaseAudit({
+        leaseDocumentId: input.id,
+        actorUserId: ctx.user.id,
+        event: "draft_edited",
+        details: JSON.stringify({ filledFields: Object.keys(input.variables) }),
+      });
+      return { ok: true };
+    }),
+
   markDisclaimerAcknowledged: protectedProcedure
     .input(z.object({ id: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {

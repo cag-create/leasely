@@ -3,15 +3,43 @@
 //
 // Route: /leases/draft/:id
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLocation, useRoute } from "wouter";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { Loader2, AlertTriangle, FileText, Send, ShieldAlert, Download } from "lucide-react";
+import { Loader2, AlertTriangle, FileText, Send, ShieldAlert, Pencil, ChevronDown, ChevronUp } from "lucide-react";
+
+const FIELD_LABELS: Record<string, string> = {
+  landlord_name: "Landlord / Company Name on Lease",
+  landlord_address: "Landlord / Company Address",
+  property_city: "Property City",
+  property_zip: "Property ZIP Code",
+  occupants: "Authorized Occupants",
+  rent_due_day: "Rent Due Day",
+  late_fee: "Late Fee Amount",
+  utilities: "Utilities",
+  pets_allowed: "Pets Allowed",
+  parking: "Parking",
+};
+
+const FIELD_HINTS: Record<string, string> = {
+  landlord_name: "e.g. Redrock Property Group LLC, by Chad Glover, Authorized Signatory",
+  landlord_address: "e.g. 123 Main St, Memphis, TN 38115",
+  property_city: "e.g. Memphis",
+  property_zip: "e.g. 38115",
+  occupants: "e.g. 2 adults",
+  rent_due_day: "e.g. 1st",
+  late_fee: "e.g. $150.00",
+  utilities: "e.g. Tenant pays all utilities",
+  pets_allowed: "e.g. No pets allowed",
+  parking: "e.g. 1 assigned parking space",
+};
 
 export default function LeasePreview() {
   const [, params] = useRoute("/leases/draft/:id");
@@ -19,9 +47,20 @@ export default function LeasePreview() {
   const id = Number(params?.id);
 
   const [acknowledged, setAcknowledged] = useState(false);
+  const [showFillPanel, setShowFillPanel] = useState(false);
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
 
+  const utils = (trpc as any).useUtils();
   const docQuery = (trpc as any).leaseDocs.get.useQuery({ id }, { enabled: Number.isFinite(id) && id > 0 });
   const ackMut = (trpc as any).leaseDocs.markDisclaimerAcknowledged.useMutation();
+  const fillMut = (trpc as any).leaseDocs.fillFields.useMutation({
+    onSuccess: () => {
+      toast.success("Lease updated — fields filled.");
+      utils.leaseDocs.get.invalidate({ id });
+      setFieldValues({});
+    },
+    onError: (e: any) => toast.error(e.message ?? "Save failed"),
+  });
   const sendMut = (trpc as any).leaseDocs.send.useMutation({
     onSuccess: () => {
       toast.success("Lease sent — the tenant will receive a signing link by email.");
@@ -41,6 +80,14 @@ export default function LeasePreview() {
     typeof doc?.renderedHtml === "string"
       ? (doc.renderedHtml.match(/class="lease-unresolved"/g) ?? []).length
       : 0;
+
+  // Extract the names of unresolved placeholder fields from the rendered HTML.
+  const unresolvedFields = useMemo(() => {
+    if (!doc?.renderedHtml) return [];
+    const matches = [...doc.renderedHtml.matchAll(/\[([a-z_]+)\s*[–—-]\s*required\]/gi)];
+    const seen = new Set<string>();
+    return matches.map(m => m[1].toLowerCase()).filter(f => { if (seen.has(f)) return false; seen.add(f); return true; });
+  }, [doc?.renderedHtml]);
 
   const handleDownload = () => {
     if (!doc) return;
@@ -151,19 +198,66 @@ export default function LeasePreview() {
           <Button variant="outline" onClick={() => navigate("/leases")}>← Back to Leases</Button>
         </div>
 
-        {unresolvedCount > 0 && (
-          <Card className="mb-4 border-red-300 bg-red-50">
-            <CardContent className="p-4 flex gap-3">
-              <AlertTriangle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
-              <div className="text-sm">
-                <p className="font-semibold">{unresolvedCount} required field{unresolvedCount === 1 ? "" : "s"} unfilled.</p>
-                <p className="text-muted-foreground mt-0.5">
-                  The placeholders are highlighted in the preview below. Go back and fill them before sending.
+        {/* Fill Required Fields panel */}
+        <Card className="mb-4 border-amber-300 bg-amber-50">
+          <CardContent className="p-4">
+            <button
+              className="w-full flex items-start gap-3 text-left"
+              onClick={() => setShowFillPanel(v => !v)}
+            >
+              <Pencil className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="flex-1 text-sm">
+                <p className="font-semibold text-amber-900">
+                  {unresolvedCount > 0
+                    ? `${unresolvedCount} required field${unresolvedCount === 1 ? "" : "s"} unfilled — click to fill`
+                    : "Edit lease fields (landlord name, utilities, etc.)"}
                 </p>
+                {unresolvedCount > 0 && (
+                  <p className="text-amber-700 mt-0.5">Fill them here before sending to the tenant.</p>
+                )}
               </div>
-            </CardContent>
-          </Card>
-        )}
+              {showFillPanel ? <ChevronUp className="h-4 w-4 text-amber-600 shrink-0" /> : <ChevronDown className="h-4 w-4 text-amber-600 shrink-0" />}
+            </button>
+
+            {showFillPanel && (
+              <div className="mt-4 border-t border-amber-200 pt-4 space-y-3">
+                {/* Always show landlord name so they can set company name */}
+                <div>
+                  <Label className="text-xs font-semibold text-gray-700">
+                    {FIELD_LABELS["landlord_name"]}
+                  </Label>
+                  <Input
+                    className="mt-1 text-sm"
+                    placeholder={FIELD_HINTS["landlord_name"]}
+                    value={fieldValues["landlord_name"] ?? (vars?.landlord_name ?? "")}
+                    onChange={e => setFieldValues(v => ({ ...v, landlord_name: e.target.value }))}
+                  />
+                </div>
+                {/* Unresolved fields */}
+                {unresolvedFields.filter(f => f !== "landlord_name").map(field => (
+                  <div key={field}>
+                    <Label className="text-xs font-semibold text-gray-700">
+                      {FIELD_LABELS[field] ?? field.replace(/_/g, " ")}
+                    </Label>
+                    <Input
+                      className="mt-1 text-sm"
+                      placeholder={FIELD_HINTS[field] ?? ""}
+                      value={fieldValues[field] ?? ""}
+                      onChange={e => setFieldValues(v => ({ ...v, [field]: e.target.value }))}
+                    />
+                  </div>
+                ))}
+                <Button
+                  className="w-full bg-[#1B2B5E] hover:bg-[#2D3F7C] text-white"
+                  onClick={() => fillMut.mutate({ id, variables: Object.fromEntries(Object.entries(fieldValues).filter(([, v]) => v.trim() !== "")) })}
+                  disabled={fillMut.isPending || Object.values(fieldValues).every(v => !v.trim())}
+                >
+                  {fillMut.isPending ? <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Saving…</> : "Save & Re-render Lease"}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {isUploaded ? (
           <Card>
