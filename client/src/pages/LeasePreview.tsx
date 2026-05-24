@@ -29,7 +29,7 @@ const FIELD_LABELS: Record<string, string> = {
 };
 
 const FIELD_HINTS: Record<string, string> = {
-  landlord_name: "e.g. Redrock Property Group LLC, by Chad Glover, Authorized Signatory",
+  landlord_name: "e.g. Redrock Property Group LLC",
   landlord_address: "e.g. 123 Main St, Memphis, TN 38115",
   property_city: "e.g. Memphis",
   property_zip: "e.g. 38115",
