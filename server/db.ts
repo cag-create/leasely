@@ -961,11 +961,14 @@ export async function createRentalApplication(data: Omit<InsertRentalApplication
 }
 
 // Application list rows are extended with a few listing fields so the
-// Lease Details modal can prefill without an extra round-trip. Cents are
-// preserved as ints; nullable when the listing was deleted/inactive.
+// Lease Details modal can prefill without an extra round-trip.
+// IMPORTANT: rent/deposit are explicitly named *Dollars because the
+// listings table stores them as whole dollars, NOT cents. The client
+// converts to cents when submitting back. Nullable when the listing
+// was deleted/inactive.
 export type RentalApplicationWithListing = RentalApplication & {
-  listingMonthlyRent: number | null;
-  listingSecurityDeposit: number | null;
+  listingMonthlyRentDollars: number | null;
+  listingSecurityDepositDollars: number | null;
   listingAddress: string | null;
   listingCity: string | null;
   listingState: string | null;
@@ -978,8 +981,8 @@ export async function getRentalApplicationsByLandlord(landlordUserId: number): P
   const rows = await db
     .select({
       app: rentalApplications,
-      listingMonthlyRent: marketplaceListings.monthlyRent,
-      listingSecurityDeposit: marketplaceListings.securityDeposit,
+      listingMonthlyRentDollars: marketplaceListings.monthlyRent,
+      listingSecurityDepositDollars: marketplaceListings.securityDeposit,
       listingAddress: marketplaceListings.address,
       listingCity: marketplaceListings.city,
       listingState: marketplaceListings.state,
@@ -991,8 +994,8 @@ export async function getRentalApplicationsByLandlord(landlordUserId: number): P
     .orderBy(desc(rentalApplications.createdAt));
   return rows.map(r => ({
     ...r.app,
-    listingMonthlyRent: r.listingMonthlyRent ?? null,
-    listingSecurityDeposit: r.listingSecurityDeposit ?? null,
+    listingMonthlyRentDollars: r.listingMonthlyRentDollars ?? null,
+    listingSecurityDepositDollars: r.listingSecurityDepositDollars ?? null,
     listingAddress: r.listingAddress ?? null,
     listingCity: r.listingCity ?? null,
     listingState: r.listingState ?? null,

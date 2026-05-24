@@ -95,9 +95,11 @@ export const marketplaceListings = mysqlTable("marketplace_listings", {
   latitude: float("latitude"),
   longitude: float("longitude"),
 
-  // Pricing
-  monthlyRent: int("monthlyRent").notNull(),
-  securityDeposit: int("securityDeposit"),
+  // Pricing — stored in WHOLE DOLLARS (no cents). Note: leaseAgreements
+  // uses cents for the same fields — convert at the boundary when
+  // creating a draft lease from a listing.
+  monthlyRent: int("monthlyRent").notNull(),       // in dollars (whole, no cents)
+  securityDeposit: int("securityDeposit"),         // in dollars (whole, no cents)
 
   // Details
   bedrooms: varchar("bedrooms", { length: 10 }).notNull(),

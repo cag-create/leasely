@@ -2512,8 +2512,9 @@ export const appRouter = router({
         if (app) {
           // Pull property info from listing — used as defaults if the
           // landlord didn't open the Lease Details modal (e.g. older
-          // client, scripted approvals). marketplaceListings.monthlyRent
-          // is an int in cents; securityDeposit is nullable int in cents.
+          // client, scripted approvals).
+          // marketplaceListings stores rent/deposit in WHOLE DOLLARS;
+          // leaseAgreements stores them in CENTS. Convert at the boundary.
           let propertyAddress = "Property address TBD";
           let state = app.state ?? "XX";
           let monthlyRentCents = 0;
@@ -2522,8 +2523,10 @@ export const appRouter = router({
           if (listing) {
             propertyAddress = `${listing.address ?? ""} ${listing.city ?? ""}, ${listing.state ?? ""}`.trim();
             state = listing.state?.slice(0, 2).toUpperCase() ?? state;
-            monthlyRentCents = (listing as any).monthlyRent ?? 0;
-            securityDepositCents = (listing as any).securityDeposit ?? monthlyRentCents;
+            const listingMonthlyDollars = (listing as any).monthlyRent ?? 0;
+            const listingDepositDollars = (listing as any).securityDeposit ?? listingMonthlyDollars;
+            monthlyRentCents = listingMonthlyDollars * 100;
+            securityDepositCents = listingDepositDollars * 100;
           }
 
           // Landlord-confirmed values from the Lease Details modal take

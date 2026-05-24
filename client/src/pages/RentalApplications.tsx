@@ -248,8 +248,11 @@ function ReceivedApplications({
     app: any,
     overrideMeta?: { reason: string; recommendation: string },
   ) => {
-    const listingRent = app.listingMonthlyRent ?? 0;
-    const listingDeposit = app.listingSecurityDeposit ?? listingRent;
+    // Listing rent/deposit are stored as WHOLE DOLLARS (not cents). The
+    // form holds dollars as strings — confirmLeaseDetails converts to
+    // cents before submitting to the server.
+    const listingRentDollars = app.listingMonthlyRentDollars ?? 0;
+    const listingDepositDollars = app.listingSecurityDepositDollars ?? listingRentDollars;
     const addr = [app.listingAddress, app.listingCity, app.listingState, app.listingZip]
       .filter(Boolean)
       .join(", ");
@@ -258,8 +261,8 @@ function ReceivedApplications({
       overrideReason: overrideMeta?.reason,
       overrideRecommendation: overrideMeta?.recommendation,
       propertyAddress: addr,
-      monthlyRent: listingRent > 0 ? (listingRent / 100).toFixed(2) : "",
-      securityDeposit: listingDeposit > 0 ? (listingDeposit / 100).toFixed(2) : "",
+      monthlyRent: listingRentDollars > 0 ? listingRentDollars.toFixed(2) : "",
+      securityDeposit: listingDepositDollars > 0 ? listingDepositDollars.toFixed(2) : "",
       leaseStartDate: app.moveInDate ?? "",
       leaseTerm: "12_months",
       applicantMoveInDate: app.moveInDate ?? null,
