@@ -29,6 +29,7 @@ import {
   type ContractorReview, type InsertContractorReview,
   type ContractorLead, type InsertContractorLead,
   proRedemptionCodes, type ProRedemptionCode,
+  tenantFavoriteVendors, type TenantFavoriteVendor,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -631,6 +632,77 @@ export async function getVendors(userId: number): Promise<Vendor[]> {
   return db.select().from(vendors)
     .where(and(eq(vendors.userId, userId), eq(vendors.isActive, 1)))
     .orderBy(asc(vendors.name));
+}
+
+/** Single-vendor lookup — used by the favorite-vendor pre-check. */
+export async function getVendorById(id: number): Promise<Vendor | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(vendors).where(eq(vendors.id, id));
+  return rows[0];
+}
+
+// ─── Tenant favorite vendors ────────────────────────────────────────────────
+// Tenants pick a favorite vendor per work-order category. When they file a
+// repair request the dispatcher pings ONLY that vendor instead of fanning
+// out to the landlord's full pool. Keyed on tenantPortalAccountId because
+// tenants in this app don't have a users-table row — they authenticate
+// against tenantPortalAccounts via a session token.
+
+export async function getTenantFavoriteVendors(tenantPortalAccountId: number): Promise<TenantFavoriteVendor[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(tenantFavoriteVendors)
+    .where(eq(tenantFavoriteVendors.tenantPortalAccountId, tenantPortalAccountId));
+}
+
+export async function getTenantFavoriteVendorForCategory(
+  tenantPortalAccountId: number,
+  category: string,
+): Promise<TenantFavoriteVendor | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(tenantFavoriteVendors)
+    .where(and(
+      eq(tenantFavoriteVendors.tenantPortalAccountId, tenantPortalAccountId),
+      eq(tenantFavoriteVendors.category, category),
+    ))
+    .limit(1);
+  return rows[0];
+}
+
+export async function setTenantFavoriteVendor(opts: {
+  tenantPortalAccountId: number;
+  landlordUserId: number;
+  vendorId: number;
+  category: string;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  // Upsert pattern: delete any existing favorite for (tenant, category)
+  // then insert. The unique index uniq_tenant_category enforces invariants.
+  await db.delete(tenantFavoriteVendors).where(and(
+    eq(tenantFavoriteVendors.tenantPortalAccountId, opts.tenantPortalAccountId),
+    eq(tenantFavoriteVendors.category, opts.category),
+  ));
+  await db.insert(tenantFavoriteVendors).values({
+    tenantPortalAccountId: opts.tenantPortalAccountId,
+    landlordUserId: opts.landlordUserId,
+    vendorId: opts.vendorId,
+    category: opts.category,
+  });
+}
+
+export async function clearTenantFavoriteVendor(
+  tenantPortalAccountId: number,
+  category: string,
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(tenantFavoriteVendors).where(and(
+    eq(tenantFavoriteVendors.tenantPortalAccountId, tenantPortalAccountId),
+    eq(tenantFavoriteVendors.category, category),
+  ));
 }
 
 export async function createVendor(data: InsertVendor): Promise<number> {

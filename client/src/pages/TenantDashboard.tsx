@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import {
   Home, DollarSign, Calendar, FileText, LogOut, CreditCard,
   CheckCircle2, Clock, AlertCircle, ArrowRight, Receipt,
-  Building2, Phone, Mail, Loader2, Shield, Wrench, Send
+  Building2, Phone, Mail, Loader2, Shield, Wrench, Send,
+  Star, Users,
 } from "lucide-react";
 
 const BRAND = "#1B2B5E";
@@ -25,7 +26,7 @@ function formatDate(d: string | Date | null | undefined) {
 
 export default function TenantDashboard() {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "payments" | "lease" | "maintenance">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "payments" | "lease" | "maintenance" | "contractors">("overview");
   const [maintenanceForm, setMaintenanceForm] = useState({
     title: "",
     description: "",
@@ -58,6 +59,33 @@ export default function TenantDashboard() {
       setMaintenanceSubmitted(true);
       setMaintenanceForm({ title: "", description: "", category: "other", priority: "medium", photos: [] });
       setPhotoInput("");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  // Favorite-vendor queries + mutations. Tenants pick a preferred vendor per
+  // work-order category; the server then routes matching repair requests
+  // straight to that vendor instead of round-robin / all-vendors dispatch.
+  const tenantUtils = trpc.useUtils();
+  const availableVendorsQ = trpc.tenant.listAvailableVendors.useQuery(
+    { sessionToken: sessionToken ?? "" },
+    { enabled: !!sessionToken, retry: false },
+  );
+  const myFavoritesQ = trpc.tenant.listMyFavoriteVendors.useQuery(
+    { sessionToken: sessionToken ?? "" },
+    { enabled: !!sessionToken, retry: false },
+  );
+  const setFavoriteMut = trpc.tenant.setFavoriteVendor.useMutation({
+    onSuccess: () => {
+      toast.success("Favorite saved — we'll route matching requests here first.");
+      tenantUtils.tenant.listMyFavoriteVendors.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const clearFavoriteMut = trpc.tenant.clearFavoriteVendor.useMutation({
+    onSuccess: () => {
+      toast.success("Favorite cleared. We'll fall back to your landlord's full vendor pool.");
+      tenantUtils.tenant.listMyFavoriteVendors.invalidate();
     },
     onError: (err) => toast.error(err.message),
   });
@@ -122,7 +150,35 @@ export default function TenantDashboard() {
     { id: "payments" as const, label: "Payments", icon: DollarSign },
     { id: "lease" as const, label: "Lease Info", icon: FileText },
     { id: "maintenance" as const, label: "Maintenance", icon: Wrench },
+    { id: "contractors" as const, label: "My Contractors", icon: Users },
   ];
+
+  // Map of category → favorite vendor row (or undefined). Used to:
+  //   - render filled vs. outline stars in the My Contractors tab
+  //   - show "your favorite plumber will be notified" hint on the
+  //     maintenance form
+  const favoritesByCategory: Record<string, { vendorId: number; vendorName: string }> = {};
+  (myFavoritesQ.data ?? []).forEach((f: any) => {
+    if (f.vendor) {
+      favoritesByCategory[f.category] = { vendorId: f.vendorId, vendorName: f.vendor.name };
+    }
+  });
+
+  const CATEGORIES: Array<{ id: "plumbing"|"electrical"|"hvac"|"appliance"|"structural"|"pest_control"|"cleaning"|"landscaping"|"other"; label: string }> = [
+    { id: "plumbing",     label: "Plumbing" },
+    { id: "electrical",   label: "Electrical" },
+    { id: "hvac",         label: "HVAC" },
+    { id: "appliance",    label: "Appliance" },
+    { id: "structural",   label: "Structural" },
+    { id: "pest_control", label: "Pest Control" },
+    { id: "cleaning",     label: "Cleaning" },
+    { id: "landscaping",  label: "Landscaping" },
+    { id: "other",        label: "Other / General" },
+  ];
+
+  const availableVendors = (availableVendorsQ.data ?? []) as Array<{
+    id: number; name: string; trade?: string | null; email?: string | null; phone?: string | null;
+  }>;
 
   return (
     <div className="min-h-screen" style={{ background: "#f8fafc" }}>
@@ -384,6 +440,18 @@ export default function TenantDashboard() {
                       <option value="landscaping">Landscaping</option>
                       <option value="other">Other</option>
                     </select>
+                    {/* Dispatch preview — surfaces who's going to get the
+                        email so the tenant has confidence in the routing. */}
+                    {favoritesByCategory[maintenanceForm.category] ? (
+                      <p className="mt-1.5 text-[11px] text-emerald-700 flex items-center gap-1">
+                        <Star className="h-3 w-3 fill-current" />
+                        Your favorite ({favoritesByCategory[maintenanceForm.category].vendorName}) will be notified directly.
+                      </p>
+                    ) : availableVendors.length > 0 ? (
+                      <p className="mt-1.5 text-[11px] text-gray-500">
+                        Your landlord's contractor pool will be notified. <button type="button" onClick={() => setActiveTab("contractors")} className="underline font-semibold">Pick a favorite →</button>
+                      </p>
+                    ) : null}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Priority</label>
@@ -476,6 +544,98 @@ export default function TenantDashboard() {
                 </Button>
               </form>
             </div>
+          </div>
+        )}
+
+        {/* My Contractors Tab */}
+        {activeTab === "contractors" && (
+          <div className="max-w-3xl">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-5">
+              <h2 className="font-black text-gray-900 text-xl mb-1 flex items-center gap-2">
+                <Users className="h-5 w-5" style={{ color: BRAND }} /> My Preferred Contractors
+              </h2>
+              <p className="text-sm text-gray-500">
+                Pick your go-to contractor for each issue type. When you submit a repair request, we'll send it straight to your favorite instead of rotating through the landlord's full vendor list.
+              </p>
+            </div>
+
+            {availableVendorsQ.isLoading ? (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-gray-300" />
+                <p className="text-sm text-gray-500">Loading your landlord's contractors…</p>
+              </div>
+            ) : availableVendors.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+                <Users className="h-8 w-8 mx-auto mb-3 text-gray-300" />
+                <p className="font-semibold text-gray-700 mb-1">No contractors yet</p>
+                <p className="text-sm text-gray-500">
+                  Your landlord hasn't added any contractors yet. Repair requests will go directly to your landlord until contractors are added.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {CATEGORIES.map(cat => {
+                  const fav = favoritesByCategory[cat.id];
+                  return (
+                    <div key={cat.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-bold text-gray-900 text-sm">{cat.label}</h3>
+                        {fav ? (
+                          <span className="text-[11px] font-semibold text-emerald-700 flex items-center gap-1">
+                            <Star className="h-3 w-3 fill-current" />
+                            Favorite set
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-gray-400">No favorite</span>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        {availableVendors.map(v => {
+                          const isFav = fav?.vendorId === v.id;
+                          const isBusy = setFavoriteMut.isPending || clearFavoriteMut.isPending;
+                          return (
+                            <div key={v.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors">
+                              <button
+                                type="button"
+                                disabled={isBusy || !sessionToken}
+                                onClick={() => {
+                                  if (!sessionToken) return;
+                                  if (isFav) {
+                                    clearFavoriteMut.mutate({ sessionToken, category: cat.id });
+                                  } else {
+                                    setFavoriteMut.mutate({ sessionToken, vendorId: v.id, category: cat.id });
+                                  }
+                                }}
+                                aria-label={isFav ? `Unfavorite ${v.name} for ${cat.label}` : `Favorite ${v.name} for ${cat.label}`}
+                                className="shrink-0 disabled:opacity-50 transition-transform hover:scale-110"
+                              >
+                                <Star
+                                  className="h-5 w-5"
+                                  style={{
+                                    color: isFav ? "#FFD166" : "#cbd5e1",
+                                    fill: isFav ? "#FFD166" : "transparent",
+                                  }}
+                                />
+                              </button>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-semibold text-gray-900 text-sm">{v.name}</div>
+                                <div className="text-xs text-gray-500 truncate">
+                                  {[v.email, v.phone].filter(Boolean).join(" · ")}
+                                </div>
+                                {v.trade && (
+                                  <div className="text-[11px] text-gray-400 mt-0.5">Trade: {v.trade}</div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

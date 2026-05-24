@@ -62,7 +62,9 @@ import {
   setAccountType, updatePortalBranding,
   getSavedSearches, createSavedSearch, deleteSavedSearch,
   getPortalBySubdomain, getPaymentsByLandlord, createPaymentRecord, updatePaymentStatus,
-  getVendors, createVendor, updateVendor, deleteVendor,
+  getVendors, getVendorById, createVendor, updateVendor, deleteVendor,
+  getTenantFavoriteVendors, getTenantFavoriteVendorForCategory,
+  setTenantFavoriteVendor, clearTenantFavoriteVendor,
   getWorkOrders, getWorkOrderById, createWorkOrder, updateWorkOrder,
   getAccountingEntries, createAccountingEntry, updateAccountingEntry, deleteAccountingEntry,
   getCrmProperties, getCrmPropertyById, createCrmProperty, updateCrmProperty, deleteCrmProperty,
@@ -1728,7 +1730,10 @@ export const appRouter = router({
 
       // Auto-dispatch: send to ALL vendors immediately for every priority level.
       // Emergency = fire immediately with 🚨 banner. All others = standard dispatch.
-      // Round Robin: if landlord has round_robin setting, rotate through vendors one at a time.
+      // Priority order:
+      //   1. Tenant favorite for this category → only that vendor (dispatchReason=favorite)
+      //   2. Landlord has round-robin enabled → least-dispatched vendor (round_robin)
+      //   3. Default → every active vendor with an email (all_vendors)
       const allVendorsList = await getVendors(tenant.landlordUserId);
       const vendorsWithEmail = allVendorsList.filter(v => v.email && v.isActive);
 
@@ -1737,20 +1742,36 @@ export const appRouter = router({
         const isEmergency = input.priority === "emergency";
         const sub2 = await getUserSubscription(tenant.landlordUserId);
 
-        // Round Robin: pick the single vendor that has been dispatched the fewest times
-        // Standard: send to ALL vendors
-        const useRoundRobin = (sub2 as any)?.roundRobinEnabled === 1;
-
         let vendorsToNotify = vendorsWithEmail;
-        if (useRoundRobin) {
-          // Count how many times each vendor has been dispatched
-          const allDispatches = await Promise.all(vendorsWithEmail.map(v => getDispatchsByVendor(v.id)));
-          const countMap = vendorsWithEmail.map((v, i) => ({ vendor: v, count: allDispatches[i].length }));
-          countMap.sort((a, b) => a.count - b.count);
-          vendorsToNotify = [countMap[0].vendor]; // least-used vendor
+        let dispatchReason: "favorite" | "round_robin" | "all_vendors" = "all_vendors";
+
+        // Step 1: Does the tenant have a favorite for this category?
+        const tenantFav = await getTenantFavoriteVendorForCategory(tenant.id, input.category);
+        if (tenantFav) {
+          const favVendor = vendorsWithEmail.find(v => v.id === tenantFav.vendorId);
+          if (favVendor) {
+            vendorsToNotify = [favVendor];
+            dispatchReason = "favorite";
+          }
         }
 
-        await updateWorkOrder(workOrderId, tenant.landlordUserId, { status: "dispatched", dispatchedAt: new Date() });
+        // Step 2: No favorite (or favorite no longer in pool) → check round-robin.
+        if (dispatchReason === "all_vendors") {
+          const useRoundRobin = (sub2 as any)?.roundRobinEnabled === 1;
+          if (useRoundRobin) {
+            const allDispatches = await Promise.all(vendorsWithEmail.map(v => getDispatchsByVendor(v.id)));
+            const countMap = vendorsWithEmail.map((v, i) => ({ vendor: v, count: allDispatches[i].length }));
+            countMap.sort((a, b) => a.count - b.count);
+            vendorsToNotify = [countMap[0].vendor]; // least-used vendor
+            dispatchReason = "round_robin";
+          }
+        }
+
+        await updateWorkOrder(workOrderId, tenant.landlordUserId, {
+          status: "dispatched",
+          dispatchedAt: new Date(),
+          dispatchReason,
+        });
 
         for (const v of vendorsToNotify) {
           const dispatchId = await createVendorDispatchRequest({
@@ -2330,6 +2351,78 @@ export const appRouter = router({
       const tenant = await getTenantById(input.id);
       if (!tenant || tenant.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
       await updateTenantToken(input.id, null, null); // deactivate
+      return { success: true };
+    }),
+
+    // ─── Tenant favorite vendors ──────────────────────────────────────────────
+    // All four procedures are publicProcedure + token-based since tenants
+    // authenticate against tenantPortalAccounts, not a users row.
+
+    /** List the active vendors in the tenant's landlord's pool. */
+    listAvailableVendors: publicProcedure.input(z.object({
+      sessionToken: z.string(),
+    })).query(async ({ input }) => {
+      const decoded = verifyTenantToken(input.sessionToken);
+      if (!decoded) throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid or expired session." });
+      const tenant = await getTenantById(decoded.id);
+      if (!tenant) throw new TRPCError({ code: "NOT_FOUND" });
+      const vendors = await getVendors(tenant.landlordUserId);
+      return vendors.filter(v => v.isActive === 1);
+    }),
+
+    /** List this tenant's favorite vendors, hydrated with vendor details. */
+    listMyFavoriteVendors: publicProcedure.input(z.object({
+      sessionToken: z.string(),
+    })).query(async ({ input }) => {
+      const decoded = verifyTenantToken(input.sessionToken);
+      if (!decoded) throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid or expired session." });
+      const favs = await getTenantFavoriteVendors(decoded.id);
+      const hydrated = await Promise.all(favs.map(async f => ({
+        ...f,
+        vendor: await getVendorById(f.vendorId),
+      })));
+      // Drop any rows whose vendor was hard-deleted from under us — defensive,
+      // shouldn't happen since deleteVendor soft-deletes (isActive=0).
+      return hydrated.filter(f => f.vendor);
+    }),
+
+    /** Star a vendor as the tenant's favorite for a specific work-order category. */
+    setFavoriteVendor: publicProcedure.input(z.object({
+      sessionToken: z.string(),
+      vendorId: z.number(),
+      category: z.enum(["plumbing","electrical","hvac","appliance","structural","pest_control","cleaning","landscaping","other"]),
+    })).mutation(async ({ input }) => {
+      const decoded = verifyTenantToken(input.sessionToken);
+      if (!decoded) throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid or expired session." });
+      const tenant = await getTenantById(decoded.id);
+      if (!tenant) throw new TRPCError({ code: "NOT_FOUND" });
+      // Verify the vendor belongs to the tenant's landlord — without this
+      // a malicious tenant could favorite any vendor in the system.
+      const vendor = await getVendorById(input.vendorId);
+      if (!vendor) throw new TRPCError({ code: "NOT_FOUND", message: "Vendor not found." });
+      if (vendor.userId !== tenant.landlordUserId) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "This vendor is not in your landlord's pool." });
+      }
+      if (vendor.isActive !== 1) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "This vendor is not active." });
+      }
+      await setTenantFavoriteVendor({
+        tenantPortalAccountId: tenant.id,
+        landlordUserId: tenant.landlordUserId,
+        vendorId: input.vendorId,
+        category: input.category,
+      });
+      return { success: true };
+    }),
+
+    /** Remove the tenant's favorite for a category — fall back to round-robin. */
+    clearFavoriteVendor: publicProcedure.input(z.object({
+      sessionToken: z.string(),
+      category: z.enum(["plumbing","electrical","hvac","appliance","structural","pest_control","cleaning","landscaping","other"]),
+    })).mutation(async ({ input }) => {
+      const decoded = verifyTenantToken(input.sessionToken);
+      if (!decoded) throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid or expired session." });
+      await clearTenantFavoriteVendor(decoded.id, input.category);
       return { success: true };
     }),
   }),

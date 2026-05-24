@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, tinyint, float } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, tinyint, float, uniqueIndex } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -286,12 +286,42 @@ export const workOrders = mysqlTable("work_orders", {
   photos: text("photos"), // JSON array of S3 URLs
   notes: text("notes"),
 
+  // Why this work order's dispatch picked the vendor(s) it picked.
+  // "favorite"     — tenant had a favorite for this category, only that vendor was pinged
+  // "round_robin"  — landlord enabled round-robin, least-dispatched vendor was picked
+  // "all_vendors"  — default fan-out to every active vendor with an email
+  dispatchReason: mysqlEnum("dispatchReason", ["favorite", "round_robin", "all_vendors"]),
+
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
 export type WorkOrder = typeof workOrders.$inferSelect;
 export type InsertWorkOrder = typeof workOrders.$inferInsert;
+
+/**
+ * Tenant favorite vendors — one favorite per work-order category per tenant.
+ *
+ * Tenants authenticate via tenantPortalAccounts (token-based, no users row),
+ * so the key is `tenantPortalAccountId` rather than a user id. `category`
+ * mirrors workOrders.category — when a tenant submits a work order, the
+ * dispatch flow honors the matching favorite before falling back to
+ * round-robin / all-vendors dispatch.
+ */
+export const tenantFavoriteVendors = mysqlTable("tenant_favorite_vendors", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantPortalAccountId: int("tenantPortalAccountId").notNull(),
+  landlordUserId: int("landlordUserId").notNull(),
+  vendorId: int("vendorId").notNull(),
+  category: varchar("category", { length: 32 }).notNull(),  // matches workOrders.category enum values
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  // One favorite per tenant per category
+  uniqTenantCategory: uniqueIndex("uniq_tenant_category").on(table.tenantPortalAccountId, table.category),
+}));
+
+export type TenantFavoriteVendor = typeof tenantFavoriteVendors.$inferSelect;
+export type InsertTenantFavoriteVendor = typeof tenantFavoriteVendors.$inferInsert;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ACCOUNTING MODULE
