@@ -567,6 +567,8 @@ const istayRouter = router({
 
 
 import { leasesRouter, adminLeaseTemplatesRouter } from "./leases/router";
+import { createLeaseDocument, getLatestTemplateVersionForState, logLeaseAudit } from "./leases/db-helpers";
+import { renderTemplate } from "./leases/render";
 
 export const appRouter = router({
   system: systemRouter,
@@ -2648,9 +2650,76 @@ export const appRouter = router({
             status: "draft",
             notes: `Auto-created from application #${app.id}. Review and send when ready.`,
           });
+
+          // Render the state-specific template into a lease_documents row so
+          // the Review & Send link (/leases/draft/:id) lands on a populated
+          // editor instead of 404. If no template exists for this state and
+          // no generic fallback was seeded, we still return the leaseAgreement
+          // id and surface a "draft manually" UX path on the client.
+          let leaseDocumentId: number | undefined;
+          try {
+            const templateForState = await getLatestTemplateVersionForState(state);
+            if (templateForState) {
+              const citations: string[] = templateForState.citations
+                ? JSON.parse(templateForState.citations as string)
+                : [];
+              const variables: Record<string, unknown> = {
+                tenant_name: app.applicantName ?? "",
+                tenant_email: app.applicantEmail ?? "",
+                tenant_phone: app.applicantPhone ?? "",
+                landlord_name: ctx.user.name ?? "",
+                landlord_email: ctx.user.email ?? "",
+                property_address: finalAddress,
+                // renderTemplate formats numeric money fields itself — pass the
+                // dollar amount as a number, NOT a pre-formatted string.
+                monthly_rent: finalRent / 100,
+                security_deposit: finalDeposit / 100,
+                lease_start_date: finalStartDate,
+                lease_term: finalTerm,
+                state,
+              };
+              const rendered = renderTemplate(templateForState.bodyHtml, variables as any, citations);
+              leaseDocumentId = await createLeaseDocument({
+                landlordUserId: ctx.user.id,
+                leaseAgreementId: leaseId,
+                source: "template",
+                templateId: templateForState.templateId,
+                templateVersionId: templateForState.id,
+                renderedHtml: rendered.html,
+                variableValues: JSON.stringify(variables),
+                status: "draft",
+              });
+              if (leaseDocumentId) {
+                await logLeaseAudit({
+                  leaseDocumentId,
+                  leaseAgreementId: leaseId,
+                  actorUserId: ctx.user.id,
+                  event: "draft_created",
+                  details: JSON.stringify({
+                    source: "approval_auto_create",
+                    applicationId: app.id,
+                    state,
+                  }),
+                });
+              }
+            }
+          } catch (e) {
+            // Don't block approval — the leaseAgreement row is created and
+            // the landlord can manually create a document at /leases/send/wizard.
+            console.error("[updateStatus] Template render failed:", e);
+          }
+
           // Persist the lease id back on the application so the list query
-          // can surface a "Draft lease ready" link without a join.
-          await setApplicationDraftLeaseId(input.id, ctx.user.id, leaseId);
+          // can surface a "Draft lease ready" link. Prefer the leaseDocument
+          // id (the /leases/draft/:id route reads from lease_documents) and
+          // fall back to the leaseAgreement id only if rendering failed —
+          // even then the link will 404, but the column at least records
+          // SOMETHING for landlord follow-up.
+          await setApplicationDraftLeaseId(
+            input.id,
+            ctx.user.id,
+            leaseDocumentId ?? leaseId,
+          );
 
           // Notify landlord a draft lease is waiting
           const landlord = await getUserByOpenId(ctx.user.openId);
@@ -2673,7 +2742,15 @@ export const appRouter = router({
             }).catch(() => {});
           }
 
-          return { success: true, draftLeaseId: leaseId };
+          // draftLeaseId is the leaseDocument id (what /leases/draft/:id
+          // resolves), not the leaseAgreement id. Returned as null when no
+          // template existed for the state so the client can offer a manual
+          // draft path instead of routing to a 404.
+          return {
+            success: true,
+            draftLeaseId: leaseDocumentId ?? null,
+            leaseAgreementId: leaseId,
+          };
         }
       }
 

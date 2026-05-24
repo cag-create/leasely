@@ -343,6 +343,8 @@ function ReceivedApplications({
       {
         onSuccess: (data: any) => {
           if (data?.draftLeaseId) {
+            // Backend successfully rendered the state-specific template into
+            // a lease_documents row — /leases/draft/:id will resolve.
             toast.success(
               <span>
                 Draft lease created.{" "}
@@ -357,7 +359,18 @@ function ReceivedApplications({
               window.location.href = draftLeaseHref(data.draftLeaseId);
             }, 1500);
           } else {
-            toast.success("Application approved.");
+            // The leaseAgreement row was created but no state template
+            // exists (or rendering failed). Point the landlord at the
+            // manual wizard instead of a 404.
+            toast.success(
+              <span>
+                Application approved. No state template available —{" "}
+                <a href="/leases/send/wizard" className="underline font-semibold">
+                  draft lease manually →
+                </a>
+              </span>,
+              { duration: 10000 },
+            );
             setLeaseDetails(null);
           }
         },

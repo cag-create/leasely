@@ -46,6 +46,44 @@ export async function listTemplateVersions(templateId: number): Promise<LeaseTem
     .orderBy(desc(leaseTemplateVersions.version));
 }
 
+/**
+ * Convenience: resolve the active template + latest version for a given state.
+ *
+ * Used by the application-approval flow to auto-render a draft lease document
+ * the moment the landlord approves an applicant. Returns the version row with
+ * the parent templateId attached so the caller can persist both ids on the
+ * lease_documents row. Falls back to the "ALL" generic template when no
+ * state-specific template exists. Returns undefined only if even the generic
+ * template hasn't been seeded.
+ */
+export async function getLatestTemplateVersionForState(
+  state: string,
+  category: LeaseTemplate["category"] = "standard_residential",
+): Promise<(LeaseTemplateVersion & { templateId: number }) | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const tryStates = [state, "ALL"];
+  for (const s of tryStates) {
+    const tpl = await db.select().from(leaseTemplates)
+      .where(and(eq(leaseTemplates.state, s), eq(leaseTemplates.category, s === "ALL" ? "generic" : category), eq(leaseTemplates.isActive, 1)))
+      .limit(1);
+    if (!tpl[0]) continue;
+    // Prefer the activeVersionId pointer; fall back to highest version number.
+    if (tpl[0].activeVersionId) {
+      const v = await db.select().from(leaseTemplateVersions)
+        .where(eq(leaseTemplateVersions.id, tpl[0].activeVersionId))
+        .limit(1);
+      if (v[0]) return { ...v[0], templateId: tpl[0].id };
+    }
+    const latest = await db.select().from(leaseTemplateVersions)
+      .where(eq(leaseTemplateVersions.templateId, tpl[0].id))
+      .orderBy(desc(leaseTemplateVersions.version))
+      .limit(1);
+    if (latest[0]) return { ...latest[0], templateId: tpl[0].id };
+  }
+  return undefined;
+}
+
 export async function createTemplateVersion(input: {
   templateId: number;
   bodyHtml: string;
