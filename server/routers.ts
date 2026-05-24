@@ -2670,6 +2670,11 @@ export const appRouter = router({
               const citations: string[] = templateForState.citations
                 ? JSON.parse(templateForState.citations as string)
                 : [];
+              // Extract city and zip from the full address so they render
+              // inline without requiring the landlord to fill them manually.
+              // e.g. "3800 Innsbrook Dr, Memphis, TN, 38115" → Memphis / 38115
+              const _cityM = finalAddress.match(/,\s*([^,]+),?\s*[A-Z]{2}[\s,]/);
+              const _zipM  = finalAddress.match(/\b(\d{5})\b/);
               const variables: Record<string, unknown> = {
                 tenant_name: app.applicantName ?? "",
                 tenant_email: app.applicantEmail ?? "",
@@ -2677,6 +2682,8 @@ export const appRouter = router({
                 landlord_name: ctx.user.name ?? "",
                 landlord_email: ctx.user.email ?? "",
                 property_address: finalAddress,
+                property_city: _cityM?.[1]?.trim() ?? "",
+                property_zip: _zipM?.[1] ?? "",
                 // renderTemplate formats numeric money fields itself — pass the
                 // dollar amount as a number, NOT a pre-formatted string.
                 monthly_rent: finalRent / 100,
@@ -4397,13 +4404,18 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
           // No document yet — create one from the state template
           const tpl = await getLatestTemplateVersionForState(freshLease.state);
           if (tpl) {
+            const _addr = freshLease.propertyAddress;
+            const _cm2 = _addr.match(/,\s*([^,]+),?\s*[A-Z]{2}[\s,]/);
+            const _zm2 = _addr.match(/\b(\d{5})\b/);
             const variables: Record<string, unknown> = {
               tenant_name: freshLease.tenantName,
               tenant_email: freshLease.tenantEmail,
               tenant_phone: freshLease.tenantPhone ?? "",
               landlord_name: ctx.user.name ?? "",
               landlord_email: ctx.user.email ?? "",
-              property_address: freshLease.propertyAddress,
+              property_address: _addr,
+              property_city: _cm2?.[1]?.trim() ?? "",
+              property_zip: _zm2?.[1] ?? "",
               monthly_rent: (input.monthlyRent !== undefined ? input.monthlyRent : freshLease.monthlyRent) / 100,
               security_deposit: (input.securityDeposit !== undefined ? input.securityDeposit : (freshLease.securityDeposit ?? 0)) / 100,
               lease_start_date: input.leaseStartDate ?? freshLease.leaseStartDate,

@@ -441,6 +441,21 @@ export default function Leases() {
           </Card>
         </div>
 
+        {/* Active filter label */}
+        {statusFilter && (
+          <div className="flex items-center gap-2 mb-4 text-sm text-gray-600">
+            <span className="font-medium">
+              Showing: {statusFilter === "draft" ? "Drafts only" : "Signed / Active only"}
+            </span>
+            <button
+              className="text-xs text-blue-600 hover:underline"
+              onClick={() => setStatusFilter(null)}
+            >
+              Show all →
+            </button>
+          </div>
+        )}
+
         {/* Leases List */}
         {!leases || leases.length === 0 ? (
           <Card className="text-center py-16">
@@ -462,7 +477,21 @@ export default function Leases() {
         ) : (
           <div className="space-y-3">
             {displayed.map(lease => (
-              <Card key={lease.id} className="hover:shadow-md transition-shadow">
+              <Card
+                key={lease.id}
+                className="hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => {
+                  if (lease.status === "draft") {
+                    if ((lease as any).leaseDocumentId) {
+                      navigate(`/leases/draft/${(lease as any).leaseDocumentId}`);
+                    } else {
+                      setEditLease(lease as any);
+                    }
+                  } else {
+                    setSelectedLease(lease);
+                  }
+                }}
+              >
                 <CardContent className="py-4 px-5">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
@@ -501,21 +530,27 @@ export default function Leases() {
                               setEditLease(lease as any);
                             }}
                           >
-                            <Pencil className="w-3 h-3" /> Edit
+                            <Pencil className="w-3 h-3" /> Edit Details
                           </Button>
                           {(lease as any).leaseDocumentId ? (
                             <Button
                               size="sm"
                               className="bg-[#1B2B5E] text-white gap-1 text-xs"
-                              onClick={() => navigate(`/leases/draft/${(lease as any).leaseDocumentId}`)}
+                              onClick={e => {
+                                e.stopPropagation();
+                                navigate(`/leases/draft/${(lease as any).leaseDocumentId}`);
+                              }}
                             >
-                              <FileText className="w-3 h-3" /> Review →
+                              <FileText className="w-3 h-3" /> Review & Send →
                             </Button>
                           ) : (
                             <Button
                               size="sm"
                               className="bg-[#1B2B5E] text-white gap-1 text-xs"
-                              onClick={() => sendMutation.mutate({ leaseId: lease.id })}
+                              onClick={e => {
+                                e.stopPropagation();
+                                sendMutation.mutate({ leaseId: lease.id });
+                              }}
                               disabled={sendMutation.isPending}
                             >
                               <Send className="w-3 h-3" /> Send
@@ -528,7 +563,7 @@ export default function Leases() {
                           size="sm"
                           variant="outline"
                           className="gap-1 text-xs"
-                          onClick={() => setSelectedLease(lease)}
+                          onClick={e => { e.stopPropagation(); setSelectedLease(lease); }}
                         >
                           <ChevronRight className="w-3 h-3" /> Details
                         </Button>

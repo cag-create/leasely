@@ -3,7 +3,7 @@
 //
 // Route: /leases/draft/:id
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useLocation, useRoute } from "wouter";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,7 @@ export default function LeasePreview() {
   const [acknowledged, setAcknowledged] = useState(false);
   const [showFillPanel, setShowFillPanel] = useState(false);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  const [autoPrefilled, setAutoPrefilled] = useState(false);
 
   const utils = (trpc as any).useUtils();
   const docQuery = (trpc as any).leaseDocs.get.useQuery({ id }, { enabled: Number.isFinite(id) && id > 0 });
@@ -88,6 +89,32 @@ export default function LeasePreview() {
     const seen = new Set<string>();
     return matches.map(m => m[1].toLowerCase()).filter(f => { if (seen.has(f)) return false; seen.add(f); return true; });
   }, [doc?.renderedHtml]);
+
+  // Auto-open the fill panel as soon as the doc loads with unresolved fields.
+  useEffect(() => {
+    if (unresolvedCount > 0) setShowFillPanel(true);
+  }, [unresolvedCount]);
+
+  // Pre-populate property_city and property_zip from the stored property_address
+  // so the landlord doesn't have to retype info we already have.
+  useEffect(() => {
+    if (!doc || autoPrefilled) return;
+    const addr = (vars?.property_address as string | undefined) ?? "";
+    if (!addr) return;
+    const auto: Record<string, string> = {};
+    if (unresolvedFields.includes("property_city")) {
+      const m = addr.match(/,\s*([^,]+),?\s*[A-Z]{2}[\s,]/);
+      if (m) auto.property_city = m[1].trim();
+    }
+    if (unresolvedFields.includes("property_zip")) {
+      const m = addr.match(/\b(\d{5})\b/);
+      if (m) auto.property_zip = m[1];
+    }
+    if (Object.keys(auto).length > 0) {
+      setFieldValues(v => ({ ...auto, ...v }));
+    }
+    setAutoPrefilled(true);
+  }, [doc, unresolvedFields, autoPrefilled, vars]);
 
   const handleDownload = () => {
     if (!doc) return;
