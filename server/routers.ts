@@ -2706,20 +2706,22 @@ export const appRouter = router({
           } catch (e) {
             // Don't block approval — the leaseAgreement row is created and
             // the landlord can manually create a document at /leases/send/wizard.
-            console.error("[updateStatus] Template render failed:", e);
+            console.error("[updateStatus] Template render failed", {
+              state,
+              applicationId: app.id,
+              leaseAgreementId: leaseId,
+              error: e instanceof Error ? e.message : String(e),
+              stack: e instanceof Error ? e.stack : undefined,
+            });
           }
 
-          // Persist the lease id back on the application so the list query
-          // can surface a "Draft lease ready" link. Prefer the leaseDocument
-          // id (the /leases/draft/:id route reads from lease_documents) and
-          // fall back to the leaseAgreement id only if rendering failed —
-          // even then the link will 404, but the column at least records
-          // SOMETHING for landlord follow-up.
-          await setApplicationDraftLeaseId(
-            input.id,
-            ctx.user.id,
-            leaseDocumentId ?? leaseId,
-          );
+          // Persist the leaseDocument id back on the application ONLY when we
+          // actually created a leaseDocuments row. Writing a leaseAgreements.id
+          // here would cause /leases/draft/:id (which queries lease_documents)
+          // to 404 — so we skip the write entirely when rendering failed.
+          if (leaseDocumentId) {
+            await setApplicationDraftLeaseId(input.id, ctx.user.id, leaseDocumentId);
+          }
 
           // Notify landlord a draft lease is waiting
           const landlord = await getUserByOpenId(ctx.user.openId);
