@@ -2659,6 +2659,13 @@ export const appRouter = router({
           let leaseDocumentId: number | undefined;
           try {
             const templateForState = await getLatestTemplateVersionForState(state);
+            if (!templateForState) {
+              console.warn("[updateStatus] No lease template seeded for state — skipping auto-draft", {
+                state,
+                applicationId: app.id,
+                leaseAgreementId: leaseId,
+              });
+            }
             if (templateForState) {
               const citations: string[] = templateForState.citations
                 ? JSON.parse(templateForState.citations as string)
