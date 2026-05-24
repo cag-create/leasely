@@ -8,7 +8,10 @@ import {
   ArrowRight, Search, Briefcase,
 } from "lucide-react";
 
-const ACCENT = "#F5A623";
+// Agent Guide uses the brand HIGHLIGHT color (soft gold #FFD166), not the
+// primary amber, so its icons + active nav state pop out from the rest of
+// the dashboard which is already dominated by primary amber #F5A623.
+const ACCENT = "#FFD166";
 
 type Section = {
   id: string;

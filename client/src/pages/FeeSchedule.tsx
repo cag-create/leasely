@@ -25,11 +25,15 @@ const Row = ({
       {desc && <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{desc}</p>}
     </div>
     <div className="text-sm text-muted-foreground text-right md:text-center">{free}</div>
-    <div className={`text-sm text-right md:text-center font-semibold ${proHighlight ? "text-[#F5A623]" : "text-foreground"}`}>{pro}</div>
+    {/* Pro highlight color uses bronze #C8860A on light backgrounds — amber #F5A623
+        on white fails WCAG AA (~2:1). Bronze passes AA Large (~3.1:1) and reads
+        as the same amber family. */}
+    <div className={`text-sm text-right md:text-center font-semibold ${proHighlight ? "text-[#C8860A]" : "text-foreground"}`}>{pro}</div>
   </div>
 );
 
-const Yes = () => <CheckCircle2 className="h-4 w-4 text-[#F5A623] inline" />;
+// h-4 checkmark on white — bronze for AA Large contrast.
+const Yes = () => <CheckCircle2 className="h-4 w-4 text-[#C8860A] inline" />;
 const No = () => <XCircle className="h-4 w-4 text-muted-foreground/40 inline" />;
 
 export default function FeeSchedule() {
@@ -41,7 +45,7 @@ export default function FeeSchedule() {
       <div className="container py-16 max-w-4xl mx-auto">
         <div className="text-center mb-12">
           <Badge variant="secondary" className="mb-4 text-xs font-semibold px-3 py-1">
-            <DollarSign className="h-3 w-3 mr-1.5 text-[#F5A623]" /> Fee Schedule & Terms
+            <DollarSign className="h-3 w-3 mr-1.5 text-[#C8860A]" /> Fee Schedule & Terms
           </Badge>
           <h1 className="text-4xl md:text-5xl font-black text-foreground mb-4">
             Simple. Transparent. <span className="text-[#F5A623]">No surprises.</span>
@@ -56,7 +60,7 @@ export default function FeeSchedule() {
         <div className="grid grid-cols-[1fr_auto_auto] md:grid-cols-[1fr_180px_180px] gap-4 px-6 py-3 mb-2">
           <div />
           <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-right md:text-center">Free Tier</div>
-          <div className="text-xs font-bold uppercase tracking-widest text-[#F5A623] text-right md:text-center flex items-center justify-end md:justify-center gap-1">
+          <div className="text-xs font-bold uppercase tracking-widest text-[#C8860A] text-right md:text-center flex items-center justify-end md:justify-center gap-1">
             <Sparkles className="h-3 w-3" /> Pro — $25/mo
           </div>
         </div>
@@ -69,14 +73,14 @@ export default function FeeSchedule() {
               label="Monthly platform fee"
               desc="Access to the Leasely platform for landlords."
               free={<span className="font-semibold text-foreground">$0/mo</span>}
-              pro={<span className="text-[#F5A623]">$25.00/mo</span>}
+              pro={<span className="text-[#C8860A]">$25.00/mo</span>}
               proHighlight
             />
             <Row
               label="One-time setup fee"
               desc="Includes your branded website, custom logo placement, and personalized leasely.net subdomain URL."
               free={<No />}
-              pro={<span className="text-[#F5A623]">$75 one-time</span>}
+              pro={<span className="text-[#C8860A]">$75 one-time</span>}
               proHighlight
             />
             <Row
@@ -110,7 +114,7 @@ export default function FeeSchedule() {
                 <span className="font-semibold text-amber-600">1% per transaction</span>
               }
               pro={
-                <span className="text-[#F5A623] font-bold">$0 — keep it all</span>
+                <span className="text-[#C8860A] font-bold">$0 — keep it all</span>
               }
               proHighlight
             />
@@ -131,14 +135,14 @@ export default function FeeSchedule() {
               label="Instant payout (same-day bank transfer)"
               desc="Request immediate transfer of your available balance to your bank."
               free={<No />}
-              pro={<span className="text-[#F5A623] font-bold">$1.00 flat fee</span>}
+              pro={<span className="text-[#C8860A] font-bold">$1.00 flat fee</span>}
               proHighlight
             />
             <Row
               label="Standard ACH payout (1-2 business days)"
               desc="Free standard payout to your connected bank account."
               free={<No />}
-              pro={<span className="text-[#F5A623]">$0 — free</span>}
+              pro={<span className="text-[#C8860A]">$0 — free</span>}
               proHighlight
             />
             <Row

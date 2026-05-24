@@ -102,11 +102,15 @@ const howItWorks = [
 ];
 
 // Realistic landlord-persona testimonial placeholders. These are NOT real
-// quotes — they're written to read naturally for a brand-new product. Swap to
+// quotes — they're written to read naturally for a brand-new product. Every
+// claim references a feature that's actually shipped today: AI screening
+// flags (employer realism, virtual-office address, income vs. rent ratio),
+// $25 flat pricing, branded portal subdomain, tenant rent collection via
+// Stripe Connect, work orders, per-property P&L in Accounting. Swap to
 // real ones the moment beta users send them in.
 const TESTIMONIALS = [
   {
-    quote: "I run six rentals across two states. Before Leasely I was juggling Avail, a separate background-check site, and a Google Sheet for payments. Now the application, screening, lease, and rent collection all sit in one tab. The $75 setup paid for itself the first time I caught a fake pay stub.",
+    quote: "I run six rentals across two states. Before Leasely I was juggling Avail, a separate background-check site, and a Google Sheet for payments. Now the application, screening, lease, and rent collection all sit in one tab. The AI screening flagged a 'consulting firm' employer at a UPS Store address the same day I forwarded the application — I never would've checked the address myself.",
     name: "Marcus T.",
     role: "Landlord · 6 units",
     location: "Charlotte, NC",

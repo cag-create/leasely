@@ -110,6 +110,14 @@ export default function PropertyCard({ listing, view = "grid", isSaved = false, 
     });
   };
 
+  // Alt text — for sample listings, explicitly disclose that the image is a
+  // stock photo. Sighted users see the SAMPLE LISTING badge + click-through
+  // toast; this gives screen readers and Unsplash's license requirements the
+  // same disclosure.
+  const imgAlt = isSample
+    ? `${listing.title} (Stock photo — sample listing for demonstration purposes)`
+    : listing.title;
+
   const SampleBadge = () => (
     <span
       className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-md"
@@ -138,7 +146,7 @@ export default function PropertyCard({ listing, view = "grid", isSaved = false, 
           <div className="relative w-56 sm:w-72 shrink-0 overflow-hidden">
             <img
               src={photo}
-              alt={listing.title}
+              alt={imgAlt}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/5 group-hover:opacity-0 transition-opacity" />
@@ -231,7 +239,7 @@ export default function PropertyCard({ listing, view = "grid", isSaved = false, 
         <div className="relative h-52 overflow-hidden">
           <img
             src={photo}
-            alt={listing.title}
+            alt={imgAlt}
             className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700"
             style={{ transform: "scale(1)" }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "scale(1.06)"; }}
