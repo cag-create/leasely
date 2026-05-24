@@ -91,27 +91,40 @@ export function renderNCResidential(input: LeaseRenderInput): RenderedLease {
     <p><strong>Late fee.</strong> If any rental payment is five (5) or more calendar days late, Landlord may charge a late fee of <strong>${money(lateFeeCap)}</strong>, which equals the greater of $15.00 or 5% of the monthly rent, the maximum permitted under <em>N.C. Gen. Stat. § 42-46(a)</em>.</p>
   </section>
 
+  ${input.endDate ? `<section>
+    <h2>5. Holdover and Automatic Month-to-Month Conversion</h2>
+    <p>Upon expiration of the initial lease term set forth above, if Tenant remains in possession of the Premises with Landlord's consent (express or implied through continued acceptance of rent), this Lease shall automatically convert to a month-to-month tenancy on the same terms and conditions, except as modified herein. Either party may terminate the resulting month-to-month tenancy by giving the other party written notice at least <strong>seven (7) days</strong> before the end of the current rental period, in accordance with <em>N.C. Gen. Stat. § 42-14</em>.</p>
+    <p>Rent during any holdover or month-to-month period shall remain at the then-current rate unless adjusted in accordance with the Rent Adjustment clause below.</p>
+  </section>` : ""}
+
   <section>
-    <h2>5. Security Deposit</h2>
+    <h2>${input.endDate ? 6 : 5}. Rent Adjustment After Twenty-Four (24) Months</h2>
+    <p>Beginning <strong>twenty-four (24) months</strong> after the Lease Start Date (${formatDate(input.startDate)}), and on each subsequent twelve-month anniversary thereafter, Landlord reserves the right to increase the monthly Rent by up to <strong>three percent (3%)</strong> of the then-current Rent. Any such increase shall take effect only after Landlord provides Tenant with written notice of the increase no less than <strong>sixty (60) days</strong> prior to the effective date.</p>
+    <p>For the avoidance of doubt, no rent increase shall occur during the first twenty-four (24) months of tenancy regardless of lease renewals, holdovers, or conversions to month-to-month. After the 24-month anniversary, increases may compound annually but shall never exceed three percent (3%) per year.</p>
+    <p>North Carolina has no statewide rent control; this clause is a contractual cap voluntarily agreed to by Landlord and is enforceable as a term of this Lease.</p>
+  </section>
+
+  <section>
+    <h2>${input.endDate ? 7 : 6}. Security Deposit</h2>
     <p>Tenant shall deposit <strong>${money(deposit.allowed)}</strong> as a security deposit. ${deposit.capped ? `<em>Note: the amount requested by Landlord was reduced to the statutory maximum of ${deposit.rule} under N.C. Gen. Stat. § 42-50.</em>` : ""}</p>
     <p>Pursuant to <em>N.C. Gen. Stat. § 42-51</em>, the deposit shall be held in a trust account with a licensed and federally insured depository institution located in North Carolina, or secured by a bond. Landlord shall furnish Tenant with written notice of the name and address of the bank or insurance company holding the deposit within <strong>thirty (30) days</strong> of the beginning of the lease term.</p>
     <p>Within <strong>thirty (30) days</strong> after the termination of the tenancy and delivery of possession (or <strong>sixty (60) days</strong> if a final accounting requires additional time), Landlord shall provide Tenant with an itemized accounting of any deductions and shall return the balance of the deposit, in accordance with <em>N.C. Gen. Stat. § 42-52</em>.</p>
   </section>
 
-  ${input.petFriendly ? `<section><h2>6. Pets</h2><p>Pets are permitted at the Property${typeof input.petDeposit === "number" && input.petDeposit > 0 ? ` upon payment of a non-refundable pet fee of ${money(input.petDeposit)}` : ""}.</p></section>` : ""}
+  ${input.petFriendly ? `<section><h2>${input.endDate ? 8 : 7}. Pets</h2><p>Pets are permitted at the Property${typeof input.petDeposit === "number" && input.petDeposit > 0 ? ` upon payment of a non-refundable pet fee of ${money(input.petDeposit)}` : ""}.</p></section>` : ""}
 
   <section>
-    <h2>${input.petFriendly ? 7 : 6}. Landlord Duties</h2>
+    <h2>${(input.endDate ? 8 : 7) + (input.petFriendly ? 1 : 0)}. Landlord Duties</h2>
     <p>Landlord shall comply with all duties imposed by <em>N.C. Gen. Stat. § 42-42</em>, including keeping the Property in a fit and habitable condition, complying with applicable building and housing codes, making all repairs necessary to keep the Property fit and habitable, and maintaining in good and safe working order all electrical, plumbing, sanitary, heating, ventilating, air conditioning, and other facilities and appliances supplied by Landlord.</p>
   </section>
 
   <section>
-    <h2>${input.petFriendly ? 8 : 7}. Tenant Duties</h2>
+    <h2>${(input.endDate ? 9 : 8) + (input.petFriendly ? 1 : 0)}. Tenant Duties</h2>
     <p>Tenant shall comply with the obligations of <em>N.C. Gen. Stat. § 42-43</em>, including keeping the Property as clean and safe as the condition of the premises permits; disposing of garbage in a clean and safe manner; keeping plumbing fixtures clean; not deliberately or negligently destroying, defacing, damaging, or removing any part of the Property; and conducting themselves in a manner that does not disturb neighbors.</p>
   </section>
 
   <section>
-    <h2>${input.petFriendly ? 9 : 8}. Default and Remedies</h2>
+    <h2>${(input.endDate ? 10 : 9) + (input.petFriendly ? 1 : 0)}. Default and Remedies</h2>
     <p><strong>Nonpayment of rent.</strong> If Tenant fails to pay rent when due and remains in default after lawful demand, Landlord may bring an action for summary ejectment pursuant to <em>N.C. Gen. Stat. § 42-3</em> and <em>§ 42-26(a)(1)</em>.</p>
     <p><strong>Breach of Lease.</strong> If Tenant materially breaches any other term of this Lease, Landlord may pursue summary ejectment as permitted by <em>N.C. Gen. Stat. § 42-26(a)(2)</em>.</p>
     <p>Nothing in this Lease waives any notice, cure, or other right afforded to Tenant by North Carolina law. Any provision purporting to waive such rights shall be unenforceable to the extent so prohibited.</p>

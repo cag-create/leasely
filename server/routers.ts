@@ -2591,7 +2591,7 @@ export const appRouter = router({
         monthlyRentCents: z.number().int().positive(),
         securityDepositCents: z.number().int().nonnegative(),
         leaseStartDate: z.string(),
-        leaseTerm: z.enum(["12_months", "6_months", "month_to_month"]),
+        leaseTerm: z.enum(["6_months", "12_months", "24_months", "36_months", "month_to_month"]),
       }).optional(),
     })).mutation(async ({ ctx, input }) => {
       const override = input.overrideReason && input.overrideRecommendation
@@ -3914,7 +3914,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       securityDeposit: z.number().min(0).default(0),
       leaseStartDate: z.string(),
       leaseEndDate: z.string().optional(),
-      leaseTerm: z.enum(["month_to_month","6_months","12_months","24_months"]).default("12_months"),
+      leaseTerm: z.enum(["month_to_month","6_months","12_months","24_months","36_months"]).default("12_months"),
       accessMethod: z.enum(["lockbox","key_pickup","in_person","other"]).default("key_pickup"),
       lockboxCode: z.string().optional(),
       accessInstructions: z.string().optional(),

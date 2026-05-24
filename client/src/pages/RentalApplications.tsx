@@ -240,7 +240,7 @@ function ReceivedApplications({
     monthlyRent: string;     // dollars, user-facing
     securityDeposit: string; // dollars, user-facing
     leaseStartDate: string;  // YYYY-MM-DD
-    leaseTerm: "12_months" | "6_months" | "month_to_month";
+    leaseTerm: "6_months" | "12_months" | "24_months" | "36_months" | "month_to_month";
     applicantMoveInDate: string | null;
   } | null>(null);
 
@@ -827,7 +827,7 @@ function ReceivedApplications({
               />
               {leaseDetails?.applicantMoveInDate && (
                 <p className="text-[11px] text-muted-foreground">
-                  Applicant requested {new Date(leaseDetails.applicantMoveInDate).toLocaleDateString()} — change to your desired start date.
+                  Applicant requested {new Date(`${leaseDetails.applicantMoveInDate}T12:00:00`).toLocaleDateString("en-US", { year: "numeric", month: "numeric", day: "numeric" })} — change to your desired start date.
                 </p>
               )}
             </div>
@@ -840,6 +840,8 @@ function ReceivedApplications({
                 onChange={e => setLeaseDetails(d => d && ({ ...d, leaseTerm: e.target.value as any }))}
               >
                 <option value="12_months">12 months</option>
+                <option value="24_months">24 months</option>
+                <option value="36_months">36 months</option>
                 <option value="6_months">6 months</option>
                 <option value="month_to_month">Month-to-month</option>
               </select>

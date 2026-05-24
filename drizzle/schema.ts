@@ -1132,7 +1132,7 @@ export const leaseAgreements = mysqlTable("lease_agreements", {
   securityDeposit: int("securityDeposit").default(0), // in cents
   leaseStartDate: varchar("leaseStartDate", { length: 20 }).notNull(),
   leaseEndDate: varchar("leaseEndDate", { length: 20 }),
-  leaseTerm: mysqlEnum("leaseTerm", ["month_to_month", "6_months", "12_months", "24_months"]).default("12_months"),
+  leaseTerm: mysqlEnum("leaseTerm", ["month_to_month", "6_months", "12_months", "24_months", "36_months"]).default("12_months"),
   // Lockbox / key access
   accessMethod: mysqlEnum("accessMethod", ["lockbox", "key_pickup", "in_person", "other"]).default("key_pickup"),
   lockboxCode: varchar("lockboxCode", { length: 50 }),

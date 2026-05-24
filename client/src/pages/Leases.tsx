@@ -60,7 +60,7 @@ const emptyForm: {
   state: string; propertyAddress: string;
   monthlyRentDollars: string; securityDepositDollars: string;
   leaseStartDate: string; leaseEndDate: string;
-  leaseTerm: "month_to_month" | "6_months" | "12_months" | "24_months";
+  leaseTerm: "month_to_month" | "6_months" | "12_months" | "24_months" | "36_months";
   accessMethod: "lockbox" | "key_pickup" | "in_person" | "other";
   lockboxCode: string; accessInstructions: string; notes: string;
 } = {
@@ -233,10 +233,11 @@ export default function Leases() {
                     <Select value={form.leaseTerm} onValueChange={v => setForm(f => ({ ...f, leaseTerm: v as any }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="month_to_month">Month-to-Month</SelectItem>
-                        <SelectItem value="6_months">6 Months</SelectItem>
                         <SelectItem value="12_months">12 Months</SelectItem>
                         <SelectItem value="24_months">24 Months</SelectItem>
+                        <SelectItem value="36_months">36 Months</SelectItem>
+                        <SelectItem value="6_months">6 Months</SelectItem>
+                        <SelectItem value="month_to_month">Month-to-Month</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

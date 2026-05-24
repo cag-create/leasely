@@ -79,24 +79,37 @@ export function renderTNResidential(input: LeaseRenderInput): RenderedLease {
     <p><strong>Late fee.</strong> Pursuant to <em>Tenn. Code Ann. § 66-28-201(d)</em>, no late fee may be charged until rent is at least <strong>five (5) days</strong> past due. The late fee is capped at <strong>10% of the past-due rent</strong>; for the rent amount above, that is up to <strong>${money(lateFeeCap)}</strong>.</p>
   </section>
 
+  ${input.endDate ? `<section>
+    <h2>6. Holdover and Automatic Month-to-Month Conversion</h2>
+    <p>Upon expiration of the initial lease term set forth above, if Tenant remains in possession of the Premises with Landlord's consent (express or implied through continued acceptance of rent), this Lease shall automatically convert to a month-to-month tenancy on the same terms and conditions, except as modified herein. Either party may terminate the resulting month-to-month tenancy by providing the other party with written notice no less than <strong>thirty (30) days</strong> prior to the intended termination date, as required by <em>Tenn. Code Ann. § 66-28-512</em>.</p>
+    <p>Rent during any holdover or month-to-month period shall remain at the then-current rate unless adjusted in accordance with the Rent Adjustment clause below.</p>
+  </section>` : ""}
+
   <section>
-    <h2>6. Security Deposit</h2>
+    <h2>${input.endDate ? 7 : 6}. Rent Adjustment After Twenty-Four (24) Months</h2>
+    <p>Beginning <strong>twenty-four (24) months</strong> after the Lease Start Date (${formatDate(input.startDate)}), and on each subsequent twelve-month anniversary thereafter, Landlord reserves the right to increase the monthly Rent by up to <strong>three percent (3%)</strong> of the then-current Rent. Any such increase shall take effect only after Landlord provides Tenant with written notice of the increase no less than <strong>sixty (60) days</strong> prior to the effective date.</p>
+    <p>For the avoidance of doubt, no rent increase shall occur during the first twenty-four (24) months of tenancy regardless of lease renewals, holdovers, or conversions to month-to-month. After the 24-month anniversary, increases may compound annually but shall never exceed three percent (3%) per year.</p>
+    <p>Tennessee has no statewide rent control; this clause is a contractual cap voluntarily agreed to by Landlord and is enforceable as a term of this Lease.</p>
+  </section>
+
+  <section>
+    <h2>${input.endDate ? 8 : 7}. Security Deposit</h2>
     <p>Tenant shall deposit <strong>${money(input.securityDeposit)}</strong> as a security deposit. Tennessee URLTA does not statutorily cap the amount; the figure above reflects the parties' agreement.</p>
     <p>Pursuant to <em>Tenn. Code Ann. § 66-28-301</em>: The deposit shall be held in a <strong>separate account in a federally insured bank or financial institution located in Tennessee</strong>, used solely for that purpose. Landlord shall inform Tenant in writing, at the time this Lease is signed, of the <strong>name and address of the bank</strong> holding the deposit.</p>
     <p>Within <strong>thirty (30) days</strong> after the end of the tenancy or after Tenant vacates the Property (whichever is later), Landlord shall provide Tenant with a written, itemized list of any damages and the amount of the deposit being retained. If Tenant does not claim the remaining balance within <strong>sixty (60) days</strong> after Landlord sends notice, Landlord may remove the funds from the separate account.</p>
     <p>The deposit may be applied only to (a) unpaid rent and (b) damage exceeding normal wear and tear.</p>
   </section>
 
-  ${input.petFriendly ? `<section><h2>7. Pets</h2><p>Pets are permitted at the Property${typeof input.petDeposit === "number" && input.petDeposit > 0 ? ` upon payment of a non-refundable pet fee of ${money(input.petDeposit)}` : ""}.</p></section>` : ""}
+  ${input.petFriendly ? `<section><h2>${input.endDate ? 9 : 8}. Pets</h2><p>Pets are permitted at the Property${typeof input.petDeposit === "number" && input.petDeposit > 0 ? ` upon payment of a non-refundable pet fee of ${money(input.petDeposit)}` : ""}.</p></section>` : ""}
 
   <section>
-    <h2>${input.petFriendly ? 8 : 7}. Default and Cure</h2>
+    <h2>${(input.endDate ? 9 : 8) + (input.petFriendly ? 1 : 0)}. Default and Cure</h2>
     <p><strong>Material noncompliance.</strong> Pursuant to <em>Tenn. Code Ann. § 66-28-505</em>, if Tenant materially breaches this Lease in a manner that can be cured by payment of rent, repair costs, damages, or other amount due, Landlord may give Tenant written notice that this Lease will terminate if the breach is not cured within <strong>fourteen (14) days</strong> after receipt of the notice. For non-remediable breaches, the Lease shall terminate on a date not less than fourteen (14) days after receipt of the notice.</p>
     <p>This Section does not waive any right Landlord or Tenant has under Tennessee law, including expedited remedies for criminal activity or substantial damage that endangers other persons or property.</p>
   </section>
 
   <section>
-    <h2>${input.petFriendly ? 9 : 8}. Landlord Access</h2>
+    <h2>${(input.endDate ? 10 : 9) + (input.petFriendly ? 1 : 0)}. Landlord Access</h2>
     <p>Landlord may enter the Property at reasonable times after giving Tenant <strong>at least 24 hours' notice</strong>, except in cases of emergency.</p>
   </section>
 
