@@ -2725,28 +2725,34 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         fetch: createPatchedFetch(fetch),
       });
 
+      // Swapped back to gpt-4o-mini — on Manus this ran through the Forge
+      // proxy (BUILT_IN_FORGE_API_URL) which is heavily optimized. On Railway
+      // we go to api.openai.com directly, and gpt-4o + this nested schema was
+      // consistently exceeding 60s. gpt-4o-mini is 3–10× faster on structured
+      // outputs and handles this schema cleanly.
+      const MODEL = "gpt-4o-mini";
       const startedAt = Date.now();
       console.log("[runAiScreening] starting", {
         appId: input.id,
         baseURL,
-        model: "gpt-4o",
+        model: MODEL,
         hasKey: !!ENV.forgeApiKey,
         promptChars: systemPrompt.length + userPrompt.length,
       });
       try {
         // Hard timeout via Promise.race — the SDK's abortSignal does NOT
-        // actually cancel the in-flight gpt-4o request through the
+        // actually cancel the in-flight request through the
         // createPatchedFetch wrapper, so we add a wall-clock racer that
-        // forcibly rejects after 60s. The user-facing client timeout is 90s,
-        // so 60s leaves headroom for the response trip.
-        const HARD_TIMEOUT_MS = 60_000;
+        // forcibly rejects. 80s server cutoff < 120s client cutoff leaves
+        // headroom for the round trip.
+        const HARD_TIMEOUT_MS = 80_000;
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), HARD_TIMEOUT_MS);
         const racedTimeout = new Promise<never>((_, reject) => {
           setTimeout(() => reject(new Error(`HARD_TIMEOUT after ${HARD_TIMEOUT_MS}ms`)), HARD_TIMEOUT_MS);
         });
         const generation = generateObject({
-          model: openai("gpt-4o"),
+          model: openai(MODEL),
           schema: ScreeningSchema,
           system: systemPrompt,
           prompt: userPrompt,
@@ -2784,7 +2790,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         throw new TRPCError({
           code: isAbort ? "TIMEOUT" : "INTERNAL_SERVER_ERROR",
           message: isAbort
-            ? "AI screening timed out after 60 seconds. The model may be overloaded — please try again."
+            ? "AI screening timed out after 80 seconds. The model may be overloaded — please try again."
             : (e?.message ?? "AI screening failed"),
         });
       }

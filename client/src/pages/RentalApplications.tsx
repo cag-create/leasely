@@ -217,8 +217,10 @@ function ReceivedApplications({
       return next;
     });
     // Client-side safety net: if the screening call hangs (network stall,
-    // missing OPENAI key on server, etc.), clear the spinner after 90s and
-    // surface an actionable error rather than leaving the user stuck.
+    // missing OPENAI key on server, etc.), clear the spinner after 120s and
+    // surface an actionable error rather than leaving the user stuck. The
+    // server enforces an 80s hard cutoff, so 120s leaves room for the round
+    // trip and any tRPC overhead.
     const timeoutHandle = window.setTimeout(() => {
       setScreeningId((current: number | null) => {
         if (current === id) {
@@ -229,7 +231,7 @@ function ReceivedApplications({
         }
         return current;
       });
-    }, 90_000);
+    }, 120_000);
     screenMut.mutate(
       { id },
       {
