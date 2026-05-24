@@ -601,7 +601,8 @@ function AIScreeningPanel({ app }: { app: any }) {
 function AiScreeningLlmView({ llm, screenedAt }: { llm: any; screenedAt?: string | Date | null }) {
   const recTone =
     llm.recommendation === "approve" ? "approve" :
-    llm.recommendation === "decline" ? "decline" : "review";
+    llm.recommendation === "decline" ? "decline" :
+    "review";
   const recColor =
     recTone === "approve" ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-400" :
     recTone === "decline" ? "bg-red-500/15 border-red-500/40 text-red-700 dark:text-red-400" :
@@ -611,15 +612,18 @@ function AiScreeningLlmView({ llm, screenedAt }: { llm: any; screenedAt?: string
     approve: "Recommend: Approve",
     approve_with_conditions: "Recommend: Approve with Conditions",
     manual_review: "Recommend: Manual Review",
+    request_more_info: "Recommend: Request More Info",
     decline: "Recommend: Decline",
   }[llm.recommendation as string] ?? "Recommend: Manual Review";
 
+  // Higher score = higher risk per the fraud-analyst prompt scoring bands.
+  // 0–30 low, 31–60 medium, 61–85 high, 86–100 critical.
   const score = Math.round(llm.overallScore ?? 0);
   const scoreColor =
-    score >= 80 ? "text-[#00C896] bg-[#00C896]/10 border-[#00C896]/20" :
-    score >= 65 ? "text-blue-500 bg-blue-500/10 border-blue-500/20" :
-    score >= 50 ? "text-amber-500 bg-amber-500/10 border-amber-500/20" :
-    "text-red-500 bg-red-500/10 border-red-500/20";
+    score >= 86 ? "text-red-500 bg-red-500/10 border-red-500/20" :
+    score >= 61 ? "text-amber-500 bg-amber-500/10 border-amber-500/20" :
+    score >= 31 ? "text-blue-500 bg-blue-500/10 border-blue-500/20" :
+    "text-[#00C896] bg-[#00C896]/10 border-[#00C896]/20";
 
   const verdictBadge = (v: string) => {
     const map: Record<string, string> = {

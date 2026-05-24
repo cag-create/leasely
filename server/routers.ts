@@ -2571,8 +2571,8 @@ export const appRouter = router({
         : "Unknown property";
 
       const ScreeningSchema = z.object({
-        overallScore: z.number().min(0).max(100).describe("0-100 composite — higher = stronger applicant"),
-        recommendation: z.enum(["approve", "approve_with_conditions", "manual_review", "decline"]),
+        overallScore: z.number().min(0).max(100).describe("0-100 risk score, higher = higher risk per the prompt scoring bands"),
+        recommendation: z.enum(["approve", "approve_with_conditions", "manual_review", "request_more_info", "decline"]),
         recommendationReason: z.string().describe("One-paragraph plain-English summary justifying the recommendation"),
         income: z.object({
           rentToIncomeRatio: z.number().nullable().describe("Monthly rent / monthly gross income. null if unverifiable."),
@@ -2637,7 +2637,7 @@ export const appRouter = router({
 
       const systemPrompt = `You are a senior rental application fraud analyst with 20 years of experience working for institutional property management companies across the United States. You have reviewed over 50,000 rental applications and have an encyclopedic knowledge of fraud patterns, synthetic identity schemes, and application manipulation tactics.
 
-Your job is to analyze a rental application and return a structured risk assessment. Always return a complete response — never stop mid-analysis, never return partial output, never say you cannot complete the analysis. If a field has no concerns, return an empty array. If data is missing, note it as a concern.
+Your job is to analyze a rental application and return a structured JSON risk assessment. You MUST always return a complete, valid JSON response — never stop mid-analysis, never return partial output, never say you cannot complete the analysis. If a field has no concerns, return an empty array []. If data is missing, note it as a concern.
 
 FRAUD PATTERNS TO CHECK — be specific, cite exact data from the application:
 
@@ -2690,35 +2690,19 @@ POSITIVE INDICATORS TO ACKNOWLEDGE:
 - Complete application with no missing fields
 - Professional email address matching applicant name
 
-SCORING (overallScore field, 0–100, where higher = stronger applicant):
-- 70–100: Low risk — approve
-- 50–69:  Medium risk — approve_with_conditions or manual_review
-- 25–49:  High risk — manual_review or decline
-- 0–24:   Critical risk — decline immediately
+SCORING:
+- 0–30: Low risk — approve
+- 31–60: Medium risk — approve with conditions or request more info
+- 61–85: High risk — decline or require co-signer
+- 86–100: Critical risk — decline immediately
 
-RECOMMENDATION (must be one of: approve, approve_with_conditions, manual_review, decline):
-- "approve" — score 70+, no red flags
-- "approve_with_conditions" — score 50–69, minor concerns resolvable with documentation (e.g. co-signer, larger deposit, paystub upload)
-- "manual_review" — score 25–49 OR missing background/credit consent OR significant gaps that require human verification before a decision
-- "decline" — score under 25, material fraud indicators, or income clearly insufficient (rent-to-income > 0.50)
+DECISION RULES:
+- "approve" — score 0–30, no red flags
+- "approve_with_conditions" — score 31–50, minor concerns resolvable with documentation
+- "request_more_info" — score 51–60, significant gaps but not disqualifying
+- "decline" — score 61–100, material fraud indicators or income insufficient
 
-AFFORDABILITY VERDICT mapping (rent ÷ monthly income):
-- ≤ 0.33 → "strong"
-- 0.34–0.40 → "adequate"
-- 0.41–0.50 → "tight"
-- > 0.50 → "insufficient"
-- unknown income → "unverifiable"
-
-FAIR HOUSING (mandatory):
-Fair-housing protected categories (race, color, national origin, religion, sex, familial status, disability, age in some states, source of income in many states/cities) MUST NOT influence the recommendation. If the data hints at any of them, add a riskFactors entry with category "fair_housing_compliance", severity "low", titled to remind the landlord to ignore it. Never penalize the score for a protected characteristic.
-
-OCCUPANCY: HUD informal guideline is roughly 2 per bedroom. Flag overcrowding for the landlord's review; don't auto-decline.
-
-ALWAYS be specific. Quote the exact data that triggered each concern. Do not make vague statements like "income seems low" — instead say "Stated income of $2,800/month is below the 3x rent threshold of $3,600/month for a $1,200/month unit."
-
-For each actionRecommended field, give concrete next steps. Don't say "verify employment" — say "Call (employerPhone) and ask for HR or the applicant's supervisor; confirm start date and gross monthly pay."
-
-Be terse in the notes fields: 1–2 sentences each, not paragraphs. Detailed reasoning goes in riskFactors[].detail and verificationChecklist[].rationale.`;
+Always be specific. Quote the exact data that triggered each concern. Do not make vague statements like "income seems low" — instead say "Stated income of $2,800/month is below the 3x rent threshold of $3,600/month for a $1,200/month unit." Return a complete JSON response every time without exception.`;
 
       const userPrompt = `PROPERTY
 ${propertyAddress}
@@ -2742,13 +2726,11 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       });
 
       try {
-        // gpt-4o-mini is supported on both vanilla OpenAI (default) and the Manus
-        // Forge proxy. The previous `claude-sonnet-4-6` model name only resolves
-        // through the Forge proxy and silently 404s against api.openai.com,
-        // which is why screening would hang when BUILT_IN_FORGE_API_URL wasn't
-        // set.
+        // gpt-4o (not mini) — mini can't reliably produce the nested structured
+        // output within the timeout. gpt-4o is ~2x faster on generateObject
+        // calls because it nails the schema on first try instead of retrying.
         const { object } = await generateObject({
-          model: openai("gpt-4o-mini"),
+          model: openai("gpt-4o"),
           schema: ScreeningSchema,
           system: systemPrompt,
           prompt: userPrompt,
@@ -2757,6 +2739,16 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         await updateApplicationAiScreening(input.id, ctx.user.id, object);
         return { success: true, result: object };
       } catch (e: any) {
+        // Surface raw error to server logs so we can see what's actually failing
+        // (timeouts, schema-validation retries, upstream 4xx/5xx, etc.).
+        console.error("[runAiScreening] OpenAI call failed:", {
+          name: e?.name,
+          message: e?.message,
+          cause: e?.cause,
+          status: e?.status ?? e?.statusCode,
+          responseBody: e?.responseBody ?? e?.response?.data,
+          stack: e?.stack,
+        });
         // Don't poison the DB with a half-baked result; surface the error to the UI
         // so the user can retry. The deterministic rule-based panel stays as the
         // fallback in the meantime.
