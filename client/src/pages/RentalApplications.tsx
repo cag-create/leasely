@@ -618,14 +618,21 @@ function AiScreeningLlmView({ llm, screenedAt }: { llm: any; screenedAt?: string
     decline: "Recommend: Decline",
   }[llm.recommendation as string] ?? "Recommend: Manual Review";
 
-  // Higher score = higher risk per the fraud-analyst prompt scoring bands.
-  // 0–30 low, 31–60 medium, 61–85 high, 86–100 critical.
+  // overallScore is a RISK score: HIGHER = HIGHER RISK. Bands match the
+  // server prompt rubric in server/routers.ts (0–24 low, 25–49 moderate-low,
+  // 50–74 moderate-high, 75–100 high). Color is inverted from a typical
+  // "credit score" intuition so red always means trouble.
   const score = Math.round(llm.overallScore ?? 0);
   const scoreColor =
-    score >= 86 ? "text-red-500 bg-red-500/10 border-red-500/20" :
-    score >= 61 ? "text-amber-500 bg-amber-500/10 border-amber-500/20" :
-    score >= 31 ? "text-blue-500 bg-blue-500/10 border-blue-500/20" :
-    "text-[#F5A623] bg-[#F5A623]/10 border-[#F5A623]/20";
+    score >= 75 ? "bg-red-500/15 border-red-500/40 text-red-700 dark:text-red-400" :
+    score >= 50 ? "bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-400" :
+    score >= 25 ? "bg-blue-500/15 border-blue-500/40 text-blue-700 dark:text-blue-400" :
+    "bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-400";
+  const scoreBarFill =
+    score >= 75 ? "bg-red-500" :
+    score >= 50 ? "bg-amber-500" :
+    score >= 25 ? "bg-blue-500" :
+    "bg-emerald-500";
 
   const verdictBadge = (v: string) => {
     const map: Record<string, string> = {
@@ -676,9 +683,19 @@ function AiScreeningLlmView({ llm, screenedAt }: { llm: any; screenedAt?: string
             </span>
           )}
         </div>
-        <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${scoreColor}`}>
-          {score}/100
-        </span>
+        <div className={`rounded-lg border px-3 py-1.5 ${scoreColor}`}>
+          <div className="flex items-baseline gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">Risk Score</span>
+            <span className="text-sm font-black tabular-nums">{score}/100</span>
+          </div>
+          <div className="text-[10px] opacity-70 leading-tight">higher = more risk</div>
+          <div className="mt-1 h-1 w-full rounded-full bg-current/10 overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${scoreBarFill}`}
+              style={{ width: `${Math.max(0, Math.min(100, score))}%` }}
+            />
+          </div>
+        </div>
       </div>
 
       <div className={`rounded-lg border px-3 py-2 flex items-start gap-2 ${recColor}`}>

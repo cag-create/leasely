@@ -2690,17 +2690,13 @@ POSITIVE INDICATORS TO ACKNOWLEDGE:
 - Complete application with no missing fields
 - Professional email address matching applicant name
 
-SCORING:
-- 0–30: Low risk — approve
-- 31–60: Medium risk — approve with conditions or request more info
-- 61–85: High risk — decline or require co-signer
-- 86–100: Critical risk — decline immediately
+SCORING (overallScore is a RISK score from 0–100; HIGHER = HIGHER RISK):
+- 0–24: low risk — strong income, verifiable employment, clean rental history, no red flags. Pair with recommendation "approve".
+- 25–49: moderate-low risk — minor concerns or missing data. Pair with "approve" or "approve_with_conditions".
+- 50–74: moderate-high risk — multiple yellow flags, thin verification, or one significant red flag. Pair with "manual_review" or "approve_with_conditions".
+- 75–100: high risk — fraud indicators, insufficient income, fake-looking employer, or pattern of red flags. Pair with "decline".
 
-DECISION RULES:
-- "approve" — score 0–30, no red flags
-- "approve_with_conditions" — score 31–50, minor concerns resolvable with documentation
-- "request_more_info" — score 51–60, significant gaps but not disqualifying
-- "decline" — score 61–100, material fraud indicators or income insufficient
+The score MUST be internally consistent with your recommendation. If you recommend "decline", the score must be >= 60. If you recommend "approve", the score must be <= 40.
 
 Always be specific. Quote the exact data that triggered each concern. Do not make vague statements like "income seems low" — instead say "Stated income of $2,800/month is below the 3x rent threshold of $3,600/month for a $1,200/month unit." Return a complete JSON response every time without exception.`;
 
