@@ -857,6 +857,11 @@ export const rentalApplications = mysqlTable("rental_applications", {
   aiOverrideReason: text("ai_override_reason"),
   aiOverrideRecommendation: varchar("ai_override_recommendation", { length: 32 }),
   aiOverrideAt: timestamp("ai_override_at"),
+  // Most recent auto-created draft lease for this application. Written by
+  // applications.updateStatus when the landlord approves. Letting the column
+  // live here (instead of joining on each list query) keeps the listing
+  // endpoint fast — the lease lifecycle still owns its own row.
+  draftLeaseId: int("draft_lease_id"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

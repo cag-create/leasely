@@ -77,7 +77,7 @@ import {
   createSupportReply, getSupportReplies,
   // Rental applications
   createRentalApplication, getRentalApplicationsByLandlord, getRentalApplicationsByListing,
-  getRentalApplicationById, updateRentalApplicationStatus, updateApplicationAiScreening,
+  getRentalApplicationById, updateRentalApplicationStatus, updateApplicationAiScreening, setApplicationDraftLeaseId,
   // Custom templates
   getCustomTemplatesByUser, createCustomTemplate, deleteCustomTemplate,
   // Rent rates
@@ -2528,6 +2528,9 @@ export const appRouter = router({
             status: "draft",
             notes: `Auto-created from application #${app.id}. Review and send when ready.`,
           });
+          // Persist the lease id back on the application so the list query
+          // can surface a "Draft lease ready" link without a join.
+          await setApplicationDraftLeaseId(input.id, ctx.user.id, leaseId);
 
           // Notify landlord a draft lease is waiting
           const landlord = await getUserByOpenId(ctx.user.openId);

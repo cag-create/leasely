@@ -215,16 +215,26 @@ function ReceivedApplications({
   });
 
   // Override modal state — opened when a landlord clicks "Mark Approved"
-  // on an application the AI flagged for decline or manual_review.
+  // on an application the AI flagged for decline or manual_review. We stash
+  // `state` here so the confirmation toast can name the state ("Draft lease
+  // created for TN") without re-looking up the application.
   const [override, setOverride] = useState<{
     appId: number;
     recommendation: string;
+    state: string | null;
   } | null>(null);
   const [overrideReason, setOverrideReason] = useState("");
   const overrideValid = overrideReason.trim().length >= 10;
 
+  // Draft leases open at /leases/draft/:id (LeasePreview component). The
+  // backend writes the lease id back onto rentalApplications.draftLeaseId
+  // after createLeaseAgreement resolves so the list query naturally exposes
+  // it without a join.
+  const draftLeaseHref = (id: number) => `/leases/draft/${id}`;
+
   const confirmOverride = () => {
     if (!override || !overrideValid) return;
+    const stateLabel = override.state ?? "this property";
     updateStatus.mutate(
       {
         id: override.appId,
@@ -233,8 +243,20 @@ function ReceivedApplications({
         overrideRecommendation: override.recommendation,
       },
       {
-        onSuccess: () => {
-          toast.success("Application approved. Override reason saved to audit trail.");
+        onSuccess: (data: any) => {
+          if (data?.draftLeaseId) {
+            toast.success(
+              <span>
+                Override saved. Draft lease created for {stateLabel}.{" "}
+                <a href={draftLeaseHref(data.draftLeaseId)} className="underline font-semibold">
+                  Review &amp; send →
+                </a>
+              </span>,
+              { duration: 10000 },
+            );
+          } else {
+            toast.success("Application approved. Override reason saved to audit trail.");
+          }
           setOverride(null);
           setOverrideReason("");
         },
@@ -254,11 +276,43 @@ function ReceivedApplications({
       const rec = getAiRecommendation(app);
       if (rec === "decline" || rec === "manual_review") {
         setOverrideReason("");
-        setOverride({ appId: app.id, recommendation: rec });
+        setOverride({ appId: app.id, recommendation: rec, state: app.state ?? null });
         return;
       }
     }
-    updateStatus.mutate({ id: app.id, status: target });
+    updateStatus.mutate(
+      { id: app.id, status: target },
+      {
+        onSuccess: (data: any) => {
+          if (target === "approved" && data?.draftLeaseId) {
+            const stateLabel = app.state ?? "this property";
+            toast.success(
+              <span>
+                Application approved. Draft lease created for {stateLabel}.{" "}
+                <a href={draftLeaseHref(data.draftLeaseId)} className="underline font-semibold">
+                  Review &amp; send →
+                </a>
+              </span>,
+              { duration: 10000 },
+            );
+            // Auto-open the draft after a short pause so the landlord lands
+            // on the editor where they almost always want to go next. The
+            // delay gives them time to read the toast or click Undo on the
+            // browser tab if they want to stay.
+            setTimeout(() => {
+              window.location.href = draftLeaseHref(data.draftLeaseId);
+            }, 1500);
+          } else if (target === "approved") {
+            toast.success("Application approved.");
+          } else {
+            toast.success(`Application marked ${target === "reviewing" ? "under review" : target}.`);
+          }
+        },
+        onError: (e: any) => {
+          toast.error(e?.message ?? `Failed to mark ${target}.`);
+        },
+      },
+    );
   };
   const screenMut = (trpc as any).applications.runAiScreening.useMutation({
     onSuccess: (_res: any, vars: { id: number }) => {
@@ -488,6 +542,33 @@ function ReceivedApplications({
                         </div>
                         <div className="opacity-90"><span className="font-medium">Reason:</span> {app.aiOverrideReason}</div>
                       </div>
+                    )}
+
+                    {/* Draft lease shortcut — once an application is approved,
+                        applications.updateStatus auto-creates a state-specific
+                        draft lease and writes the lease id back onto this row.
+                        Surface it inline so the landlord doesn't have to dig. */}
+                    {app.status === "approved" && app.draftLeaseId && (
+                      <a
+                        href={draftLeaseHref(app.draftLeaseId)}
+                        onClick={e => e.stopPropagation()}
+                        className="flex items-center justify-between gap-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 hover:bg-emerald-500/15 transition-colors group"
+                      >
+                        <div className="flex items-center gap-2.5 text-sm">
+                          <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                          <div>
+                            <div className="font-semibold text-emerald-700 dark:text-emerald-300">
+                              Draft lease ready for {app.state ?? "this state"}
+                            </div>
+                            <div className="text-xs text-emerald-700/80 dark:text-emerald-300/80">
+                              Pre-filled with applicant info and state-specific clauses. Review and send to tenant.
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 group-hover:translate-x-0.5 transition-transform">
+                          Open →
+                        </span>
+                      </a>
                     )}
 
                     <div className="flex gap-2 flex-wrap">

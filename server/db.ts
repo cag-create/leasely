@@ -997,6 +997,16 @@ export async function updateRentalApplicationStatus(
   await db.update(rentalApplications).set(updates as any).where(and(eq(rentalApplications.id, id), eq(rentalApplications.landlordUserId, landlordUserId)));
 }
 
+/** Persist the most-recent auto-created draft lease id onto the application row. */
+export async function setApplicationDraftLeaseId(id: number, landlordUserId: number, leaseId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(rentalApplications)
+    .set({ draftLeaseId: leaseId, updatedAt: new Date() })
+    .where(and(eq(rentalApplications.id, id), eq(rentalApplications.landlordUserId, landlordUserId)));
+}
+
 export async function updateApplicationAiScreening(id: number, landlordUserId: number, result: unknown): Promise<void> {
   const db = await getDb();
   if (!db) return;
