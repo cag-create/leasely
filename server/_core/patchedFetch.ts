@@ -30,8 +30,13 @@ export function createPatchedFetch(originalFetch: typeof fetch): typeof fetch {
   return async (input, init) => {
     const response = await originalFetch(input, init);
 
-    // Only patch streaming responses
+    // Only patch streaming SSE responses — for plain JSON (e.g. non-streaming
+    // generateObject calls) the patcher's \n\n-delimited buffer never flushes
+    // and the request hangs until the wall-clock timeout. Bail out for
+    // anything that isn't an event stream.
     if (!response.body) return response;
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!contentType.includes("text/event-stream")) return response;
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
