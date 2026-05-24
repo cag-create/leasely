@@ -62,9 +62,8 @@ export default function TenantLogin() {
         style={{ background: `linear-gradient(145deg, ${BRAND} 0%, #0d3a2a 100%)` }}
       >
         <div>
-          <Link href="/" className="flex items-center gap-2 mb-16">
-            <img src={LOGO_URL} alt="Leasely" className="h-8 w-auto brightness-0 invert" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-            <span className="font-black text-2xl tracking-tight">Leasely</span>
+          <Link href="/" className="flex items-center mb-16">
+            <img src={LOGO_URL} alt="Leasely" className="h-10 w-auto brightness-0 invert" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
           </Link>
           <div className="mb-8">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold mb-6" style={{ background: `${ACCENT}30`, color: ACCENT }}>
@@ -104,9 +103,8 @@ export default function TenantLogin() {
       <div className="flex-1 flex flex-col items-center justify-center p-8">
         {/* Mobile logo */}
         <div className="lg:hidden mb-8 text-center">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <img src={LOGO_URL} alt="Leasely" className="h-8 w-auto" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-            <span className="font-black text-xl tracking-tight" style={{ color: BRAND }}>Leasely</span>
+          <Link href="/" className="inline-flex items-center">
+            <img src={LOGO_URL} alt="Leasely" className="h-10 w-auto" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
           </Link>
         </div>
 

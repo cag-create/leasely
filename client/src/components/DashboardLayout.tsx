@@ -213,10 +213,9 @@ function DashboardLayoutContent({
                   <img
                     src={LOGO_URL}
                     alt="Leasely"
-                    className="h-9 w-auto rounded-md bg-white p-1 shadow-sm"
+                    className="h-10 w-auto rounded-md bg-white p-1 shadow-sm"
                     onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
                   />
-                  <span className="font-black text-base text-sidebar-foreground tracking-tight truncate" style={{ fontFamily: "Outfit, sans-serif" }}>Leasely</span>
                   {isPro && (
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#F5A623]/15 text-[#E8951A] border border-[#F5A623]/20 shrink-0">
                       PRO

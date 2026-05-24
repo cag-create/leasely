@@ -79,16 +79,13 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-[60px]">
 
             {/* ── Logo ── */}
-            <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+            <Link href="/" className="flex items-center shrink-0 group">
               <img
                 src={LOGO_URL}
                 alt="Leasely"
-                className="h-7 w-auto transition-opacity group-hover:opacity-80"
+                className="h-10 w-auto transition-opacity group-hover:opacity-80"
                 onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
               />
-              <span className="font-black text-[1.15rem] tracking-tight text-[#0A1628]">
-                Leasely
-              </span>
             </Link>
 
             {/* ── Desktop Nav ── */}
