@@ -3904,6 +3904,18 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       const rentPayUrl = `${APP_URL}/lease-pay/${lease.id}?email=${emailParam}&kind=rent`;
       const depositPayUrl = lease.securityDeposit ? `${APP_URL}/lease-pay/${lease.id}?email=${emailParam}&kind=deposit` : undefined;
 
+      // Format the move-in date for the email body ("June 1, 2026"). The
+      // stored leaseStartDate is a YYYY-MM-DD string; parse it as UTC noon
+      // so timezone slop doesn't flip the day.
+      const leaseStartDateFormatted = lease.leaseStartDate
+        ? new Date(`${lease.leaseStartDate}T12:00:00Z`).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            timeZone: "UTC",
+          })
+        : undefined;
+
       // Auto-send payment request email to tenant (lease not yet fully executed)
       sendEmail({
         to: lease.tenantEmail,
@@ -3918,6 +3930,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
           accessMethod: lease.accessMethod ?? "key_pickup",
           lockboxCode: lease.lockboxCode ?? undefined,
           accessInstructions: lease.accessInstructions ?? undefined,
+          leaseStartDateFormatted,
         }),
       }).catch(() => {});
 

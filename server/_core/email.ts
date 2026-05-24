@@ -250,6 +250,27 @@ export function leaseAgreementEmail(opts: {
 }
 
 // ── Lease Signed — Payment Links Email ───────────────────────────────────────
+// Auto-fires from server/routers.ts after the tenant signs. The email is the
+// tenant's primary handoff between signing and payment — it must:
+//   1. Make the two required payments unmissable (two amber CTAs).
+//   2. Set expectations: lease is conditional, keys arrive after payment +
+//      countersignature.
+//   3. NEVER leak the raw lockbox code or any access secret in the email —
+//      tenants reveal those in their dashboard ONLY after payment clears.
+const ACCESS_METHOD_LABEL: Record<string, string> = {
+  key_pickup: "Pick up keys from landlord",
+  lockbox: "Lockbox at property",
+  smart_lock: "Smart lock code",
+  in_person: "Landlord will meet you at the property",
+};
+
+// Heuristic: an instructions string is "sensitive" if it likely contains a
+// code, key combination, or password. Those get gated behind payment.
+// Generic pickup notes ("Stop by the office between 9-5") pass through.
+function looksSensitive(s: string): boolean {
+  return /\b(code|pin|password|combination|combo)\b/i.test(s) || /\d{4,}/.test(s);
+}
+
 export function leaseSignedPaymentEmail(opts: {
   tenantName: string;
   propertyAddress: string;
@@ -260,49 +281,90 @@ export function leaseSignedPaymentEmail(opts: {
   accessMethod: string;
   lockboxCode?: string;
   accessInstructions?: string;
+  leaseStartDateFormatted?: string; // e.g. "June 1, 2026"
 }): string {
-  const accessSection = opts.accessMethod === "lockbox" && opts.lockboxCode
-    ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:20px 0">
-        <p style="margin:0 0 8px;font-weight:700;color:#166534;font-size:15px">🔑 Lockbox Access Code</p>
-        <p style="margin:0 0 8px;font-size:28px;font-weight:900;letter-spacing:0.15em;color:#166534">${opts.lockboxCode}</p>
-        ${opts.accessInstructions ? `<p style="margin:0;color:#15803d;font-size:14px">${opts.accessInstructions}</p>` : ""}
-       </div>`
-    : opts.accessInstructions
-    ? `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px;margin:20px 0">
-        <p style="margin:0 0 8px;font-weight:700;color:#1e40af">🔑 Key / Access Instructions</p>
-        <p style="margin:0;color:#1e40af;font-size:14px">${opts.accessInstructions}</p>
-       </div>`
+  const methodLabel = ACCESS_METHOD_LABEL[opts.accessMethod] ?? "Coordinated with your landlord";
+
+  // The lockbox code is NEVER rendered in the email. If access instructions
+  // contain a code/pin/combination, gate them with the same "see dashboard"
+  // copy. Generic non-sensitive instructions pass through so the tenant has
+  // something concrete to plan around.
+  const hasLockboxCode = !!opts.lockboxCode;
+  const safeInstructions =
+    opts.accessInstructions && !looksSensitive(opts.accessInstructions)
+      ? opts.accessInstructions
+      : undefined;
+  const gatedInstructions =
+    opts.accessInstructions && looksSensitive(opts.accessInstructions);
+
+  const depositLine = opts.securityDepositDollars > 0
+    ? `<a href="${opts.depositPaymentUrl}"
+           style="display:block;background:#F5A623;color:#3A2410;padding:16px 24px;border-radius:8px;text-decoration:none;font-weight:800;font-size:15px;text-align:center;margin-bottom:10px;border:1px solid #E8951A">
+          Pay Security Deposit — $${opts.securityDepositDollars.toLocaleString()}
+        </a>`
     : "";
 
+  const moveInLine = opts.leaseStartDateFormatted
+    ? `<li style="margin-bottom:8px">Move in on <strong>${opts.leaseStartDateFormatted}</strong></li>`
+    : `<li style="margin-bottom:8px">Move in on the lease start date</li>`;
+
   return `
-<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#111827">
   <div style="background:#1B2B5E;padding:20px 24px;border-radius:10px 10px 0 0">
-    <h1 style="color:white;margin:0;font-size:20px">Action Required — Pay to Activate Your Lease</h1>
+    <h1 style="color:#ffffff;margin:0;font-size:20px;font-weight:800">Action Required — Pay to Activate Your Lease</h1>
   </div>
   <div style="background:#f9fafb;padding:24px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px">
-    <p style="margin:0 0 16px">Hi ${opts.tenantName},</p>
-    <p style="margin:0 0 12px">
-      You've signed your lease for <strong>${opts.propertyAddress}</strong>. Your signature is on file but the lease is <strong>conditional</strong> until two steps are complete:
+
+    <p style="margin:0 0 12px;font-size:16px;color:#111827">
+      Congrats ${opts.tenantName} — your lease for <strong>${opts.propertyAddress}</strong> is signed.
     </p>
-    <ol style="margin:0 0 16px;padding-left:20px;color:#374151">
-      <li style="margin-bottom:6px">Pay your <strong>security deposit</strong> and <strong>first month's rent</strong> using the buttons below.</li>
-      <li>Your landlord will then countersign — at which point the lease is fully executed and we'll send your move-in details.</li>
-    </ol>
-    <div style="margin-bottom:12px">
-      <a href="${opts.depositPaymentUrl}"
-         style="display:block;background:#00C896;color:#062018;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;text-align:center;margin-bottom:10px">
-        Step 1: Pay Security Deposit — $${opts.securityDepositDollars.toLocaleString()} →
-      </a>
-      <a href="${opts.rentPaymentUrl}"
-         style="display:block;background:#1B2B5E;color:white;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;text-align:center">
-        Step 2: Pay First Month's Rent — $${opts.monthlyRentDollars.toLocaleString()} →
-      </a>
+
+    <!-- Status banner — amber -->
+    <div style="background:#fffaf0;border:1px solid #F5A623;border-radius:8px;padding:14px 16px;margin:16px 0">
+      <p style="margin:0;color:#7a4706;font-size:14px;line-height:1.55">
+        Your lease is <strong>conditional</strong> until first month's rent and security deposit are paid. Once payment clears, the landlord will countersign and you'll receive keys.
+      </p>
     </div>
-    <p style="margin:8px 0 16px;color:#6b7280;font-size:13px">
-      Move-in instructions are released only after both payments clear and your landlord countersigns.
+
+    <!-- Payment CTAs — two amber buttons -->
+    <div style="margin:20px 0 8px">
+      <a href="${opts.rentPaymentUrl}"
+         style="display:block;background:#F5A623;color:#3A2410;padding:16px 24px;border-radius:8px;text-decoration:none;font-weight:800;font-size:15px;text-align:center;margin-bottom:10px;border:1px solid #E8951A">
+        Pay First Month's Rent — $${opts.monthlyRentDollars.toLocaleString()}
+      </a>
+      ${depositLine}
+    </div>
+
+    <!-- How you'll get your keys — emerald card -->
+    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px;margin:24px 0">
+      <p style="margin:0 0 6px;font-weight:800;color:#166534;font-size:14px">🔑 How you'll get your keys</p>
+      <p style="margin:0 0 10px;color:#166534;font-size:14px"><strong>${methodLabel}</strong></p>
+      ${hasLockboxCode
+        ? `<p style="margin:0 0 8px;color:#15803d;font-size:13px;line-height:1.5">Your lockbox code will be revealed in your <a href="https://leasely.net/tenant" style="color:#15803d;font-weight:700;text-decoration:underline">tenant dashboard</a> once payment clears.</p>`
+        : ""}
+      ${gatedInstructions
+        ? `<p style="margin:0;color:#15803d;font-size:13px;line-height:1.5">Detailed access instructions will be revealed in your <a href="https://leasely.net/tenant" style="color:#15803d;font-weight:700;text-decoration:underline">tenant dashboard</a> once payment clears.</p>`
+        : ""}
+      ${safeInstructions
+        ? `<pre style="margin:8px 0 0;padding:10px 12px;background:#ffffff;border:1px solid #bbf7d0;border-radius:6px;font-family:'Courier New',monospace;font-size:13px;color:#166534;white-space:pre-wrap;word-break:break-word">${safeInstructions}</pre>`
+        : ""}
+    </div>
+
+    <!-- What happens next -->
+    <p style="margin:20px 0 8px;font-weight:700;color:#111827;font-size:14px">What happens next:</p>
+    <ol style="margin:0 0 16px;padding-left:22px;color:#374151;font-size:14px;line-height:1.5">
+      <li style="margin-bottom:8px">Pay first month's rent and security deposit using the buttons above</li>
+      <li style="margin-bottom:8px">Landlord countersigns within 24 hours</li>
+      <li style="margin-bottom:8px">You'll receive a final email with the executed lease attached + full access details</li>
+      ${moveInLine}
+    </ol>
+
+    <!-- Help line -->
+    <p style="margin:24px 0 0;padding-top:16px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:13px;line-height:1.5">
+      Questions? Reply to this email or submit a repair request from your <a href="https://leasely.net/tenant" style="color:#E8951A;font-weight:600">tenant dashboard</a>.
     </p>
-    ${accessSection ? `<details style="margin:16px 0"><summary style="cursor:pointer;color:#6b7280;font-size:13px">Pre-arrival reference (released after countersignature)</summary>${accessSection}</details>` : ""}
-    <p style="margin:16px 0 0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Leasely</a></p>
+
+    <p style="margin:16px 0 0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#E8951A">Leasely</a></p>
   </div>
 </div>`;
 }
