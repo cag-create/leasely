@@ -4367,10 +4367,15 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       });
 
       // Re-render the leaseDocument so the preview reflects the updated values.
+      // If no document exists yet (e.g. lease created before auto-render was deployed),
+      // create one from the state template now.
+      let leaseDocumentId: number | undefined;
       try {
+        const freshLease = await getLeaseById(input.leaseId);
         const docs = await listLeaseDocumentsByAgreement(input.leaseId);
         const doc = docs[0]; // most-recent first (ordered by createdAt desc)
         if (doc && doc.templateVersionId) {
+          // Update existing document
           const tv = await getTemplateVersionById(doc.templateVersionId);
           if (tv) {
             const variables: Record<string, unknown> = JSON.parse(doc.variableValues ?? "{}");
@@ -4386,6 +4391,38 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
               variableValues: JSON.stringify(variables),
               updatedAt: new Date(),
             });
+            leaseDocumentId = doc.id;
+          }
+        } else if (freshLease) {
+          // No document yet — create one from the state template
+          const tpl = await getLatestTemplateVersionForState(freshLease.state);
+          if (tpl) {
+            const variables: Record<string, unknown> = {
+              tenant_name: freshLease.tenantName,
+              tenant_email: freshLease.tenantEmail,
+              tenant_phone: freshLease.tenantPhone ?? "",
+              landlord_name: ctx.user.name ?? "",
+              landlord_email: ctx.user.email ?? "",
+              property_address: freshLease.propertyAddress,
+              monthly_rent: (input.monthlyRent !== undefined ? input.monthlyRent : freshLease.monthlyRent) / 100,
+              security_deposit: (input.securityDeposit !== undefined ? input.securityDeposit : (freshLease.securityDeposit ?? 0)) / 100,
+              lease_start_date: input.leaseStartDate ?? freshLease.leaseStartDate,
+              lease_end_date: input.leaseEndDate ?? freshLease.leaseEndDate ?? undefined,
+              lease_term: input.leaseTerm ?? freshLease.leaseTerm ?? "12_months",
+              state: freshLease.state,
+            };
+            const citations: string[] = tpl.citations ? JSON.parse(tpl.citations as string) : [];
+            const rendered = renderTemplate(tpl.bodyHtml, variables as any, citations);
+            leaseDocumentId = await createLeaseDocument({
+              landlordUserId: ctx.user.id,
+              leaseAgreementId: input.leaseId,
+              source: "template",
+              templateId: tpl.templateId,
+              templateVersionId: tpl.id,
+              renderedHtml: rendered.html,
+              variableValues: JSON.stringify(variables),
+              status: "draft",
+            });
           }
         }
       } catch (e) {
@@ -4395,7 +4432,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         });
       }
 
-      return { success: true };
+      return { success: true, leaseDocumentId: leaseDocumentId ?? null };
     }),
   }),
 

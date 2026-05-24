@@ -144,6 +144,7 @@ export default function Leases() {
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedLease, setSelectedLease] = useState<any>(null);
   const [editLease, setEditLease] = useState<any>(null);
+  const [statusFilter, setStatusFilter] = useState<"draft" | "active" | null>(null);
   const [form, setForm] = useState(emptyForm);
 
   const { data: leases, refetch } = trpc.leases.list.useQuery(undefined, {
@@ -185,6 +186,19 @@ export default function Leases() {
     onError: (e) => toast.error(e.message),
   });
 
+  const generateDocMutation = trpc.leases.updateDraft.useMutation({
+    onSuccess: (data, variables) => {
+      refetch();
+      if (data.leaseDocumentId) {
+        setSelectedLease(null);
+        navigate(`/leases/draft/${data.leaseDocumentId}`);
+      } else {
+        toast.error("No state template available — draft manually via the wizard");
+      }
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -203,6 +217,12 @@ export default function Leases() {
   const draft = leases?.filter(l => l.status === "draft").length ?? 0;
   const active = leases?.filter(l => l.status === "signed" || l.status === "active").length ?? 0;
   const total = leases?.length ?? 0;
+
+  const displayed = !leases ? [] : statusFilter === "draft"
+    ? leases.filter(l => l.status === "draft")
+    : statusFilter === "active"
+    ? leases.filter(l => l.status === "signed" || l.status === "active")
+    : leases;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -381,18 +401,24 @@ export default function Leases() {
           </Dialog>
         </div>
 
-        {/* Stats */}
+        {/* Stats / Filter Tabs */}
         <div className="grid grid-cols-3 gap-4 mb-8">
-          <Card className="border-gray-200">
+          <Card
+            className={`border-gray-200 cursor-pointer transition-shadow hover:shadow-md ${statusFilter === null ? "ring-2 ring-[#1B2B5E]" : ""}`}
+            onClick={() => setStatusFilter(null)}
+          >
             <CardContent className="pt-4 pb-4 flex items-center gap-3">
               <FileText className="w-8 h-8 text-gray-500" />
               <div>
                 <div className="text-2xl font-bold text-gray-800">{total}</div>
-                <div className="text-sm text-gray-500">Total Leases</div>
+                <div className="text-sm text-gray-500">All Leases</div>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-blue-200 bg-blue-50">
+          <Card
+            className={`border-blue-200 bg-blue-50 cursor-pointer transition-shadow hover:shadow-md ${statusFilter === "draft" ? "ring-2 ring-blue-500" : ""}`}
+            onClick={() => setStatusFilter(f => f === "draft" ? null : "draft")}
+          >
             <CardContent className="pt-4 pb-4 flex items-center gap-3">
               <Clock className="w-8 h-8 text-blue-600" />
               <div>
@@ -401,7 +427,10 @@ export default function Leases() {
               </div>
             </CardContent>
           </Card>
-          <Card className="border-green-200 bg-green-50">
+          <Card
+            className={`border-green-200 bg-green-50 cursor-pointer transition-shadow hover:shadow-md ${statusFilter === "active" ? "ring-2 ring-green-500" : ""}`}
+            onClick={() => setStatusFilter(f => f === "active" ? null : "active")}
+          >
             <CardContent className="pt-4 pb-4 flex items-center gap-3">
               <CheckCircle2 className="w-8 h-8 text-green-600" />
               <div>
@@ -424,9 +453,15 @@ export default function Leases() {
               </Button>
             </CardContent>
           </Card>
+        ) : displayed.length === 0 ? (
+          <Card className="text-center py-12">
+            <CardContent>
+              <p className="text-gray-500">No leases match this filter.</p>
+            </CardContent>
+          </Card>
         ) : (
           <div className="space-y-3">
-            {leases.map(lease => (
+            {displayed.map(lease => (
               <Card key={lease.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedLease(lease)}>
                 <CardContent className="py-4 px-5">
                   <div className="flex items-start justify-between">
@@ -570,18 +605,35 @@ export default function Leases() {
                   </div>
                 )}
 
-                {selectedLease.status === "draft" && (selectedLease as any).leaseDocumentId && (
-                  <Button
-                    variant="outline"
-                    className="w-full gap-2"
-                    onClick={() => {
-                      setSelectedLease(null);
-                      navigate(`/leases/draft/${(selectedLease as any).leaseDocumentId}`);
-                    }}
-                  >
-                    <FileText className="w-4 h-4" />
-                    Review Lease Document →
-                  </Button>
+                {selectedLease.status === "draft" && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 gap-2"
+                      onClick={() => {
+                        if ((selectedLease as any).leaseDocumentId) {
+                          setSelectedLease(null);
+                          navigate(`/leases/draft/${(selectedLease as any).leaseDocumentId}`);
+                        } else {
+                          generateDocMutation.mutate({ leaseId: selectedLease.id });
+                        }
+                      }}
+                      disabled={generateDocMutation.isPending}
+                    >
+                      <FileText className="w-4 h-4" />
+                      {generateDocMutation.isPending ? "Generating..." : "Review Lease →"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => {
+                        setSelectedLease(null);
+                        setEditLease(selectedLease);
+                      }}
+                    >
+                      <Pencil className="w-4 h-4" /> Edit
+                    </Button>
+                  </div>
                 )}
 
                 {selectedLease.status === "draft" && (
