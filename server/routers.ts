@@ -2734,17 +2734,31 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         promptChars: systemPrompt.length + userPrompt.length,
       });
       try {
-        // maxRetries: 0 disables the Vercel AI SDK's internal retry loop, which
-        // was previously swallowing AbortSignal and letting requests run for
-        // 5+ minutes past our 75s timeout.
-        const { object } = await generateObject({
+        // Hard timeout via Promise.race — the SDK's abortSignal does NOT
+        // actually cancel the in-flight gpt-4o request through the
+        // createPatchedFetch wrapper, so we add a wall-clock racer that
+        // forcibly rejects after 60s. The user-facing client timeout is 90s,
+        // so 60s leaves headroom for the response trip.
+        const HARD_TIMEOUT_MS = 60_000;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), HARD_TIMEOUT_MS);
+        const racedTimeout = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error(`HARD_TIMEOUT after ${HARD_TIMEOUT_MS}ms`)), HARD_TIMEOUT_MS);
+        });
+        const generation = generateObject({
           model: openai("gpt-4o"),
           schema: ScreeningSchema,
           system: systemPrompt,
           prompt: userPrompt,
           maxRetries: 0,
-          abortSignal: AbortSignal.timeout(75_000),
+          abortSignal: controller.signal,
         });
+        let object: any;
+        try {
+          ({ object } = await Promise.race([generation, racedTimeout]));
+        } finally {
+          clearTimeout(timer);
+        }
         console.log("[runAiScreening] success", {
           appId: input.id,
           elapsedMs: Date.now() - startedAt,
@@ -2766,11 +2780,11 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         // Don't poison the DB with a half-baked result; surface the error to the UI
         // so the user can retry. The deterministic rule-based panel stays as the
         // fallback in the meantime.
-        const isAbort = e?.name === "AbortError" || /aborted|timeout/i.test(e?.message ?? "");
+        const isAbort = e?.name === "AbortError" || /aborted|timeout|HARD_TIMEOUT/i.test(e?.message ?? "");
         throw new TRPCError({
           code: isAbort ? "TIMEOUT" : "INTERNAL_SERVER_ERROR",
           message: isAbort
-            ? "AI screening timed out after 75 seconds. The model may be overloaded — please try again."
+            ? "AI screening timed out after 60 seconds. The model may be overloaded — please try again."
             : (e?.message ?? "AI screening failed"),
         });
       }
