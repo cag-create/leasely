@@ -978,10 +978,23 @@ export async function getRentalApplicationById(id: number): Promise<RentalApplic
   return rows[0];
 }
 
-export async function updateRentalApplicationStatus(id: number, landlordUserId: number, status: string, notes?: string): Promise<void> {
+export async function updateRentalApplicationStatus(
+  id: number,
+  landlordUserId: number,
+  status: string,
+  notes?: string,
+  override?: { reason: string; recommendation: string },
+): Promise<void> {
   const db = await getDb();
   if (!db) return;
-  await db.update(rentalApplications).set({ status: status as any, notes, updatedAt: new Date() }).where(and(eq(rentalApplications.id, id), eq(rentalApplications.landlordUserId, landlordUserId)));
+  const updates: Record<string, unknown> = { status: status as any, updatedAt: new Date() };
+  if (notes !== undefined) updates.notes = notes;
+  if (override) {
+    updates.aiOverrideReason = override.reason;
+    updates.aiOverrideRecommendation = override.recommendation;
+    updates.aiOverrideAt = new Date();
+  }
+  await db.update(rentalApplications).set(updates as any).where(and(eq(rentalApplications.id, id), eq(rentalApplications.landlordUserId, landlordUserId)));
 }
 
 export async function updateApplicationAiScreening(id: number, landlordUserId: number, result: unknown): Promise<void> {

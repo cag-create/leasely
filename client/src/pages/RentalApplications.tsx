@@ -9,8 +9,14 @@ import {
   Search, Eye, Download, Share2, Copy, Filter,
   Home, Building2, ChevronDown, AlertCircle, Plus, ShieldCheck,
   Sparkles, ThumbsUp, AlertTriangle, ThumbsDown, Briefcase, DollarSign,
+  ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 // ApplyConnect co-branded background check portal — set in Railway as VITE_APPLYCONNECT_PARTNER_URL
 // once partnership is approved. Until then the button shows a "Coming Soon" state.
@@ -175,6 +181,28 @@ export default function RentalApplications() {
   );
 }
 
+// Pull the AI recommendation out of an application row, if a screening
+// has been run. Returns null when no LLM result is stored or parsing fails.
+function getAiRecommendation(app: any): string | null {
+  if (!app?.aiScreeningResult) return null;
+  try {
+    const parsed = typeof app.aiScreeningResult === "string"
+      ? JSON.parse(app.aiScreeningResult)
+      : app.aiScreeningResult;
+    return parsed?.recommendation ?? null;
+  } catch {
+    return null;
+  }
+}
+
+const REC_LABEL: Record<string, string> = {
+  approve: "Approve",
+  approve_with_conditions: "Approve with Conditions",
+  manual_review: "Manual Review",
+  request_more_info: "Request More Info",
+  decline: "Decline",
+};
+
 function ReceivedApplications({
   applications, isLoading, statusFilter, setStatusFilter,
   searchQuery, setSearchQuery, statusCounts, selectedApp, setSelectedApp,
@@ -185,6 +213,53 @@ function ReceivedApplications({
   const updateStatus = trpc.applications.updateStatus.useMutation({
     onSuccess: () => utils.applications.list.invalidate(),
   });
+
+  // Override modal state — opened when a landlord clicks "Mark Approved"
+  // on an application the AI flagged for decline or manual_review.
+  const [override, setOverride] = useState<{
+    appId: number;
+    recommendation: string;
+  } | null>(null);
+  const [overrideReason, setOverrideReason] = useState("");
+  const overrideValid = overrideReason.trim().length >= 10;
+
+  const confirmOverride = () => {
+    if (!override || !overrideValid) return;
+    updateStatus.mutate(
+      {
+        id: override.appId,
+        status: "approved",
+        overrideReason: overrideReason.trim(),
+        overrideRecommendation: override.recommendation,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Application approved. Override reason saved to audit trail.");
+          setOverride(null);
+          setOverrideReason("");
+        },
+        onError: (e: any) => {
+          toast.error(e?.message ?? "Failed to save override.");
+        },
+      },
+    );
+  };
+
+  const handleStatusClick = (app: any, target: "reviewing" | "approved" | "denied") => {
+    // Only "approved" gates through the override modal — and only when the AI
+    // flagged the applicant for decline/manual_review. All other transitions
+    // (denying, marking under review, approving an AI-approved applicant)
+    // fire the mutation immediately.
+    if (target === "approved") {
+      const rec = getAiRecommendation(app);
+      if (rec === "decline" || rec === "manual_review") {
+        setOverrideReason("");
+        setOverride({ appId: app.id, recommendation: rec });
+        return;
+      }
+    }
+    updateStatus.mutate({ id: app.id, status: target });
+  };
   const screenMut = (trpc as any).applications.runAiScreening.useMutation({
     onSuccess: (_res: any, vars: { id: number }) => {
       setScreenedIds((prev: Set<number>) => {
@@ -398,6 +473,23 @@ function ReceivedApplications({
                         {STATE_DISCLOSURES[app.state]}
                       </div>
                     )}
+                    {/* AI-override audit note — shown after a landlord
+                        approved an AI-flagged applicant. Read-only. */}
+                    {app.aiOverrideReason && (
+                      <div className="rounded-lg bg-amber-500/5 border border-amber-500/20 p-3 text-xs text-amber-700 dark:text-amber-400">
+                        <div className="font-semibold mb-1 flex items-center gap-1.5">
+                          <ShieldAlert className="h-3.5 w-3.5" />
+                          AI recommendation overridden
+                          {app.aiOverrideAt && (
+                            <span className="font-normal opacity-70">
+                              · {new Date(app.aiOverrideAt).toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                        <div className="opacity-90"><span className="font-medium">Reason:</span> {app.aiOverrideReason}</div>
+                      </div>
+                    )}
+
                     <div className="flex gap-2 flex-wrap">
                    {(["reviewing", "approved", "denied"] as const).map(s => (                        <Button
                           key={s}
@@ -407,7 +499,7 @@ function ReceivedApplications({
                           disabled={app.status === s || updateStatus.isPending}
                           onClick={e => {
                             e.stopPropagation();
-                            updateStatus.mutate({ id: app.id, status: s });
+                            handleStatusClick(app, s);
                           }}
                         >
                           Mark {s === "reviewing" ? "Under Review" : s.replace(/\b\w/g, c => c.toUpperCase())}
@@ -453,6 +545,63 @@ function ReceivedApplications({
           })}
         </div>
       )}
+
+      {/* AI override confirmation modal — gates "Mark Approved" when the AI
+          flagged the applicant for decline or manual_review. The typed
+          reason is persisted to rentalApplications.aiOverrideReason for
+          fair-housing audit defensibility. */}
+      <Dialog open={!!override} onOpenChange={open => { if (!open) { setOverride(null); setOverrideReason(""); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 text-amber-500" />
+              Override AI Recommendation?
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-sm">
+              The AI screening recommended <span className="font-semibold text-foreground">
+                {override ? (REC_LABEL[override.recommendation] ?? override.recommendation) : ""}
+              </span> for this applicant based on the risk factors shown above. Approving now will override that recommendation.
+              <br /><br />
+              For fair-housing compliance, please document why you're approving despite the AI's concerns. This note is saved to the application's audit trail and is not shown to the applicant.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2 py-2">
+            <Label htmlFor="override-reason" className="text-xs font-semibold">
+              Reason for override <span className="text-muted-foreground font-normal">(required, 10+ characters)</span>
+            </Label>
+            <Textarea
+              id="override-reason"
+              autoFocus
+              value={overrideReason}
+              onChange={e => setOverrideReason(e.target.value)}
+              placeholder={'e.g. "Co-signer added covering 3x rent" or "Verified employer by phone — generic name was a DBA"'}
+              rows={4}
+              className="resize-none"
+            />
+            <div className="text-[11px] text-muted-foreground text-right tabular-nums">
+              {overrideReason.trim().length}/10
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => { setOverride(null); setOverrideReason(""); }}
+              disabled={updateStatus.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-[#F5A623] hover:bg-[#E8951A] text-[#3A2410] font-semibold disabled:opacity-50"
+              onClick={confirmOverride}
+              disabled={!overrideValid || updateStatus.isPending}
+            >
+              {updateStatus.isPending ? "Saving…" : "Confirm Approval"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

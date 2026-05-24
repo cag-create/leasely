@@ -851,6 +851,12 @@ export const rentalApplications = mysqlTable("rental_applications", {
   // AI screening output (JSON string conforming to ScreeningSchema in routers.ts)
   aiScreeningResult: text("aiScreeningResult"),
   aiScreenedAt: timestamp("aiScreenedAt"),
+  // AI override audit trail — populated when a landlord approves an application
+  // that the AI flagged as "decline" or "manual_review". Required documentation
+  // for fair-housing defensibility.
+  aiOverrideReason: text("ai_override_reason"),
+  aiOverrideRecommendation: varchar("ai_override_recommendation", { length: 32 }),
+  aiOverrideAt: timestamp("ai_override_at"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

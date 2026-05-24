@@ -2484,8 +2484,16 @@ export const appRouter = router({
       id: z.number(),
       status: z.enum(["reviewing", "approved", "denied", "withdrawn"]),
       notes: z.string().optional(),
+      // Required when approving an applicant the AI flagged for decline /
+      // manual_review. Captured here so fair-housing audits have a
+      // documented justification for every override.
+      overrideReason: z.string().optional(),
+      overrideRecommendation: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
-      await updateRentalApplicationStatus(input.id, ctx.user.id, input.status, input.notes);
+      const override = input.overrideReason && input.overrideRecommendation
+        ? { reason: input.overrideReason, recommendation: input.overrideRecommendation }
+        : undefined;
+      await updateRentalApplicationStatus(input.id, ctx.user.id, input.status, input.notes, override);
 
       // When approved: auto-create a draft lease pre-filled with the applicant's info
       if (input.status === "approved") {
