@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import {
   FileText, Plus, CheckCircle2, Clock, Send, AlertTriangle,
-  Home, DollarSign, Calendar, Key, ChevronRight, Users
+  Home, DollarSign, Calendar, Key, ChevronRight, Users, Pencil
 } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -73,11 +73,77 @@ const emptyForm: {
   lockboxCode: "", accessInstructions: "", notes: "",
 };
 
+function LeaseEditForm({ lease, onClose }: { lease: any; onClose: () => void }) {
+  const [form, setForm] = useState({
+    leaseStartDate: lease.leaseStartDate ?? "",
+    leaseEndDate: lease.leaseEndDate ?? "",
+    monthlyRent: lease.monthlyRent ? (lease.monthlyRent / 100).toString() : "",
+    securityDeposit: lease.securityDeposit ? (lease.securityDeposit / 100).toString() : "",
+    leaseTerm: lease.leaseTerm ?? "24_months",
+  });
+
+  const updateMutation = trpc.leases.updateDraft.useMutation({
+    onSuccess: () => { toast.success("Lease updated"); onClose(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label>Start Date</Label>
+          <Input type="date" value={form.leaseStartDate} onChange={e => setForm(f => ({ ...f, leaseStartDate: e.target.value }))} />
+        </div>
+        <div>
+          <Label>End Date</Label>
+          <Input type="date" value={form.leaseEndDate} onChange={e => setForm(f => ({ ...f, leaseEndDate: e.target.value }))} />
+        </div>
+        <div>
+          <Label>Monthly Rent ($)</Label>
+          <Input type="number" value={form.monthlyRent} onChange={e => setForm(f => ({ ...f, monthlyRent: e.target.value }))} />
+        </div>
+        <div>
+          <Label>Security Deposit ($)</Label>
+          <Input type="number" value={form.securityDeposit} onChange={e => setForm(f => ({ ...f, securityDeposit: e.target.value }))} />
+        </div>
+      </div>
+      <div>
+        <Label>Lease Term</Label>
+        <Select value={form.leaseTerm} onValueChange={v => setForm(f => ({ ...f, leaseTerm: v }))}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="12_months">12 Months</SelectItem>
+            <SelectItem value="24_months">24 Months</SelectItem>
+            <SelectItem value="36_months">36 Months</SelectItem>
+            <SelectItem value="month_to_month">Month-to-Month</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <Button
+        className="w-full bg-[#1B2B5E] hover:bg-[#2D3F7C] text-white"
+        onClick={() => updateMutation.mutate({
+          leaseId: lease.id,
+          leaseStartDate: form.leaseStartDate || undefined,
+          leaseEndDate: form.leaseEndDate || undefined,
+          monthlyRent: form.monthlyRent ? Math.round(parseFloat(form.monthlyRent) * 100) : undefined,
+          securityDeposit: form.securityDeposit ? Math.round(parseFloat(form.securityDeposit) * 100) : undefined,
+          leaseTerm: form.leaseTerm as any,
+        })}
+        disabled={updateMutation.isPending}
+      >
+        {updateMutation.isPending ? "Saving..." : "Save & Re-render Lease"}
+      </Button>
+    </div>
+  );
+}
+
 export default function Leases() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
+  const utils = trpc.useUtils();
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedLease, setSelectedLease] = useState<any>(null);
+  const [editLease, setEditLease] = useState<any>(null);
   const [form, setForm] = useState(emptyForm);
 
   const { data: leases, refetch } = trpc.leases.list.useQuery(undefined, {
@@ -390,17 +456,30 @@ export default function Leases() {
                     </div>
                     <div className="flex items-center gap-2 ml-4">
                       {lease.status === "draft" && (
-                        <Button
-                          size="sm"
-                          className="bg-[#1B2B5E] text-white gap-1 text-xs"
-                          onClick={e => {
-                            e.stopPropagation();
-                            sendMutation.mutate({ leaseId: lease.id });
-                          }}
-                          disabled={sendMutation.isPending}
-                        >
-                          <Send className="w-3 h-3" /> Send
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1 text-xs"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setEditLease(lease as any);
+                            }}
+                          >
+                            <Pencil className="w-3 h-3" /> Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-[#1B2B5E] text-white gap-1 text-xs"
+                            onClick={e => {
+                              e.stopPropagation();
+                              sendMutation.mutate({ leaseId: lease.id });
+                            }}
+                            disabled={sendMutation.isPending}
+                          >
+                            <Send className="w-3 h-3" /> Send
+                          </Button>
+                        </>
                       )}
                       <span className="text-xs text-gray-400">
                         {new Date(lease.createdAt).toLocaleDateString()}
@@ -412,6 +491,21 @@ export default function Leases() {
               </Card>
             ))}
           </div>
+        )}
+
+        {/* Edit Lease Details Dialog */}
+        {editLease && (
+          <Dialog open={!!editLease} onOpenChange={() => setEditLease(null)}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit Lease Details</DialogTitle>
+              </DialogHeader>
+              <LeaseEditForm
+                lease={editLease}
+                onClose={() => { setEditLease(null); utils.leases.list.invalidate(); }}
+              />
+            </DialogContent>
+          </Dialog>
         )}
 
         {/* Lease Detail Dialog */}

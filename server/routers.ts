@@ -567,7 +567,7 @@ const istayRouter = router({
 
 
 import { leasesRouter, adminLeaseTemplatesRouter } from "./leases/router";
-import { createLeaseDocument, getLatestTemplateVersionForState, logLeaseAudit } from "./leases/db-helpers";
+import { createLeaseDocument, getLatestTemplateVersionForState, logLeaseAudit, getTemplateVersionById, listLeaseDocumentsByAgreement, updateLeaseDocument } from "./leases/db-helpers";
 import { renderTemplate } from "./leases/render";
 
 export const appRouter = router({
@@ -4342,6 +4342,61 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
 
         return { sessionUrl: session.url };
       }),
+
+    /** Landlord: update a draft lease's key fields and re-render the lease document */
+    updateDraft: protectedProcedure.input(z.object({
+      leaseId: z.number(),
+      leaseStartDate: z.string().optional(),
+      leaseEndDate: z.string().optional(),
+      monthlyRent: z.number().positive().optional(),
+      securityDeposit: z.number().min(0).optional(),
+      leaseTerm: z.enum(["month_to_month", "6_months", "12_months", "24_months", "36_months"]).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      const lease = await getLeaseById(input.leaseId);
+      if (!lease || lease.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+      if (lease.status !== "draft") throw new TRPCError({ code: "BAD_REQUEST", message: "Can only edit draft leases" });
+
+      await updateLeaseAgreement(input.leaseId, ctx.user.id, {
+        ...(input.leaseStartDate && { leaseStartDate: input.leaseStartDate }),
+        ...(input.leaseEndDate && { leaseEndDate: input.leaseEndDate }),
+        ...(input.monthlyRent !== undefined && { monthlyRent: input.monthlyRent }),
+        ...(input.securityDeposit !== undefined && { securityDeposit: input.securityDeposit }),
+        ...(input.leaseTerm && { leaseTerm: input.leaseTerm }),
+      });
+
+      // Re-render the leaseDocument so the preview reflects the updated values.
+      try {
+        const docs = await listLeaseDocumentsByAgreement(input.leaseId);
+        const doc = docs[0]; // most-recent first (ordered by createdAt desc)
+        if (doc && doc.templateVersionId) {
+          const tv = await getTemplateVersionById(doc.templateVersionId);
+          if (tv) {
+            const variables: Record<string, unknown> = JSON.parse(doc.variableValues ?? "{}");
+            if (input.leaseStartDate) variables.lease_start_date = input.leaseStartDate;
+            if (input.leaseEndDate) variables.lease_end_date = input.leaseEndDate;
+            if (input.monthlyRent !== undefined) variables.monthly_rent = input.monthlyRent / 100;
+            if (input.securityDeposit !== undefined) variables.security_deposit = input.securityDeposit / 100;
+            if (input.leaseTerm) variables.lease_term = input.leaseTerm;
+            const citations: string[] = tv.citations ? JSON.parse(tv.citations as string) : [];
+            const rendered = renderTemplate(tv.bodyHtml, variables as any, citations);
+            await updateLeaseDocument(doc.id, {
+              renderedHtml: rendered.html,
+              variableValues: JSON.stringify(variables),
+              updatedAt: new Date(),
+            });
+          }
+        }
+      } catch (e) {
+        console.error("[updateDraft] Re-render failed", {
+          leaseId: input.leaseId,
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+
+      return { success: true };
+    }),
   }),
 
   // ─── PROPERTY MANAGER ACCESS ─────────────────────────────────────────────────

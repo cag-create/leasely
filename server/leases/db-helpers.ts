@@ -38,6 +38,13 @@ export async function getTemplateVersion(versionId: number): Promise<LeaseTempla
   return rows[0];
 }
 
+export async function getTemplateVersionById(id: number): Promise<LeaseTemplateVersion | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(leaseTemplateVersions).where(eq(leaseTemplateVersions.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+
 export async function listTemplateVersions(templateId: number): Promise<LeaseTemplateVersion[]> {
   const db = await getDb();
   if (!db) return [];
