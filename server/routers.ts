@@ -2725,20 +2725,34 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         fetch: createPatchedFetch(fetch),
       });
 
+      const startedAt = Date.now();
+      console.log("[runAiScreening] starting", {
+        appId: input.id,
+        baseURL,
+        model: "gpt-4o",
+        hasKey: !!ENV.forgeApiKey,
+        promptChars: systemPrompt.length + userPrompt.length,
+      });
       try {
-        // gpt-4o (not mini) — mini can't reliably produce the nested structured
-        // output within the timeout. gpt-4o is ~2x faster on generateObject
-        // calls because it nails the schema on first try instead of retrying.
+        // maxRetries: 0 disables the Vercel AI SDK's internal retry loop, which
+        // was previously swallowing AbortSignal and letting requests run for
+        // 5+ minutes past our 75s timeout.
         const { object } = await generateObject({
           model: openai("gpt-4o"),
           schema: ScreeningSchema,
           system: systemPrompt,
           prompt: userPrompt,
+          maxRetries: 0,
           abortSignal: AbortSignal.timeout(75_000),
+        });
+        console.log("[runAiScreening] success", {
+          appId: input.id,
+          elapsedMs: Date.now() - startedAt,
         });
         await updateApplicationAiScreening(input.id, ctx.user.id, object);
         return { success: true, result: object };
       } catch (e: any) {
+        console.error("[runAiScreening] failed after", Date.now() - startedAt, "ms");
         // Surface raw error to server logs so we can see what's actually failing
         // (timeouts, schema-validation retries, upstream 4xx/5xx, etc.).
         console.error("[runAiScreening] OpenAI call failed:", {
