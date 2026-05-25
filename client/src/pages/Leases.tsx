@@ -90,6 +90,7 @@ function LeaseEditForm({ lease, onClose }: { lease: any; onClose: () => void }) 
     utilities: "",
     petsAllowed: "",
     parking: "",
+    paymentMethods: "",
   });
 
   const fillFieldsMut = (trpc as any).leaseDocs.fillFields.useMutation({
@@ -109,6 +110,7 @@ function LeaseEditForm({ lease, onClose }: { lease: any; onClose: () => void }) 
       if (form.utilities.trim()) extraVars.utilities = form.utilities.trim();
       if (form.petsAllowed.trim()) extraVars.pets_allowed = form.petsAllowed.trim();
       if (form.parking.trim()) extraVars.parking = form.parking.trim();
+      if (form.paymentMethods.trim()) extraVars.payment_methods = form.paymentMethods.trim();
 
       const docId = data?.leaseDocumentId ?? lease.leaseDocumentId;
       if (Object.keys(extraVars).length > 0 && docId) {
@@ -202,6 +204,10 @@ function LeaseEditForm({ lease, onClose }: { lease: any; onClose: () => void }) 
               <Label>Parking</Label>
               <Input placeholder="e.g. 1 assigned space" value={form.parking} onChange={e => setForm(f => ({ ...f, parking: e.target.value }))} />
             </div>
+          </div>
+          <div>
+            <Label>Accepted Payment Methods</Label>
+            <Input placeholder="e.g. Leasely tenant portal, ACH / direct deposit, Check, Money order" value={form.paymentMethods} onChange={e => setForm(f => ({ ...f, paymentMethods: e.target.value }))} />
           </div>
         </div>
       </div>

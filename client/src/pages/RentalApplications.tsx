@@ -244,6 +244,8 @@ function ReceivedApplications({
     applicantMoveInDate: string | null;
     landlordName: string;
     landlordCompany: string;
+    paymentMethods: string[];
+    paymentMethodsNotes: string;
   } | null>(null);
 
   // Pull the Pro user's account name + brand (used to pre-fill the landlord
@@ -275,6 +277,10 @@ function ReceivedApplications({
       applicantMoveInDate: app.moveInDate ?? null,
       landlordName: me?.name ?? "",
       landlordCompany: me?.brandName ?? "",
+      // Default to the rails most landlords actually accept. Pros can toggle
+      // off anything they don't use (e.g. drop Cash App or cash) per lease.
+      paymentMethods: ["Leasely tenant portal", "ACH / direct deposit", "Check", "Money order"],
+      paymentMethodsNotes: "",
     });
   };
 
@@ -349,6 +355,8 @@ function ReceivedApplications({
           leaseTerm: leaseDetails.leaseTerm,
           landlordName: leaseDetails.landlordName.trim() || undefined,
           landlordCompany: leaseDetails.landlordCompany.trim() || undefined,
+          paymentMethods: leaseDetails.paymentMethods,
+          paymentMethodsNotes: leaseDetails.paymentMethodsNotes.trim() || undefined,
         },
       },
       {
@@ -894,6 +902,49 @@ function ReceivedApplications({
                 <option value="6_months">6 months</option>
                 <option value="month_to_month">Month-to-month</option>
               </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Accepted rent payment methods</Label>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 rounded-md border border-input bg-background p-3">
+                {[
+                  "Leasely tenant portal",
+                  "ACH / direct deposit",
+                  "Zelle",
+                  "Venmo",
+                  "Cash App",
+                  "Check",
+                  "Money order",
+                  "Cash",
+                ].map(method => {
+                  const checked = leaseDetails?.paymentMethods.includes(method) ?? false;
+                  return (
+                    <label key={method} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-input"
+                        checked={checked}
+                        onChange={e => setLeaseDetails(d => {
+                          if (!d) return d;
+                          const next = e.target.checked
+                            ? [...d.paymentMethods, method]
+                            : d.paymentMethods.filter(m => m !== method);
+                          return { ...d, paymentMethods: next };
+                        })}
+                      />
+                      <span>{method}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              <Input
+                placeholder="Notes — e.g. portal URL, no Zelle after 5pm"
+                value={leaseDetails?.paymentMethodsNotes ?? ""}
+                onChange={e => setLeaseDetails(d => d && ({ ...d, paymentMethodsNotes: e.target.value }))}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Disclosed on the lease so the tenant knows exactly how to pay rent.
+              </p>
             </div>
           </div>
 

@@ -50,6 +50,7 @@ const NC_RESIDENTIAL: SeedTemplate = {
     "property_address", "property_city", "state", "property_zip",
     "monthly_rent", "security_deposit", "lease_start_date", "lease_end_date",
     "rent_due_day", "late_fee", "utilities", "pets_allowed", "parking", "occupants",
+    "payment_methods",
   ],
   citations: [
     "N.C. Gen. Stat. § 42-3", "N.C. Gen. Stat. § 42-14", "N.C. Gen. Stat. § 42-25.6",
@@ -82,6 +83,7 @@ const NC_RESIDENTIAL: SeedTemplate = {
 
   <section><h2>4. Rent</h2>
     <p>Tenant shall pay rent of <strong>{{monthly_rent}}</strong> per month, due on the <strong>{{rent_due_day}}</strong> of each month.</p>
+    <p><strong>Accepted payment methods.</strong> Tenant shall pay rent via any of the following methods accepted by Landlord: <strong>{{payment_methods}}</strong>. Rent is considered paid on the date funds are received and confirmed by Landlord.</p>
     <p><strong>Late fee.</strong> If any rental payment is five (5) or more calendar days late, Landlord may charge a late fee of <strong>{{late_fee}}</strong>, not to exceed the greater of $15.00 or 5% of the monthly rent under <em>N.C. Gen. Stat. § 42-46(a)</em>.</p>
   </section>
 
@@ -143,7 +145,7 @@ const NC_COLIVING: SeedTemplate = {
     "property_address", "property_city", "state", "property_zip",
     "monthly_rent", "security_deposit", "lease_start_date", "lease_end_date",
     "rent_due_day", "late_fee", "utilities", "pets_allowed", "parking", "occupants",
-    "co_living_rules", "unit_or_room_label",
+    "co_living_rules", "unit_or_room_label", "payment_methods",
   ],
   citations: [
     "N.C. Gen. Stat. § 42-14", "N.C. Gen. Stat. § 42-25.6", "N.C. Gen. Stat. § 42-26",
@@ -170,6 +172,7 @@ const NC_COLIVING: SeedTemplate = {
 
   <section><h2>3. Monthly Fee</h2>
     <p>Tenant shall pay <strong>{{monthly_rent}}</strong> per month, due on the <strong>{{rent_due_day}}</strong> of each month. The fee covers the right to occupy {{unit_or_room_label}}, use of common areas, and shared utilities ({{utilities}}).</p>
+    <p><strong>Accepted payment methods.</strong> Tenant shall pay rent via any of the following methods accepted by Landlord: <strong>{{payment_methods}}</strong>. Rent is considered paid on the date funds are received and confirmed by Landlord.</p>
     <p>Late fee: <strong>{{late_fee}}</strong>, not to exceed the greater of $15 or 5% of the monthly fee per <em>N.C. Gen. Stat. § 42-46(a)</em>.</p>
   </section>
 
@@ -208,6 +211,7 @@ const TN_RESIDENTIAL: SeedTemplate = {
     "property_address", "property_city", "state", "property_zip",
     "monthly_rent", "security_deposit", "lease_start_date", "lease_end_date",
     "rent_due_day", "late_fee", "utilities", "pets_allowed", "parking", "occupants",
+    "payment_methods",
   ],
   citations: [
     "Tenn. Code Ann. § 29-18-101 et seq.", "Tenn. Code Ann. § 66-28-102",
@@ -240,6 +244,7 @@ const TN_RESIDENTIAL: SeedTemplate = {
 
   <section><h2>4. Rent</h2>
     <p>Tenant shall pay <strong>{{monthly_rent}}</strong> per month, due on the <strong>{{rent_due_day}}</strong> of each month.</p>
+    <p><strong>Accepted payment methods.</strong> Tenant shall pay rent via any of the following methods accepted by Landlord: <strong>{{payment_methods}}</strong>. Rent is considered paid on the date funds are received and confirmed by Landlord.</p>
     <p><strong>Late fee.</strong> Pursuant to <em>§ 66-28-201(d)</em>, no late fee may be charged until rent is at least five (5) days past due, and the fee is capped at 10% of the past-due rent. For the rent above: <strong>{{late_fee}}</strong>.</p>
   </section>
 
@@ -287,7 +292,7 @@ const TN_COLIVING: SeedTemplate = {
     "property_address", "property_city", "state", "property_zip",
     "monthly_rent", "security_deposit", "lease_start_date", "lease_end_date",
     "rent_due_day", "late_fee", "utilities", "pets_allowed", "parking", "occupants",
-    "co_living_rules", "unit_or_room_label",
+    "co_living_rules", "unit_or_room_label", "payment_methods",
   ],
   citations: [
     "Tenn. Code Ann. § 29-18-101 et seq.", "Tenn. Code Ann. § 66-28-201",
@@ -314,6 +319,7 @@ const TN_COLIVING: SeedTemplate = {
 
   <section><h2>3. Monthly Fee</h2>
     <p><strong>{{monthly_rent}}</strong> per month, due on the <strong>{{rent_due_day}}</strong>. Utilities included: {{utilities}}. Late fee: <strong>{{late_fee}}</strong> (capped at 10% of the past-due amount per Tenn. Code Ann. § 66-28-201(d) after the 5-day grace).</p>
+    <p><strong>Accepted payment methods.</strong> Tenant shall pay rent via any of the following methods accepted by Landlord: <strong>{{payment_methods}}</strong>. Rent is considered paid on the date funds are received and confirmed by Landlord.</p>
   </section>
 
   <section><h2>4. Refundable Deposit</h2>
@@ -348,7 +354,7 @@ const GENERIC_MULTISTATE: SeedTemplate = {
     "landlord_name", "tenant_name", "tenant_email", "property_address", "property_city",
     "state", "property_zip", "monthly_rent", "security_deposit", "lease_start_date",
     "lease_end_date", "rent_due_day", "late_fee", "utilities", "pets_allowed",
-    "parking", "occupants",
+    "parking", "occupants", "payment_methods",
   ],
   citations: ["42 U.S.C. § 4852d"],
   disclosures: ["federal_lead_paint"],
@@ -377,6 +383,7 @@ const GENERIC_MULTISTATE: SeedTemplate = {
 
   <section><h2>4. Rent</h2>
     <p>{{monthly_rent}} per month, due on the {{rent_due_day}} of each month. Late fee: {{late_fee}}.</p>
+    <p><strong>Accepted payment methods.</strong> Tenant shall pay rent via any of the following methods accepted by Landlord: <strong>{{payment_methods}}</strong>. Rent is considered paid on the date funds are received and confirmed by Landlord.</p>
   </section>
 
   <section><h2>5. Security Deposit</h2>

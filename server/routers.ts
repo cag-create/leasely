@@ -2599,6 +2599,12 @@ export const appRouter = router({
         // Falls back to ctx.user.name and subscription.brandName respectively.
         landlordName: z.string().optional(),
         landlordCompany: z.string().optional(),
+        // Accepted rent-payment rails. Surfaced as checkboxes on the modal so
+        // the lease document explicitly discloses what the landlord accepts
+        // (Leasely portal, ACH, Zelle, Venmo, Cash App, check, money order,
+        // cash). paymentMethodsNotes is free-text for portal URLs or carve-outs.
+        paymentMethods: z.array(z.string()).optional(),
+        paymentMethodsNotes: z.string().optional(),
       }).optional(),
     })).mutation(async ({ ctx, input }) => {
       const override = input.overrideReason && input.overrideRecommendation
@@ -2647,6 +2653,21 @@ export const appRouter = router({
             || (ctx.user.name ?? "");
           const finalLandlordCompany = (input.leaseDetails?.landlordCompany?.trim())
             || (landlordSub?.brandName ?? "");
+
+          // Combine the checkbox list and any free-text notes into a single
+          // human-readable string the template renders directly. Defaults
+          // cover what most landlords actually accept; the landlord can edit
+          // to drop or add rails per-lease.
+          const selectedMethods = input.leaseDetails?.paymentMethods?.filter(Boolean) ?? [
+            "Leasely tenant portal",
+            "ACH / direct deposit",
+            "Check",
+            "Money order",
+          ];
+          const paymentNotes = input.leaseDetails?.paymentMethodsNotes?.trim() ?? "";
+          const finalPaymentMethods = paymentNotes
+            ? `${selectedMethods.join(", ")} (${paymentNotes})`
+            : selectedMethods.join(", ");
 
           const leaseId = await createLeaseAgreement({
             landlordUserId: ctx.user.id,
@@ -2705,6 +2726,7 @@ export const appRouter = router({
                 security_deposit: finalDeposit / 100,
                 lease_start_date: finalStartDate,
                 lease_term: finalTerm,
+                payment_methods: finalPaymentMethods,
                 state,
               };
               const rendered = renderTemplate(templateForState.bodyHtml, variables as any, citations);

@@ -25,6 +25,7 @@ const FIELD_LABELS: Record<string, string> = {
   utilities: "Utilities",
   pets_allowed: "Pets Allowed",
   parking: "Parking",
+  payment_methods: "Accepted Payment Methods",
 };
 
 const FIELD_HINTS: Record<string, string> = {
@@ -37,6 +38,7 @@ const FIELD_HINTS: Record<string, string> = {
   utilities: "e.g. Tenant pays all utilities",
   pets_allowed: "e.g. No pets allowed",
   parking: "e.g. 1 assigned parking space",
+  payment_methods: "e.g. Leasely tenant portal, ACH / direct deposit, Check, Money order",
 };
 
 export default function LeasePreview() {
