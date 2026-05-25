@@ -242,7 +242,14 @@ function ReceivedApplications({
     leaseStartDate: string;  // YYYY-MM-DD
     leaseTerm: "6_months" | "12_months" | "24_months" | "36_months" | "month_to_month";
     applicantMoveInDate: string | null;
+    landlordName: string;
+    landlordCompany: string;
   } | null>(null);
+
+  // Pull the Pro user's account name + brand (used to pre-fill the landlord
+  // identity inputs on the Lease Details modal). Both fields stay editable
+  // so users can switch between personal name and a company / DBA per lease.
+  const { data: me } = (trpc as any).auth.me.useQuery();
 
   const openLeaseDetails = (
     app: any,
@@ -266,6 +273,8 @@ function ReceivedApplications({
       leaseStartDate: app.moveInDate ?? "",
       leaseTerm: "12_months",
       applicantMoveInDate: app.moveInDate ?? null,
+      landlordName: me?.name ?? "",
+      landlordCompany: me?.brandName ?? "",
     });
   };
 
@@ -338,6 +347,8 @@ function ReceivedApplications({
           securityDepositCents: depositCents,
           leaseStartDate: leaseDetails.leaseStartDate,
           leaseTerm: leaseDetails.leaseTerm,
+          landlordName: leaseDetails.landlordName.trim() || undefined,
+          landlordCompany: leaseDetails.landlordCompany.trim() || undefined,
         },
       },
       {
@@ -786,6 +797,31 @@ function ReceivedApplications({
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Landlord name</Label>
+                <Input
+                  value={leaseDetails?.landlordName ?? ""}
+                  onChange={e => setLeaseDetails(d => d && ({ ...d, landlordName: e.target.value }))}
+                  placeholder="Jane Smith"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Person signing as landlord — your name or a team member's.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Company / DBA <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                <Input
+                  value={leaseDetails?.landlordCompany ?? ""}
+                  onChange={e => setLeaseDetails(d => d && ({ ...d, landlordCompany: e.target.value }))}
+                  placeholder="Smith Property Management LLC"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Leave blank to use the landlord's personal name only.
+                </p>
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Property address</Label>
               <Input

@@ -2594,6 +2594,11 @@ export const appRouter = router({
         securityDepositCents: z.number().int().nonnegative(),
         leaseStartDate: z.string(),
         leaseTerm: z.enum(["6_months", "12_months", "24_months", "36_months", "month_to_month"]),
+        // Landlord identity — editable on the Lease Details modal so Pros
+        // can use either their personal name or a company/DBA on the lease.
+        // Falls back to ctx.user.name and subscription.brandName respectively.
+        landlordName: z.string().optional(),
+        landlordCompany: z.string().optional(),
       }).optional(),
     })).mutation(async ({ ctx, input }) => {
       const override = input.overrideReason && input.overrideRecommendation
@@ -2633,6 +2638,15 @@ export const appRouter = router({
             ?? app.moveInDate
             ?? new Date().toISOString().split("T")[0];
           const finalTerm = input.leaseDetails?.leaseTerm ?? "12_months";
+
+          // Landlord display name + company default to the Pro user's account
+          // name and their subscription brandName. Modal overrides both so
+          // landlords can switch between personal name and DBA per lease.
+          const landlordSub = await getUserSubscription(ctx.user.id);
+          const finalLandlordName = (input.leaseDetails?.landlordName?.trim())
+            || (ctx.user.name ?? "");
+          const finalLandlordCompany = (input.leaseDetails?.landlordCompany?.trim())
+            || (landlordSub?.brandName ?? "");
 
           const leaseId = await createLeaseAgreement({
             landlordUserId: ctx.user.id,
@@ -2679,7 +2693,8 @@ export const appRouter = router({
                 tenant_name: app.applicantName ?? "",
                 tenant_email: app.applicantEmail ?? "",
                 tenant_phone: app.applicantPhone ?? "",
-                landlord_name: ctx.user.name ?? "",
+                landlord_name: finalLandlordName,
+                landlord_company: finalLandlordCompany,
                 landlord_email: ctx.user.email ?? "",
                 property_address: finalAddress,
                 property_city: _cityM?.[1]?.trim() ?? "",

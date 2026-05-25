@@ -16,7 +16,8 @@ import { trpc } from "@/lib/trpc";
 import { Loader2, AlertTriangle, FileText, Send, ShieldAlert, Pencil, ChevronDown, ChevronUp } from "lucide-react";
 
 const FIELD_LABELS: Record<string, string> = {
-  landlord_name: "Landlord / Company Name on Lease",
+  landlord_name: "Landlord Name on Lease",
+  landlord_company: "Company / DBA",
   landlord_address: "Landlord / Company Address",
   occupants: "Authorized Occupants",
   rent_due_day: "Rent Due Day",
@@ -27,7 +28,8 @@ const FIELD_LABELS: Record<string, string> = {
 };
 
 const FIELD_HINTS: Record<string, string> = {
-  landlord_name: "e.g. Redrock Property Group LLC",
+  landlord_name: "e.g. Jane Smith",
+  landlord_company: "e.g. Redrock Property Group LLC (optional)",
   landlord_address: "e.g. 123 Main St, Memphis, TN 38115",
   occupants: "e.g. 2 adults",
   rent_due_day: "e.g. 1st",

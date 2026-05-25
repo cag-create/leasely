@@ -81,6 +81,8 @@ function LeaseEditForm({ lease, onClose }: { lease: any; onClose: () => void }) 
     securityDeposit: lease.securityDeposit ? (lease.securityDeposit / 100).toString() : "",
     leaseTerm: lease.leaseTerm ?? "24_months",
     // template variable fields (not in lease_agreements row — start blank)
+    landlordName: "",
+    landlordCompany: "",
     landlordAddress: "",
     occupants: "",
     rentDueDay: "",
@@ -98,6 +100,8 @@ function LeaseEditForm({ lease, onClose }: { lease: any; onClose: () => void }) 
     onSuccess: (data: any) => {
       // After core fields saved, save any template variable fields that were entered.
       const extraVars: Record<string, string> = {};
+      if (form.landlordName.trim()) extraVars.landlord_name = form.landlordName.trim();
+      if (form.landlordCompany.trim()) extraVars.landlord_company = form.landlordCompany.trim();
       if (form.landlordAddress.trim()) extraVars.landlord_address = form.landlordAddress.trim();
       if (form.occupants.trim()) extraVars.occupants = form.occupants.trim();
       if (form.rentDueDay.trim()) extraVars.rent_due_day = form.rentDueDay.trim();
@@ -157,6 +161,16 @@ function LeaseEditForm({ lease, onClose }: { lease: any; onClose: () => void }) 
       <div className="border-t pt-3">
         <p className="text-xs font-semibold text-gray-500 uppercase mb-3">Lease Document Fields</p>
         <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Landlord Name on Lease</Label>
+              <Input placeholder="e.g. Jane Smith" value={form.landlordName} onChange={e => setForm(f => ({ ...f, landlordName: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Company / DBA</Label>
+              <Input placeholder="e.g. Redrock Property Group LLC" value={form.landlordCompany} onChange={e => setForm(f => ({ ...f, landlordCompany: e.target.value }))} />
+            </div>
+          </div>
           <div>
             <Label>Landlord / Company Address</Label>
             <Input placeholder="e.g. 123 Main St, Memphis, TN 38115" value={form.landlordAddress} onChange={e => setForm(f => ({ ...f, landlordAddress: e.target.value }))} />
