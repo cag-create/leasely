@@ -260,6 +260,17 @@ const TN_RESIDENTIAL: SeedTemplate = {
     <p>Landlord may enter at reasonable times after giving Tenant at least 24 hours' notice, except in emergencies.</p>
   </section>
 
+  <section><h2>9. Holdover and Automatic Month-to-Month Conversion</h2>
+    <p>If Tenant remains in possession of the Property after expiration of the lease term with Landlord's consent (express or implied by continued acceptance of rent), this Lease shall automatically convert to a <strong>month-to-month tenancy</strong> on the same terms and conditions then in effect. Either party may terminate the resulting month-to-month tenancy by providing the other party written notice no less than <strong>thirty (30) days</strong> prior to the next periodic rental due date, as required by <em>Tenn. Code Ann. § 66-28-512</em>.</p>
+    <p>If Tenant remains in possession without Landlord's consent after expiration of the term, Landlord may pursue removal through Tennessee's Forcible Entry and Detainer procedure, <em>Tenn. Code Ann. § 29-18-101 et seq.</em>, or through URLTA where applicable. Landlord shall not use self-help removal under any circumstances.</p>
+  </section>
+
+  <section><h2>10. Lease Renewal and Rent Adjustment</h2>
+    <p><strong>Renewal offer.</strong> Prior to expiration of any fixed lease term, Landlord may offer Tenant a written renewal agreement. Any renewal may include a rent adjustment of up to <strong>three percent (3%)</strong> of the then-current monthly rent, provided Landlord delivers written notice of the new rent no less than <strong>sixty (60) days</strong> before the renewal term begins.</p>
+    <p><strong>Ongoing 3% cap after 24 months.</strong> Beginning twenty-four (24) months after the Lease Start Date and on each subsequent twelve-month anniversary thereafter, Landlord reserves the right to increase the monthly rent by up to <strong>three percent (3%)</strong> of the then-current rent, upon <strong>sixty (60) days' written notice</strong>. No increase shall take effect during the first twenty-four (24) months of continuous tenancy regardless of any renewals or holdover conversions. Increases may compound annually but shall not exceed three percent (3%) per year.</p>
+    <p>Tennessee has no statewide rent-control law; the three-percent ceiling is a voluntary contractual commitment by Landlord and is enforceable as a term of this Lease.</p>
+  </section>
+
   ${FEDERAL_LEAD_PAINT}
   ${COMPLIANCE_BLOCK}
   ${SIGNATURE_BLOCK}

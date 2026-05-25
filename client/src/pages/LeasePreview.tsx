@@ -58,7 +58,9 @@ export default function LeasePreview() {
     onSuccess: () => {
       toast.success("Lease updated — fields filled.");
       utils.leaseDocs.get.invalidate({ id });
-      setFieldValues({});
+      // Do NOT clear fieldValues here — clearing resets state to {} which makes
+      // Object.values({}).every(...) return true, disabling the Save button and
+      // preventing the landlord from making a second edit without a page reload.
     },
     onError: (e: any) => toast.error(e.message ?? "Save failed"),
   });
