@@ -84,18 +84,21 @@ export default function LeasePreview() {
       ? (doc.renderedHtml.match(/class="lease-unresolved"/g) ?? []).length
       : 0;
 
-  // Extract the names of unresolved placeholder fields from the rendered HTML.
-  const unresolvedFields = useMemo(() => {
-    if (!doc?.renderedHtml) return [];
-    const matches = [...doc.renderedHtml.matchAll(/\[([a-z_]+)\s*[–—-]\s*required\]/gi)];
-    const seen = new Set<string>();
-    return matches.map(m => m[1].toLowerCase()).filter(f => { if (seen.has(f)) return false; seen.add(f); return true; });
-  }, [doc?.renderedHtml]);
+  // Fields to show in the fill panel — derived from stored variable values rather
+  // than the rendered HTML so that blank-string values are caught even when
+  // renderTemplate already substituted them as empty text (no red marker).
+  const fieldsToFill = useMemo(() => {
+    return Object.keys(FIELD_LABELS).filter(f => {
+      if (f === "landlord_name") return false; // always shown as the first entry
+      const v = (vars as Record<string, unknown>)[f];
+      return v === undefined || v === null || (typeof v === "string" && !v.trim());
+    });
+  }, [vars]);
 
-  // Auto-open the fill panel as soon as the doc loads with unresolved fields.
+  // Auto-open the fill panel as soon as the doc loads with any unfilled fields.
   useEffect(() => {
-    if (unresolvedCount > 0) setShowFillPanel(true);
-  }, [unresolvedCount]);
+    if (unresolvedCount > 0 || fieldsToFill.length > 0) setShowFillPanel(true);
+  }, [unresolvedCount, fieldsToFill.length]);
 
   // Pre-populate property_city and property_zip from the stored property_address
   // so the landlord doesn't have to retype info we already have.
@@ -104,11 +107,11 @@ export default function LeasePreview() {
     const addr = (vars?.property_address as string | undefined) ?? "";
     if (!addr) return;
     const auto: Record<string, string> = {};
-    if (unresolvedFields.includes("property_city")) {
+    if (fieldsToFill.includes("property_city")) {
       const m = addr.match(/,\s*([^,]+),?\s*[A-Z]{2}[\s,]/);
       if (m) auto.property_city = m[1].trim();
     }
-    if (unresolvedFields.includes("property_zip")) {
+    if (fieldsToFill.includes("property_zip")) {
       const m = addr.match(/\b(\d{5})\b/);
       if (m) auto.property_zip = m[1];
     }
@@ -116,7 +119,7 @@ export default function LeasePreview() {
       setFieldValues(v => ({ ...auto, ...v }));
     }
     setAutoPrefilled(true);
-  }, [doc, unresolvedFields, autoPrefilled, vars]);
+  }, [doc, fieldsToFill, autoPrefilled, vars]);
 
   const handleDownload = () => {
     if (!doc) return;
@@ -237,11 +240,15 @@ export default function LeasePreview() {
               <Pencil className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
               <div className="flex-1 text-sm">
                 <p className="font-semibold text-amber-900">
-                  {unresolvedCount > 0
-                    ? `${unresolvedCount} required field${unresolvedCount === 1 ? "" : "s"} unfilled — click to fill`
-                    : "Edit lease fields (landlord name, utilities, etc.)"}
+                  {(() => {
+                    const landlordMissing = !(vars?.landlord_name as string | undefined)?.trim();
+                    const total = fieldsToFill.length + (landlordMissing ? 1 : 0);
+                    return total > 0
+                      ? `${total} required field${total === 1 ? "" : "s"} unfilled — click to fill`
+                      : "Edit lease fields (landlord name, utilities, etc.)";
+                  })()}
                 </p>
-                {unresolvedCount > 0 && (
+                {(unresolvedCount > 0 || fieldsToFill.length > 0) && (
                   <p className="text-amber-700 mt-0.5">Fill them here before sending to the tenant.</p>
                 )}
               </div>
@@ -262,8 +269,8 @@ export default function LeasePreview() {
                     onChange={e => setFieldValues(v => ({ ...v, landlord_name: e.target.value }))}
                   />
                 </div>
-                {/* Unresolved fields */}
-                {unresolvedFields.filter(f => f !== "landlord_name").map(field => (
+                {/* Unfilled fields (derived from stored vars, not rendered HTML) */}
+                {fieldsToFill.map(field => (
                   <div key={field}>
                     <Label className="text-xs font-semibold text-gray-700">
                       {FIELD_LABELS[field] ?? field.replace(/_/g, " ")}

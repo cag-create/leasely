@@ -80,12 +80,46 @@ function LeaseEditForm({ lease, onClose }: { lease: any; onClose: () => void }) 
     monthlyRent: lease.monthlyRent ? (lease.monthlyRent / 100).toString() : "",
     securityDeposit: lease.securityDeposit ? (lease.securityDeposit / 100).toString() : "",
     leaseTerm: lease.leaseTerm ?? "24_months",
+    // template variable fields (not in lease_agreements row — start blank)
+    landlordAddress: "",
+    occupants: "",
+    rentDueDay: "",
+    lateFee: "",
+    utilities: "",
+    petsAllowed: "",
+    parking: "",
+  });
+
+  const fillFieldsMut = (trpc as any).leaseDocs.fillFields.useMutation({
+    onError: (e: any) => toast.error(e.message ?? "Failed to save lease fields"),
   });
 
   const updateMutation = trpc.leases.updateDraft.useMutation({
-    onSuccess: () => { toast.success("Lease updated"); onClose(); },
-    onError: (e) => toast.error(e.message),
+    onSuccess: (data: any) => {
+      // After core fields saved, save any template variable fields that were entered.
+      const extraVars: Record<string, string> = {};
+      if (form.landlordAddress.trim()) extraVars.landlord_address = form.landlordAddress.trim();
+      if (form.occupants.trim()) extraVars.occupants = form.occupants.trim();
+      if (form.rentDueDay.trim()) extraVars.rent_due_day = form.rentDueDay.trim();
+      if (form.lateFee.trim()) extraVars.late_fee = form.lateFee.trim();
+      if (form.utilities.trim()) extraVars.utilities = form.utilities.trim();
+      if (form.petsAllowed.trim()) extraVars.pets_allowed = form.petsAllowed.trim();
+      if (form.parking.trim()) extraVars.parking = form.parking.trim();
+
+      const docId = data?.leaseDocumentId ?? lease.leaseDocumentId;
+      if (Object.keys(extraVars).length > 0 && docId) {
+        fillFieldsMut.mutate({ id: docId, variables: extraVars }, {
+          onSuccess: () => { toast.success("Lease updated"); onClose(); },
+        });
+      } else {
+        toast.success("Lease updated");
+        onClose();
+      }
+    },
+    onError: (e: any) => toast.error(e.message),
   });
+
+  const isSaving = updateMutation.isPending || fillFieldsMut.isPending;
 
   return (
     <div className="space-y-4">
@@ -119,6 +153,45 @@ function LeaseEditForm({ lease, onClose }: { lease: any; onClose: () => void }) 
           </SelectContent>
         </Select>
       </div>
+
+      <div className="border-t pt-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase mb-3">Lease Document Fields</p>
+        <div className="space-y-3">
+          <div>
+            <Label>Landlord / Company Address</Label>
+            <Input placeholder="e.g. 123 Main St, Memphis, TN 38115" value={form.landlordAddress} onChange={e => setForm(f => ({ ...f, landlordAddress: e.target.value }))} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Rent Due Day</Label>
+              <Input placeholder="e.g. 1st" value={form.rentDueDay} onChange={e => setForm(f => ({ ...f, rentDueDay: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Late Fee</Label>
+              <Input placeholder="e.g. $150.00" value={form.lateFee} onChange={e => setForm(f => ({ ...f, lateFee: e.target.value }))} />
+            </div>
+          </div>
+          <div>
+            <Label>Authorized Occupants</Label>
+            <Input placeholder="e.g. 2 adults" value={form.occupants} onChange={e => setForm(f => ({ ...f, occupants: e.target.value }))} />
+          </div>
+          <div>
+            <Label>Utilities</Label>
+            <Input placeholder="e.g. Tenant pays all utilities" value={form.utilities} onChange={e => setForm(f => ({ ...f, utilities: e.target.value }))} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Pets Allowed</Label>
+              <Input placeholder="e.g. No pets allowed" value={form.petsAllowed} onChange={e => setForm(f => ({ ...f, petsAllowed: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Parking</Label>
+              <Input placeholder="e.g. 1 assigned space" value={form.parking} onChange={e => setForm(f => ({ ...f, parking: e.target.value }))} />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <Button
         className="w-full bg-[#1B2B5E] hover:bg-[#2D3F7C] text-white"
         onClick={() => updateMutation.mutate({
@@ -129,9 +202,9 @@ function LeaseEditForm({ lease, onClose }: { lease: any; onClose: () => void }) 
           securityDeposit: form.securityDeposit ? Math.round(parseFloat(form.securityDeposit) * 100) : undefined,
           leaseTerm: form.leaseTerm as any,
         })}
-        disabled={updateMutation.isPending}
+        disabled={isSaving}
       >
-        {updateMutation.isPending ? "Saving..." : "Save & Re-render Lease"}
+        {isSaving ? "Saving..." : "Save & Re-render Lease"}
       </Button>
     </div>
   );
