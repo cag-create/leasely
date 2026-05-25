@@ -73,7 +73,7 @@ const NC_RESIDENTIAL: SeedTemplate = {
   </section>
 
   <section><h2>2. Property</h2>
-    <p>Landlord leases to Tenant the residential premises located at <strong>{{property_address}}, {{property_city}}, {{state}} {{property_zip}}</strong> (the "Property"). Authorized occupants: {{occupants}}.</p>
+    <p>Landlord leases to Tenant the residential premises located at <strong>{{property_address}}</strong> (the "Property"). Authorized occupants: {{occupants}}.</p>
   </section>
 
   <section><h2>3. Term</h2>
@@ -164,7 +164,7 @@ const NC_COLIVING: SeedTemplate = {
   </section>
 
   <section><h2>2. Nature of This Agreement</h2>
-    <p>Tenant is granted the right to occupy <strong>{{unit_or_room_label}}</strong> at <strong>{{property_address}}, {{property_city}}, {{state}} {{property_zip}}</strong> (the "Residence") and to use the shared common areas. Operator reserves the right to enter the room with 24 hours' notice (except in emergencies) and may reassign Tenant to a comparable room within the Residence on 30 days' written notice.</p>
+    <p>Tenant is granted the right to occupy <strong>{{unit_or_room_label}}</strong> at <strong>{{property_address}}</strong> (the "Residence") and to use the shared common areas. Operator reserves the right to enter the room with 24 hours' notice (except in emergencies) and may reassign Tenant to a comparable room within the Residence on 30 days' written notice.</p>
     <p>The "membership" or "room rental" framing applies to house rules and room assignment only. <strong>If Operator seeks to remove Tenant from possession, Operator will follow the applicable North Carolina eviction procedure (summary ejectment under N.C. Gen. Stat. § 42-25.6 et seq.) and will not engage in any self-help removal.</strong> Nothing in this Agreement waives any procedural protection or non-waivable right under North Carolina law.</p>
   </section>
 
@@ -231,7 +231,7 @@ const TN_RESIDENTIAL: SeedTemplate = {
   </section>
 
   <section><h2>2. Property</h2>
-    <p>Premises located at <strong>{{property_address}}, {{property_city}}, {{state}} {{property_zip}}</strong>. Authorized occupants: {{occupants}}.</p>
+    <p>Premises located at <strong>{{property_address}}</strong>. Authorized occupants: {{occupants}}.</p>
   </section>
 
   <section><h2>3. Term</h2>
@@ -308,7 +308,7 @@ const TN_COLIVING: SeedTemplate = {
   </section>
 
   <section><h2>2. Nature of This Agreement</h2>
-    <p>Tenant is granted the right to occupy <strong>{{unit_or_room_label}}</strong> at <strong>{{property_address}}, {{property_city}}, {{state}} {{property_zip}}</strong> and use the shared common areas. Operator may enter with 24 hours' notice (except in emergencies) and may reassign Tenant to a comparable room on 30 days' written notice.</p>
+    <p>Tenant is granted the right to occupy <strong>{{unit_or_room_label}}</strong> at <strong>{{property_address}}</strong> and use the shared common areas. Operator may enter with 24 hours' notice (except in emergencies) and may reassign Tenant to a comparable room on 30 days' written notice.</p>
     <p>The "membership" or "room rental" framing applies to house rules and room assignment only. <strong>If Operator seeks to remove Tenant from possession, Operator will follow Tennessee's applicable eviction procedure (Tenn. Code Ann. § 29-18-101 et seq. or URLTA where applicable). Self-help removal is prohibited.</strong> Nothing in this Agreement waives any procedural protection or non-waivable right under Tennessee law.</p>
   </section>
 
@@ -368,7 +368,7 @@ const GENERIC_MULTISTATE: SeedTemplate = {
   </section>
 
   <section><h2>2. Property</h2>
-    <p>{{property_address}}, {{property_city}}, {{state}} {{property_zip}}. Authorized occupants: {{occupants}}.</p>
+    <p>{{property_address}}. Authorized occupants: {{occupants}}.</p>
   </section>
 
   <section><h2>3. Term</h2>

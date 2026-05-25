@@ -18,8 +18,6 @@ import { Loader2, AlertTriangle, FileText, Send, ShieldAlert, Pencil, ChevronDow
 const FIELD_LABELS: Record<string, string> = {
   landlord_name: "Landlord / Company Name on Lease",
   landlord_address: "Landlord / Company Address",
-  property_city: "Property City",
-  property_zip: "Property ZIP Code",
   occupants: "Authorized Occupants",
   rent_due_day: "Rent Due Day",
   late_fee: "Late Fee Amount",
@@ -31,8 +29,6 @@ const FIELD_LABELS: Record<string, string> = {
 const FIELD_HINTS: Record<string, string> = {
   landlord_name: "e.g. Redrock Property Group LLC",
   landlord_address: "e.g. 123 Main St, Memphis, TN 38115",
-  property_city: "e.g. Memphis",
-  property_zip: "e.g. 38115",
   occupants: "e.g. 2 adults",
   rent_due_day: "e.g. 1st",
   late_fee: "e.g. $150.00",
@@ -49,7 +45,6 @@ export default function LeasePreview() {
   const [acknowledged, setAcknowledged] = useState(false);
   const [showFillPanel, setShowFillPanel] = useState(false);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
-  const [autoPrefilled, setAutoPrefilled] = useState(false);
 
   const utils = (trpc as any).useUtils();
   const docQuery = (trpc as any).leaseDocs.get.useQuery({ id }, { enabled: Number.isFinite(id) && id > 0 });
@@ -99,27 +94,6 @@ export default function LeasePreview() {
   useEffect(() => {
     if (unresolvedCount > 0 || fieldsToFill.length > 0) setShowFillPanel(true);
   }, [unresolvedCount, fieldsToFill.length]);
-
-  // Pre-populate property_city and property_zip from the stored property_address
-  // so the landlord doesn't have to retype info we already have.
-  useEffect(() => {
-    if (!doc || autoPrefilled) return;
-    const addr = (vars?.property_address as string | undefined) ?? "";
-    if (!addr) return;
-    const auto: Record<string, string> = {};
-    if (fieldsToFill.includes("property_city")) {
-      const m = addr.match(/,\s*([^,]+),?\s*[A-Z]{2}[\s,]/);
-      if (m) auto.property_city = m[1].trim();
-    }
-    if (fieldsToFill.includes("property_zip")) {
-      const m = addr.match(/\b(\d{5})\b/);
-      if (m) auto.property_zip = m[1];
-    }
-    if (Object.keys(auto).length > 0) {
-      setFieldValues(v => ({ ...auto, ...v }));
-    }
-    setAutoPrefilled(true);
-  }, [doc, fieldsToFill, autoPrefilled, vars]);
 
   const handleDownload = () => {
     if (!doc) return;
