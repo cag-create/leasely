@@ -249,7 +249,7 @@ const TN_RESIDENTIAL: SeedTemplate = {
   </section>
 
   <section><h2>5. Security Deposit</h2>
-    <p>Tenant shall deposit <strong>{{security_deposit}}</strong>. Tennessee URLTA does not cap the residential deposit. Pursuant to <em>§ 66-28-301</em>, the deposit shall be held in a separate account at a federally insured Tennessee bank, used solely for that purpose; Landlord shall inform Tenant in writing of the name and address of the institution at signing. Within 30 days of the end of tenancy, Landlord shall provide a written itemization of any deductions; if Tenant does not claim the balance within 60 days after Landlord sends notice, Landlord may remove the funds from the separate account.</p>
+    <p>Tenant shall deposit <strong>{{security_deposit}}</strong>. Tennessee URLTA does not cap the residential deposit. Pursuant to <em>§ 66-28-301(a)</em>, the deposit shall be held in a separate account, used solely for that purpose, at any bank or lending institution subject to regulation by the State of Tennessee or any agency of the United States government (an FDIC-insured bank in any state satisfies this requirement); Landlord shall inform Tenant in writing of the location of the institution at signing. Within 30 days of the end of tenancy, Landlord shall provide a written itemization of any deductions; if Tenant does not claim the balance within 60 days after Landlord sends notice, Landlord may remove the funds from the separate account.</p>
   </section>
 
   <section><h2>6. Utilities, Pets, Parking</h2>
@@ -323,7 +323,7 @@ const TN_COLIVING: SeedTemplate = {
   </section>
 
   <section><h2>4. Refundable Deposit</h2>
-    <p><strong>{{security_deposit}}</strong>, held in compliance with <em>Tenn. Code Ann. § 66-28-301</em> (separate federally insured Tennessee bank account, written notice of institution at signing).</p>
+    <p><strong>{{security_deposit}}</strong>, held in compliance with <em>Tenn. Code Ann. § 66-28-301(a)</em> (separate account at a bank or lending institution regulated by the State of Tennessee or any agency of the U.S. government — FDIC-insured banks in any state qualify — with written notice of the institution at signing).</p>
   </section>
 
   <section><h2>5. Term and Termination</h2>
