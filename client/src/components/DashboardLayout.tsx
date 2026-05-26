@@ -199,7 +199,7 @@ function DashboardLayoutContent({
         <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar" disableTransition={isResizing}>
 
           {/* ── Sidebar Header ── */}
-          <SidebarHeader className="h-[72px] border-b border-sidebar-border">
+          <SidebarHeader className="h-[88px] border-b border-sidebar-border">
             <div className="flex items-center gap-3 px-3 h-full">
               <button
                 onClick={toggleSidebar}
@@ -213,7 +213,7 @@ function DashboardLayoutContent({
                   <img
                     src={LOGO_URL}
                     alt="Leasely"
-                    className="h-10 w-auto rounded-md bg-white p-1 shadow-sm"
+                    className="h-16 w-auto rounded-md bg-white p-1.5 shadow-sm"
                     onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
                   />
                   {isPro && (
