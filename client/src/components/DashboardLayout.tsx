@@ -199,7 +199,7 @@ function DashboardLayoutContent({
         <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar" disableTransition={isResizing}>
 
           {/* ── Sidebar Header ── */}
-          <SidebarHeader className="h-[88px] border-b border-sidebar-border">
+          <SidebarHeader className="h-14 border-b border-sidebar-border">
             <div className="flex items-center gap-3 px-3 h-full">
               <button
                 onClick={toggleSidebar}
@@ -208,20 +208,10 @@ function DashboardLayoutContent({
               >
                 <PanelLeft className="h-4 w-4 text-muted-foreground" />
               </button>
-              {!isCollapsed && (
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <img
-                    src={LOGO_URL}
-                    alt="Leasely"
-                    className="h-16 w-auto rounded-md bg-white p-1.5 shadow-sm"
-                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-                  />
-                  {isPro && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#F5A623]/15 text-[#E8951A] border border-[#F5A623]/20 shrink-0">
-                      PRO
-                    </span>
-                  )}
-                </div>
+              {!isCollapsed && isPro && (
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#F5A623]/15 text-[#E8951A] border border-[#F5A623]/20 shrink-0">
+                  PRO
+                </span>
               )}
             </div>
           </SidebarHeader>
@@ -313,6 +303,18 @@ function DashboardLayoutContent({
                 {supportMenuItems.map(item => <NavItem key={item.path} item={item} />)}
               </SidebarMenu>
             </div>
+
+            {/* Brand logo (after Contractors / at bottom) */}
+            {!isCollapsed && (
+              <div className="flex items-center justify-center px-3 pt-4 pb-2">
+                <img
+                  src={LOGO_URL}
+                  alt="Leasely"
+                  className="h-20 w-auto rounded-lg bg-white p-2 shadow-sm"
+                  onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+              </div>
+            )}
 
             {/* Upgrade CTA for free users */}
             {!isPro && !isCollapsed && (
