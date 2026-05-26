@@ -249,6 +249,17 @@ export const leasesRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Legal disclaimer must be acknowledged before sending" });
       }
       await updateLeaseDocument(input.id, { status: "sent" });
+
+      // Bubble the send up to the parent lease_agreements row so the Leases
+      // list (which reads from lease_agreements) stops showing the lease as
+      // a "Draft" after it has been sent to the tenant.
+      if (doc.leaseAgreementId) {
+        await updateLeaseAgreement(doc.leaseAgreementId, ctx.user.id, {
+          status: "sent",
+          sentAt: new Date() as any,
+        });
+      }
+
       await logLeaseAudit({ leaseDocumentId: input.id, actorUserId: ctx.user.id, event: "lease_sent" });
       return { ok: true };
     }),
