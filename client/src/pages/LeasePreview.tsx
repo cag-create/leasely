@@ -19,6 +19,8 @@ const FIELD_LABELS: Record<string, string> = {
   landlord_name: "Landlord Name on Lease",
   landlord_company: "Company / DBA",
   landlord_address: "Landlord / Company Address",
+  monthly_rent: "Monthly Rent ($)",
+  security_deposit: "Security Deposit ($)",
   occupants: "Authorized Occupants",
   rent_due_day: "Rent Due Day",
   late_fee: "Late Fee Amount",
@@ -32,6 +34,8 @@ const FIELD_HINTS: Record<string, string> = {
   landlord_name: "e.g. Jane Smith",
   landlord_company: "e.g. Redrock Property Group LLC (optional)",
   landlord_address: "e.g. 123 Main St, Memphis, TN 38115",
+  monthly_rent: "e.g. 1600",
+  security_deposit: "e.g. 1600",
   occupants: "e.g. 2 adults",
   rent_due_day: "e.g. 1st",
   late_fee: "e.g. $150.00",
@@ -40,6 +44,11 @@ const FIELD_HINTS: Record<string, string> = {
   parking: "e.g. 1 assigned parking space",
   payment_methods: "e.g. Leasely tenant portal, ACH / direct deposit, Check, Money order",
 };
+
+// Fields that always appear in the edit panel with their current value
+// pre-filled, even when they already have a value. Landlords need to be able
+// to revise monetary amounts and names per-lease.
+const ALWAYS_EDITABLE = ["landlord_name", "monthly_rent", "security_deposit"];
 
 export default function LeasePreview() {
   const [, params] = useRoute("/leases/draft/:id");
@@ -88,7 +97,7 @@ export default function LeasePreview() {
   // renderTemplate already substituted them as empty text (no red marker).
   const fieldsToFill = useMemo(() => {
     return Object.keys(FIELD_LABELS).filter(f => {
-      if (f === "landlord_name") return false; // always shown as the first entry
+      if (ALWAYS_EDITABLE.includes(f)) return false; // rendered separately below
       const v = (vars as Record<string, unknown>)[f];
       return v === undefined || v === null || (typeof v === "string" && !v.trim());
     });
@@ -235,18 +244,26 @@ export default function LeasePreview() {
 
             {showFillPanel && (
               <div className="mt-4 border-t border-amber-200 pt-4 space-y-3">
-                {/* Always show landlord name so they can set company name */}
-                <div>
-                  <Label className="text-xs font-semibold text-gray-700">
-                    {FIELD_LABELS["landlord_name"]}
-                  </Label>
-                  <Input
-                    className="mt-1 text-sm"
-                    placeholder={FIELD_HINTS["landlord_name"]}
-                    value={fieldValues["landlord_name"] ?? (vars?.landlord_name ?? "")}
-                    onChange={e => setFieldValues(v => ({ ...v, landlord_name: e.target.value }))}
-                  />
-                </div>
+                {/* Always-editable fields — pre-filled with the current stored
+                    value so the landlord can override per-lease (e.g. fix a
+                    deposit that was copied from the listing). */}
+                {ALWAYS_EDITABLE.map(field => {
+                  const stored = (vars as Record<string, unknown>)[field];
+                  const currentValue = fieldValues[field] ?? (stored != null ? String(stored) : "");
+                  return (
+                    <div key={field}>
+                      <Label className="text-xs font-semibold text-gray-700">
+                        {FIELD_LABELS[field]}
+                      </Label>
+                      <Input
+                        className="mt-1 text-sm"
+                        placeholder={FIELD_HINTS[field]}
+                        value={currentValue}
+                        onChange={e => setFieldValues(v => ({ ...v, [field]: e.target.value }))}
+                      />
+                    </div>
+                  );
+                })}
                 {/* Unfilled fields (derived from stored vars, not rendered HTML) */}
                 {fieldsToFill.map(field => (
                   <div key={field}>

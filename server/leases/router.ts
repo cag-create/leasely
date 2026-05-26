@@ -28,6 +28,7 @@ import {
   listLeaseDocumentsByLandlord, listLeaseDocumentsByAgreement, createLeaseSignature,
   listSignaturesForDocument, logLeaseAudit, listLeaseAudit,
 } from "./db-helpers";
+import { updateLeaseAgreement } from "../db";
 
 const STATE_CODE = z.string().regex(/^[A-Z]{2}$|^ALL$/);
 const CATEGORY = z.enum(["standard_residential", "coliving_room_rental", "generic"]);
@@ -199,6 +200,27 @@ export const leasesRouter = router({
         variableValues: JSON.stringify(mergedVars),
         renderedHtml: newHtml,
       });
+
+      // Keep the underlying lease_agreements row in sync when the landlord
+      // edits monetary fields on the document — otherwise the displayed lease
+      // text and the payment links (Stripe, deposit charge) diverge.
+      // marketplaceListings/document vars are in DOLLARS; lease_agreements is
+      // in CENTS, so multiply by 100 on the way down.
+      if (doc.leaseAgreementId) {
+        const agreementPatch: { monthlyRent?: number; securityDeposit?: number } = {};
+        if (input.variables.monthly_rent !== undefined) {
+          const dollars = Number(input.variables.monthly_rent);
+          if (Number.isFinite(dollars) && dollars >= 0) agreementPatch.monthlyRent = Math.round(dollars * 100);
+        }
+        if (input.variables.security_deposit !== undefined) {
+          const dollars = Number(input.variables.security_deposit);
+          if (Number.isFinite(dollars) && dollars >= 0) agreementPatch.securityDeposit = Math.round(dollars * 100);
+        }
+        if (Object.keys(agreementPatch).length > 0) {
+          await updateLeaseAgreement(doc.leaseAgreementId, ctx.user.id, agreementPatch);
+        }
+      }
+
       await logLeaseAudit({
         leaseDocumentId: input.id,
         actorUserId: ctx.user.id,
