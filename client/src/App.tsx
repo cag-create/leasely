@@ -35,6 +35,7 @@ const AdminPage           = lazy(() => import("./pages/AdminPage"));
 const RentalApplications  = lazy(() => import("./pages/RentalApplications"));
 const PublicApplication   = lazy(() => import("./pages/PublicApplication"));
 const ProSetup            = lazy(() => import("./pages/ProSetup"));
+const Welcome             = lazy(() => import("./pages/Welcome"));
 const PortalSetup         = lazy(() => import("./pages/PortalSetup"));
 const EditListing         = lazy(() => import("./pages/EditListing"));
 const ImportListings      = lazy(() => import("./pages/ImportListings"));
@@ -94,6 +95,7 @@ function Router() {
         {/* Public */}
         <Route path="/" component={Home} />
         <Route path="/apply/:listingId" component={PublicApplication} />
+        <Route path="/welcome" component={Welcome} />
         <Route path="/pro-setup" component={ProSetup} />
         <Route path="/portal-setup" component={PortalSetup} />
         <Route path="/edit-listing/:id" component={EditListing} />
