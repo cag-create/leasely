@@ -818,7 +818,7 @@ export default function Leases() {
                   </div>
                 )}
 
-                {(selectedLease.status === "sent" || selectedLease.status === "tenant_signed" || selectedLease.status === "awaiting_payment") && (
+                {(selectedLease.status === "tenant_signed" || selectedLease.status === "awaiting_payment") && (
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-3">
                     <div className="flex items-start gap-2">
                       <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
