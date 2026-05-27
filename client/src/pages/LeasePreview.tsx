@@ -201,6 +201,10 @@ export default function LeasePreview() {
   }
 
   const isUploaded = doc.source === "uploaded";
+  // Once the lease has been sent (and especially once signed) we render
+  // read-only — no field edits, no acknowledgement card, no Send button.
+  // Landlords still reach this page from /leases to *review* the document.
+  const isReadOnly = doc.status !== "draft";
 
   return (
     <div className="min-h-screen bg-background">
@@ -208,16 +212,49 @@ export default function LeasePreview() {
       <div className="max-w-4xl mx-auto px-4 py-10">
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-2xl font-bold">Lease draft #{doc.id}</h1>
+            <h1 className="text-2xl font-bold">
+              {isReadOnly ? `Lease #${doc.id}` : `Lease draft #${doc.id}`}
+            </h1>
             <p className="text-sm text-muted-foreground">
               Status: <span className="font-medium">{doc.status}</span>
               {tenantEmail && <> · Tenant: {tenantEmail}</>}
             </p>
           </div>
-          <Button variant="outline" onClick={() => navigate("/leases")}>← Back to Leases</Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                // Open the lease document in a clean print window. The user
+                // can pick "Save as PDF" from the print dialog to download.
+                const w = window.open("", "_blank", "width=900,height=1000");
+                if (!w) {
+                  toast.error("Pop-ups are blocked — allow them to print this lease.");
+                  return;
+                }
+                w.document.write(`<!DOCTYPE html><html><head><title>Lease #${doc.id}</title>
+                  <style>
+                    @page { margin: 0.75in; }
+                    body { font-family: -apple-system, system-ui, sans-serif; line-height: 1.6; color: #111; max-width: 7.5in; margin: 0 auto; }
+                    h1 { font-size: 22px; font-weight: 700; margin: 1rem 0 0.75rem; }
+                    h2 { font-size: 16px; font-weight: 600; margin: 1.25rem 0 0.5rem; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+                    p { margin: 0.5rem 0; }
+                    ul, ol { padding-left: 1.5rem; }
+                    .signature-block { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #999; }
+                    .lease-unresolved { background: #fee; color: #b00020; padding: 0 4px; border-radius: 3px; font-weight: 600; }
+                  </style></head><body>${doc.renderedHtml ?? "<p>(empty)</p>"}</body></html>`);
+                w.document.close();
+                w.focus();
+                setTimeout(() => w.print(), 250);
+              }}
+            >
+              <FileText className="h-4 w-4 mr-1.5" /> Print / Save PDF
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/leases")}>← Back to Leases</Button>
+          </div>
         </div>
 
-        {/* Fill Required Fields panel */}
+        {/* Fill Required Fields panel — only when the lease is still a draft */}
+        {!isReadOnly && (
         <Card className="mb-4 border-amber-300 bg-amber-50">
           <CardContent className="p-4">
             <button
@@ -242,7 +279,7 @@ export default function LeasePreview() {
               {showFillPanel ? <ChevronUp className="h-4 w-4 text-amber-600 shrink-0" /> : <ChevronDown className="h-4 w-4 text-amber-600 shrink-0" />}
             </button>
 
-            {showFillPanel && (
+            {!isReadOnly && showFillPanel && (
               <div className="mt-4 border-t border-amber-200 pt-4 space-y-3">
                 {/* Always-editable fields — pre-filled with the current stored
                     value so the landlord can override per-lease (e.g. fix a
@@ -289,6 +326,7 @@ export default function LeasePreview() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {isUploaded ? (
           <Card>
@@ -329,6 +367,7 @@ export default function LeasePreview() {
           </Card>
         )}
 
+        {!isReadOnly && (
         <Card className="border-amber-300">
           <CardContent className="p-5">
             <div className="flex items-start gap-3 mb-3">
@@ -371,6 +410,7 @@ export default function LeasePreview() {
             </div>
           </CardContent>
         </Card>
+        )}
       </div>
     </div>
   );

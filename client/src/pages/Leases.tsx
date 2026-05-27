@@ -765,6 +765,23 @@ export default function Leases() {
                   </div>
                 )}
 
+                {/* Review the lease document at any stage after draft. The
+                    /leases/draft/<id> route renders the document for any
+                    status — read-only once sent/signed. */}
+                {selectedLease.status !== "draft" && (selectedLease as any).leaseDocumentId && (
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={() => {
+                      setSelectedLease(null);
+                      navigate(`/leases/draft/${(selectedLease as any).leaseDocumentId}`);
+                    }}
+                  >
+                    <FileText className="w-4 h-4" />
+                    Review Lease Document
+                  </Button>
+                )}
+
                 {selectedLease.status === "draft" && (
                   <div className="flex gap-2">
                     <Button
