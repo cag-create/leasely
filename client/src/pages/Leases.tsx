@@ -245,6 +245,12 @@ export default function Leases() {
     retry: false,
   });
 
+  // Arrears summary — drives the red banner at the top of the page.
+  const { data: arrears } = (trpc as any).leases.arrearsByLandlord.useQuery(undefined, {
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
   const createMutation = trpc.leases.create.useMutation({
     onSuccess: () => {
       toast.success("Lease created as draft");
@@ -549,6 +555,33 @@ export default function Leases() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Arrears alert — only renders when there are tenants behind. */}
+        {Array.isArray(arrears) && arrears.length > 0 && (
+          <Card className="border-red-300 bg-red-50 mb-4">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <Clock className="w-6 h-6 text-red-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-bold text-red-900">
+                    {arrears.length} tenant{arrears.length === 1 ? "" : "s"} behind on rent —{" "}
+                    ${(arrears.reduce((a: number, t: any) => a + t.amountOwedCents, 0) / 100).toLocaleString("en-US", { minimumFractionDigits: 0 })} outstanding
+                  </p>
+                  <ul className="text-sm text-red-800 mt-2 space-y-1">
+                    {arrears.map((t: any) => (
+                      <li key={t.leaseId} className="flex flex-wrap justify-between gap-2">
+                        <span><strong>{t.tenantName}</strong> · {t.propertyAddress}</span>
+                        <span className="font-mono">
+                          {t.monthsBehind} mo · ${(t.amountOwedCents / 100).toLocaleString("en-US")}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Active filter label */}
         {statusFilter && (
