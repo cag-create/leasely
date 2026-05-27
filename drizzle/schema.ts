@@ -1153,11 +1153,52 @@ export const leaseAgreements = mysqlTable("lease_agreements", {
   // Signed document URL (uploaded PDF or DocuSign)
   signedDocumentUrl: text("signedDocumentUrl"),
   notes: text("notes"),
+  // ── Stripe autopay (recurring rent) ──
+  // Set when the tenant authorises a SetupIntent at signing. The Subscription
+  // then bills on the rent_due_day each month; webhook records into
+  // rent_payments. Until autopay is enabled, rent is treated as manual.
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  stripePaymentMethodId: varchar("stripePaymentMethodId", { length: 255 }),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  autopayEnabled: tinyint("autopayEnabled").default(0),
+  autopayActivatedAt: timestamp("autopayActivatedAt"),
+  rentDueDay: int("rentDueDay").default(1), // day-of-month 1-28
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type LeaseAgreement = typeof leaseAgreements.$inferSelect;
 export type InsertLeaseAgreement = typeof leaseAgreements.$inferInsert;
+
+/**
+ * Monthly rent payment ledger. One row per due-month per lease. Populated
+ * automatically by the Stripe Subscription webhook when autopay is enabled,
+ * or manually by the landlord (off-platform Zelle/Venmo/check). Drives the
+ * arrears view ("X months behind, $Y outstanding").
+ */
+export const rentPayments = mysqlTable("rent_payments", {
+  id: int("id").autoincrement().primaryKey(),
+  leaseAgreementId: int("leaseAgreementId").notNull(),
+  landlordUserId: int("landlordUserId").notNull(),
+  tenantEmail: varchar("tenantEmail", { length: 320 }).notNull(),
+  // Period this payment covers — YYYY-MM-01 string for the first of the month
+  periodMonth: varchar("periodMonth", { length: 10 }).notNull(),
+  // Due date — typically the rent_due_day of periodMonth
+  dueDate: varchar("dueDate", { length: 20 }).notNull(),
+  amountCents: int("amountCents").notNull(),
+  status: mysqlEnum("status", ["pending", "paid", "late", "skipped", "partial"]).default("pending").notNull(),
+  paidAt: timestamp("paidAt"),
+  paidAmountCents: int("paidAmountCents"),
+  paymentMethod: varchar("paymentMethod", { length: 60 }), // "Leasely", "Zelle", "Cash App", etc.
+  stripeInvoiceId: varchar("stripeInvoiceId", { length: 255 }),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  uniqLeasePeriod: uniqueIndex("uniq_lease_period").on(table.leaseAgreementId, table.periodMonth),
+}));
+export type RentPayment = typeof rentPayments.$inferSelect;
+export type InsertRentPayment = typeof rentPayments.$inferInsert;
 
 // ─── Lease Templates (Phase 2) ────────────────────────────────────────────────
 // Admin-editable, state-specific. New states can be added by inserting rows.
@@ -1309,6 +1350,18 @@ export const vendorDispatchRequests = mysqlTable("vendor_dispatch_requests", {
   // Landlord decision
   landlordApproved: tinyint("landlordApproved"),
   approvedAt: timestamp("approvedAt"),
+  // Inspection (after vendor visits site) — photos + observation notes
+  inspectionPhotos: text("inspectionPhotos"), // JSON array of URLs
+  inspectionNotes: text("inspectionNotes"),
+  inspectedAt: timestamp("inspectedAt"),
+  // Completion (after work done) — photos + invoice
+  completionPhotos: text("completionPhotos"), // JSON array of URLs
+  invoiceUrl: text("invoiceUrl"),             // single PDF/img URL
+  invoiceAmountCents: int("invoiceAmountCents"), // final invoiced amount (may differ from quote)
+  completedAt: timestamp("completedAt"),
+  // Landlord completion approval — gates payment
+  landlordApprovedCompletion: tinyint("landlordApprovedCompletion"),
+  landlordApprovedCompletionAt: timestamp("landlordApprovedCompletionAt"),
   // Payment
   paymentStatus: mysqlEnum("paymentStatus", ["pending", "paid", "failed"]).default("pending"),
   stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),

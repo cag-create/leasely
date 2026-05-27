@@ -114,7 +114,8 @@ import {
   // Property Manager Access
   createPropertyManagerAccess, getPropertyManagersByOwner, getPropertiesManagedBy, updatePropertyManagerAccess, revokePropertyManagerAccess,
   // Vendor Dispatch
-  createVendorDispatchRequest, getDispatchsByWorkOrder, getDispatchsByVendor, updateVendorDispatchRequest,
+  createVendorDispatchRequest, getDispatchsByWorkOrder, getDispatchsByVendor, updateVendorDispatchRequest, getDispatchById,
+  createRentPayment, updateRentPayment, listRentPaymentsByLease, listRentPaymentsByLandlord, getRentPaymentByLeasePeriod,
   // Auth: session revocation
   bumpTokenVersion,
 } from "./db";
@@ -2028,12 +2029,117 @@ export const appRouter = router({
     }),
 
     // ── Mark work order complete + pay vendor via Stripe ─────────────────────
+    // ── Vendor submits inspection report (photos + observations + quote) ─────
+    // After accepting a dispatch, the vendor visits the site, takes photos,
+    // and reports back. This precedes any work or invoice.
+    submitInspection: publicProcedure.input(z.object({
+      dispatchId: z.number(),
+      photos: z.array(z.string().url()).max(20),
+      notes: z.string().max(2000).optional(),
+      revisedQuoteCents: z.number().int().nonnegative().optional(),
+    })).mutation(async ({ input }) => {
+      const dr = await getDispatchById(input.dispatchId);
+      if (!dr) throw new TRPCError({ code: "NOT_FOUND" });
+      await updateVendorDispatchRequest(input.dispatchId, {
+        inspectionPhotos: JSON.stringify(input.photos),
+        inspectionNotes: input.notes,
+        inspectedAt: new Date(),
+        vendorQuoteCents: input.revisedQuoteCents ?? dr.vendorQuoteCents,
+      });
+      // Bump work order status so landlord knows inspection happened
+      await updateWorkOrder(dr.workOrderId, dr.landlordUserId, { status: "in_progress" });
+
+      // Email landlord
+      const landlord = await getUserById(dr.landlordUserId);
+      const wo = await getWorkOrderById(dr.workOrderId, dr.landlordUserId);
+      if (landlord?.email && wo) {
+        const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+        sendEmail({
+          to: landlord.email,
+          subject: `🔍 Inspection complete — ${wo.title}`,
+          html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+            <h2 style="color:#1B2B5E">Inspection Report Submitted</h2>
+            <p>The contractor has inspected <strong>${wo.title}</strong> at ${wo.propertyAddress ?? ""}.</p>
+            ${input.notes ? `<p><strong>Notes:</strong> ${input.notes}</p>` : ""}
+            ${input.revisedQuoteCents ? `<p><strong>Revised quote:</strong> $${(input.revisedQuoteCents / 100).toFixed(2)}</p>` : ""}
+            <p style="margin-top:16px"><a href="${APP_URL}/work-orders" style="background:#1B2B5E;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none">Review Inspection</a></p>
+          </div>`,
+        }).catch(() => {});
+      }
+      return { success: true };
+    }),
+
+    // ── Vendor marks work complete (final photos + invoice) ───────────────
+    // Gates the payVendor step — landlord must approveCompletion before payment.
+    markComplete: publicProcedure.input(z.object({
+      dispatchId: z.number(),
+      photos: z.array(z.string().url()).min(1).max(20),
+      invoiceUrl: z.string().url(),
+      invoiceAmountCents: z.number().int().positive(),
+      notes: z.string().max(2000).optional(),
+    })).mutation(async ({ input }) => {
+      const dr = await getDispatchById(input.dispatchId);
+      if (!dr) throw new TRPCError({ code: "NOT_FOUND" });
+      await updateVendorDispatchRequest(input.dispatchId, {
+        completionPhotos: JSON.stringify(input.photos),
+        invoiceUrl: input.invoiceUrl,
+        invoiceAmountCents: input.invoiceAmountCents,
+        completedAt: new Date(),
+      });
+
+      const landlord = await getUserById(dr.landlordUserId);
+      const wo = await getWorkOrderById(dr.workOrderId, dr.landlordUserId);
+      if (landlord?.email && wo) {
+        const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+        sendEmail({
+          to: landlord.email,
+          subject: `✅ Work complete — review & approve ${wo.title}`,
+          html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+            <h2 style="color:#1B2B5E">Work Complete — Approval Required</h2>
+            <p>The contractor has completed <strong>${wo.title}</strong> at ${wo.propertyAddress ?? ""}.</p>
+            <p><strong>Invoice amount:</strong> $${(input.invoiceAmountCents / 100).toFixed(2)}</p>
+            ${input.notes ? `<p><strong>Notes:</strong> ${input.notes}</p>` : ""}
+            <p>Review the completion photos and invoice, then approve to release payment.</p>
+            <p style="margin-top:16px"><a href="${APP_URL}/work-orders" style="background:#00C896;color:#0a2a1f;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:700">Review & Approve</a></p>
+          </div>`,
+        }).catch(() => {});
+      }
+      return { success: true };
+    }),
+
+    // ── Landlord approves completion — required before payVendor ───────────
+    approveCompletion: protectedProcedure.input(z.object({
+      dispatchId: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      const dr = await getDispatchById(input.dispatchId);
+      if (!dr || dr.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+      if (!dr.completedAt) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Contractor has not marked work complete yet." });
+      }
+      await updateVendorDispatchRequest(input.dispatchId, {
+        landlordApprovedCompletion: 1,
+        landlordApprovedCompletionAt: new Date(),
+      });
+      return { success: true };
+    }),
+
     payVendor: protectedProcedure.input(z.object({
       dispatchId: z.number(),
       amountCents: z.number().positive(),
     })).mutation(async ({ ctx, input }) => {
       const sub = await getUserSubscription(ctx.user.id);
       if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+
+      // Gate payment on completion approval — enforces bid → approve → inspect
+      // → complete → approve completion → pay audit trail.
+      const drGate = await getDispatchById(input.dispatchId);
+      if (!drGate || drGate.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      if (!drGate.landlordApprovedCompletion) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Approve the completion (review photos + invoice) before releasing payment.",
+        });
+      }
 
       const { getDb } = await import("./db");
       const db = await getDb();
@@ -4291,6 +4397,189 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         firstMonthPaid: willHaveRent,
         depositPaid: willHaveDeposit,
       };
+    }),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // RECURRING RENT + ARREARS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Enable Stripe autopay on a lease. Creates a SetupIntent client_secret
+     * the tenant uses to authorise a payment method. Once confirmed, the
+     * webhook stores the PaymentMethodId on the lease + creates the
+     * Subscription billing on rentDueDay each month.
+     *
+     * The tenant goes through this once at signing. Pro accounts collect
+     * Leasely's platform fee on each charge.
+     */
+    createAutopaySetup: publicProcedure.input(z.object({
+      leaseId: z.number(),
+      tenantEmail: z.string().email(),
+    })).mutation(async ({ input }) => {
+      const lease = await getLeaseById(input.leaseId);
+      if (!lease || lease.tenantEmail.toLowerCase() !== input.tenantEmail.toLowerCase()) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Lease + email mismatch." });
+      }
+      const stripe = getStripe();
+      if (!stripe) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Stripe not configured." });
+
+      // Reuse or create the Stripe customer
+      let customerId = lease.stripeCustomerId;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: lease.tenantEmail,
+          name: lease.tenantName,
+          metadata: { leaseAgreementId: String(lease.id) },
+        });
+        customerId = customer.id;
+        await updateLeaseAgreement(lease.id, lease.landlordUserId, { stripeCustomerId: customerId } as any);
+      }
+
+      const setupIntent = await stripe.setupIntents.create({
+        customer: customerId,
+        payment_method_types: ["card", "us_bank_account"],
+        usage: "off_session",
+        metadata: { leaseAgreementId: String(lease.id) },
+      });
+
+      return {
+        clientSecret: setupIntent.client_secret,
+        customerId,
+      };
+    }),
+
+    /**
+     * Called by client after Stripe SetupIntent succeeds. Stores the payment
+     * method on the lease, starts the Subscription, and back-fills the first
+     * rent_payments row for the current month.
+     */
+    activateAutopay: publicProcedure.input(z.object({
+      leaseId: z.number(),
+      tenantEmail: z.string().email(),
+      paymentMethodId: z.string().min(1),
+    })).mutation(async ({ input }) => {
+      const lease = await getLeaseById(input.leaseId);
+      if (!lease || lease.tenantEmail.toLowerCase() !== input.tenantEmail.toLowerCase()) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const stripe = getStripe();
+      if (!stripe || !lease.stripeCustomerId) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Setup must run first." });
+      }
+
+      // Attach + set as default
+      await stripe.paymentMethods.attach(input.paymentMethodId, { customer: lease.stripeCustomerId });
+      await stripe.customers.update(lease.stripeCustomerId, {
+        invoice_settings: { default_payment_method: input.paymentMethodId },
+      });
+
+      await updateLeaseAgreement(lease.id, lease.landlordUserId, {
+        stripePaymentMethodId: input.paymentMethodId,
+        autopayEnabled: 1,
+        autopayActivatedAt: new Date(),
+      } as any);
+
+      return { success: true };
+    }),
+
+    /** List rent payment ledger for a lease (landlord-facing). */
+    listRentPayments: protectedProcedure.input(z.object({
+      leaseId: z.number(),
+    })).query(async ({ ctx, input }) => {
+      const lease = await getLeaseById(input.leaseId);
+      if (!lease || lease.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+      return listRentPaymentsByLease(input.leaseId);
+    }),
+
+    /**
+     * Landlord records an off-platform rent payment (Zelle/Venmo/Cash App/check/cash).
+     * Auto-creates the rent_payments row for that period if it doesn't exist yet,
+     * else marks it paid.
+     */
+    recordRentPayment: protectedProcedure.input(z.object({
+      leaseId: z.number(),
+      periodMonth: z.string().regex(/^\d{4}-\d{2}-01$/), // first of month
+      amountCents: z.number().int().positive(),
+      method: z.string().min(1).max(60),
+      note: z.string().max(500).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const lease = await getLeaseById(input.leaseId);
+      if (!lease || lease.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const existing = await getRentPaymentByLeasePeriod(input.leaseId, input.periodMonth);
+      const dueDate = `${input.periodMonth.slice(0, 7)}-${String(lease.rentDueDay ?? 1).padStart(2, "0")}`;
+
+      if (existing) {
+        await updateRentPayment(existing.id, {
+          status: "paid",
+          paidAt: new Date(),
+          paidAmountCents: input.amountCents,
+          paymentMethod: input.method,
+          notes: input.note ? `${existing.notes ?? ""}\n${input.note}`.trim() : existing.notes,
+        });
+        return { success: true, id: existing.id };
+      }
+
+      const id = await createRentPayment({
+        leaseAgreementId: lease.id,
+        landlordUserId: lease.landlordUserId,
+        tenantEmail: lease.tenantEmail,
+        periodMonth: input.periodMonth,
+        dueDate,
+        amountCents: lease.monthlyRent,
+        status: "paid",
+        paidAt: new Date() as any,
+        paidAmountCents: input.amountCents,
+        paymentMethod: input.method,
+        notes: input.note,
+      });
+      return { success: true, id };
+    }),
+
+    /**
+     * Arrears dashboard query — every lease the landlord owns plus how many
+     * months overdue + total dollars outstanding. Computed from the
+     * rent_payments table; assumes one bill per month from leaseStartDate.
+     */
+    arrearsByLandlord: protectedProcedure.query(async ({ ctx }) => {
+      const leases = await getLeasesByLandlord(ctx.user.id);
+      const today = new Date();
+      const out: Array<{
+        leaseId: number; tenantName: string; tenantEmail: string; propertyAddress: string;
+        monthlyRent: number; monthsBehind: number; amountOwedCents: number; lastPaidPeriod: string | null;
+      }> = [];
+
+      for (const lease of leases) {
+        if (!["signed", "active", "awaiting_payment", "paid"].includes(lease.status)) continue;
+        const payments = await listRentPaymentsByLease(lease.id);
+        const paidPeriods = new Set(payments.filter(p => p.status === "paid").map(p => p.periodMonth));
+        // Compute every month from leaseStartDate to today
+        const start = new Date(`${lease.leaseStartDate}T12:00:00Z`);
+        if (Number.isNaN(start.getTime())) continue;
+        let monthsBehind = 0;
+        let lastPaid: string | null = null;
+        const cur = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1));
+        const cutoff = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
+        while (cur.getTime() <= cutoff.getTime()) {
+          const period = `${cur.getUTCFullYear()}-${String(cur.getUTCMonth() + 1).padStart(2, "0")}-01`;
+          if (paidPeriods.has(period)) lastPaid = period;
+          else monthsBehind += 1;
+          cur.setUTCMonth(cur.getUTCMonth() + 1);
+        }
+        if (monthsBehind > 0) {
+          out.push({
+            leaseId: lease.id,
+            tenantName: lease.tenantName,
+            tenantEmail: lease.tenantEmail,
+            propertyAddress: lease.propertyAddress,
+            monthlyRent: lease.monthlyRent,
+            monthsBehind,
+            amountOwedCents: monthsBehind * lease.monthlyRent,
+            lastPaidPeriod: lastPaid,
+          });
+        }
+      }
+      return out;
     }),
 
     /** Landlord countersigns the lease (only allowed once payment has cleared). */

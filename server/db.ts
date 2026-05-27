@@ -1785,6 +1785,7 @@ import {
   leaseDocuments,
   propertyManagerAccess, InsertPropertyManagerAccess, PropertyManagerAccess,
   vendorDispatchRequests, InsertVendorDispatchRequest, VendorDispatchRequest,
+  rentPayments, InsertRentPayment, RentPayment,
 } from "../drizzle/schema";
 
 export async function createLeaseAgreement(data: Omit<InsertLeaseAgreement, "id" | "createdAt" | "updatedAt">): Promise<number> {
@@ -1901,4 +1902,51 @@ export async function updateVendorDispatchRequest(id: number, data: Partial<Inse
   const db = await getDb();
   if (!db) return;
   await db.update(vendorDispatchRequests).set(data as any).where(eq(vendorDispatchRequests.id, id));
+}
+
+export async function getDispatchById(id: number): Promise<VendorDispatchRequest | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(vendorDispatchRequests).where(eq(vendorDispatchRequests.id, id)).limit(1);
+  return rows[0];
+}
+
+// ─── Rent Payments (monthly ledger / arrears) ────────────────────────────────
+
+export async function createRentPayment(data: Omit<InsertRentPayment, "id" | "createdAt" | "updatedAt">): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const result = await db.insert(rentPayments).values(data as any);
+  return (result[0] as any).insertId;
+}
+
+export async function updateRentPayment(id: number, data: Partial<InsertRentPayment>): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(rentPayments).set(data as any).where(eq(rentPayments.id, id));
+}
+
+export async function listRentPaymentsByLease(leaseAgreementId: number): Promise<RentPayment[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(rentPayments)
+    .where(eq(rentPayments.leaseAgreementId, leaseAgreementId))
+    .orderBy(desc(rentPayments.periodMonth));
+}
+
+export async function listRentPaymentsByLandlord(landlordUserId: number): Promise<RentPayment[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(rentPayments)
+    .where(eq(rentPayments.landlordUserId, landlordUserId))
+    .orderBy(desc(rentPayments.dueDate));
+}
+
+export async function getRentPaymentByLeasePeriod(leaseAgreementId: number, periodMonth: string): Promise<RentPayment | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(rentPayments)
+    .where(and(eq(rentPayments.leaseAgreementId, leaseAgreementId), eq(rentPayments.periodMonth, periodMonth)))
+    .limit(1);
+  return rows[0];
 }
