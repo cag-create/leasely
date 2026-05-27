@@ -185,7 +185,7 @@ export default function Home() {
               </div>
 
               <p className="text-lg md:text-xl text-white/65 leading-relaxed max-w-lg">
-                List, screen, sign, collect, and dispatch — every step of the lease lifecycle on a single screen. <span className="text-white font-semibold">$25/month flat.</span> No per-unit fees. Ever.
+                List, screen, sign, collect, and dispatch — every step of the lease lifecycle on a single screen. <span className="text-white font-semibold">$25/month flat.</span> No per-unit fees. No per-transaction fees. No vendor invoice markups. <span className="text-[#F5A623] font-semibold">We don't nickel-and-dime.</span>
               </p>
 
               {/* Competitive strip */}

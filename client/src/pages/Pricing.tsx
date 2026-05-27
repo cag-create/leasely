@@ -118,6 +118,10 @@ const FAQ_ITEMS = [
     q: "I manage many properties. Is there a per-unit charge?",
     a: "No. Pro is $75 one-time setup + $25/month flat — no per-property or per-unit fees, ever. List 1 property or 100. Add a property manager. Hand off entire portfolios. It's all the same $25/month."
   },
+  {
+    q: "Do you take a cut of vendor invoices or charge per work order?",
+    a: "No. Unlike Buildium and Yardi — which charge per-transaction fees or mark up vendor invoices — Leasely takes zero from your work orders. Your contractor invoices you $1,000, your contractor gets paid $1,000, we don't touch it. We don't nickel-and-dime. The $25/mo covers unlimited work orders, unlimited vendor dispatch, and unlimited Stripe Connect payouts."
+  },
 ];
 
 
