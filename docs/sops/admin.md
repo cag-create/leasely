@@ -1,6 +1,6 @@
 # Leasely — Admin SOP
 
-> Internal operating procedures for the platform admin team. Last updated 2026-05-22.
+> Internal operating procedures for the platform admin team. Last updated 2026-05-27.
 
 This SOP covers the everyday and rare-but-critical tasks that flow through `/admin`.
 It is the authoritative reference — if a flow disagrees with this doc, the doc is right
@@ -52,6 +52,34 @@ and the flow needs fixing.
 4. Open a Linear ticket against the screening model with the applicant ID redacted.
 5. Refund chargebacks **only after** Stripe's evidence window closes — never refund
    a disputed charge while it's still in dispute, you lose the dispute case file.
+
+## 5a. Pro signup flow — what to check when activation looks broken
+
+The Stripe payment link redirects to **`leasely.net/welcome`** after the $75
+setup payment. That page reads the `?session_id=...` query param, calls
+`pro.activateFromStripeSession`, and provisions the subdomain. If a member
+reports "I paid but nothing happened":
+
+1. Confirm the Stripe payment succeeded in the Stripe dashboard.
+2. In `/admin` → Pro Members, search by email. `pro_setup_paid_at` should be
+   populated. If not, run `pro.activateFromStripeSession({ sessionId })`
+   manually from the admin console with the session ID from Stripe.
+3. Subdomain provision is async — Cloudflare DNS can lag 5–15 min.
+4. Confirm `business_legal_name` is set on the user — the lease render
+   depends on it. Members entering personal name only is the most common
+   "lease has wrong landlord" report.
+
+## 5b. Brevo email lookups (lease emails, password resets, screening reports)
+
+All transactional email goes through Brevo via `BREVO_API_KEY`. To verify
+delivery for a member ticket:
+
+1. Log in to Brevo → **Transactional → Email activity**.
+2. Search by recipient email + 24h window.
+3. Look for `delivered`, `soft_bounce`, `hard_bounce`, `spam`, or `blocked`.
+4. `hard_bounce` → mark the email invalid in the user record and ask the
+   member for a corrected address. Brevo will suppress further sends to
+   bounced addresses for 30 days.
 
 ## 5. Manual Pro-member overrides
 

@@ -211,6 +211,11 @@ export default function Dashboard() {
   const { data: paymentHistory = [] } = trpc.marketplace.getPaymentHistory.useQuery(undefined, {
     enabled: isAuthenticated && (tierData?.tier === "paid"),
   });
+  // Lease count drives the first-success checklist below
+  const { data: leasesForChecklist = [] } = trpc.leases.list.useQuery(undefined, {
+    enabled: isAuthenticated,
+    retry: false,
+  });
   // Available balance for instant payout
   const { data: balanceData, refetch: refetchBalance } = trpc.marketplace.getAvailableBalance.useQuery(undefined, {
     enabled: isAuthenticated && (tierData?.tier === "paid") && stripeStatus?.status === "active",
@@ -357,6 +362,72 @@ export default function Dashboard() {
             </Button>
           </div>
         )}
+
+        {/* First-success checklist — collapses once all steps are complete.
+            Only shown to Pro users (free tier sees the upgrade banner above). */}
+        {isPaid && (() => {
+          const hasListing = myListings.length > 0;
+          const hasStripe = stripeStatus?.status === "active";
+          const hasLease = (leasesForChecklist as any[]).length > 0;
+          const completed = [hasListing, hasStripe, hasLease].filter(Boolean).length;
+          if (completed === 3) return null;
+          const pct = Math.round((completed / 3) * 100);
+          const steps = [
+            { done: hasListing, label: "Add your first property", desc: "List a unit you own — takes 2 minutes.", href: "/list-property", cta: "Add listing" },
+            { done: hasStripe, label: "Connect Stripe", desc: "Get paid directly. 0% ACH for tenants.", href: "#stripe-connect", cta: "Connect Stripe" },
+            { done: hasLease, label: "Send your first lease", desc: "Create and send a lease — your tenant signs + autopays.", href: "/leases", cta: "Create lease" },
+          ];
+          return (
+            <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6 mb-8">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="font-black text-gray-900 flex items-center gap-2">
+                    <Sparkles className="h-5 w-5" style={{ color: ACCENT }} /> Get to your first paid tenant
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">{completed} of 3 complete · finish setup to start collecting rent.</p>
+                </div>
+                <span className="text-2xl font-black" style={{ color: ACCENT }}>{pct}%</span>
+              </div>
+              <div className="h-2 bg-white rounded-full overflow-hidden mb-4">
+                <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: ACCENT }} />
+              </div>
+              <div className="space-y-2">
+                {steps.map((s) => (
+                  <div key={s.label} className={`flex items-center gap-3 rounded-xl p-3 ${s.done ? "bg-white/60 opacity-60" : "bg-white"}`}>
+                    <div className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 ${s.done ? "bg-emerald-500" : "border-2 border-gray-200"}`}>
+                      {s.done && <CheckCircle2 className="h-4 w-4 text-white" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-semibold text-sm ${s.done ? "line-through text-gray-400" : "text-gray-900"}`}>{s.label}</p>
+                      {!s.done && <p className="text-xs text-gray-500">{s.desc}</p>}
+                    </div>
+                    {!s.done && (
+                      s.href.startsWith("#")
+                        ? (
+                          <Button
+                            size="sm"
+                            className="font-bold text-xs h-8"
+                            style={{ background: ACCENT, color: "#3A2410" }}
+                            onClick={() => stripeConnectMutation.mutate()}
+                            disabled={stripeConnectMutation.isPending}
+                          >
+                            {s.cta}
+                          </Button>
+                        )
+                        : (
+                          <Link href={s.href}>
+                            <Button size="sm" className="font-bold text-xs h-8" style={{ background: ACCENT, color: "#3A2410" }}>
+                              {s.cta}
+                            </Button>
+                          </Link>
+                        )
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
