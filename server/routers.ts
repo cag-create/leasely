@@ -4227,6 +4227,72 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       return { success: true, status: patch.status ?? lease.status };
     }),
 
+    /**
+     * Landlord-confirmed payment receipt — for off-platform payments (Zelle,
+     * Venmo, Cash App, ACH, check, money order, cash). This is the manual
+     * counterpart to the Stripe webhook-driven `markPaid` above. Same state
+     * machine, same countersign-prompt email, just authenticated as the
+     * landlord and audit-tagged so we know it wasn't from Stripe.
+     */
+    confirmPaymentReceived: protectedProcedure.input(z.object({
+      leaseId: z.number(),
+      kind: z.enum(["rent", "deposit", "both"]),
+      method: z.string().min(1).max(40).optional(),
+      note: z.string().max(500).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const lease = await getLeaseById(input.leaseId);
+      if (!lease || lease.landlordUserId !== ctx.user.id) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      const patch: Record<string, unknown> = {};
+      if (input.kind === "rent" || input.kind === "both") patch.firstMonthPaid = 1;
+      if (input.kind === "deposit" || input.kind === "both") patch.depositPaid = 1;
+
+      const willHaveRent = patch.firstMonthPaid === 1 || lease.firstMonthPaid === 1;
+      const needsDeposit = (lease.securityDeposit ?? 0) > 0;
+      const willHaveDeposit = !needsDeposit || patch.depositPaid === 1 || lease.depositPaid === 1;
+
+      if (willHaveRent && willHaveDeposit) {
+        patch.status = "paid";
+        patch.paidAt = new Date();
+      }
+
+      // Append the confirmation to the lease notes so there's a paper trail
+      // for non-Stripe payments (method + landlord-supplied reference).
+      const stamp = new Date().toISOString().slice(0, 10);
+      const trail = `[${stamp}] Manual payment confirmation — ${input.kind}${input.method ? ` via ${input.method}` : ""}${input.note ? ` (${input.note})` : ""}`;
+      patch.notes = lease.notes ? `${lease.notes}\n${trail}` : trail;
+
+      await updateLeaseAgreement(lease.id, lease.landlordUserId, patch as any);
+
+      // Email the landlord a confirmation that the countersign step is unlocked,
+      // mirroring the Stripe-webhook behaviour so the UX feels identical.
+      if (willHaveRent && willHaveDeposit) {
+        const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+        const landlord = await getUserById(lease.landlordUserId);
+        if (landlord?.email) {
+          sendEmail({
+            to: landlord.email,
+            subject: `Payment Confirmed — Countersign to Execute Lease (${lease.propertyAddress})`,
+            html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+              <h2 style="color:#1B2B5E">Payment Confirmed — Action Required</h2>
+              <p>You confirmed receipt of first month's rent${needsDeposit ? " and security deposit" : ""} from <strong>${lease.tenantName}</strong>${input.method ? ` (via ${input.method})` : ""}.</p>
+              <p>The lease is ready for your countersignature to be fully executed.</p>
+              <p style="margin-top:16px"><a href="${APP_URL}/leases" style="background:#00C896;color:#0a2a1f;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:700">Countersign Lease</a></p>
+            </div>`,
+          }).catch(() => {});
+        }
+      }
+
+      return {
+        success: true,
+        status: patch.status ?? lease.status,
+        firstMonthPaid: willHaveRent,
+        depositPaid: willHaveDeposit,
+      };
+    }),
+
     /** Landlord countersigns the lease (only allowed once payment has cleared). */
     landlordSign: protectedProcedure.input(z.object({
       leaseId: z.number(),

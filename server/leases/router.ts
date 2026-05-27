@@ -28,7 +28,8 @@ import {
   listLeaseDocumentsByLandlord, listLeaseDocumentsByAgreement, createLeaseSignature,
   listSignaturesForDocument, logLeaseAudit, listLeaseAudit,
 } from "./db-helpers";
-import { updateLeaseAgreement } from "../db";
+import { updateLeaseAgreement, getLeaseById, getUserById } from "../db";
+import { sendEmail, leaseAgreementEmail } from "../_core/email";
 
 const STATE_CODE = z.string().regex(/^[A-Z]{2}$|^ALL$/);
 const CATEGORY = z.enum(["standard_residential", "coliving_room_rental", "generic"]);
@@ -252,12 +253,36 @@ export const leasesRouter = router({
 
       // Bubble the send up to the parent lease_agreements row so the Leases
       // list (which reads from lease_agreements) stops showing the lease as
-      // a "Draft" after it has been sent to the tenant.
+      // a "Draft" after it has been sent to the tenant. Also email the
+      // tenant the sign-lease link — without this email the tenant has no
+      // way to reach the signing page.
       if (doc.leaseAgreementId) {
         await updateLeaseAgreement(doc.leaseAgreementId, ctx.user.id, {
           status: "sent",
           sentAt: new Date() as any,
         });
+
+        const lease = await getLeaseById(doc.leaseAgreementId);
+        if (lease) {
+          const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+          const landlord = await getUserById(lease.landlordUserId);
+          const signUrl = `${APP_URL}/tenant/sign-lease/${lease.id}`;
+          sendEmail({
+            to: lease.tenantEmail,
+            subject: `Your Lease Agreement is Ready — ${lease.propertyAddress}`,
+            html: leaseAgreementEmail({
+              tenantName: lease.tenantName,
+              landlordName: landlord?.name ?? "Your Landlord",
+              propertyAddress: lease.propertyAddress,
+              state: lease.state,
+              monthlyRentDollars: lease.monthlyRent / 100,
+              securityDepositDollars: (lease.securityDeposit ?? 0) / 100,
+              leaseStartDate: lease.leaseStartDate,
+              leaseTerm: lease.leaseTerm ?? "12_months",
+              leaseUrl: signUrl,
+            }),
+          }).catch(() => {});
+        }
       }
 
       await logLeaseAudit({ leaseDocumentId: input.id, actorUserId: ctx.user.id, event: "lease_sent" });

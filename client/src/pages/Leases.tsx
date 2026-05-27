@@ -279,6 +279,22 @@ export default function Leases() {
     onError: (e) => toast.error(e.message),
   });
 
+  // Off-platform payment fallback. Leasely-rails (Stripe) is the default —
+  // this is here only so a landlord who took Zelle/Venmo/check/cash can keep
+  // the lease moving without manual DB surgery.
+  const confirmPaymentMutation = (trpc as any).leases.confirmPaymentReceived.useMutation({
+    onSuccess: (data: any) => {
+      if (data.status === "paid") {
+        toast.success("Payment confirmed — lease is ready for your countersignature");
+      } else {
+        toast.success("Payment recorded");
+      }
+      refetch();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const [payMethod, setPayMethod] = useState<string>("Leasely");
+
   const generateDocMutation = trpc.leases.updateDraft.useMutation({
     onSuccess: (data, variables) => {
       refetch();
@@ -802,15 +818,16 @@ export default function Leases() {
                   </div>
                 )}
 
-                {(selectedLease.status === "tenant_signed" || selectedLease.status === "awaiting_payment") && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                {(selectedLease.status === "sent" || selectedLease.status === "tenant_signed" || selectedLease.status === "awaiting_payment") && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-3">
                     <div className="flex items-start gap-2">
                       <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-semibold text-amber-900">Tenant Signed — Awaiting Payment</p>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-amber-900">Awaiting Payment</p>
                         <p className="text-xs text-amber-800 mt-0.5">
-                          Tenant has e-signed. Lease is conditional and not yet executed. We'll email you to countersign once
-                          first month's rent and the security deposit clear.
+                          Leasely auto-collects via Stripe + emails you when payment clears. If the tenant paid you
+                          directly via Zelle, Venmo, Cash App, ACH, check, money order, or cash, confirm receipt below
+                          to unlock countersignature.
                         </p>
                         <ul className="text-xs text-amber-800 mt-2 space-y-0.5">
                           <li>• First month's rent: {selectedLease.firstMonthPaid ? "✅ paid" : "⏳ pending"}</li>
@@ -820,6 +837,54 @@ export default function Leases() {
                         </ul>
                       </div>
                     </div>
+
+                    {(!selectedLease.firstMonthPaid || ((selectedLease.securityDeposit ?? 0) > 0 && !selectedLease.depositPaid)) && (
+                      <div className="border-t border-amber-200 pt-3 space-y-2">
+                        <Label className="text-xs font-semibold text-amber-900">Confirm off-platform payment</Label>
+                        <select
+                          className="w-full text-xs border border-amber-300 rounded px-2 py-1.5 bg-white"
+                          value={payMethod}
+                          onChange={(e) => setPayMethod(e.target.value)}
+                        >
+                          <option value="Leasely">Leasely platform</option>
+                          <option value="ACH / direct deposit">ACH / direct deposit</option>
+                          <option value="Zelle">Zelle</option>
+                          <option value="Venmo">Venmo</option>
+                          <option value="Cash App">Cash App</option>
+                          <option value="Check">Check</option>
+                          <option value="Money order">Money order</option>
+                          <option value="Cash">Cash</option>
+                        </select>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-8"
+                            disabled={selectedLease.firstMonthPaid === 1 || confirmPaymentMutation.isPending}
+                            onClick={() => confirmPaymentMutation.mutate({ leaseId: selectedLease.id, kind: "rent", method: payMethod })}
+                          >
+                            Rent received
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-8"
+                            disabled={(selectedLease.securityDeposit ?? 0) === 0 || selectedLease.depositPaid === 1 || confirmPaymentMutation.isPending}
+                            onClick={() => confirmPaymentMutation.mutate({ leaseId: selectedLease.id, kind: "deposit", method: payMethod })}
+                          >
+                            Deposit received
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="text-xs h-8 bg-amber-600 hover:bg-amber-700 text-white"
+                            disabled={confirmPaymentMutation.isPending}
+                            onClick={() => confirmPaymentMutation.mutate({ leaseId: selectedLease.id, kind: "both", method: payMethod })}
+                          >
+                            Both received
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
