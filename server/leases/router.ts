@@ -182,7 +182,12 @@ export const leasesRouter = router({
     .mutation(async ({ ctx, input }) => {
       const doc = await getLeaseDocument(input.id);
       if (!doc || doc.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
-      if (doc.status !== "draft") throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot edit a non-draft document" });
+      // Allow edits through "sent" — the landlord can revise rent/deposit
+      // (or any other variable) right up until the tenant signs. Once a
+      // signature exists, the document is locked.
+      if (doc.status !== "draft" && doc.status !== "sent") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot edit a lease that has been signed" });
+      }
 
       const oldVars: Record<string, unknown> = doc.variableValues ? JSON.parse(doc.variableValues) : {};
       const mergedVars = { ...oldVars, ...input.variables };

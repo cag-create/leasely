@@ -201,10 +201,12 @@ export default function LeasePreview() {
   }
 
   const isUploaded = doc.source === "uploaded";
-  // Once the lease has been sent (and especially once signed) we render
-  // read-only — no field edits, no acknowledgement card, no Send button.
-  // Landlords still reach this page from /leases to *review* the document.
-  const isReadOnly = doc.status !== "draft";
+  // Editable through "sent" — landlords can still revise rent/deposit
+  // numbers or fix typos up until the tenant signs. Anything signed is
+  // locked. The Send/Acknowledgement card only shows for true drafts.
+  const isEditable = doc.status === "draft" || doc.status === "sent";
+  const isReadOnly = !isEditable;
+  const isDraft = doc.status === "draft";
 
   return (
     <div className="min-h-screen bg-background">
@@ -367,7 +369,7 @@ export default function LeasePreview() {
           </Card>
         )}
 
-        {!isReadOnly && (
+        {isDraft && (
         <Card className="border-amber-300">
           <CardContent className="p-5">
             <div className="flex items-start gap-3 mb-3">

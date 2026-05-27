@@ -114,10 +114,13 @@ export default function LeasePay() {
 
   const needsDeposit = lease.securityDeposit > 0;
   const allPaid = lease.firstMonthPaid && (!needsDeposit || lease.depositPaid);
+  const totalDueCents =
+    (!lease.firstMonthPaid ? lease.monthlyRent : 0) +
+    (needsDeposit && !lease.depositPaid ? lease.securityDeposit : 0);
 
-  function pay(kind: "rent" | "deposit") {
-    setSubmitting(kind);
-    createSession.mutate({ leaseId, tenantEmail: email, kind });
+  function startAutopay() {
+    setSubmitting("rent");
+    createSession.mutate({ leaseId, tenantEmail: email });
   }
 
   return (
@@ -143,10 +146,10 @@ export default function LeasePay() {
 
           <div className="p-5 space-y-4">
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900">
-              <strong>How this works:</strong> Pay your security deposit and first month's rent. Once both clear, your landlord will countersign and your lease becomes fully effective.
+              <strong>How this works:</strong> Set up autopay below — your security deposit and first month's rent are collected today, and rent bills automatically each month. Once payment clears, your landlord countersigns and the lease becomes fully effective.
             </div>
 
-            {/* Deposit */}
+            {/* Itemised breakdown */}
             {needsDeposit && (
               <div className={`rounded-xl border p-4 flex items-center gap-3 ${lease.depositPaid ? "border-emerald-200 bg-emerald-50" : "border-gray-200 bg-white"}`}>
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: lease.depositPaid ? "#10b98120" : "#1B2B5E10" }}>
@@ -154,43 +157,36 @@ export default function LeasePay() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 text-sm">Security deposit</p>
-                  <p className="text-xs text-gray-500">{fmt(lease.securityDeposit)}{lease.depositPaid ? " · paid" : ""}</p>
+                  <p className="text-xs text-gray-500">{fmt(lease.securityDeposit)}{lease.depositPaid ? " · paid" : " · one-time"}</p>
                 </div>
-                {!lease.depositPaid && (
-                  <Button
-                    size="sm"
-                    onClick={() => pay("deposit")}
-                    disabled={!!submitting}
-                    style={{ background: ACCENT, color: "#3A2410" }}
-                    className="font-bold"
-                  >
-                    {submitting === "deposit" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Pay"}
-                  </Button>
-                )}
               </div>
             )}
 
-            {/* Rent */}
             <div className={`rounded-xl border p-4 flex items-center gap-3 ${lease.firstMonthPaid ? "border-emerald-200 bg-emerald-50" : "border-gray-200 bg-white"}`}>
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: lease.firstMonthPaid ? "#10b98120" : "#1B2B5E10" }}>
                 {lease.firstMonthPaid ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <Receipt className="w-5 h-5" style={{ color: BRAND }} />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 text-sm">First month's rent</p>
-                <p className="text-xs text-gray-500">{fmt(lease.monthlyRent)}{lease.firstMonthPaid ? " · paid" : ""}</p>
+                <p className="font-semibold text-gray-900 text-sm">Monthly rent (autopay)</p>
+                <p className="text-xs text-gray-500">{fmt(lease.monthlyRent)} / month{lease.firstMonthPaid ? " · active" : ""}</p>
               </div>
-              {!lease.firstMonthPaid && (
-                <Button
-                  size="sm"
-                  onClick={() => pay("rent")}
-                  disabled={!!submitting}
-                  style={{ background: ACCENT, color: "#3A2410" }}
-                  className="font-bold"
-                >
-                  {submitting === "rent" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Pay"}
-                </Button>
-              )}
             </div>
+
+            {/* Combined CTA */}
+            {!allPaid && (
+              <Button
+                onClick={startAutopay}
+                disabled={!!submitting || totalDueCents <= 0}
+                style={{ background: ACCENT, color: "#3A2410" }}
+                className="w-full font-bold text-base h-12"
+              >
+                {submitting ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Loading checkout…</>
+                ) : (
+                  <>Set Up Autopay · {fmt(totalDueCents)} due today</>
+                )}
+              </Button>
+            )}
 
             {allPaid && (
               <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-emerald-900">

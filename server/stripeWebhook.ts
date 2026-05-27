@@ -8,9 +8,10 @@ import Stripe from "stripe";
 import {
   upsertUserSubscription, getUserByOpenId, getDb,
   getLeaseById, updateLeaseAgreement, getUserById, getOrCreateProCode,
+  createRentPayment, updateRentPayment, getRentPaymentByLeasePeriod,
 } from "./db";
 import { sendEmail } from "./_core/email";
-import { affiliates, affiliateReferrals } from "../drizzle/schema";
+import { affiliates, affiliateReferrals, leaseAgreements } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 
 function getStripe(): Stripe | null {
@@ -75,17 +76,36 @@ export function registerStripeWebhook(app: Express) {
         switch (event.type) {
           case "checkout.session.completed": {
             const session = event.data.object as Stripe.Checkout.Session;
-            // Lease move-in payments (rent / deposit) — handled separately from Pro subscription
             const leaseId = session.metadata?.leaselyLeaseId;
+            const autopaySetup = session.metadata?.leaselyAutopaySetup === "true";
             const leaseKind = session.metadata?.leaselyLeasePaymentKind;
-            if (leaseId && (leaseKind === "rent" || leaseKind === "deposit")) {
+            if (leaseId && autopaySetup) {
+              // Phase 2: tenant just authorised the rent autopay subscription.
+              await handleLeaseAutopayActivated(parseInt(leaseId), session);
+            } else if (leaseId && (leaseKind === "rent" || leaseKind === "deposit")) {
+              // Legacy one-time deposit/rent flow (pre-subscription model).
               await handleLeasePaymentCompleted(parseInt(leaseId), leaseKind);
             } else {
               await handleCheckoutCompleted(session);
             }
             break;
           }
-          case "customer.subscription.deleted":
+          case "invoice.paid": {
+            const invoice = event.data.object as Stripe.Invoice;
+            await handleInvoicePaid(invoice);
+            break;
+          }
+          case "invoice.payment_failed": {
+            const invoice = event.data.object as Stripe.Invoice;
+            await handleInvoicePaymentFailed(invoice);
+            break;
+          }
+          case "customer.subscription.deleted": {
+            const sub = event.data.object as Stripe.Subscription;
+            await handleSubscriptionCancelled(sub);
+            await handleSubscriptionChange(sub);
+            break;
+          }
           case "customer.subscription.updated": {
             const sub = event.data.object as Stripe.Subscription;
             await handleSubscriptionChange(sub);
@@ -368,4 +388,230 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
   });
 
   console.log(`[Webhook] Subscription ${subscription.status} → tier=${tier} for user ${userId}`);
+}
+
+/**
+ * Tenant just completed the Checkout Session that creates the rent autopay
+ * Subscription. The first invoice (paid as part of the session) included the
+ * security deposit + first month's rent as invoice items, so we mark both as
+ * paid, store the Stripe Customer + Subscription, flip autopay on, transition
+ * the lease to `paid`, and email the landlord to countersign.
+ */
+async function handleLeaseAutopayActivated(leaseId: number, session: Stripe.Checkout.Session) {
+  const lease = await getLeaseById(leaseId);
+  if (!lease) {
+    console.warn(`[Webhook] Lease ${leaseId} not found for autopay activation`);
+    return;
+  }
+
+  const stripeCustomerId = typeof session.customer === "string"
+    ? session.customer
+    : session.customer?.id ?? undefined;
+  const stripeSubscriptionId = typeof session.subscription === "string"
+    ? session.subscription
+    : session.subscription?.id ?? undefined;
+
+  const needsDeposit = (lease.securityDeposit ?? 0) > 0;
+  const patch: Record<string, unknown> = {
+    firstMonthPaid: 1,
+    depositPaid: needsDeposit ? 1 : (lease.depositPaid ?? 0),
+    autopayEnabled: 1,
+    autopayActivatedAt: new Date(),
+    status: "paid",
+    paidAt: new Date(),
+  };
+  if (stripeCustomerId) patch.stripeCustomerId = stripeCustomerId;
+  if (stripeSubscriptionId) patch.stripeSubscriptionId = stripeSubscriptionId;
+
+  await updateLeaseAgreement(lease.id, lease.landlordUserId, patch as any);
+  console.log(`[Webhook] 🔁 Autopay activated for lease ${leaseId} | sub=${stripeSubscriptionId}`);
+
+  // Record the first month's rent in the ledger (deposit is non-recurring, not tracked)
+  const now = new Date();
+  const periodMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-01`;
+  try {
+    const existing = await getRentPaymentByLeasePeriod(lease.id, periodMonth);
+    if (!existing) {
+      await createRentPayment({
+        leaseAgreementId: lease.id,
+        landlordUserId: lease.landlordUserId,
+        tenantEmail: lease.tenantEmail,
+        periodMonth,
+        dueDate: periodMonth,
+        amountCents: lease.monthlyRent,
+        status: "paid",
+        paidAt: new Date(),
+        paidAmountCents: lease.monthlyRent,
+        paymentMethod: "Leasely",
+      });
+    }
+  } catch (err) {
+    console.warn("[Webhook] ledger insert (autopay activation) failed:", err);
+  }
+
+  // Notify landlord to countersign
+  const APP_URL = process.env.VITE_APP_URL ?? process.env.APP_URL ?? "https://leasely.net";
+  try {
+    const landlord = await getUserById(lease.landlordUserId);
+    if (landlord?.email) {
+      await sendEmail({
+        to: landlord.email,
+        subject: `Autopay Live — Countersign to Execute Lease (${lease.propertyAddress})`,
+        html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+          <h2 style="color:#1B2B5E">Tenant is on autopay — countersign to finish</h2>
+          <p><strong>${lease.tenantName}</strong> set up rent autopay${needsDeposit ? " and paid the security deposit" : ""}. The first month's rent has cleared.</p>
+          <p>The lease is ready for your countersignature to be fully executed.</p>
+          <p style="margin-top:16px"><a href="${APP_URL}/leases" style="background:#00C896;color:#0a2a1f;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:700">Countersign Lease</a></p>
+        </div>`,
+      });
+    }
+  } catch (err) {
+    console.warn("[Webhook] autopay landlord countersign email failed:", err);
+  }
+}
+
+/**
+ * Stripe successfully charged a recurring rent invoice. Upsert the
+ * corresponding row in rent_payments so the arrears view reflects payment.
+ * The first invoice on a fresh subscription is handled by
+ * handleLeaseAutopayActivated (which runs from checkout.session.completed
+ * with mode=subscription) — invoice.paid for that same period will simply
+ * find the existing row and update it idempotently.
+ */
+async function handleInvoicePaid(invoice: Stripe.Invoice) {
+  const subscriptionId = typeof (invoice as any).subscription === "string"
+    ? (invoice as any).subscription
+    : (invoice as any).subscription?.id ?? null;
+  if (!subscriptionId) return; // not a subscription invoice
+
+  const lease = await findLeaseBySubscriptionId(subscriptionId);
+  if (!lease) {
+    console.log(`[Webhook] invoice.paid: no lease for sub ${subscriptionId}`);
+    return;
+  }
+
+  const periodMonth = invoicePeriodMonth(invoice);
+  const amountPaid = invoice.amount_paid ?? lease.monthlyRent;
+  const paidAt = invoice.status_transitions?.paid_at
+    ? new Date(invoice.status_transitions.paid_at * 1000)
+    : new Date();
+  const paymentIntentId = typeof (invoice as any).payment_intent === "string"
+    ? (invoice as any).payment_intent
+    : (invoice as any).payment_intent?.id ?? null;
+
+  try {
+    const existing = await getRentPaymentByLeasePeriod(lease.id, periodMonth);
+    if (existing) {
+      await updateRentPayment(existing.id, {
+        status: "paid",
+        paidAt,
+        paidAmountCents: amountPaid,
+        paymentMethod: "Leasely",
+        stripeInvoiceId: invoice.id,
+        stripePaymentIntentId: paymentIntentId ?? undefined,
+      });
+    } else {
+      await createRentPayment({
+        leaseAgreementId: lease.id,
+        landlordUserId: lease.landlordUserId,
+        tenantEmail: lease.tenantEmail,
+        periodMonth,
+        dueDate: periodMonth,
+        amountCents: lease.monthlyRent,
+        status: "paid",
+        paidAt,
+        paidAmountCents: amountPaid,
+        paymentMethod: "Leasely",
+        stripeInvoiceId: invoice.id,
+        stripePaymentIntentId: paymentIntentId ?? undefined,
+      });
+    }
+    console.log(`[Webhook] 💵 Rent paid: lease ${lease.id} period ${periodMonth} ($${amountPaid / 100})`);
+  } catch (err) {
+    console.warn("[Webhook] invoice.paid ledger upsert failed:", err);
+  }
+}
+
+/**
+ * Stripe failed to charge a recurring rent invoice. Mark the matching ledger
+ * row as `late` (or create one if missing) so the arrears view surfaces it.
+ */
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  const subscriptionId = typeof (invoice as any).subscription === "string"
+    ? (invoice as any).subscription
+    : (invoice as any).subscription?.id ?? null;
+  if (!subscriptionId) return;
+
+  const lease = await findLeaseBySubscriptionId(subscriptionId);
+  if (!lease) return;
+
+  const periodMonth = invoicePeriodMonth(invoice);
+  try {
+    const existing = await getRentPaymentByLeasePeriod(lease.id, periodMonth);
+    if (existing) {
+      await updateRentPayment(existing.id, {
+        status: "late",
+        stripeInvoiceId: invoice.id,
+      });
+    } else {
+      await createRentPayment({
+        leaseAgreementId: lease.id,
+        landlordUserId: lease.landlordUserId,
+        tenantEmail: lease.tenantEmail,
+        periodMonth,
+        dueDate: periodMonth,
+        amountCents: lease.monthlyRent,
+        status: "late",
+        stripeInvoiceId: invoice.id,
+      });
+    }
+    console.log(`[Webhook] ⚠️ Rent late: lease ${lease.id} period ${periodMonth}`);
+
+    // Email landlord so they can follow up out-of-band
+    const landlord = await getUserById(lease.landlordUserId);
+    if (landlord?.email) {
+      const APP_URL = process.env.VITE_APP_URL ?? process.env.APP_URL ?? "https://leasely.net";
+      await sendEmail({
+        to: landlord.email,
+        subject: `Rent payment failed — ${lease.propertyAddress}`,
+        html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+          <h2 style="color:#b91c1c">Rent autopay failed</h2>
+          <p><strong>${lease.tenantName}</strong>'s rent autopay for ${periodMonth} did not go through. Stripe will retry automatically, but you may want to reach out.</p>
+          <p style="margin-top:16px"><a href="${APP_URL}/rent" style="background:#1B2B5E;color:#fff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:700">View Rent Ledger</a></p>
+        </div>`,
+      });
+    }
+  } catch (err) {
+    console.warn("[Webhook] invoice.payment_failed ledger update failed:", err);
+  }
+}
+
+/**
+ * Subscription cancelled (tenant or landlord cancelled autopay). Flip
+ * autopayEnabled off on the lease so the dashboard reflects manual-rent mode.
+ */
+async function handleSubscriptionCancelled(subscription: Stripe.Subscription) {
+  const lease = await findLeaseBySubscriptionId(subscription.id);
+  if (!lease) return;
+  await updateLeaseAgreement(lease.id, lease.landlordUserId, {
+    autopayEnabled: 0,
+  } as any);
+  console.log(`[Webhook] 🛑 Autopay disabled for lease ${lease.id} (sub ${subscription.id} cancelled)`);
+}
+
+/** Look up a lease by its Stripe subscription ID. */
+async function findLeaseBySubscriptionId(subscriptionId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(leaseAgreements)
+    .where(eq(leaseAgreements.stripeSubscriptionId, subscriptionId))
+    .limit(1);
+  return rows[0];
+}
+
+/** Extract a YYYY-MM-01 period key from a Stripe invoice's billing period. */
+function invoicePeriodMonth(invoice: Stripe.Invoice): string {
+  const periodStart = invoice.lines?.data?.[0]?.period?.start ?? invoice.period_start;
+  const d = new Date((periodStart ?? Math.floor(Date.now() / 1000)) * 1000);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`;
 }

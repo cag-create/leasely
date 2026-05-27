@@ -951,11 +951,208 @@ export default function Leases() {
                     {landlordSignMutation.isPending ? "Countersigning..." : "Countersign — Execute Lease"}
                   </Button>
                 )}
+
+                {/* Monthly rent ledger — shows for any lease that's reached
+                    paid/signed/active so the landlord can see autopay history
+                    and record off-platform payments. */}
+                {["paid", "signed", "active"].includes(selectedLease.status) && (
+                  <RentLedgerPanel lease={selectedLease} />
+                )}
               </div>
             </DialogContent>
           </Dialog>
         )}
       </div>
+    </div>
+  );
+}
+
+const STATUS_PILL: Record<string, string> = {
+  paid: "bg-emerald-100 text-emerald-800",
+  late: "bg-red-100 text-red-800",
+  pending: "bg-amber-100 text-amber-800",
+  skipped: "bg-gray-100 text-gray-600",
+  partial: "bg-orange-100 text-orange-800",
+};
+
+function fmtPeriod(period: string) {
+  const [y, m] = period.split("-");
+  if (!y || !m) return period;
+  const d = new Date(Date.UTC(parseInt(y), parseInt(m) - 1, 1));
+  return d.toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+}
+
+function currentPeriod(): string {
+  const d = new Date();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`;
+}
+
+function RentLedgerPanel({ lease }: { lease: any }) {
+  const utils = trpc.useContext();
+  const { data: payments, isLoading } = (trpc as any).leases.listRentPayments.useQuery(
+    { leaseId: lease.id },
+    { retry: false }
+  );
+
+  const [showRecord, setShowRecord] = useState(false);
+  const [periodMonth, setPeriodMonth] = useState(currentPeriod());
+  const [amount, setAmount] = useState((lease.monthlyRent / 100).toString());
+  const [method, setMethod] = useState("Zelle");
+  const [note, setNote] = useState("");
+
+  const recordMutation = (trpc as any).leases.recordRentPayment.useMutation({
+    onSuccess: () => {
+      toast.success("Payment recorded");
+      setShowRecord(false);
+      setNote("");
+      (utils as any).leases.listRentPayments.invalidate({ leaseId: lease.id });
+      (utils as any).leases.arrearsByLandlord.invalidate();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  // Compute arrears for THIS lease for the inline banner
+  const paidPeriods = new Set(
+    (payments ?? []).filter((p: any) => p.status === "paid").map((p: any) => p.periodMonth)
+  );
+  let monthsBehind = 0;
+  if (lease.leaseStartDate) {
+    const start = new Date(`${lease.leaseStartDate}T12:00:00Z`);
+    if (!Number.isNaN(start.getTime())) {
+      const today = new Date();
+      const cur = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1));
+      const cutoff = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
+      while (cur.getTime() <= cutoff.getTime()) {
+        const p = `${cur.getUTCFullYear()}-${String(cur.getUTCMonth() + 1).padStart(2, "0")}-01`;
+        if (!paidPeriods.has(p)) monthsBehind += 1;
+        cur.setUTCMonth(cur.getUTCMonth() + 1);
+      }
+    }
+  }
+  const amountOwed = monthsBehind * lease.monthlyRent;
+
+  return (
+    <div className="border border-gray-200 rounded-lg p-3 space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <DollarSign className="w-4 h-4 text-[#1B2B5E]" />
+          <h4 className="font-semibold text-gray-900 text-sm">Rent Ledger</h4>
+          {lease.autopayEnabled === 1 && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">AUTOPAY</span>
+          )}
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="text-xs h-7"
+          onClick={() => setShowRecord(s => !s)}
+        >
+          <Plus className="w-3 h-3 mr-1" /> Record payment
+        </Button>
+      </div>
+
+      {monthsBehind > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded p-2 text-xs text-red-900">
+          <strong>{monthsBehind} month{monthsBehind === 1 ? "" : "s"} behind</strong> · ${(amountOwed / 100).toLocaleString("en-US")} outstanding
+        </div>
+      )}
+
+      {showRecord && (
+        <div className="bg-gray-50 border border-gray-200 rounded p-3 space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">Period (YYYY-MM-01)</Label>
+              <Input
+                value={periodMonth}
+                onChange={e => setPeriodMonth(e.target.value)}
+                placeholder="2026-05-01"
+                className="h-8 text-sm"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Amount ($)</Label>
+              <Input
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                className="h-8 text-sm"
+              />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Method</Label>
+            <select
+              className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 bg-white"
+              value={method}
+              onChange={e => setMethod(e.target.value)}
+            >
+              <option value="Leasely">Leasely platform</option>
+              <option value="ACH / direct deposit">ACH / direct deposit</option>
+              <option value="Zelle">Zelle</option>
+              <option value="Venmo">Venmo</option>
+              <option value="Cash App">Cash App</option>
+              <option value="Check">Check</option>
+              <option value="Money order">Money order</option>
+              <option value="Cash">Cash</option>
+            </select>
+          </div>
+          <div>
+            <Label className="text-xs">Note (optional)</Label>
+            <Input
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              placeholder="e.g. confirmation #12345"
+              className="h-8 text-sm"
+            />
+          </div>
+          <Button
+            size="sm"
+            className="w-full bg-[#1B2B5E] hover:bg-[#2D3F7C] text-white text-xs h-8"
+            disabled={recordMutation.isPending || !/^\d{4}-\d{2}-01$/.test(periodMonth) || !parseFloat(amount)}
+            onClick={() => recordMutation.mutate({
+              leaseId: lease.id,
+              periodMonth,
+              amountCents: Math.round(parseFloat(amount) * 100),
+              method,
+              note: note || undefined,
+            })}
+          >
+            {recordMutation.isPending ? "Saving..." : "Save payment"}
+          </Button>
+        </div>
+      )}
+
+      {isLoading ? (
+        <p className="text-xs text-gray-500">Loading ledger…</p>
+      ) : !payments || payments.length === 0 ? (
+        <p className="text-xs text-gray-500">No payments recorded yet.</p>
+      ) : (
+        <div className="max-h-48 overflow-y-auto -mx-1 px-1">
+          <table className="w-full text-xs">
+            <thead className="text-gray-500">
+              <tr className="border-b border-gray-100">
+                <th className="text-left py-1 font-medium">Period</th>
+                <th className="text-left py-1 font-medium">Status</th>
+                <th className="text-right py-1 font-medium">Amount</th>
+                <th className="text-right py-1 font-medium">Method</th>
+              </tr>
+            </thead>
+            <tbody>
+              {payments.map((p: any) => (
+                <tr key={p.id} className="border-b border-gray-50">
+                  <td className="py-1.5 font-mono">{fmtPeriod(p.periodMonth)}</td>
+                  <td className="py-1.5">
+                    <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold ${STATUS_PILL[p.status] ?? "bg-gray-100"}`}>
+                      {p.status}
+                    </span>
+                  </td>
+                  <td className="py-1.5 text-right font-mono">${((p.paidAmountCents ?? p.amountCents) / 100).toLocaleString("en-US")}</td>
+                  <td className="py-1.5 text-right text-gray-500">{p.paymentMethod ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

@@ -148,6 +148,15 @@ export default function WorkOrders() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const approveCompletionMutation = trpc.workOrders.approveCompletion.useMutation({
+    onSuccess: () => {
+      toast.success("Completion approved. You can now release payment.");
+      refetch();
+      refetchBids();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const payVendorMutation = trpc.workOrders.payVendor.useMutation({
     onSuccess: () => {
       toast.success("Payment processed! Work order resolved.");
@@ -528,6 +537,60 @@ export default function WorkOrders() {
                               {bid.vendorNotes && (
                                 <p className="text-xs text-gray-500 mt-1 italic">"{bid.vendorNotes}"</p>
                               )}
+                              {(() => {
+                                try {
+                                  const inspPhotos: string[] = bid.inspectionPhotos ? JSON.parse(bid.inspectionPhotos) : [];
+                                  if (inspPhotos.length === 0 && !bid.inspectionNotes) return null;
+                                  return (
+                                    <div className="mt-2 rounded-md bg-blue-50 border border-blue-200 p-2">
+                                      <p className="text-xs font-semibold text-blue-900 mb-1">Inspection report</p>
+                                      {bid.inspectionNotes && <p className="text-xs text-blue-800 mb-1.5">{bid.inspectionNotes}</p>}
+                                      {inspPhotos.length > 0 && (
+                                        <div className="flex gap-1 flex-wrap">
+                                          {inspPhotos.map((u: string) => (
+                                            <a key={u} href={u} target="_blank" rel="noreferrer noopener">
+                                              <img src={u} className="w-14 h-14 object-cover rounded" alt="" />
+                                            </a>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                } catch { return null; }
+                              })()}
+                              {(() => {
+                                try {
+                                  const compPhotos: string[] = bid.completionPhotos ? JSON.parse(bid.completionPhotos) : [];
+                                  if (compPhotos.length === 0 && !bid.invoiceUrl) return null;
+                                  return (
+                                    <div className="mt-2 rounded-md bg-emerald-50 border border-emerald-200 p-2">
+                                      <p className="text-xs font-semibold text-emerald-900 mb-1">
+                                        Completion report
+                                        {bid.invoiceAmountCents != null && (
+                                          <span className="ml-1.5 font-bold">· Invoice {formatDollars(bid.invoiceAmountCents)}</span>
+                                        )}
+                                      </p>
+                                      {bid.invoiceUrl && (
+                                        <a href={bid.invoiceUrl} target="_blank" rel="noreferrer noopener" className="text-xs text-emerald-800 underline block mb-1.5">
+                                          View invoice →
+                                        </a>
+                                      )}
+                                      {compPhotos.length > 0 && (
+                                        <div className="flex gap-1 flex-wrap">
+                                          {compPhotos.map((u: string) => (
+                                            <a key={u} href={u} target="_blank" rel="noreferrer noopener">
+                                              <img src={u} className="w-14 h-14 object-cover rounded" alt="" />
+                                            </a>
+                                          ))}
+                                        </div>
+                                      )}
+                                      {bid.landlordApprovedCompletion === 1 && (
+                                        <p className="text-xs font-semibold text-emerald-700 mt-1.5">✓ You approved this completion</p>
+                                      )}
+                                    </div>
+                                  );
+                                } catch { return null; }
+                              })()}
                             </div>
                             <div className="flex gap-2 ml-3 shrink-0">
                               {bid.status === "accepted" && !bid.landlordApproved && (
@@ -540,7 +603,22 @@ export default function WorkOrders() {
                                   <ThumbsUp className="w-3 h-3" /> Approve
                                 </Button>
                               )}
-                              {bid.landlordApproved === 1 && bid.paymentStatus !== "paid" && (
+                              {bid.landlordApproved === 1 && !bid.completedAt && bid.paymentStatus !== "paid" && (
+                                <span className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">
+                                  {bid.inspectedAt ? "Awaiting completion" : "Awaiting inspection"}
+                                </span>
+                              )}
+                              {bid.landlordApproved === 1 && bid.completedAt && !bid.landlordApprovedCompletion && bid.paymentStatus !== "paid" && (
+                                <Button
+                                  size="sm"
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1 text-xs"
+                                  onClick={() => approveCompletionMutation.mutate({ dispatchId: bid.id })}
+                                  disabled={approveCompletionMutation.isPending}
+                                >
+                                  <ThumbsUp className="w-3 h-3" /> Approve Completion
+                                </Button>
+                              )}
+                              {bid.landlordApproved === 1 && bid.landlordApprovedCompletion === 1 && bid.paymentStatus !== "paid" && (
                                 payDispatchId === bid.id ? (
                                   <div className="flex items-center gap-1">
                                     <Input

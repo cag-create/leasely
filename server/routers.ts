@@ -1936,6 +1936,74 @@ export const appRouter = router({
       return { success: true, dispatched };
     }),
 
+    // ── Vendor: upload a photo or invoice file (public, gated by dispatchId) ─
+    // The dispatch URL is the only auth surface for the contractor — they
+    // don't have a Leasely account. We require a valid dispatchId so random
+    // strangers can't burn through Cloudinary storage.
+    vendorUpload: publicProcedure
+      .input(z.object({
+        dispatchId: z.number().int().positive(),
+        fileName: z.string().max(200),
+        fileType: z.string().max(100),
+        fileData: z.string(), // base64
+        kind: z.enum(["inspection", "completion", "invoice"]),
+      }))
+      .mutation(async ({ input }) => {
+        const dr = await getDispatchById(input.dispatchId);
+        if (!dr) throw new TRPCError({ code: "NOT_FOUND" });
+        const buffer = Buffer.from(input.fileData, "base64");
+        if (buffer.length > 10 * 1024 * 1024) {
+          throw new TRPCError({ code: "PAYLOAD_TOO_LARGE", message: "Files must be under 10 MB." });
+        }
+        const ext = input.fileName.split(".").pop()?.toLowerCase() ?? "jpg";
+        const key = `vendor-dispatch/${input.dispatchId}/${input.kind}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { url } = await storagePut(key, buffer, input.fileType);
+        return { url };
+      }),
+
+    // ── Vendor: read dispatch state (drives multi-stage VendorRespond UI) ────
+    // Public — vendor URL is the auth surface. Returns the dispatch + the
+    // associated work order title/address so the vendor knows the job.
+    getDispatchPublic: publicProcedure
+      .input(z.object({ dispatchId: z.number().int().positive() }))
+      .query(async ({ input }) => {
+        const dr = await getDispatchById(input.dispatchId);
+        if (!dr) throw new TRPCError({ code: "NOT_FOUND" });
+        const wo = await getWorkOrderById(dr.workOrderId, dr.landlordUserId);
+        // Derive stage from the dispatch row so the client can pick a panel.
+        let stage: "respond" | "inspect" | "complete" | "awaiting_approval" | "paid" | "declined";
+        if (dr.status === "declined") stage = "declined";
+        else if (dr.paymentStatus === "paid") stage = "paid";
+        else if (dr.landlordApprovedCompletion) stage = "awaiting_approval";
+        else if (dr.completedAt) stage = "awaiting_approval";
+        else if (dr.inspectedAt) stage = "complete";
+        else if (dr.landlordApproved) stage = "inspect";
+        else stage = "respond";
+        return {
+          stage,
+          dispatch: {
+            id: dr.id,
+            status: dr.status,
+            proposedDate: dr.proposedDate,
+            proposedTimeSlot: dr.proposedTimeSlot,
+            vendorQuoteCents: dr.vendorQuoteCents,
+            landlordApproved: dr.landlordApproved,
+            inspectedAt: dr.inspectedAt,
+            inspectionPhotos: dr.inspectionPhotos,
+            completedAt: dr.completedAt,
+            completionPhotos: dr.completionPhotos,
+            invoiceAmountCents: dr.invoiceAmountCents,
+            invoiceUrl: dr.invoiceUrl,
+            paymentStatus: dr.paymentStatus,
+          },
+          workOrder: wo ? {
+            title: wo.title,
+            description: wo.description,
+            propertyAddress: wo.propertyAddress,
+          } : null,
+        };
+      }),
+
     // ── Vendor responds with availability + quote ─────────────────────────────
     // Public — vendor doesn't need a Leasely account
     vendorRespond: publicProcedure.input(z.object({
@@ -4674,14 +4742,24 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
     }),
 
     /**
-     * Tenant: create a Stripe checkout session for either rent or deposit
-     * tied to a specific lease. Webhook calls leases.markPaid on success.
+     * Tenant: create a Stripe Subscription Checkout session that sets up
+     * recurring rent autopay AND collects the security deposit + first
+     * month's rent on the first invoice.
+     *
+     * Leasely is recurring-only — there are no one-time tenant payments.
+     * The Subscription bills monthly rent on the rent_due_day each cycle.
+     * The webhook records each `invoice.paid` event into rent_payments.
+     *
+     * `kind` is kept for backwards compatibility with the UI but is now a
+     * no-op — every checkout creates the full subscription. Once it's been
+     * set up once for a given lease, this endpoint short-circuits to the
+     * Stripe Customer Portal so the tenant can edit their card.
      */
     createPaymentSession: publicProcedure
       .input(z.object({
         leaseId: z.number(),
         tenantEmail: z.string().email(),
-        kind: z.enum(["rent", "deposit"]),
+        kind: z.enum(["rent", "deposit"]).optional(),
       }))
       .mutation(async ({ input }) => {
         const lease = await getLeaseById(input.leaseId);
@@ -4698,44 +4776,62 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         const stripe = getStripe();
         if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured" });
 
-        const amountCents = input.kind === "rent" ? lease.monthlyRent : (lease.securityDeposit ?? 0);
-        if (amountCents <= 0) throw new TRPCError({ code: "BAD_REQUEST", message: "Nothing to pay for this category." });
-
-        const desc = input.kind === "rent"
-          ? `First month's rent — ${lease.propertyAddress}`
-          : `Security deposit — ${lease.propertyAddress}`;
+        const monthlyRentCents = lease.monthlyRent;
+        const depositCents = lease.securityDeposit ?? 0;
+        if (monthlyRentCents <= 0) throw new TRPCError({ code: "BAD_REQUEST", message: "Monthly rent must be set on the lease." });
 
         // Pro landlords: 0% platform fee. Free tier: 1% Leasely platform fee.
         const isProLandlord = sub.tier === "paid";
-        const platformFeeCents = isProLandlord ? 0 : Math.round(amountCents * 0.01);
+        const applicationFeePercent = isProLandlord ? 0 : 1;
 
-        const paymentIntentData: any = {
-          transfer_data: { destination: sub.stripeConnectAccountId },
-          metadata: {
-            leaselyLeaseId: String(lease.id),
-            leaselyLeasePaymentKind: input.kind,
-          },
-        };
-        if (platformFeeCents > 0) paymentIntentData.application_fee_amount = platformFeeCents;
-
-        const session = await stripe.checkout.sessions.create({
-          payment_method_types: ["card"],
-          mode: "payment",
-          customer_email: lease.tenantEmail,
-          line_items: [{
+        // Subscription = recurring rent. First invoice will include the
+        // recurring rent line PLUS any non-recurring line_items below
+        // (which Stripe converts to invoice items on the first invoice).
+        const lineItems: any[] = [];
+        if (!lease.firstMonthPaid) {
+          lineItems.push({
             price_data: {
               currency: "usd",
-              product_data: { name: desc, description: lease.propertyAddress },
-              unit_amount: amountCents,
+              product_data: { name: `Monthly rent — ${lease.propertyAddress}` },
+              unit_amount: monthlyRentCents,
+              recurring: { interval: "month" as const },
             },
             quantity: 1,
-          }],
-          payment_intent_data: paymentIntentData,
+          });
+        }
+        if (depositCents > 0 && !lease.depositPaid) {
+          lineItems.push({
+            price_data: {
+              currency: "usd",
+              product_data: { name: `Security deposit — ${lease.propertyAddress}` },
+              unit_amount: depositCents,
+            },
+            quantity: 1,
+          });
+        }
+
+        if (lineItems.length === 0) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Nothing to collect — deposit and first month are already paid." });
+        }
+
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ["card", "us_bank_account"],
+          mode: "subscription",
+          customer_email: lease.tenantEmail,
+          line_items: lineItems,
+          subscription_data: {
+            application_fee_percent: applicationFeePercent,
+            transfer_data: { destination: sub.stripeConnectAccountId },
+            metadata: {
+              leaselyLeaseId: String(lease.id),
+              landlordUserId: String(lease.landlordUserId),
+            },
+          },
           success_url: `${APP_URL}/lease-pay/${lease.id}/success?email=${encodeURIComponent(lease.tenantEmail)}`,
           cancel_url: `${APP_URL}/lease-pay/${lease.id}?email=${encodeURIComponent(lease.tenantEmail)}`,
           metadata: {
             leaselyLeaseId: String(lease.id),
-            leaselyLeasePaymentKind: input.kind,
+            leaselyAutopaySetup: "true",
           },
         });
 
