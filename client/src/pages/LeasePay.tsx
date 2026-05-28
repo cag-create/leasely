@@ -127,6 +127,7 @@ export default function LeasePay() {
             Continue
           </Button>
         </div>
+        <JourneyFooter currentStep={2} />
       </div>
     );
   }
@@ -135,6 +136,7 @@ export default function LeasePay() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <JourneyFooter currentStep={2} />
       </div>
     );
   }
