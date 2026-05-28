@@ -301,6 +301,16 @@ export default function Leases() {
   });
   const [payMethod, setPayMethod] = useState<string>("Leasely");
 
+  const duplicateMutation = (trpc as any).leases.duplicate.useMutation({
+    onSuccess: (data: any) => {
+      toast.success("Lease duplicated — fill in the new tenant + dates");
+      refetch();
+      setSelectedLease(null);
+      if (data?.id) navigate(`/leases?edit=${data.id}`);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const generateDocMutation = trpc.leases.updateDraft.useMutation({
     onSuccess: (data, variables) => {
       refetch();
@@ -635,9 +645,10 @@ export default function Leases() {
                 }}
               >
                 <CardContent className="py-4 px-5">
-                  <div className="flex items-start justify-between">
+                  {/* Stack vertically on mobile, side-by-side on sm+ */}
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[lease.status] ?? "bg-gray-100 text-gray-700"}`}>
                           {STATUS_LABELS[lease.status] ?? lease.status}
                         </span>
@@ -649,9 +660,9 @@ export default function Leases() {
                         {lease.tenantName}
                       </h3>
                       <p className="text-sm text-gray-500 flex items-center gap-1 mt-0.5">
-                        <Home className="w-3 h-3" /> {lease.propertyAddress}
+                        <Home className="w-3 h-3 shrink-0" /> <span className="truncate">{lease.propertyAddress}</span>
                       </p>
-                      <div className="flex gap-4 mt-1">
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
                         <span className="text-xs text-gray-500 flex items-center gap-1">
                           <DollarSign className="w-3 h-3" /> {formatCents(lease.monthlyRent)}/mo
                         </span>
@@ -660,24 +671,24 @@ export default function Leases() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 ml-4">
+                    <div className="flex flex-wrap items-center gap-2 sm:ml-4 sm:shrink-0">
                       {lease.status === "draft" && (
                         <>
                           <Button
                             size="sm"
                             variant="outline"
-                            className="gap-1 text-xs"
+                            className="gap-1 text-xs flex-1 sm:flex-none"
                             onClick={e => {
                               e.stopPropagation();
                               setEditLease(lease as any);
                             }}
                           >
-                            <Pencil className="w-3 h-3" /> Edit Details
+                            <Pencil className="w-3 h-3" /> Edit
                           </Button>
                           {(lease as any).leaseDocumentId ? (
                             <Button
                               size="sm"
-                              className="bg-[#1B2B5E] text-white gap-1 text-xs"
+                              className="bg-[#1B2B5E] text-white gap-1 text-xs flex-1 sm:flex-none"
                               onClick={e => {
                                 e.stopPropagation();
                                 navigate(`/leases/draft/${(lease as any).leaseDocumentId}`);
@@ -688,7 +699,7 @@ export default function Leases() {
                           ) : (
                             <Button
                               size="sm"
-                              className="bg-[#1B2B5E] text-white gap-1 text-xs"
+                              className="bg-[#1B2B5E] text-white gap-1 text-xs flex-1 sm:flex-none"
                               onClick={e => {
                                 e.stopPropagation();
                                 sendMutation.mutate({ leaseId: lease.id });
@@ -704,13 +715,13 @@ export default function Leases() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="gap-1 text-xs"
+                          className="gap-1 text-xs flex-1 sm:flex-none"
                           onClick={e => { e.stopPropagation(); setSelectedLease(lease); }}
                         >
                           <ChevronRight className="w-3 h-3" /> Details
                         </Button>
                       )}
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-gray-400 hidden sm:inline">
                         {new Date(lease.createdAt).toLocaleDateString()}
                       </span>
                     </div>
@@ -814,6 +825,18 @@ export default function Leases() {
                     Review Lease Document
                   </Button>
                 )}
+
+                {/* Duplicate — clones the property/terms into a new draft so
+                    the landlord can quickly re-rent the unit to a new tenant. */}
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => duplicateMutation.mutate({ leaseId: selectedLease.id })}
+                  disabled={duplicateMutation.isPending}
+                >
+                  <FileText className="w-4 h-4" />
+                  {duplicateMutation.isPending ? "Duplicating..." : "Duplicate as new draft"}
+                </Button>
 
                 {selectedLease.status === "draft" && (
                   <div className="flex gap-2">

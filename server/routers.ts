@@ -116,6 +116,8 @@ import {
   // Vendor Dispatch
   createVendorDispatchRequest, getDispatchsByWorkOrder, getDispatchsByVendor, updateVendorDispatchRequest, getDispatchById,
   createRentPayment, updateRentPayment, listRentPaymentsByLease, listRentPaymentsByLandlord, getRentPaymentByLeasePeriod,
+  // In-app notifications
+  createNotification, listNotificationsForUser, countUnreadNotifications, markNotificationRead, markAllNotificationsRead,
   // Auth: session revocation
   bumpTokenVersion,
 } from "./db";
@@ -4235,6 +4237,47 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       return { id };
     }),
 
+    /**
+     * Duplicate an existing lease into a fresh draft. Copies the property +
+     * terms but clears tenant identity, dates, signatures, and payment state
+     * so the landlord can quickly clone a unit for the next tenant.
+     */
+    duplicate: protectedProcedure.input(z.object({
+      leaseId: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+
+      const src = await getLeaseById(input.leaseId);
+      if (!src || src.landlordUserId !== ctx.user.id) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      const id = await createLeaseAgreement({
+        landlordUserId: ctx.user.id,
+        listingId: src.listingId ?? undefined,
+        // Tenant identity reset so it doesn't accidentally double-send
+        tenantName: "",
+        tenantEmail: "",
+        tenantPhone: undefined,
+        // Property + terms cloned
+        state: src.state,
+        propertyAddress: src.propertyAddress,
+        monthlyRent: src.monthlyRent,
+        securityDeposit: src.securityDeposit ?? 0,
+        leaseTerm: src.leaseTerm ?? "12_months",
+        accessMethod: src.accessMethod ?? "key_pickup",
+        lockboxCode: src.lockboxCode ?? undefined,
+        accessInstructions: src.accessInstructions ?? undefined,
+        notes: src.notes ?? undefined,
+        // Dates intentionally blank — landlord must set new lease window
+        leaseStartDate: "",
+        leaseEndDate: undefined,
+        status: "draft",
+      });
+      return { id };
+    }),
+
     /** Landlord: send lease to tenant (status → sent) */
     send: protectedProcedure.input(z.object({ leaseId: z.number() })).mutation(async ({ ctx, input }) => {
       const sub = await getUserSubscription(ctx.user.id);
@@ -4348,6 +4391,19 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
             <p style="margin-top:16px"><a href="${APP_URL}/leases" style="background:#1B2B5E;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none">View Lease</a></p>
           </div>`,
         }).catch(() => {});
+      }
+
+      // In-app notification for landlord
+      try {
+        await createNotification({
+          userId: lease.landlordUserId,
+          type: "lease_signed",
+          title: `Tenant signed · ${lease.propertyAddress}`,
+          body: `${lease.tenantName} signed the lease. Awaiting payment before countersign.`,
+          link: "/leases",
+        });
+      } catch (err) {
+        console.warn("[leases.sign] notification insert failed:", err);
       }
 
       return { success: true };
@@ -5117,6 +5173,24 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         }
         return results;
       }),
+  }),
+
+  notifications: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const rows = await listNotificationsForUser(ctx.user.id, 30);
+      const unread = await countUnreadNotifications(ctx.user.id);
+      return { items: rows, unread };
+    }),
+    markRead: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await markNotificationRead(ctx.user.id, input.id);
+        return { ok: true } as const;
+      }),
+    markAllRead: protectedProcedure.mutation(async ({ ctx }) => {
+      await markAllNotificationsRead(ctx.user.id);
+      return { ok: true } as const;
+    }),
   }),
 });
 

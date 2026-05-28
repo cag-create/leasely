@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { Loader2, AlertCircle, ChevronRight } from "lucide-react";
+import { Loader2, AlertCircle, ChevronRight, CheckCircle2 } from "lucide-react";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD",
@@ -68,6 +68,8 @@ const emptyVars: FormVars = {
   unit_or_room_label: "",
 };
 
+const DRAFT_KEY = "leasely:wizardDraft:v1";
+
 export default function LeaseWizard() {
   const [, navigate] = useLocation();
   const [step, setStep] = useState<"choose" | "fill">("choose");
@@ -77,6 +79,37 @@ export default function LeaseWizard() {
   const [customClauseTitle, setCustomClauseTitle] = useState("");
   const [customClauseBody, setCustomClauseBody] = useState("");
   const [customClauses, setCustomClauses] = useState<Array<{ title: string; body: string }>>([]);
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+
+  // ── Autosave to localStorage ──
+  // Restore any in-flight draft on mount so a tab refresh / phone call doesn't
+  // wipe 5 minutes of typing.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      if (draft.state) setState(draft.state);
+      if (draft.category) setCategory(draft.category);
+      if (draft.vars) setVars(prev => ({ ...prev, ...draft.vars }));
+      if (Array.isArray(draft.customClauses)) setCustomClauses(draft.customClauses);
+      if (draft.savedAt) setSavedAt(new Date(draft.savedAt));
+    } catch { /* ignore corrupted draft */ }
+  }, []);
+
+  // Save on any change (debounced via setTimeout)
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      try {
+        const now = new Date();
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({
+          state, category, vars, customClauses, savedAt: now.toISOString(),
+        }));
+        setSavedAt(now);
+      } catch { /* quota — silently drop */ }
+    }, 800);
+    return () => clearTimeout(handle);
+  }, [state, category, vars, customClauses]);
 
   const templateQuery = (trpc as any).leaseDocs.getTemplate.useQuery(
     { state, category },
@@ -92,6 +125,8 @@ export default function LeaseWizard() {
       if (res.warnings.length > 0) {
         toast.warning(res.warnings[0], { duration: 9000 });
       }
+      // Draft is now persisted server-side — drop the local autosave snapshot
+      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
       navigate(`/leases/draft/${res.id}`);
     },
     onError: (e: any) => toast.error(e.message ?? "Draft failed"),
@@ -149,9 +184,12 @@ export default function LeaseWizard() {
         <Navbar />
         <div className="max-w-3xl mx-auto px-4 py-10">
           <h1 className="text-2xl font-bold mb-2">New Lease — Step 1 of 2</h1>
-          <p className="text-muted-foreground mb-8">
+          <p className="text-muted-foreground mb-3">
             Pick the state and lease type. We&apos;ll preload the right template with the required state-specific clauses.
           </p>
+          <div className="h-1.5 bg-muted rounded-full mb-6 overflow-hidden">
+            <div className="h-full rounded-full transition-all" style={{ width: "50%", background: "#F5A623" }} />
+          </div>
 
           <Card>
             <CardContent className="p-6 space-y-5">
@@ -198,8 +236,20 @@ export default function LeaseWizard() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="max-w-3xl mx-auto px-4 py-10">
-        <h1 className="text-2xl font-bold mb-1">Lease details — {state} {category === "coliving_room_rental" ? "Co-Living" : "Standard Residential"}</h1>
-        <p className="text-muted-foreground mb-6">Step 2 of 2 — fill in the variables; we&apos;ll render the lease for you to review.</p>
+        <div className="flex items-start justify-between gap-4 mb-1">
+          <h1 className="text-2xl font-bold">Lease details — {state} {category === "coliving_room_rental" ? "Co-Living" : "Standard Residential"}</h1>
+          {savedAt && (
+            <span className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1 shrink-0 flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3" />
+              Saved {savedAt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+            </span>
+          )}
+        </div>
+        <p className="text-muted-foreground mb-3">Step 2 of 2 — fill in the variables; we&apos;ll render the lease for you to review. <span className="text-xs">Your draft is autosaved locally — refresh-safe.</span></p>
+        {/* Two-step progress */}
+        <div className="h-1.5 bg-muted rounded-full mb-6 overflow-hidden">
+          <div className="h-full rounded-full transition-all" style={{ width: "100%", background: "#F5A623" }} />
+        </div>
 
         {templateQuery.isLoading && (
           <div className="flex items-center text-muted-foreground py-6">

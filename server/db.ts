@@ -1950,3 +1950,46 @@ export async function getRentPaymentByLeasePeriod(leaseAgreementId: number, peri
     .limit(1);
   return rows[0];
 }
+
+// ─── In-app Notifications ─────────────────────────────────────────────────────
+import { notifications, InsertNotification, Notification } from "../drizzle/schema";
+
+export async function createNotification(data: Omit<InsertNotification, "id" | "createdAt">): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.insert(notifications).values(data as any);
+  return (result[0] as any).insertId;
+}
+
+export async function listNotificationsForUser(userId: number, limit = 30): Promise<Notification[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(notifications)
+    .where(eq(notifications.userId, userId))
+    .orderBy(desc(notifications.createdAt))
+    .limit(limit);
+}
+
+export async function countUnreadNotifications(userId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const rows = await db.select({ id: notifications.id }).from(notifications)
+    .where(and(eq(notifications.userId, userId), sql`${notifications.readAt} IS NULL`));
+  return rows.length;
+}
+
+export async function markNotificationRead(userId: number, id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(notifications)
+    .set({ readAt: new Date() } as any)
+    .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
+}
+
+export async function markAllNotificationsRead(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(notifications)
+    .set({ readAt: new Date() } as any)
+    .where(and(eq(notifications.userId, userId), sql`${notifications.readAt} IS NULL`));
+}

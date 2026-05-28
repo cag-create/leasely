@@ -8,7 +8,7 @@ import { trpc } from "@/lib/trpc";
 import {
   Map, PlusCircle, LayoutDashboard, Heart, Menu, X,
   LogOut, ChevronDown, Sparkles, Search, Building2,
-  Headphones, Shield, Settings, Wrench
+  Headphones, Shield, Settings, Wrench, Bell, CheckCheck
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -17,6 +17,97 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/112528410/Ucb4CaDiJcuyDWNAe95Wyq/leasely-logo-corrected_6f0929ef.png";
+
+function timeAgo(d: string | Date) {
+  const t = typeof d === "string" ? new Date(d) : d;
+  const s = Math.floor((Date.now() - t.getTime()) / 1000);
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
+}
+
+function NotificationBell() {
+  const utils = trpc.useUtils();
+  const { data } = trpc.notifications.list.useQuery(undefined, {
+    refetchInterval: 60000,
+    refetchOnWindowFocus: true,
+  });
+  const markRead = trpc.notifications.markRead.useMutation({
+    onSuccess: () => utils.notifications.list.invalidate(),
+  });
+  const markAllRead = trpc.notifications.markAllRead.useMutation({
+    onSuccess: () => utils.notifications.list.invalidate(),
+  });
+  const items = (data?.items ?? []) as any[];
+  const unread = data?.unread ?? 0;
+
+  function onItemClick(n: any) {
+    if (!n.readAt) markRead.mutate({ id: n.id });
+    if (n.link) window.location.href = n.link;
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className="relative flex items-center justify-center w-9 h-9 rounded-full hover:bg-secondary transition-colors"
+          aria-label="Notifications"
+        >
+          <Bell className="h-4.5 w-4.5 text-muted-foreground" />
+          {unread > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F5A623] text-[#3A2410] text-[10px] font-bold flex items-center justify-center border-2 border-white">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          )}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80 p-0 max-h-[28rem] overflow-hidden flex flex-col">
+        <div className="px-3 py-2 border-b border-border flex items-center justify-between">
+          <p className="text-sm font-semibold">Notifications</p>
+          {unread > 0 && (
+            <button
+              onClick={() => markAllRead.mutate()}
+              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+            >
+              <CheckCheck className="h-3.5 w-3.5" /> Mark all read
+            </button>
+          )}
+        </div>
+        <div className="overflow-y-auto flex-1">
+          {items.length === 0 ? (
+            <div className="px-4 py-8 text-center text-xs text-muted-foreground">
+              You're all caught up.
+            </div>
+          ) : (
+            items.map((n) => (
+              <button
+                key={n.id}
+                onClick={() => onItemClick(n)}
+                className={`w-full text-left px-3 py-2.5 border-b border-border/50 last:border-b-0 hover:bg-secondary/60 transition-colors ${
+                  !n.readAt ? "bg-amber-50/60" : ""
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  {!n.readAt && (
+                    <span className="mt-1.5 w-2 h-2 rounded-full bg-[#F5A623] shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{n.title}</p>
+                    {n.body && (
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{n.body}</p>
+                    )}
+                    <p className="text-[10px] text-muted-foreground/80 mt-1">{timeAgo(n.createdAt)}</p>
+                  </div>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export default function Navbar() {
   const [location] = useLocation();
@@ -155,6 +246,8 @@ export default function Navbar() {
                       </Button>
                     </Link>
                   )}
+
+                  <NotificationBell />
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

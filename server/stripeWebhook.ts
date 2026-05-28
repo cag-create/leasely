@@ -9,6 +9,7 @@ import {
   upsertUserSubscription, getUserByOpenId, getDb,
   getLeaseById, updateLeaseAgreement, getUserById, getOrCreateProCode,
   createRentPayment, updateRentPayment, getRentPaymentByLeasePeriod,
+  createNotification,
 } from "./db";
 import { sendEmail } from "./_core/email";
 import { affiliates, affiliateReferrals, leaseAgreements } from "../drizzle/schema";
@@ -468,6 +469,19 @@ async function handleLeaseAutopayActivated(leaseId: number, session: Stripe.Chec
   } catch (err) {
     console.warn("[Webhook] autopay landlord countersign email failed:", err);
   }
+
+  // In-app notification for landlord
+  try {
+    await createNotification({
+      userId: lease.landlordUserId,
+      type: "lease_autopay_activated",
+      title: "Tenant set up autopay — countersign to execute",
+      body: `${lease.tenantName} paid first month's rent${needsDeposit ? " + deposit" : ""} for ${lease.propertyAddress}.`,
+      link: "/leases",
+    });
+  } catch (err) {
+    console.warn("[Webhook] autopay notification insert failed:", err);
+  }
 }
 
 /**
@@ -527,6 +541,19 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
       });
     }
     console.log(`[Webhook] 💵 Rent paid: lease ${lease.id} period ${periodMonth} ($${amountPaid / 100})`);
+
+    // In-app notification for landlord
+    try {
+      await createNotification({
+        userId: lease.landlordUserId,
+        type: "rent_paid",
+        title: `Rent paid · ${lease.propertyAddress}`,
+        body: `${lease.tenantName} paid $${(amountPaid / 100).toFixed(0)} for ${periodMonth}.`,
+        link: "/rent",
+      });
+    } catch (err) {
+      console.warn("[Webhook] rent_paid notification insert failed:", err);
+    }
   } catch (err) {
     console.warn("[Webhook] invoice.paid ledger upsert failed:", err);
   }
@@ -580,6 +607,19 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
           <p style="margin-top:16px"><a href="${APP_URL}/rent" style="background:#1B2B5E;color:#fff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:700">View Rent Ledger</a></p>
         </div>`,
       });
+    }
+
+    // In-app notification for landlord
+    try {
+      await createNotification({
+        userId: lease.landlordUserId,
+        type: "rent_failed",
+        title: `Rent payment failed · ${lease.propertyAddress}`,
+        body: `${lease.tenantName}'s autopay for ${periodMonth} did not go through. Stripe will retry.`,
+        link: "/rent",
+      });
+    } catch (err) {
+      console.warn("[Webhook] rent_failed notification insert failed:", err);
     }
   } catch (err) {
     console.warn("[Webhook] invoice.payment_failed ledger update failed:", err);

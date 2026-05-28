@@ -1582,3 +1582,22 @@ export const rentBenchmarkRuns = mysqlTable("rent_benchmark_runs", {
 });
 export type RentBenchmarkRun = typeof rentBenchmarkRuns.$inferSelect;
 export type InsertRentBenchmarkRun = typeof rentBenchmarkRuns.$inferInsert;
+
+/**
+ * In-app notifications — bell-icon feed shown to the user in the Navbar.
+ * Keyed by userId. type is a short token (e.g. "lease_signed", "payment_paid",
+ * "payment_failed", "vendor_accepted") so the UI can pick an icon. link is
+ * an optional in-app path the bell click should navigate to.
+ */
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  type: varchar("type", { length: 64 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body"),
+  link: varchar("link", { length: 512 }),
+  readAt: timestamp("readAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
