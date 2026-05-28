@@ -451,7 +451,7 @@ export default function PortalSetup() {
                 <Sparkles className="h-5 w-5 text-amber-400" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Claim your free $399 package</h2>
+                <h2 className="text-lg font-bold text-white">Claim your free $397 package</h2>
                 <p className="text-sm text-white/50">Website · Logo · 1-Year Domain — included with Pro</p>
               </div>
             </div>
@@ -481,7 +481,7 @@ export default function PortalSetup() {
                   <span className="text-sm text-white/80">{f}</span>
                 </div>
               ))}
-              <p className="text-xs text-amber-400/70 mt-3">Valued at $399 + $30/yr portal renewal · yours free as a Pro member</p>
+              <p className="text-xs text-amber-400/70 mt-3">Valued at $397 + $30/yr portal renewal · yours free as a Pro member</p>
             </div>
 
             {/* Code */}

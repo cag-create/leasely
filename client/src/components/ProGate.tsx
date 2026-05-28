@@ -96,7 +96,7 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
             {/* Feature highlights */}
             <div className="grid grid-cols-2 gap-3 text-left">
               {[
-                "Free $399 website + logo",
+                "Free $397 website + logo",
                 "Branded tenant portal",
                 "Unlimited listings",
                 "AI fraud screening",

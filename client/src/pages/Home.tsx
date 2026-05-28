@@ -237,7 +237,7 @@ export default function Home() {
                   "Property CRM + lease tracking",
                   "Background checks (TransUnion)",
                   "QR codes for sign riders",
-                  "$399 branded website (free)",
+                  "$397 branded website (free)",
                   "First listing free, $25/mo",
                 ].map(item => (
                   <span key={item} className="flex items-center gap-1.5">
