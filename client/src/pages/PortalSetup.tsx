@@ -484,6 +484,45 @@ export default function PortalSetup() {
               <p className="text-xs text-amber-400/70 mt-3">Valued at $397 + $30/yr portal renewal · yours free as a Pro member</p>
             </div>
 
+            {/* Cost breakdown — one-time vs. recurring vs. optional add-ons */}
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5 space-y-4">
+              <p className="text-xs font-semibold text-white/70 uppercase tracking-wider">Cost breakdown — what's free, what renews, what's optional</p>
+
+              <div>
+                <p className="text-xs font-bold text-emerald-400 mb-1.5">Included free (one-time)</p>
+                <ul className="text-sm text-white/70 space-y-1 pl-4 list-disc marker:text-emerald-400/50">
+                  <li>Custom website design</li>
+                  <li>7 logo concepts</li>
+                  <li>1-year domain registration</li>
+                  <li>1-year managed hosting</li>
+                </ul>
+              </div>
+
+              <div>
+                <p className="text-xs font-bold text-amber-400 mb-1.5">Recurring (year 2 onward)</p>
+                <ul className="text-sm text-white/70 space-y-1 pl-4 list-disc marker:text-amber-400/50">
+                  <li>Domain + hosting renewal — <span className="text-white font-semibold">$30/yr</span> via CBP <span className="text-white/40">(or transfer the domain to your own registrar — free)</span></li>
+                </ul>
+              </div>
+
+              <div>
+                <p className="text-xs font-bold text-sky-400 mb-1.5">Optional add-ons via CBP (you pay them directly)</p>
+                <ul className="text-sm text-white/70 space-y-1 pl-4 list-disc marker:text-sky-400/50">
+                  <li>
+                    <span className="font-semibold text-white">EIN filing — ~$79 one-time.</span>{" "}
+                    <span className="text-white/50">Or apply directly with the IRS yourself for free at </span>
+                    <a href="https://www.irs.gov/businesses/small-businesses-self-employed/apply-for-an-employer-identification-number-ein-online" target="_blank" rel="noopener" className="text-sky-300 underline hover:text-sky-200">irs.gov</a>
+                    <span className="text-white/50"> (takes ~10 minutes).</span>
+                  </li>
+                  <li>Business formation (LLC, S-corp), trademark filing, additional logos/branding — pricing at <a href="https://certifybusinesspro.com" target="_blank" rel="noopener" className="text-sky-300 underline hover:text-sky-200">certifybusinesspro.com</a></li>
+                </ul>
+              </div>
+
+              <p className="text-xs text-white/40 pt-1 border-t border-white/5">
+                Leasely charges <span className="text-white/60 font-semibold">$75 one-time setup + $25/mo</span>. Everything else above is between you and CBP — no markups, no kickbacks.
+              </p>
+            </div>
+
             {/* Code */}
             {proCode ? (
               <div className="rounded-xl border-2 border-[#F5A623]/40 bg-[#F5A623]/5 p-5 text-center">

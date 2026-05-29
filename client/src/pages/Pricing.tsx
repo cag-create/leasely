@@ -122,6 +122,10 @@ const FAQ_ITEMS = [
     q: "Do you take a cut of vendor invoices or charge per work order?",
     a: "No. Unlike Buildium and Yardi — which charge per-transaction fees or mark up vendor invoices — Leasely takes zero from your work orders. Your contractor invoices you $1,000, your contractor gets paid $1,000, we don't touch it. We don't nickel-and-dime. The $25/mo covers unlimited work orders, unlimited vendor dispatch, and unlimited Stripe Connect payouts."
   },
+  {
+    q: "What's actually recurring vs. one-time?",
+    a: "Leasely: $75 one-time setup + $25/mo recurring (cancel anytime). The CBP brand kit ($397 value — free with Pro) is one-time; only the domain + hosting renewal at $30/yr is recurring after year 1, and you can transfer your domain to your own registrar to avoid it. Optional CBP add-ons like EIN filing (~$79 one-time — or apply free yourself at irs.gov), LLC formation, and trademark filing are billed directly by CBP at their listed prices — Leasely takes no markup and no kickback on any of it."
+  },
 ];
 
 
