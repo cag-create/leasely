@@ -80,7 +80,9 @@ export function renderTemplate(bodyHtml: string, vars: RenderVariables, citation
 
   const html = bodyHtml.replace(PLACEHOLDER_RE, (_match, name: string) => {
     if (Object.prototype.hasOwnProperty.call(effectiveVars, name) && effectiveVars[name] !== undefined && effectiveVars[name] !== null && effectiveVars[name] !== "") {
-      return formatValue(name, effectiveVars[name]);
+      // Wrap resolved values too so the preview can click-to-edit any field,
+      // not just the red `[var — required]` placeholders.
+      return `<span class="lease-filled" data-var="${escapeHtml(name)}">${formatValue(name, effectiveVars[name])}</span>`;
     }
     unresolved.add(name);
     return `<span class="lease-unresolved" data-var="${escapeHtml(name)}">[${escapeHtml(name)} — required]</span>`;

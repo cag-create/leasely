@@ -367,10 +367,37 @@ export default function LeasePreview() {
                 ))}
                 <Button
                   className="w-full bg-[#1B2B5E] hover:bg-[#2D3F7C] text-white"
-                  onClick={() => fillMut.mutate({ id, variables: Object.fromEntries(Object.entries(fieldValues).filter(([, v]) => v.trim() !== "")) })}
-                  disabled={fillMut.isPending || Object.values(fieldValues).every(v => !v.trim())}
+                  onClick={async () => {
+                    const filled = Object.fromEntries(Object.entries(fieldValues).filter(([, v]) => v.trim() !== ""));
+                    const hasNewValues = Object.keys(filled).length > 0;
+                    try {
+                      if (hasNewValues) await fillMut.mutateAsync({ id, variables: filled });
+                      // After saving, only send if there are no remaining unresolved
+                      // placeholders. The fillMut refetch updates unresolvedCount.
+                      // We must read the *latest* doc, so refetch first.
+                      const fresh = await docQuery.refetch();
+                      const stillUnresolved = (fresh.data?.renderedHtml ?? "").match(/lease-unresolved/g)?.length ?? 0;
+                      if (stillUnresolved > 0) {
+                        toast.warning(`${stillUnresolved} field${stillUnresolved === 1 ? "" : "s"} still unfilled. Click the red [field — required] placeholders below to finish.`);
+                        return;
+                      }
+                      if (!isDraft) {
+                        toast.success("Saved.");
+                        return;
+                      }
+                      // Auto-acknowledge + send so a single click pushes the lease out.
+                      await ackMut.mutateAsync({ id });
+                      await sendMut.mutateAsync({ id });
+                      toast.success("Lease saved and sent to tenant.");
+                    } catch (e: any) {
+                      toast.error(e?.message ?? "Save & send failed");
+                    }
+                  }}
+                  disabled={fillMut.isPending || sendMut.isPending}
                 >
-                  {fillMut.isPending ? <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Saving…</> : "Save & Re-render Lease"}
+                  {fillMut.isPending || sendMut.isPending
+                    ? <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Saving &amp; sending…</>
+                    : isDraft ? <><Send className="h-4 w-4 mr-1.5" /> Save &amp; Send to Tenant</> : "Save Changes"}
                 </Button>
               </div>
             )}
@@ -403,6 +430,9 @@ export default function LeasePreview() {
                 .lease-unresolved { background:#fee; color:#b00020; padding:0 4px; border-radius:3px; font-weight:600; cursor:pointer; transition: background .15s ease, box-shadow .15s ease; }
                 .lease-preview.editable .lease-unresolved:hover { background:#fcd; box-shadow: 0 0 0 2px #fbb inset; }
                 .lease-preview.editable .lease-unresolved::after { content:" ✎"; font-size:0.85em; opacity:0.7; }
+                .lease-filled { transition: background .15s ease, box-shadow .15s ease; border-radius:2px; }
+                .lease-preview.editable .lease-filled { cursor:pointer; border-bottom: 1px dashed transparent; }
+                .lease-preview.editable .lease-filled:hover { background:#dbeafe; border-bottom-color:#60a5fa; box-shadow: 0 0 0 2px #bfdbfe inset; }
                 .lease-preview h1 { font-size:1.5rem; font-weight:700; margin: 1rem 0 .75rem; }
                 .lease-preview h2 { font-size:1.1rem; font-weight:600; margin: 1.25rem 0 .5rem; }
                 .lease-preview section { margin: .75rem 0; }
@@ -414,7 +444,7 @@ export default function LeasePreview() {
               {!isReadOnly && (
                 <div className="mb-3 flex items-center gap-2 text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
                   <Pencil className="h-3.5 w-3.5 shrink-0" />
-                  <span><strong>Tip:</strong> Click any red <span className="bg-red-100 text-red-700 px-1 rounded font-semibold">[field — required]</span> placeholder below to edit it inline. Changes save instantly.</span>
+                  <span><strong>Tip:</strong> Click <em>any</em> filled value or red <span className="bg-red-100 text-red-700 px-1 rounded font-semibold">[field — required]</span> placeholder below to edit it inline. Changes save instantly.</span>
                 </div>
               )}
               <div

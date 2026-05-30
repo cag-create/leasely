@@ -102,6 +102,21 @@ export default function TenantSignLease() {
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800 mb-4">
             <strong>Note:</strong> Your signature is conditional. The lease is not legally binding until both deposit and first month's rent are paid <em>and</em> your landlord has countersigned.
           </div>
+          <div className="flex gap-2 mb-4">
+            <Button
+              className="flex-1 font-bold gap-2 py-2.5"
+              style={{ background: BRAND, color: "white" }}
+              onClick={() => {
+                // Send the tenant straight to their portal. If they don't yet
+                // have a session token (first time on this device), the signin
+                // page handles bootstrapping from the magic-link.
+                const hasToken = typeof window !== "undefined" && !!localStorage.getItem("leasely_tenant_token");
+                window.location.href = hasToken ? "/tenant/dashboard" : "/tenant-portal/signin";
+              }}
+            >
+              <Home className="w-4 h-4" /> Go to My Tenant Portal
+            </Button>
+          </div>
           <p className="text-sm text-gray-400">Powered by <strong style={{ color: BRAND }}>Leasely</strong></p>
         </div>
         <JourneyFooter currentStep={2} />

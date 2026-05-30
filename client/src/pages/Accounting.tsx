@@ -94,9 +94,12 @@ export default function Accounting() {
     myListings.forEach((l: any) => {
       // skip if already linked via crm
       if (crmProperties.some((p: any) => p.listingId === l.id)) return;
+      // Always show the address (not the marketing title) so the dropdown
+      // matches what the landlord sees on lease rows + rent-payment logs.
+      const addressLabel = [l.address, l.city].filter(Boolean).join(", ") || l.title || "(unnamed property)";
       items.push({
         key: `listing:${l.id}`,
-        label: l.title || l.address,
+        label: addressLabel,
         listingId: l.id,
         address: [l.address, l.city, l.state].filter(Boolean).join(", "),
       });

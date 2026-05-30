@@ -4620,6 +4620,38 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
 
       await updateLeaseAgreement(lease.id, lease.landlordUserId, patch as any);
 
+      // Mirror manual payment into accounting ledger as income entries so the
+      // Accounting page stays in sync without the landlord double-entering.
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        if (input.kind === "rent" || input.kind === "both") {
+          await createAccountingEntry({
+            userId: lease.landlordUserId,
+            type: "income",
+            category: "rent" as any,
+            amount: lease.monthlyRent,
+            date: today,
+            description: `First month's rent — ${lease.tenantName}${input.method ? ` (${input.method})` : ""}${input.note ? ` — ${input.note}` : ""}`,
+            propertyAddress: lease.propertyAddress,
+            listingId: lease.listingId ?? undefined,
+          } as any);
+        }
+        if ((input.kind === "deposit" || input.kind === "both") && (lease.securityDeposit ?? 0) > 0) {
+          await createAccountingEntry({
+            userId: lease.landlordUserId,
+            type: "income",
+            category: "deposit" as any,
+            amount: lease.securityDeposit ?? 0,
+            date: today,
+            description: `Security deposit — ${lease.tenantName}${input.method ? ` (${input.method})` : ""}${input.note ? ` — ${input.note}` : ""}`,
+            propertyAddress: lease.propertyAddress,
+            listingId: lease.listingId ?? undefined,
+          } as any);
+        }
+      } catch (e) {
+        console.warn("[confirmPaymentReceived] auto-accounting entry failed:", e);
+      }
+
       // Email the landlord a confirmation that the countersign step is unlocked,
       // mirroring the Stripe-webhook behaviour so the UX feels identical.
       if (willHaveRent && willHaveDeposit) {
@@ -4781,6 +4813,26 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         paymentMethod: input.method,
         notes: input.note,
       });
+
+      // Auto-mirror the rent payment into the accounting ledger as an income
+      // entry so the Accounting page (and tax PDFs) stay in sync without the
+      // landlord having to log the same payment twice. Best-effort — failure
+      // here must not roll back the rent_payments insert.
+      try {
+        await createAccountingEntry({
+          userId: lease.landlordUserId,
+          type: "income",
+          category: "rent" as any,
+          amount: input.amountCents,
+          date: new Date().toISOString().slice(0, 10),
+          description: `Rent received — ${lease.tenantName} — ${input.periodMonth.slice(0, 7)} (${input.method})${input.note ? ` — ${input.note}` : ""}`,
+          propertyAddress: lease.propertyAddress,
+          listingId: lease.listingId ?? undefined,
+        } as any);
+      } catch (e) {
+        console.warn("[recordRentPayment] auto-accounting entry failed:", e);
+      }
+
       return { success: true, id };
     }),
 
@@ -4942,6 +4994,43 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       } as any);
 
       return { success: true };
+    }),
+
+    /**
+     * Hard-delete a lease — only the owning landlord may delete, and only
+     * paid Pro members. Cleans up dependent rows (lease_documents, rent_payments,
+     * lease_audit_log) first to avoid FK violations. Use this when a lease was
+     * created in error or needs to be permanently removed; if you only want to
+     * re-send to a different tenant, prefer `resetToDraft` instead.
+     */
+    delete: protectedProcedure.input(z.object({
+      leaseId: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN", message: "Pro subscription required to delete leases." });
+
+      const lease = await getLeaseById(input.leaseId);
+      if (!lease || lease.landlordUserId !== ctx.user.id) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+      // Cascade cleanup. Order matters because rent_payments + lease_audit_logs
+      // + lease_documents all FK to lease_agreements.id.
+      try {
+        const { rentPayments, leaseDocuments, leaseAuditLogs, leaseAgreements } = await import("../drizzle/schema");
+        await db.delete(rentPayments).where(eq(rentPayments.leaseAgreementId, lease.id));
+        await db.delete(leaseAuditLogs).where(eq(leaseAuditLogs.leaseAgreementId, lease.id));
+        await db.delete(leaseDocuments).where(eq(leaseDocuments.leaseAgreementId, lease.id));
+        await db.delete(leaseAgreements).where(and(eq(leaseAgreements.id, lease.id), eq(leaseAgreements.landlordUserId, ctx.user.id)));
+      } catch (e) {
+        console.error("[leases.delete] cascade delete failed", e);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Delete failed — please contact support." });
+      }
+
+      return { success: true, deletedLeaseId: lease.id };
     }),
 
     /** Tenant: get leases by email (portal auth) */

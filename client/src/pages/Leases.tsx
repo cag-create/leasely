@@ -322,6 +322,20 @@ export default function Leases() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  // Hard delete — wipes the lease + dependent rows. Pro members only.
+  const [deleteFor, setDeleteFor] = useState<any | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const deleteMutation = (trpc as any).leases.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Lease permanently deleted");
+      refetch();
+      setDeleteFor(null);
+      setDeleteConfirmText("");
+      setSelectedLease(null);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const editTenantMutation = trpc.leases.update.useMutation({
     onSuccess: () => {
       toast.success("Tenant info updated");
@@ -945,6 +959,14 @@ export default function Leases() {
                   >
                     <Trash2 className="w-3 h-3" /> Reset to draft
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs flex-1 sm:flex-none border-red-500 bg-red-50 text-red-800 hover:bg-red-100"
+                    onClick={() => setDeleteFor(selectedLease)}
+                  >
+                    <Trash2 className="w-3 h-3" /> Delete lease
+                  </Button>
                 </div>
 
                 {/* Review the lease document at any stage after draft. The
@@ -1228,6 +1250,51 @@ export default function Leases() {
                     }}
                   >
                     {resetMutation.isPending ? "Resetting..." : "Yes, reset to draft"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Hard-delete dialog — permanently removes the lease + all dependent
+            rows (documents, payments, audit log). Requires typing DELETE to
+            confirm. Pro-only on the server. */}
+        {deleteFor && (
+          <Dialog open={!!deleteFor} onOpenChange={() => { setDeleteFor(null); setDeleteConfirmText(""); }}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-red-700">Permanently delete lease?</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-2">
+                <div className="rounded-md bg-red-50 border border-red-300 p-3 text-sm text-red-900">
+                  <p className="font-semibold mb-1">This will permanently delete:</p>
+                  <ul className="list-disc ml-5 text-xs space-y-0.5">
+                    <li>The lease agreement record</li>
+                    <li>The rendered lease document</li>
+                    <li>All recorded rent payments for this lease</li>
+                    <li>All audit log entries</li>
+                  </ul>
+                  <p className="text-xs mt-2 font-semibold">This action cannot be undone.</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-700 mb-1.5">Type DELETE to confirm</Label>
+                  <Input
+                    value={deleteConfirmText}
+                    onChange={e => setDeleteConfirmText(e.target.value)}
+                    placeholder="DELETE"
+                  />
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button variant="outline" className="flex-1" onClick={() => { setDeleteFor(null); setDeleteConfirmText(""); }}>
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 bg-red-700 hover:bg-red-800 text-white"
+                    disabled={deleteMutation.isPending || deleteConfirmText.trim() !== "DELETE"}
+                    onClick={() => deleteMutation.mutate({ leaseId: deleteFor.id })}
+                  >
+                    {deleteMutation.isPending ? "Deleting..." : "Yes, delete permanently"}
                   </Button>
                 </div>
               </div>
