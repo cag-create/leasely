@@ -13,7 +13,7 @@ import {
   newInquiryEmail,
 } from "./_core/email";
 import Stripe from "stripe";
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHmac, timingSafeEqual, randomBytes } from "crypto";
 import { LEASELY_PRO, LEASELY_PRO_SETUP, DOMAIN_RENEWAL_ANNUAL } from "./products";
 import QRCode from "qrcode";
 import { generateObject } from "ai";
@@ -4475,6 +4475,59 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         });
       } catch (err) {
         console.warn("[leases.sign] notification insert failed:", err);
+      }
+
+      // Auto-provision the tenant portal account so the tenant can pay rent,
+      // file repair requests, and view documents without a second manual
+      // invite step. Idempotent: if a portal account already exists for this
+      // email, we reuse it and just refresh the magic-link token.
+      try {
+        let portalAccountId: number;
+        const existing = await getTenantByEmail(lease.tenantEmail);
+        if (existing) {
+          portalAccountId = existing.id;
+        } else {
+          const parseDateString = (s?: string | null) =>
+            s ? new Date(`${s}T12:00:00Z`) : undefined;
+          portalAccountId = await createTenantAccount({
+            landlordUserId: lease.landlordUserId,
+            leaseId: lease.id,
+            listingId: lease.listingId ?? undefined,
+            name: lease.tenantName,
+            email: lease.tenantEmail,
+            phone: lease.tenantPhone ?? undefined,
+            monthlyRentCents: lease.monthlyRent,
+            leaseStart: parseDateString(lease.leaseStartDate),
+            leaseEnd: parseDateString(lease.leaseEndDate),
+          });
+        }
+        // Magic-link token (30-day TTL). Refreshed on every sign so the
+        // welcome email always carries a working link, even for legacy
+        // accounts whose token expired.
+        const portalToken = randomBytes(32).toString("hex");
+        const portalTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        await updateTenantToken(portalAccountId, portalToken, portalTokenExpiresAt);
+
+        const portalSignInUrl = `${APP_URL}/tenant-portal/signin?token=${portalToken}`;
+        sendEmail({
+          to: lease.tenantEmail,
+          subject: `Your Tenant Portal is Ready — ${lease.propertyAddress}`,
+          html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+            <h2 style="color:#1B2B5E">Welcome to Your Tenant Portal</h2>
+            <p>Hi ${lease.tenantName}, your tenant portal for <strong>${lease.propertyAddress}</strong> is now active.</p>
+            <p>From the portal you can:</p>
+            <ul>
+              <li>Pay rent (one-time or autopay)</li>
+              <li>Submit repair / maintenance requests</li>
+              <li>View your lease documents and payment history</li>
+              <li>Message your landlord</li>
+            </ul>
+            <p style="margin-top:20px"><a href="${portalSignInUrl}" style="background:#1B2B5E;color:#fff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:700">Sign in to Your Portal</a></p>
+            <p style="font-size:12px;color:#666;margin-top:16px">This sign-in link is valid for 30 days. If it expires, request a new one from the portal sign-in page using the email on your lease.</p>
+          </div>`,
+        }).catch(() => {});
+      } catch (err) {
+        console.warn("[leases.sign] tenant portal auto-provision failed:", err);
       }
 
       return { success: true };

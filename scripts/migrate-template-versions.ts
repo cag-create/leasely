@@ -64,7 +64,7 @@ const rerenderDocId = rerenderArg ? Number(rerenderArg.split("=")[1]) : null;
           JSON.stringify(seed.variables ?? []),
           JSON.stringify(seed.citations ?? []),
           JSON.stringify(seed.disclosures ?? []),
-          "Auto-migration: payment_methods clause + TN § 66-28-301 fix",
+          "Auto-migration: added Early Termination (Lease Break) section — SCRA, DV, habitability protections + 2-months-rent buyout + landlord mitigation duty",
         ],
       );
       const newVersionId = (insRes as any).insertId;

@@ -3,7 +3,7 @@
 //
 // Route: /leases/draft/:id
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useLocation, useRoute } from "wouter";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Loader2, AlertTriangle, FileText, Send, ShieldAlert, Pencil, ChevronDown, ChevronUp } from "lucide-react";
@@ -58,6 +59,11 @@ export default function LeasePreview() {
   const [acknowledged, setAcknowledged] = useState(false);
   const [showFillPanel, setShowFillPanel] = useState(false);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  // Click-to-edit on the rendered preview: clicking a red [field — required]
+  // span opens this inline editor pre-filled with the current value.
+  const [inlineEditField, setInlineEditField] = useState<string | null>(null);
+  const [inlineEditValue, setInlineEditValue] = useState("");
+  const previewRef = useRef<HTMLDivElement | null>(null);
 
   const utils = (trpc as any).useUtils();
   const docQuery = (trpc as any).leaseDocs.get.useQuery({ id }, { enabled: Number.isFinite(id) && id > 0 });
@@ -107,6 +113,48 @@ export default function LeasePreview() {
   useEffect(() => {
     if (unresolvedCount > 0 || fieldsToFill.length > 0) setShowFillPanel(true);
   }, [unresolvedCount, fieldsToFill.length]);
+
+  // Click-to-edit: bind a delegated listener on the preview container so we
+  // catch clicks on any [field — required] placeholder (.lease-unresolved) or
+  // any element tagged with data-var. Re-binds whenever the rendered HTML
+  // changes so newly resolved spans pick up the listener.
+  useEffect(() => {
+    const node = previewRef.current;
+    // Only bind on editable drafts/sent — anything past that is locked.
+    const editableNow = doc?.status === "draft" || doc?.status === "sent";
+    if (!node || !editableNow) return;
+    const handler = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement | null)?.closest<HTMLElement>("[data-var], .lease-unresolved");
+      if (!target) return;
+      const name = target.getAttribute("data-var");
+      if (!name) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setInlineEditField(name);
+      const stored = (vars as Record<string, unknown>)[name];
+      setInlineEditValue(typeof stored === "string" ? stored : stored != null ? String(stored) : "");
+    };
+    node.addEventListener("click", handler);
+    return () => node.removeEventListener("click", handler);
+  }, [doc?.renderedHtml, doc?.status, vars]);
+
+  const saveInlineEdit = () => {
+    if (!inlineEditField) return;
+    const trimmed = inlineEditValue.trim();
+    if (!trimmed) {
+      toast.error("Value can't be empty.");
+      return;
+    }
+    fillMut.mutate(
+      { id, variables: { [inlineEditField]: trimmed } },
+      {
+        onSuccess: () => {
+          setInlineEditField(null);
+          setInlineEditValue("");
+        },
+      },
+    );
+  };
 
   const handleDownload = () => {
     if (!doc) return;
@@ -352,7 +400,9 @@ export default function LeasePreview() {
           <Card className="mb-6">
             <CardContent className="p-6">
               <style>{`
-                .lease-unresolved { background:#fee; color:#b00020; padding:0 4px; border-radius:3px; font-weight:600; }
+                .lease-unresolved { background:#fee; color:#b00020; padding:0 4px; border-radius:3px; font-weight:600; cursor:pointer; transition: background .15s ease, box-shadow .15s ease; }
+                .lease-preview.editable .lease-unresolved:hover { background:#fcd; box-shadow: 0 0 0 2px #fbb inset; }
+                .lease-preview.editable .lease-unresolved::after { content:" ✎"; font-size:0.85em; opacity:0.7; }
                 .lease-preview h1 { font-size:1.5rem; font-weight:700; margin: 1rem 0 .75rem; }
                 .lease-preview h2 { font-size:1.1rem; font-weight:600; margin: 1.25rem 0 .5rem; }
                 .lease-preview section { margin: .75rem 0; }
@@ -361,13 +411,51 @@ export default function LeasePreview() {
                 .lease-preview .signature-block { margin-top: 2rem; padding-top: 1rem; border-top:1px solid #eee; }
                 .lease-preview .legal-disclaimer { font-size:.85rem; color:#666; margin-top:1.5rem; }
               `}</style>
+              {!isReadOnly && (
+                <div className="mb-3 flex items-center gap-2 text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                  <Pencil className="h-3.5 w-3.5 shrink-0" />
+                  <span><strong>Tip:</strong> Click any red <span className="bg-red-100 text-red-700 px-1 rounded font-semibold">[field — required]</span> placeholder below to edit it inline. Changes save instantly.</span>
+                </div>
+              )}
               <div
-                className="lease-preview text-sm"
+                ref={previewRef}
+                className={`lease-preview text-sm ${isReadOnly ? "" : "editable"}`}
                 dangerouslySetInnerHTML={{ __html: doc.renderedHtml ?? "<p>(empty)</p>" }}
               />
             </CardContent>
           </Card>
         )}
+
+        {/* Inline placeholder editor — opens when user clicks a [field — required] span */}
+        <Dialog open={inlineEditField !== null} onOpenChange={(open) => { if (!open) { setInlineEditField(null); setInlineEditValue(""); } }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                Edit {inlineEditField ? (FIELD_LABELS[inlineEditField] ?? inlineEditField.replace(/_/g, " ")) : ""}
+              </DialogTitle>
+              <DialogDescription>
+                {inlineEditField ? (FIELD_HINTS[inlineEditField] ?? "Enter a value for this placeholder.") : ""}
+              </DialogDescription>
+            </DialogHeader>
+            <Input
+              autoFocus
+              value={inlineEditValue}
+              placeholder={inlineEditField ? (FIELD_HINTS[inlineEditField] ?? "") : ""}
+              onChange={e => setInlineEditValue(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter") { e.preventDefault(); saveInlineEdit(); }
+                if (e.key === "Escape") { setInlineEditField(null); setInlineEditValue(""); }
+              }}
+              className="mt-2"
+            />
+            <DialogFooter className="mt-3">
+              <Button variant="outline" onClick={() => { setInlineEditField(null); setInlineEditValue(""); }}>Cancel</Button>
+              <Button onClick={saveInlineEdit} disabled={fillMut.isPending || !inlineEditValue.trim()}>
+                {fillMut.isPending ? <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Saving…</> : "Save"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {isDraft && (
         <Card className="border-amber-300">

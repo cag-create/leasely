@@ -40,6 +40,54 @@ const SIGNATURE_BLOCK = `
   </div>
 </section>`;
 
+// ─── Early Termination (Lease Break) ──────────────────────────────────────────
+// State-specific buyout language. Two universal principles apply in every U.S.
+// state: (1) the landlord has a duty to mitigate damages by making reasonable
+// efforts to re-let, and (2) servicemembers may terminate under the SCRA
+// (50 U.S.C. § 3955) with 30 days' notice + a copy of orders. State-specific
+// statutory protections (domestic violence, habitability) are added per state.
+const EARLY_TERMINATION_NC = `
+<section>
+  <h2>Early Termination by Tenant (Lease Break)</h2>
+  <p><strong>Notice and fee.</strong> If Tenant wishes to end this Lease before the Lease End Date for any reason not protected by statute, Tenant shall (a) provide Landlord with at least <strong>sixty (60) days' written notice</strong> of the intended vacate date, and (b) pay an <strong>early-termination fee equal to two (2) months' rent</strong>, OR the rent that would be owed for the remainder of the term, <em>whichever is less</em>. The fee is in addition to any unpaid rent, damages beyond ordinary wear and tear, and lawful deductions from the security deposit under <em>N.C. Gen. Stat. § 42-51 and § 42-52</em>.</p>
+  <p><strong>Landlord's duty to mitigate.</strong> If Tenant vacates before the term ends, Landlord shall make reasonable efforts to re-let the Property at a comparable rent. Tenant remains liable for rent only until the Property is re-let to a replacement tenant or the original Lease End Date, whichever comes first, less Landlord's reasonable re-letting costs (advertising, showings, screening, broker fees if any). North Carolina recognizes a landlord's mitigation duty in residential leases; this clause restates that duty for clarity.</p>
+  <p><strong>Statutorily protected terminations.</strong> Tenant may terminate without paying the early-termination fee in the following situations, each of which has its own notice and documentation requirements:</p>
+  <ul>
+    <li><strong>Active military service (SCRA).</strong> Under the federal Servicemembers Civil Relief Act, <em>50 U.S.C. § 3955</em>, a servicemember who enters active duty or receives PCS / deployment orders of 90+ days may terminate by giving Landlord written notice with a copy of orders; the Lease terminates 30 days after the next rent due date.</li>
+    <li><strong>Domestic violence, sexual assault, or stalking.</strong> Pursuant to <em>N.C. Gen. Stat. § 42-45.1</em>, a victim with a valid protective order, criminal restraining order, or qualifying court order or law-enforcement documentation may terminate the Lease by giving Landlord 30 days' written notice. Tenant is liable only for rent through the termination date.</li>
+    <li><strong>Uninhabitable premises.</strong> If Landlord fails to comply with the duties imposed by <em>N.C. Gen. Stat. § 42-42</em> after written notice and a reasonable opportunity to cure, Tenant may pursue the remedies available under § 42-44, which may include termination in certain circumstances.</li>
+  </ul>
+  <p><strong>Security deposit.</strong> The security deposit may be applied to unpaid rent, the early-termination fee, and damages beyond ordinary wear and tear, in accordance with <em>N.C. Gen. Stat. § 42-51</em>. Any balance shall be returned within 30 days (or 60 days if a final accounting is required) per <em>§ 42-52</em>.</p>
+</section>`;
+
+const EARLY_TERMINATION_TN = `
+<section>
+  <h2>Early Termination by Tenant (Lease Break)</h2>
+  <p><strong>Notice and fee.</strong> If Tenant wishes to end this Lease before the Lease End Date for any reason not protected by statute, Tenant shall (a) provide Landlord with at least <strong>sixty (60) days' written notice</strong> of the intended vacate date, and (b) pay an <strong>early-termination fee equal to two (2) months' rent</strong>, OR the rent that would be owed for the remainder of the term, <em>whichever is less</em>. The fee is in addition to any unpaid rent, damages beyond ordinary wear and tear, and lawful deductions from the security deposit under <em>Tenn. Code Ann. § 66-28-301 and § 66-28-305</em>.</p>
+  <p><strong>Landlord's duty to mitigate.</strong> If Tenant vacates before the term ends, Landlord shall make reasonable efforts to re-let the Property at a comparable rent. In URLTA counties, this duty is codified at <em>Tenn. Code Ann. § 66-28-507</em>. Tenant remains liable for rent only until the Property is re-let or the original Lease End Date, whichever comes first, less Landlord's reasonable re-letting costs.</p>
+  <p><strong>Statutorily protected terminations.</strong> Tenant may terminate without paying the early-termination fee in the following situations, each of which has its own notice and documentation requirements:</p>
+  <ul>
+    <li><strong>Active military service (SCRA).</strong> Under <em>50 U.S.C. § 3955</em>, a servicemember entering active duty or receiving PCS / deployment orders of 90+ days may terminate by giving Landlord written notice with a copy of orders; the Lease terminates 30 days after the next rent due date.</li>
+    <li><strong>Domestic violence, sexual assault, or stalking.</strong> Pursuant to <em>Tenn. Code Ann. § 66-7-109</em>, a victim with a qualifying protective order or other documentation specified by statute may terminate the Lease by giving Landlord at least 30 days' written notice. Tenant is liable only for rent and damages accruing through the termination date.</li>
+    <li><strong>Uninhabitable premises (URLTA counties).</strong> If Landlord fails to comply with <em>Tenn. Code Ann. § 66-28-304</em> after the 14-day cure notice required by <em>§ 66-28-501</em>, Tenant may terminate without further obligation. In non-URLTA counties this remedy is contractual rather than statutory but Landlord agrees to honor it.</li>
+  </ul>
+  <p><strong>Security deposit.</strong> The security deposit may be applied to unpaid rent, the early-termination fee, and damages beyond ordinary wear and tear, in accordance with <em>Tenn. Code Ann. § 66-28-301(g)</em>. Final accounting and any balance shall be provided within 30 days of the termination date.</p>
+</section>`;
+
+const EARLY_TERMINATION_GENERIC = `
+<section>
+  <h2>Early Termination by Tenant (Lease Break)</h2>
+  <p><strong>Notice and fee.</strong> If Tenant wishes to end this Lease before the Lease End Date for any reason not protected by statute, Tenant shall (a) provide Landlord with at least <strong>sixty (60) days' written notice</strong> of the intended vacate date, and (b) pay an <strong>early-termination fee equal to two (2) months' rent</strong>, OR the rent that would be owed for the remainder of the term, <em>whichever is less</em>. The fee is in addition to any unpaid rent, damages beyond ordinary wear and tear, and lawful deductions from the security deposit.</p>
+  <p><strong>Landlord's duty to mitigate.</strong> Nearly every U.S. state — by statute or by case law — requires Landlord to make reasonable efforts to re-let the Property after Tenant vacates. Tenant remains liable for rent only until the Property is re-let to a replacement tenant or the original Lease End Date, whichever comes first, less Landlord's reasonable re-letting costs.</p>
+  <p><strong>Statutorily protected terminations.</strong> Tenant may terminate without paying the early-termination fee in the following situations (each with its own notice and documentation requirements under {{state}} law):</p>
+  <ul>
+    <li><strong>Active military service (SCRA).</strong> Under <em>50 U.S.C. § 3955</em>, a servicemember entering active duty or receiving PCS / deployment orders of 90+ days may terminate by giving Landlord written notice with a copy of orders.</li>
+    <li><strong>Domestic violence, sexual assault, or stalking.</strong> Most states permit a victim with a qualifying protective order or court documentation to terminate on 30 days' written notice. The exact statute and documentation required vary by state — Tenant should consult {{state}} law.</li>
+    <li><strong>Uninhabitable premises.</strong> If Landlord materially fails to maintain the Property in habitable condition after written notice and a reasonable opportunity to cure, Tenant may have a statutory or common-law right to terminate.</li>
+  </ul>
+  <p><strong>Security deposit.</strong> The security deposit may be applied to unpaid rent, the early-termination fee, and damages beyond ordinary wear and tear, in accordance with applicable {{state}} law. Final accounting timing varies by state (commonly 14 to 30 days).</p>
+</section>`;
+
 const NC_RESIDENTIAL: SeedTemplate = {
   state: "NC",
   category: "standard_residential",
@@ -129,6 +177,7 @@ const NC_RESIDENTIAL: SeedTemplate = {
     </ul>
   </section>
 
+  ${EARLY_TERMINATION_NC}
   ${FEDERAL_LEAD_PAINT}
   ${COMPLIANCE_BLOCK}
   ${SIGNATURE_BLOCK}
@@ -195,6 +244,7 @@ const NC_COLIVING: SeedTemplate = {
     <p>Authorized occupants: {{occupants}}. Pets allowed: {{pets_allowed}}. Parking: {{parking}}. Guests may stay no longer than seven (7) consecutive nights without written consent.</p>
   </section>
 
+  ${EARLY_TERMINATION_NC}
   ${FEDERAL_LEAD_PAINT}
   ${COMPLIANCE_BLOCK}
   ${SIGNATURE_BLOCK}
@@ -276,6 +326,7 @@ const TN_RESIDENTIAL: SeedTemplate = {
     <p>Tennessee has no statewide rent-control law; the three-percent ceiling is a voluntary contractual commitment by Landlord and is enforceable as a term of this Lease.</p>
   </section>
 
+  ${EARLY_TERMINATION_TN}
   ${FEDERAL_LEAD_PAINT}
   ${COMPLIANCE_BLOCK}
   ${SIGNATURE_BLOCK}
@@ -339,6 +390,7 @@ const TN_COLIVING: SeedTemplate = {
     <p>Authorized occupants: {{occupants}}. Pets: {{pets_allowed}}. Parking: {{parking}}.</p>
   </section>
 
+  ${EARLY_TERMINATION_TN}
   ${FEDERAL_LEAD_PAINT}
   ${COMPLIANCE_BLOCK}
   ${SIGNATURE_BLOCK}
@@ -398,6 +450,7 @@ const GENERIC_MULTISTATE: SeedTemplate = {
     <p>If Landlord seeks to recover possession of the Property, Landlord shall follow the eviction procedure required by the law of {{state}}. Self-help removal (lockouts, utility shutoffs, removal of property) is prohibited. Nothing in this Lease waives any procedural protection or non-waivable right the Tenant has under applicable law.</p>
   </section>
 
+  ${EARLY_TERMINATION_GENERIC}
   ${FEDERAL_LEAD_PAINT}
   ${COMPLIANCE_BLOCK}
   ${SIGNATURE_BLOCK}
