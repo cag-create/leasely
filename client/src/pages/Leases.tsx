@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import {
   FileText, Plus, CheckCircle2, Clock, Send, AlertTriangle,
-  Home, DollarSign, Calendar, Key, ChevronRight, Users, Pencil
+  Home, DollarSign, Calendar, Key, ChevronRight, Users, Pencil, Trash2
 } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -299,6 +299,37 @@ export default function Leases() {
   // legally binding electronic signature before flipping status to "signed".
   const [countersignFor, setCountersignFor] = useState<any | null>(null);
   const [countersignName, setCountersignName] = useState("");
+
+  // Edit-tenant-info dialog state — landlords can retarget the tenant email
+  // or fix a typo at any stage of the lease lifecycle.
+  const [editTenantFor, setEditTenantFor] = useState<any | null>(null);
+  const [editTenantName, setEditTenantName] = useState("");
+  const [editTenantEmail, setEditTenantEmail] = useState("");
+
+  // Reset-to-draft dialog state — destructive escape hatch when a lease ended
+  // up "signed" without an actual signature, or needs to be re-sent to a
+  // different person.
+  const [resetFor, setResetFor] = useState<any | null>(null);
+  const [resetReason, setResetReason] = useState("");
+
+  const resetMutation = (trpc as any).leases.resetToDraft.useMutation({
+    onSuccess: () => {
+      toast.success("Lease reset to draft — re-send when ready");
+      refetch();
+      setResetFor(null);
+      setSelectedLease(null);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const editTenantMutation = trpc.leases.update.useMutation({
+    onSuccess: () => {
+      toast.success("Tenant info updated");
+      refetch();
+      setEditTenantFor(null);
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   // Off-platform payment fallback. Leasely-rails (Stripe) is the default —
   // this is here only so a landlord who took Zelle/Venmo/check/cash can keep
@@ -868,15 +899,53 @@ export default function Leases() {
                     </div>
 
                     {/* Integrity warning — status says "fully executed" but
-                        signatures aren't both on file. */}
+                        signatures aren't both on file, OR signatures exist
+                        but were captured by the legacy (pre-typed-name)
+                        flow so there's no real artifact on the document. */}
                     {["signed", "active"].includes(selectedLease.status) &&
                       (!selectedLease.tenantSignedAt || !selectedLease.landlordSignedAt) && (
                       <div className="mt-2 rounded-md bg-red-50 border border-red-200 p-2.5 text-xs text-red-800">
-                        <strong>Signature mismatch:</strong> Status shows fully executed but a signature timestamp is missing. Re-execute the countersign or contact support.
+                        <strong>Signature mismatch:</strong> Status shows fully executed but a signature timestamp is missing.
+                      </div>
+                    )}
+                    {["signed", "active"].includes(selectedLease.status) &&
+                      selectedLease.tenantSignedAt && selectedLease.landlordSignedAt &&
+                      (!(selectedLease as any).tenantSignatureName || !(selectedLease as any).landlordSignatureName) && (
+                      <div className="mt-2 rounded-md bg-amber-50 border border-amber-200 p-2.5 text-xs text-amber-900">
+                        <strong>Legacy signature:</strong> This lease was signed before typed-name capture was required, so there's no visible signature on the document. Reset to draft and re-sign to get a real artifact.
                       </div>
                     )}
                   </div>
                 )}
+
+                {/* Tenant info + admin actions — always available so a landlord
+                    can retarget the email or unwind a lease that's in a bad
+                    state. */}
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs flex-1 sm:flex-none"
+                    onClick={() => {
+                      setEditTenantName(selectedLease.tenantName ?? "");
+                      setEditTenantEmail(selectedLease.tenantEmail ?? "");
+                      setEditTenantFor(selectedLease);
+                    }}
+                  >
+                    <Pencil className="w-3 h-3" /> Edit tenant name / email
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs flex-1 sm:flex-none border-red-300 text-red-700 hover:bg-red-50"
+                    onClick={() => {
+                      setResetReason("");
+                      setResetFor(selectedLease);
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" /> Reset to draft
+                  </Button>
+                </div>
 
                 {/* Review the lease document at any stage after draft. The
                     /leases/draft/<id> route renders the document for any
@@ -1050,6 +1119,117 @@ export default function Leases() {
                 {["paid", "signed", "active"].includes(selectedLease.status) && (
                   <RentLedgerPanel lease={selectedLease} />
                 )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Edit tenant info dialog — retarget email / fix typo. Works on any
+            lease status. Server-side `update` validates the email format. */}
+        {editTenantFor && (
+          <Dialog open={!!editTenantFor} onOpenChange={() => setEditTenantFor(null)}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit tenant name / email</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-2">
+                <div className="rounded-md bg-blue-50 border border-blue-200 p-3 text-xs text-blue-900">
+                  Changing the email here updates where the signing & payment links go.
+                  If the lease has already been sent, use <strong>Resend</strong> on the lease
+                  card afterward to deliver to the new address.
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-700 mb-1.5">Tenant Name *</Label>
+                  <Input
+                    value={editTenantName}
+                    onChange={e => setEditTenantName(e.target.value)}
+                    placeholder="Full name"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-700 mb-1.5">Tenant Email *</Label>
+                  <Input
+                    type="email"
+                    value={editTenantEmail}
+                    onChange={e => setEditTenantEmail(e.target.value)}
+                    placeholder="tenant@email.com"
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button variant="outline" className="flex-1" onClick={() => setEditTenantFor(null)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 bg-[#1B2B5E] text-white"
+                    disabled={
+                      editTenantMutation.isPending
+                      || editTenantName.trim().length < 2
+                      || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editTenantEmail.trim())
+                    }
+                    onClick={() => {
+                      editTenantMutation.mutate({
+                        leaseId: editTenantFor.id,
+                        tenantName: editTenantName.trim(),
+                        tenantEmail: editTenantEmail.trim(),
+                      });
+                    }}
+                  >
+                    {editTenantMutation.isPending ? "Saving..." : "Save"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Reset-to-draft dialog — destructive escape hatch. Clears every
+            signature timestamp + payment flag and returns status to "draft".
+            Stripe customer/subscription IDs are intentionally preserved on
+            the row so a tenant who already authorised autopay isn't
+            double-charged on resend; if you're sending to a NEW tenant,
+            duplicate the lease instead. */}
+        {resetFor && (
+          <Dialog open={!!resetFor} onOpenChange={() => setResetFor(null)}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-red-700">Reset lease to draft?</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-2">
+                <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-900">
+                  <p className="font-semibold mb-1">This clears:</p>
+                  <ul className="list-disc ml-5 text-xs space-y-0.5">
+                    <li>Tenant + landlord signatures and timestamps</li>
+                    <li>First-month and security-deposit payment flags</li>
+                    <li>Status — returns to <strong>Draft</strong></li>
+                  </ul>
+                  <p className="text-xs mt-2">An audit line is appended to the lease notes. The lease itself is not deleted; you can re-send when ready.</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-700 mb-1.5">Reason (optional, saved to notes)</Label>
+                  <Input
+                    value={resetReason}
+                    onChange={e => setResetReason(e.target.value)}
+                    placeholder="e.g. Wrong tenant email — retargeting"
+                  />
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button variant="outline" className="flex-1" onClick={() => setResetFor(null)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                    disabled={resetMutation.isPending}
+                    onClick={() => {
+                      resetMutation.mutate({
+                        leaseId: resetFor.id,
+                        reason: resetReason.trim() || undefined,
+                      });
+                    }}
+                  >
+                    {resetMutation.isPending ? "Resetting..." : "Yes, reset to draft"}
+                  </Button>
+                </div>
               </div>
             </DialogContent>
           </Dialog>

@@ -4825,6 +4825,8 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
     /** Landlord: update a draft lease */
     update: protectedProcedure.input(z.object({
       leaseId: z.number(),
+      tenantName: z.string().trim().min(2).max(255).optional(),
+      tenantEmail: z.string().email().optional(),
       tenantPhone: z.string().optional(),
       monthlyRent: z.number().optional(),
       securityDeposit: z.number().optional(),
@@ -4842,6 +4844,50 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
     })).mutation(async ({ ctx, input }) => {
       const { leaseId, ...data } = input;
       await updateLeaseAgreement(leaseId, ctx.user.id, data as any);
+      return { success: true };
+    }),
+
+    /**
+     * Unwind a lease back to a fresh draft state. Clears every signature
+     * artifact, payment flag, and payment-link record, then resets status
+     * to "draft". Audit-trailed in notes. Use when a lease ended up in a
+     * bad state (e.g. someone clicked the legacy countersign button without
+     * actually signing, or the tenant email needs to be retargeted before
+     * re-sending). Stripe state (customer/subscription IDs) is intentionally
+     * preserved so a previously-charged tenant isn't double-billed if you
+     * later resend; clear those separately via the lease detail dialog if
+     * the lease is going to a different tenant.
+     */
+    resetToDraft: protectedProcedure.input(z.object({
+      leaseId: z.number(),
+      reason: z.string().trim().max(500).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const lease = await getLeaseById(input.leaseId);
+      if (!lease || lease.landlordUserId !== ctx.user.id) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      const stamp = new Date().toISOString().slice(0, 10);
+      const trail = `[${stamp}] Lease reset to draft by landlord${input.reason ? ` — ${input.reason}` : ""}. Prior status: ${lease.status}.`;
+      const notes = lease.notes ? `${lease.notes}\n${trail}` : trail;
+
+      await updateLeaseAgreement(lease.id, ctx.user.id, {
+        status: "draft",
+        sentAt: null,
+        signedAt: null,
+        tenantSignedAt: null,
+        landlordSignedAt: null,
+        tenantSignatureName: null,
+        landlordSignatureName: null,
+        tenantSignatureIp: null,
+        landlordSignatureIp: null,
+        paidAt: null,
+        firstMonthPaymentSent: 0,
+        depositPaymentSent: 0,
+        firstMonthPaid: 0,
+        depositPaid: 0,
+        notes,
+      } as any);
+
       return { success: true };
     }),
 
