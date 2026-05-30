@@ -4312,6 +4312,70 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
     }),
 
     /**
+     * Re-fire the tenant-facing signing email for a lease that's already been
+     * sent but not yet acted on. Does NOT modify status — only refreshes
+     * `sentAt` and re-sends the email. Useful when the tenant lost the
+     * original, the email landed in spam, or the address needs nudging.
+     * Allowed for statuses where the tenant action is still pending:
+     * `sent`, `tenant_signed`, `awaiting_payment`.
+     */
+    resend: protectedProcedure.input(z.object({ leaseId: z.number() })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+
+      const lease = await getLeaseById(input.leaseId);
+      if (!lease || lease.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+
+      if (!["sent", "tenant_signed", "awaiting_payment"].includes(lease.status)) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Resend is only available while the tenant has not yet completed signing + payment.",
+        });
+      }
+
+      const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+      const landlord = await getUserByOpenId(ctx.user.openId);
+
+      // Always bump sentAt so the landlord can see when the last reminder went out.
+      await updateLeaseAgreement(input.leaseId, ctx.user.id, { sentAt: new Date() } as any);
+
+      // Choose the email payload based on what the tenant still owes us.
+      if (lease.status === "sent") {
+        const signUrl = `${APP_URL}/tenant/sign-lease/${input.leaseId}`;
+        sendEmail({
+          to: lease.tenantEmail,
+          subject: `Reminder: Your Lease Agreement is Ready — ${lease.propertyAddress}`,
+          html: leaseAgreementEmail({
+            tenantName: lease.tenantName,
+            landlordName: landlord?.name ?? "Your Landlord",
+            propertyAddress: lease.propertyAddress,
+            state: lease.state,
+            monthlyRentDollars: lease.monthlyRent / 100,
+            securityDepositDollars: (lease.securityDeposit ?? 0) / 100,
+            leaseStartDate: lease.leaseStartDate,
+            leaseTerm: lease.leaseTerm ?? "12_months",
+            leaseUrl: signUrl,
+          }),
+        }).catch(() => {});
+      } else {
+        // Tenant signed but hasn't paid yet — re-send the payment link.
+        const emailParam = encodeURIComponent(lease.tenantEmail);
+        const rentPayUrl = `${APP_URL}/lease-pay/${lease.id}?email=${emailParam}&kind=rent`;
+        sendEmail({
+          to: lease.tenantEmail,
+          subject: `Reminder: Pay to Activate Your Lease — ${lease.propertyAddress}`,
+          html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+            <h2 style="color:#1B2B5E">Friendly Reminder — Payment Pending</h2>
+            <p>Hi ${lease.tenantName}, this is a quick nudge — your signed lease for <strong>${lease.propertyAddress}</strong> is waiting on first month's rent${lease.securityDeposit ? " and the security deposit" : ""} before your landlord countersigns.</p>
+            <p style="margin-top:16px"><a href="${rentPayUrl}" style="background:#F5A623;color:#3A2410;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:700">Complete Payment</a></p>
+          </div>`,
+        }).catch(() => {});
+      }
+
+      return { success: true, status: lease.status, resentAt: new Date().toISOString() };
+    }),
+
+    /**
      * Tenant signs lease (public — tenant uses sign link).
      * NEW FLOW: Tenant signs FIRST, but the lease is NOT yet fully executed.
      * Status moves to `tenant_signed` → `awaiting_payment`. Tenant must pay
@@ -4320,7 +4384,8 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
     sign: publicProcedure.input(z.object({
       leaseId: z.number(),
       tenantEmail: z.string().email(),
-    })).mutation(async ({ input }) => {
+      signatureName: z.string().trim().min(2, "Type your full legal name to sign.").max(120),
+    })).mutation(async ({ ctx, input }) => {
       const lease = await getLeaseById(input.leaseId);
       if (!lease || lease.tenantEmail.toLowerCase() !== input.tenantEmail.toLowerCase()) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Invalid lease or email mismatch." });
@@ -4330,13 +4395,19 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       }
 
       const now = new Date();
-      // Conditional signature: tenant has signed, awaiting payment before landlord countersigns
+      // Conditional signature: tenant has signed, awaiting payment before landlord countersigns.
+      // We capture the typed name + IP so the rendered lease has a real artifact, not just a status flag.
+      const signerIp = (ctx as any)?.req?.headers?.["x-forwarded-for"]?.toString().split(",")[0].trim()
+        ?? (ctx as any)?.req?.ip
+        ?? null;
       await updateLeaseAgreement(lease.id, lease.landlordUserId, {
         status: "awaiting_payment",
         tenantSignedAt: now,
+        tenantSignatureName: input.signatureName.trim(),
+        tenantSignatureIp: signerIp ?? undefined,
         firstMonthPaymentSent: 1,
         depositPaymentSent: lease.securityDeposit ? 1 : 0,
-      });
+      } as any);
 
       // Build payment links for tenant
       const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
@@ -4709,6 +4780,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
     /** Landlord countersigns the lease (only allowed once payment has cleared). */
     landlordSign: protectedProcedure.input(z.object({
       leaseId: z.number(),
+      signatureName: z.string().trim().min(2, "Type your full legal name to countersign.").max(120),
     })).mutation(async ({ ctx, input }) => {
       const lease = await getLeaseById(input.leaseId);
       if (!lease || lease.landlordUserId !== ctx.user.id) {
@@ -4721,11 +4793,16 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         });
       }
       const now = new Date();
+      const signerIp = (ctx as any)?.req?.headers?.["x-forwarded-for"]?.toString().split(",")[0].trim()
+        ?? (ctx as any)?.req?.ip
+        ?? null;
       await updateLeaseAgreement(lease.id, ctx.user.id, {
         status: "signed",
         landlordSignedAt: now,
+        landlordSignatureName: input.signatureName.trim(),
+        landlordSignatureIp: signerIp ?? undefined,
         signedAt: now,
-      });
+      } as any);
 
       // Notify tenant the lease is fully executed and provide access details
       const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
@@ -4757,7 +4834,11 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       lockboxCode: z.string().optional(),
       accessInstructions: z.string().optional(),
       notes: z.string().optional(),
-      status: z.enum(["draft","sent","tenant_signed","awaiting_payment","paid","signed","active","expired","terminated"]).optional(),
+      // Intentionally restricted: "signed" and "active" can ONLY be reached via
+      // landlordSign / dedicated workflow endpoints so a "Fully executed" badge
+      // is never set without an actual signature timestamp. Use `terminate` or
+      // `expire` flows for late-stage transitions, not this catch-all update.
+      status: z.enum(["draft","sent","expired","terminated"]).optional(),
     })).mutation(async ({ ctx, input }) => {
       const { leaseId, ...data } = input;
       await updateLeaseAgreement(leaseId, ctx.user.id, data as any);

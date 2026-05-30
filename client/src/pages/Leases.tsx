@@ -285,6 +285,21 @@ export default function Leases() {
     onError: (e) => toast.error(e.message),
   });
 
+  // Resend the signing/payment reminder email. Server only allows this when
+  // the tenant action is still pending (sent / tenant_signed / awaiting_payment).
+  const resendMutation = (trpc as any).leases.resend.useMutation({
+    onSuccess: () => {
+      toast.success("Reminder email re-sent to the tenant");
+      refetch();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  // Countersign dialog state — captures the landlord's typed legal name as a
+  // legally binding electronic signature before flipping status to "signed".
+  const [countersignFor, setCountersignFor] = useState<any | null>(null);
+  const [countersignName, setCountersignName] = useState("");
+
   // Off-platform payment fallback. Leasely-rails (Stripe) is the default —
   // this is here only so a landlord who took Zelle/Venmo/check/cash can keep
   // the lease moving without manual DB surgery.
@@ -711,6 +726,21 @@ export default function Leases() {
                           )}
                         </>
                       )}
+                      {["sent", "tenant_signed", "awaiting_payment"].includes(lease.status) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1 text-xs flex-1 sm:flex-none border-amber-400 text-amber-700 hover:bg-amber-50"
+                          onClick={e => {
+                            e.stopPropagation();
+                            resendMutation.mutate({ leaseId: lease.id });
+                          }}
+                          disabled={resendMutation.isPending}
+                          title={lease.status === "sent" ? "Re-send the signing email" : "Re-send the payment reminder"}
+                        >
+                          <Send className="w-3 h-3" /> Resend
+                        </Button>
+                      )}
                       {lease.status !== "draft" && (
                         <Button
                           size="sm"
@@ -799,13 +829,52 @@ export default function Leases() {
                   </div>
                 )}
 
-                {selectedLease.signedAt && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                    <div>
-                      <p className="text-sm font-semibold text-green-800">Signed</p>
-                      <p className="text-xs text-green-700">{formatDate(selectedLease.signedAt)}</p>
+                {/* Signature block — shows both parties' typed-name signatures
+                    with date. A red warning surfaces if status is "signed" but
+                    a signature artifact is missing (legacy data from before
+                    typed-name capture was required). */}
+                {(selectedLease.tenantSignedAt || selectedLease.landlordSignedAt || ["signed", "active"].includes(selectedLease.status)) && (
+                  <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Signatures</p>
+
+                    {/* Tenant */}
+                    <div className="border-b border-gray-100 pb-3">
+                      <p className="text-xs text-gray-500 mb-0.5">Tenant</p>
+                      {selectedLease.tenantSignedAt ? (
+                        <>
+                          <p className="font-serif italic text-lg text-gray-900">
+                            {(selectedLease as any).tenantSignatureName || <span className="text-amber-700 not-italic font-sans text-sm">(typed name not captured — pre-Nov 2026 signature)</span>}
+                          </p>
+                          <p className="text-xs text-gray-500">Signed {formatDate(selectedLease.tenantSignedAt)}</p>
+                        </>
+                      ) : (
+                        <p className="text-sm text-gray-400 italic">Not yet signed</p>
+                      )}
                     </div>
+
+                    {/* Landlord */}
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Landlord</p>
+                      {selectedLease.landlordSignedAt ? (
+                        <>
+                          <p className="font-serif italic text-lg text-gray-900">
+                            {(selectedLease as any).landlordSignatureName || <span className="text-amber-700 not-italic font-sans text-sm">(typed name not captured — pre-Nov 2026 signature)</span>}
+                          </p>
+                          <p className="text-xs text-gray-500">Countersigned {formatDate(selectedLease.landlordSignedAt)}</p>
+                        </>
+                      ) : (
+                        <p className="text-sm text-gray-400 italic">Not yet countersigned</p>
+                      )}
+                    </div>
+
+                    {/* Integrity warning — status says "fully executed" but
+                        signatures aren't both on file. */}
+                    {["signed", "active"].includes(selectedLease.status) &&
+                      (!selectedLease.tenantSignedAt || !selectedLease.landlordSignedAt) && (
+                      <div className="mt-2 rounded-md bg-red-50 border border-red-200 p-2.5 text-xs text-red-800">
+                        <strong>Signature mismatch:</strong> Status shows fully executed but a signature timestamp is missing. Re-execute the countersign or contact support.
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -965,13 +1034,13 @@ export default function Leases() {
                   <Button
                     className="w-full bg-[#F5A623] hover:bg-[#00b083] text-[#3A2410] gap-2 font-bold"
                     onClick={() => {
-                      landlordSignMutation.mutate({ leaseId: selectedLease.id });
-                      setSelectedLease({ ...selectedLease, status: "signed" });
+                      setCountersignName("");
+                      setCountersignFor(selectedLease);
                     }}
                     disabled={landlordSignMutation.isPending}
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    {landlordSignMutation.isPending ? "Countersigning..." : "Countersign — Execute Lease"}
+                    Countersign — Execute Lease
                   </Button>
                 )}
 
@@ -981,6 +1050,65 @@ export default function Leases() {
                 {["paid", "signed", "active"].includes(selectedLease.status) && (
                   <RentLedgerPanel lease={selectedLease} />
                 )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Countersign dialog — landlord types their full legal name as a
+            legally binding electronic signature before status flips to
+            "signed". Stored in landlordSignatureName so the document and
+            dashboard can render a real artifact, not just a status flag. */}
+        {countersignFor && (
+          <Dialog open={!!countersignFor} onOpenChange={() => setCountersignFor(null)}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Countersign — Execute Lease</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-2">
+                <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
+                  <p className="font-semibold mb-1">{countersignFor.propertyAddress}</p>
+                  <p className="text-xs">Tenant <strong>{countersignFor.tenantName}</strong> has signed and paid. Type your full legal name below to countersign and execute the lease.</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-700 mb-1.5">Your Full Legal Name *</Label>
+                  <Input
+                    type="text"
+                    autoFocus
+                    placeholder="e.g. Chad Glover"
+                    value={countersignName}
+                    onChange={e => setCountersignName(e.target.value)}
+                    className="rounded-xl font-serif italic text-lg"
+                    autoComplete="off"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">This typed name is your legally binding electronic signature and will appear on the executed lease.</p>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setCountersignFor(null)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 bg-[#F5A623] hover:bg-[#e5961c] text-[#3A2410] font-bold gap-2"
+                    disabled={countersignName.trim().length < 2 || landlordSignMutation.isPending}
+                    onClick={async () => {
+                      try {
+                        await landlordSignMutation.mutateAsync({
+                          leaseId: countersignFor.id,
+                          signatureName: countersignName.trim(),
+                        });
+                        setCountersignFor(null);
+                        setSelectedLease(null);
+                      } catch {/* toast handled in onError */}
+                    }}
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    {landlordSignMutation.isPending ? "Countersigning..." : "Sign & Execute"}
+                  </Button>
+                </div>
               </div>
             </DialogContent>
           </Dialog>

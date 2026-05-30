@@ -59,6 +59,7 @@ export default function TenantSignLease() {
   const { id } = useParams<{ id: string }>();
   const leaseId = id ? parseInt(id) : null;
   const [email, setEmail] = useState("");
+  const [signatureName, setSignatureName] = useState("");
   const [signed, setSigned] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
 
@@ -163,6 +164,19 @@ export default function TenantSignLease() {
               <p className="text-xs text-gray-400 mt-1">Must match the email your landlord has on file.</p>
             </div>
 
+            <div>
+              <Label className="text-sm font-semibold text-gray-700 mb-1.5">Type Your Full Legal Name as Your Signature *</Label>
+              <Input
+                type="text"
+                placeholder="e.g. Jane Q. Doe"
+                value={signatureName}
+                onChange={e => setSignatureName(e.target.value)}
+                className="rounded-xl font-serif italic text-lg"
+                autoComplete="off"
+              />
+              <p className="text-xs text-gray-400 mt-1">This typed name is your legally binding electronic signature and will appear on the executed lease.</p>
+            </div>
+
             {/* Signature acknowledgment */}
             <div className="space-y-3">
               <label className="flex items-start gap-3 cursor-pointer">
@@ -182,10 +196,14 @@ export default function TenantSignLease() {
               <Button
                 className="flex-1 font-bold gap-2 py-3"
                 style={{ background: ACCENT, color: "#3A2410" }}
-                disabled={!email.trim() || !confirmed || signMutation.isPending}
+                disabled={!email.trim() || signatureName.trim().length < 2 || !confirmed || signMutation.isPending}
                 onClick={() => {
                   if (!leaseId) return;
-                  signMutation.mutate({ leaseId, tenantEmail: email.trim() });
+                  signMutation.mutate({
+                    leaseId,
+                    tenantEmail: email.trim(),
+                    signatureName: signatureName.trim(),
+                  });
                 }}
               >
                 {signMutation.isPending

@@ -1144,6 +1144,13 @@ export const leaseAgreements = mysqlTable("lease_agreements", {
   signedAt: timestamp("signedAt"),
   tenantSignedAt: timestamp("tenantSignedAt"),
   landlordSignedAt: timestamp("landlordSignedAt"),
+  // Typed-name signatures captured at sign / countersign time. Stored alongside
+  // the timestamps so a rendered lease can show "Signed by [Name] on [date]"
+  // and a "Fully executed" badge cannot appear without an actual artifact.
+  tenantSignatureName: varchar("tenantSignatureName", { length: 255 }),
+  landlordSignatureName: varchar("landlordSignatureName", { length: 255 }),
+  tenantSignatureIp: varchar("tenantSignatureIp", { length: 45 }),
+  landlordSignatureIp: varchar("landlordSignatureIp", { length: 45 }),
   paidAt: timestamp("paidAt"),
   // Payment link sent after signing
   firstMonthPaymentSent: tinyint("firstMonthPaymentSent").default(0),
