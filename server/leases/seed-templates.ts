@@ -255,19 +255,23 @@ const TN_RESIDENTIAL: SeedTemplate = {
   state: "TN",
   category: "standard_residential",
   name: "Tennessee Residential Lease",
-  description: "Standard residential lease grounded in the Tennessee URLTA (Title 66 Chapter 28) where applicable.",
+  description: "Comprehensive residential lease for Tennessee grounded in URLTA (Title 66 Chapter 28) plus statewide statutes — covers parties, term, rent, deposit, inspections, tenant alterations, utilities, insurance, attorney fees, assignment, damage, care/use, notice address, holdover, early termination, and signatures.",
   variables: [
-    "landlord_name", "landlord_address", "tenant_name", "tenant_email",
+    "landlord_name", "landlord_address", "landlord_phone", "landlord_email",
+    "tenant_name", "tenant_email", "tenant_phone",
     "property_address", "property_city", "state", "property_zip",
     "monthly_rent", "security_deposit", "lease_start_date", "lease_end_date",
     "rent_due_day", "late_fee", "utilities", "pets_allowed", "parking", "occupants",
     "payment_methods",
   ],
   citations: [
-    "Tenn. Code Ann. § 29-18-101 et seq.", "Tenn. Code Ann. § 66-28-102",
-    "Tenn. Code Ann. § 66-28-201", "Tenn. Code Ann. § 66-28-301",
-    "Tenn. Code Ann. § 66-28-302", "Tenn. Code Ann. § 66-28-305",
-    "Tenn. Code Ann. § 66-28-505", "Tenn. Code Ann. § 66-28-512",
+    "Tenn. Code Ann. § 29-18-101 et seq.", "Tenn. Code Ann. § 66-7-109",
+    "Tenn. Code Ann. § 66-28-102", "Tenn. Code Ann. § 66-28-201",
+    "Tenn. Code Ann. § 66-28-301", "Tenn. Code Ann. § 66-28-302",
+    "Tenn. Code Ann. § 66-28-304", "Tenn. Code Ann. § 66-28-305",
+    "Tenn. Code Ann. § 66-28-403", "Tenn. Code Ann. § 66-28-501",
+    "Tenn. Code Ann. § 66-28-505", "Tenn. Code Ann. § 66-28-507",
+    "Tenn. Code Ann. § 66-28-512", "50 U.S.C. § 3955",
     "42 U.S.C. § 4852d",
   ],
   disclosures: ["federal_lead_paint"],
@@ -276,6 +280,7 @@ const TN_RESIDENTIAL: SeedTemplate = {
   <header>
     <h1>Tennessee Residential Lease Agreement</h1>
     <p class="lease-subtitle">Governed by the Tennessee Uniform Residential Landlord and Tenant Act (URLTA), Tenn. Code Ann. § 66-28-101 et seq., where applicable. In non-URLTA counties (population ≤ 75,000 per § 66-28-102), the provisions of this Lease operate as contractual ceilings.</p>
+    <p class="lease-preamble"><strong>This Lease (the "Lease") is entered into between {{landlord_name}} ("Landlord") and {{tenant_name}} ("Tenant") (each a "Party" and together the "Parties").</strong> In consideration of the Landlord renting the premises described below to the Tenant, and other valuable consideration, the receipt and sufficiency of which the Parties acknowledge, the Parties agree as follows.</p>
   </header>
 
   <section><h2>1. Parties</h2>
@@ -326,7 +331,116 @@ const TN_RESIDENTIAL: SeedTemplate = {
     <p>Tennessee has no statewide rent-control law; the three-percent ceiling is a voluntary contractual commitment by Landlord and is enforceable as a term of this Lease.</p>
   </section>
 
+  <section><h2>11. Move-In and Move-Out Inspections</h2>
+    <p>The Parties shall jointly complete, sign, and date a written inspection report describing the condition of the Property at the beginning of the tenancy and again at the end. Photographs taken at move-in and move-out are part of the inspection record. Any item not noted at move-in is presumed to have been in good condition at the start of the tenancy.</p>
+  </section>
+
+  <section><h2>12. Landlord Access</h2>
+    <p>At reasonable times during the term of this Lease and any renewal, Landlord and Landlord's agents may enter the Property to (a) inspect the premises, (b) make necessary or agreed repairs, or (c) show the Property to prospective tenants or purchasers. Except in emergencies or with Tenant's consent, Landlord shall give Tenant at least <strong>twenty-four (24) hours' written or electronic notice</strong> before entering, consistent with the spirit of <em>Tenn. Code Ann. § 66-28-403</em>. Tenant shall not unreasonably withhold consent.</p>
+  </section>
+
+  <section><h2>13. Alterations and Tenant Improvements</h2>
+    <p>Tenant shall obtain Landlord's prior written consent before doing any of the following on or to the Property:</p>
+    <ol type="a">
+      <li>Applying adhesive materials, or driving nails or hooks into walls or ceilings, beyond two small picture hooks per wall;</li>
+      <li>Painting, wallpapering, redecorating, or otherwise materially altering the appearance of the Property;</li>
+      <li>Removing or adding walls, or making any structural alteration;</li>
+      <li>Installing a waterbed, in-wall safe, hot tub, or similar high-load fixture;</li>
+      <li>Adding or modifying electrical wiring, gas lines, or heating units, or materially changing the amount of electrical or HVAC load drawn at the Property;</li>
+      <li>Displaying placards, signs, or notices for advertising or commercial purposes on or visible from the exterior of the Property;</li>
+      <li>Affixing or erecting a satellite dish, antenna, or tower on or near the Property except as permitted by the FCC Over-the-Air Reception Devices Rule, 47 CFR § 1.4000.</li>
+    </ol>
+    <p>Any alteration made without Landlord's consent may be reversed at Tenant's expense, and Landlord may deduct the reasonable cost of restoration from the security deposit per <em>Tenn. Code Ann. § 66-28-301(g)</em>.</p>
+  </section>
+
+  <section><h2>14. Insurance</h2>
+    <p>Tenant acknowledges that Tenant's personal property is <strong>not insured by Landlord</strong> against damage, theft, fire, water intrusion, or any other loss, and that Landlord assumes no liability for any such loss. Tenant is strongly encouraged to obtain renter's insurance (typically &lt;$20/month) covering personal property and liability. Tenant is not required to insure Landlord's contents, furnishings, or the structure of the Property.</p>
+  </section>
+
+  <section><h2>15. Attorney Fees and Court Costs</h2>
+    <p>If either Party files an action arising out of this Lease, the prevailing Party shall be entitled to recover from the non-prevailing Party, in addition to all sums otherwise owed, the reasonable attorney fees actually incurred and taxable court costs, subject to any cap or fee-shifting rule imposed by Tennessee law in the specific case.</p>
+  </section>
+
+  <section><h2>16. Governing Law and Forum</h2>
+    <p>This Lease shall be construed in accordance with and exclusively governed by the laws of the State of Tennessee, without regard to its conflict-of-laws principles. The Parties consent to exclusive jurisdiction and venue in the state courts of general or specialized jurisdiction located in the Tennessee county where the Property is situated.</p>
+  </section>
+
+  <section><h2>17. Severability and Conflict with Statute</h2>
+    <p>If any provision of this Lease conflicts with a non-waivable provision of URLTA or other applicable Tennessee law, the statutory provision controls and the conflicting Lease provision is reformed to the minimum extent necessary to comply. All other provisions remain in full force. Any provision required by statute is incorporated by reference even if not expressly stated above.</p>
+  </section>
+
+  <section><h2>18. Amendment</h2>
+    <p>This Lease may be amended only by a written instrument signed by both Parties. Oral modifications are not binding. An exchange of signed electronic documents (including signed emails) is treated as a writing for this purpose.</p>
+  </section>
+
+  <section><h2>19. Assignment and Subletting</h2>
+    <p>Tenant shall not assign this Lease, sublet the Property in whole or in part, or grant any license or concession to use the Property, without Landlord's prior written consent. Landlord may withhold consent in Landlord's reasonable discretion. Consent to one assignment, sublet, license, or concession is not consent to any subsequent assignment, sublet, license, or concession. Any purported assignment, sublet, license, or concession in violation of this section is voidable at Landlord's option and may, at Landlord's election, terminate this Lease subject to the eviction procedure required by Tennessee law.</p>
+  </section>
+
+  <section><h2>20. Damage to the Property</h2>
+    <p>If the Property is materially damaged or destroyed by fire, storm, or other casualty <em>not caused by</em> Tenant's negligence or willful act (or that of Tenant's household, guests, or invitees), and Landlord elects not to rebuild or repair within a reasonable time, Landlord may terminate this Lease on written notice, with rent prorated to the date Tenant surrenders possession. If the casualty makes the Property uninhabitable, Tenant has the same termination right, on written notice to Landlord.</p>
+    <p>Tenant shall promptly notify Landlord in writing of any damage to the Property or any condition that may significantly interfere with the normal use of the Property or any landlord-supplied furnishings, including water intrusion, plumbing failures, HVAC failure, electrical hazards, and visible mold growth.</p>
+  </section>
+
+  <section><h2>21. Care and Use of the Property</h2>
+    <ol>
+      <li>Tenant shall keep the Property clean and safe, and shall use all appliances, fixtures, and systems only for their intended purposes.</li>
+      <li>Tenant shall not engage in or permit any illegal trade, activity, or substance manufacture on or about the Property. Possession or use of any controlled substance in violation of state or federal law is prohibited.</li>
+      <li>The Parties shall comply with all applicable health, sanitation, fire, housing, and safety codes.</li>
+      <li>The Parties shall use reasonable efforts to prevent the accumulation of moisture and the growth of mold. Tenant shall promptly notify Landlord in writing of any visible mold or persistent moisture; Landlord shall promptly respond.</li>
+      <li>If the Property will be unoccupied for four (4) consecutive days or more, Tenant shall arrange a competent person to check on the Property periodically and shall provide Landlord with the name and contact information of that person in advance.</li>
+      <li>At the end of the term, Tenant shall surrender the Property in substantially the same condition as at the start, ordinary wear and tear excepted.</li>
+    </ol>
+  </section>
+
+  <section><h2>22. Smoking, Vaping, and Drug-Free Premises</h2>
+    <p>Tenant and Tenant's household, guests, and invitees shall not smoke any substance (including but not limited to tobacco, cannabis, and herbal products) anywhere inside the Property. The same prohibition applies to vaping and e-cigarettes inside the Property. Smoking and vaping outside, on porches and balconies, are permitted only if local ordinance allows and shall not direct smoke into neighboring units. Violation is a material breach and may result in odor-remediation charges deducted from the security deposit.</p>
+  </section>
+
+  <section><h2>23. Rules and Regulations; Locks</h2>
+    <p>Tenant shall comply with all reasonable house rules and posted regulations governing the Property and any associated common areas. Tenant shall not change, add, or rekey locks without Landlord's prior written consent, except as expressly permitted by Tennessee law (including without limitation a victim's right to change locks under <em>Tenn. Code Ann. § 66-28-518</em>). Tenant shall provide Landlord with a working key or code to any lock Tenant has changed with consent.</p>
+  </section>
+
+  <section><h2>24. Joint and Several Liability</h2>
+    <p>If more than one person signs this Lease as Tenant, each is jointly and severally liable for all obligations of Tenant, including rent, damages, late fees, and attorney fees. Landlord may proceed against any one or all Tenants for the full amount of any obligation.</p>
+  </section>
+
+  <section><h2>25. Holdover and Month-to-Month Conversion</h2>
+    <p>If Tenant remains in possession after the Lease End Date with Landlord's express or implied consent (including by continued acceptance of rent), this Lease automatically converts to a <strong>month-to-month tenancy</strong> on the same terms then in effect, subject to any rent adjustment lawfully noticed under Section 10. Either Party may then terminate on at least thirty (30) days' written notice ending on the next periodic rent due date, per <em>Tenn. Code Ann. § 66-28-512</em>. If Tenant remains without consent, Landlord may pursue removal through the Forcible Entry and Detainer process (<em>Tenn. Code Ann. § 29-18-101 et seq.</em>) or URLTA where applicable. Self-help removal is prohibited.</p>
+  </section>
+
+  <section><h2>26. Notices and Addresses for Service</h2>
+    <p>For all matters relating to this tenancy, notices and demands shall be delivered as follows. Each Party may update the contact information below by written notice to the other.</p>
+    <p><strong>Landlord:</strong> {{landlord_name}}<br/>
+       Address: {{landlord_address}}<br/>
+       Phone: {{landlord_phone}}<br/>
+       Email: {{landlord_email}}</p>
+    <p><strong>Tenant:</strong> {{tenant_name}}<br/>
+       Address: At the Property, unless changed by written notice<br/>
+       Phone: {{tenant_phone}}<br/>
+       Email: {{tenant_email}}</p>
+    <p>Notice by email is effective on the day sent if sent before 5:00 p.m. local time and not bounced. Notice by U.S. mail is effective on the third business day after deposit, postage prepaid, addressed to the recipient at the address above.</p>
+  </section>
+
+  <section><h2>27. General Provisions</h2>
+    <ol>
+      <li>All monetary amounts in this Lease are denominated in U.S. dollars.</li>
+      <li>A waiver of any breach by either Party is not a waiver of any subsequent breach.</li>
+      <li>This Lease binds and benefits the Parties' respective heirs, executors, administrators, successors, and permitted assigns.</li>
+      <li>Headings are for convenience only and do not affect interpretation. Singular includes plural and vice versa; gendered terms are inclusive.</li>
+      <li>This Lease may be executed in counterparts, including electronic signatures and emailed PDFs, each of which is an original and all of which constitute one instrument.</li>
+      <li>During the final thirty (30) days of the term, Landlord may post the customary "For Rent" or "For Sale" sign at the Property and may show the Property to prospective tenants or purchasers subject to the notice requirement in Section 12.</li>
+      <li>Time is of the essence as to every provision of this Lease.</li>
+      <li>This Lease, together with any written addenda signed by both Parties, constitutes the entire agreement and supersedes any prior oral or written understandings.</li>
+    </ol>
+  </section>
+
   ${EARLY_TERMINATION_TN}
+
+  <section><h2>Acknowledgement of Duplicate</h2>
+    <p>Tenant acknowledges receiving a duplicate copy of this fully executed Lease signed by both Tenant and Landlord on the date of full execution.</p>
+  </section>
+
   ${FEDERAL_LEAD_PAINT}
   ${COMPLIANCE_BLOCK}
   ${SIGNATURE_BLOCK}
