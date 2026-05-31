@@ -33,6 +33,7 @@ import {
   rentBenchmarks,
   rentBenchmarkHistory,
   rentBenchmarkRuns,
+  marketplaceListings,
   type InsertRentBenchmark,
   type InsertRentBenchmarkHistory,
 } from "../../drizzle/schema";
@@ -341,6 +342,177 @@ function parseIntOrNull(v: unknown): number | null {
   return isNaN(n) || n <= 0 ? null : n;
 }
 
+// ── Leasely's own active-listing medians (third source) ───────────────────────
+
+/**
+ * Aggregate active marketplace_listings by zip, compute median monthly
+ * rent, and upsert into rent_benchmarks.{leaselyMedianRent,leaselyListingCount}.
+ *
+ * Unlike ACS (annual government data) and HUD (annual federal data), this
+ * is OUR proprietary signal — what landlords are *actually asking* on the
+ * Leasely marketplace right now. Refreshed weekly because listings move
+ * faster than government data; daily would be overkill given how many
+ * new listings get added.
+ *
+ * Note on units: marketplace_listings.monthlyRent is whole dollars,
+ * matching ACS B25064 ("median gross rent" in dollars). HUD FMRs are also
+ * dollars. All three sources are unit-compatible — the UI can compare
+ * them directly.
+ *
+ * Statistical caution: we record `leaselyListingCount` alongside the
+ * median so consumers can disregard noisy single-listing zips. Median
+ * (not mean) handles outliers gracefully (one $20k penthouse won't skew
+ * a typical neighborhood).
+ */
+export async function refreshLeaselyListingBenchmarks(): Promise<{ rowsUpserted: number; errors: string[] }> {
+  const runId = await startRun("leasely");
+  const db = await getDb();
+  if (!db) {
+    await finishRun(runId, "failed", 0, "database not available");
+    return { rowsUpserted: 0, errors: ["database not available"] };
+  }
+  const errors: string[] = [];
+  try {
+    // Pull every active listing's zip + monthlyRent. The marketplace table
+    // is small relative to ACS (tens of thousands at most), so streaming
+    // the full set in-memory and bucketing in JS is simpler than a complex
+    // SQL median (which MySQL lacks natively).
+    const rows = await db
+      .select({ zip: marketplaceListings.zip, monthlyRent: marketplaceListings.monthlyRent, state: marketplaceListings.state })
+      .from(marketplaceListings)
+      .where(sql`${marketplaceListings.status} = 'active' AND ${marketplaceListings.monthlyRent} > 0`);
+
+    if (rows.length === 0) {
+      await finishRun(runId, "success", 0);
+      return { rowsUpserted: 0, errors };
+    }
+
+    // Bucket by 5-digit zip. Listings have varchar(20) zips so they can
+    // carry "30303-1234" — clip to first 5 to match rentBenchmarks.zip.
+    const buckets = new Map<string, { rents: number[]; state: string }>();
+    for (const row of rows) {
+      const zip = String(row.zip ?? "").replace(/[^0-9]/g, "").slice(0, 5);
+      if (zip.length !== 5) continue;
+      const rent = Number(row.monthlyRent);
+      if (!Number.isFinite(rent) || rent <= 0) continue;
+      const state = mapStateToAbbr(row.state);
+      if (!state) continue;
+      const bucket = buckets.get(zip) ?? { rents: [], state };
+      bucket.rents.push(rent);
+      buckets.set(zip, bucket);
+    }
+
+    if (buckets.size === 0) {
+      await finishRun(runId, "success", 0);
+      return { rowsUpserted: 0, errors };
+    }
+
+    const now = new Date();
+    const dataYear = now.getFullYear();
+    const values: InsertRentBenchmark[] = [];
+    const historyValues: InsertRentBenchmarkHistory[] = [];
+
+    for (const [zip, bucket] of Array.from(buckets.entries())) {
+      const median = computeMedian(bucket.rents);
+      if (median == null) continue;
+      values.push({
+        zip,
+        state: bucket.state,
+        leaselyMedianRent: median,
+        leaselyListingCount: bucket.rents.length,
+        leaselyRefreshedAt: now,
+      });
+      historyValues.push({
+        zip,
+        source: "leasely",
+        bedrooms: "all",
+        rent: median,
+        sampleSize: bucket.rents.length,
+        dataYear,
+      });
+    }
+
+    // Chunked upserts so MySQL packet limits don't bite us.
+    const CHUNK = 500;
+    let totalUpserts = 0;
+    for (let i = 0; i < values.length; i += CHUNK) {
+      const slice = values.slice(i, i + CHUNK);
+      try {
+        await db
+          .insert(rentBenchmarks)
+          .values(slice)
+          .onDuplicateKeyUpdate({
+            set: {
+              state: sql`VALUES(state)`,
+              leaselyMedianRent: sql`VALUES(leaselyMedianRent)`,
+              leaselyListingCount: sql`VALUES(leaselyListingCount)`,
+              leaselyRefreshedAt: sql`VALUES(leaselyRefreshedAt)`,
+            },
+          });
+        totalUpserts += slice.length;
+      } catch (e: any) {
+        errors.push(`leasely chunk ${i}: ${e?.message ?? "upsert failed"}`);
+      }
+    }
+
+    // History is append-only; if it blows up we still keep the snapshot upserts.
+    if (historyValues.length > 0) {
+      try {
+        for (let i = 0; i < historyValues.length; i += CHUNK) {
+          await db.insert(rentBenchmarkHistory).values(historyValues.slice(i, i + CHUNK));
+        }
+      } catch (e: any) {
+        errors.push(`leasely history: ${e?.message ?? "history insert failed"}`);
+      }
+    }
+
+    await finishRun(runId, "success", totalUpserts, errors.length ? errors.slice(0, 5).join("; ") : undefined);
+    return { rowsUpserted: totalUpserts, errors };
+  } catch (e: any) {
+    await finishRun(runId, "failed", 0, e?.message ?? "unknown error");
+    return { rowsUpserted: 0, errors: [...errors, e?.message ?? "unknown error"] };
+  }
+}
+
+/**
+ * Pure: median of an integer array. Returns null for empty input.
+ * O(n log n) sort is fine — typical zip bucket is <100 listings, even a
+ * dense market like 30303 hits maybe 500 at the high end.
+ */
+function computeMedian(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 0) {
+    return Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+  }
+  return sorted[mid];
+}
+
+/**
+ * Listings store state as either a 2-letter abbr ("GA") or a full name
+ * ("Georgia"). rent_benchmarks.state is a 2-letter abbr only. Normalize.
+ */
+const STATE_NAME_TO_ABBR: Record<string, string> = {
+  "alabama":"AL","alaska":"AK","arizona":"AZ","arkansas":"AR","california":"CA",
+  "colorado":"CO","connecticut":"CT","delaware":"DE","district of columbia":"DC",
+  "florida":"FL","georgia":"GA","hawaii":"HI","idaho":"ID","illinois":"IL",
+  "indiana":"IN","iowa":"IA","kansas":"KS","kentucky":"KY","louisiana":"LA",
+  "maine":"ME","maryland":"MD","massachusetts":"MA","michigan":"MI","minnesota":"MN",
+  "mississippi":"MS","missouri":"MO","montana":"MT","nebraska":"NE","nevada":"NV",
+  "new hampshire":"NH","new jersey":"NJ","new mexico":"NM","new york":"NY",
+  "north carolina":"NC","north dakota":"ND","ohio":"OH","oklahoma":"OK","oregon":"OR",
+  "pennsylvania":"PA","puerto rico":"PR","rhode island":"RI","south carolina":"SC",
+  "south dakota":"SD","tennessee":"TN","texas":"TX","utah":"UT","vermont":"VT",
+  "virginia":"VA","washington":"WA","west virginia":"WV","wisconsin":"WI","wyoming":"WY",
+};
+function mapStateToAbbr(input: string | null | undefined): string | null {
+  if (!input) return null;
+  const s = input.trim();
+  if (s.length === 2) return s.toUpperCase();
+  return STATE_NAME_TO_ABBR[s.toLowerCase()] ?? null;
+}
+
 // ── Public lookup ─────────────────────────────────────────────────────────────
 
 export async function lookupBenchmarkByZip(zip: string) {
@@ -357,10 +529,13 @@ export async function lookupBenchmarkByZip(zip: string) {
 
 // ── Scheduler ─────────────────────────────────────────────────────────────────
 
-const STALE_THRESHOLD_MS = 27 * 24 * 60 * 60 * 1000; // 27 days
+const STALE_THRESHOLD_MS = 27 * 24 * 60 * 60 * 1000; // 27 days (ACS/HUD)
+// Leasely listings change daily; refresh weekly to keep our own-data
+// signal current without thrashing the DB.
+const LEASELY_STALE_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
 const SCHEDULER_INTERVAL_MS = 24 * 60 * 60 * 1000; // re-check every 24h
 
-async function lastSuccessfulRun(source: "acs" | "hud"): Promise<Date | null> {
+async function lastSuccessfulRun(source: "acs" | "hud" | "leasely"): Promise<Date | null> {
   const db = await getDb();
   if (!db) return null;
   const rows = await db
@@ -379,14 +554,16 @@ async function lastSuccessfulRun(source: "acs" | "hud"): Promise<Date | null> {
  */
 export async function refreshBenchmarksIfStale(): Promise<void> {
   try {
-    const [acsLast, hudLast] = await Promise.all([
+    const [acsLast, hudLast, leaselyLast] = await Promise.all([
       lastSuccessfulRun("acs"),
       lastSuccessfulRun("hud"),
+      lastSuccessfulRun("leasely"),
     ]);
     const now = Date.now();
 
     const acsStale = !acsLast || now - acsLast.getTime() > STALE_THRESHOLD_MS;
     const hudStale = !hudLast || now - hudLast.getTime() > STALE_THRESHOLD_MS;
+    const leaselyStale = !leaselyLast || now - leaselyLast.getTime() > LEASELY_STALE_THRESHOLD_MS;
 
     if (acsStale) {
       console.log("[rentBenchmarks] ACS data is stale, refreshing nationwide…");
@@ -397,6 +574,11 @@ export async function refreshBenchmarksIfStale(): Promise<void> {
       console.log("[rentBenchmarks] HUD data is stale, refreshing…");
       const result = await refreshHudFmrs();
       console.log(`[rentBenchmarks] HUD refresh complete: ${result.rowsUpserted} rows`);
+    }
+    if (leaselyStale) {
+      console.log("[rentBenchmarks] Leasely own-listings stale, refreshing…");
+      const result = await refreshLeaselyListingBenchmarks();
+      console.log(`[rentBenchmarks] Leasely refresh complete: ${result.rowsUpserted} zips`);
     }
   } catch (e) {
     console.warn("[rentBenchmarks] refreshBenchmarksIfStale failed:", e);

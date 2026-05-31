@@ -218,6 +218,67 @@ export async function seedLeaseTemplatesIfEmpty(): Promise<void> {
   }
 }
 
+/**
+ * Boot-time companion to seedLeaseTemplatesIfEmpty.
+ *
+ * The seed-only path above won't bump versions when seed-templates.ts
+ * changes — it skips any template that already has an activeVersionId.
+ * That left Railway running stale clause text after every edit to
+ * seed-templates.ts; the manual scripts/migrate-template-versions.ts had
+ * to be run by hand.
+ *
+ * This function does what that script does, but on every boot, so the
+ * deploy itself flips active versions forward when the seed body diverges
+ * from the currently active version. It is conservative:
+ *   - Only acts on templates whose seed bodyHtml differs from the active
+ *     version's bodyHtml (byte-equal short-circuit; no unnecessary inserts).
+ *   - Inserts a NEW version row (preserving history) and re-points
+ *     activeVersionId — admin-edited versions remain in the table.
+ *   - Idempotent: re-running on an already-current DB is a no-op.
+ *
+ * Returns a summary of what changed so the boot log can record it.
+ */
+export async function migrateLeaseTemplateVersionsIfChanged(): Promise<{
+  checked: number;
+  bumped: number;
+  skipped: number;
+  errors: number;
+}> {
+  const db = await getDb();
+  if (!db) return { checked: 0, bumped: 0, skipped: 0, errors: 0 };
+  let checked = 0, bumped = 0, skipped = 0, errors = 0;
+  for (const seed of SEED_TEMPLATES) {
+    checked++;
+    try {
+      const tplRows = await db.select().from(leaseTemplates)
+        .where(and(eq(leaseTemplates.state, seed.state), eq(leaseTemplates.category, seed.category)))
+        .limit(1);
+      const tpl = tplRows[0];
+      if (!tpl) { skipped++; continue; } // seedLeaseTemplatesIfEmpty will pick this up
+      if (!tpl.activeVersionId) { skipped++; continue; } // ditto
+      const verRows = await db.select().from(leaseTemplateVersions)
+        .where(eq(leaseTemplateVersions.id, tpl.activeVersionId))
+        .limit(1);
+      const activeBody = verRows[0]?.bodyHtml ?? null;
+      if (activeBody === seed.bodyHtml) { skipped++; continue; }
+      // Body diverged — insert a new version and activate it.
+      await createTemplateVersion({
+        templateId: tpl.id,
+        bodyHtml: seed.bodyHtml,
+        variables: seed.variables,
+        citations: seed.citations,
+        disclosures: seed.disclosures,
+        changeNote: "Auto-migration on boot — seed-templates.ts diverged from active version",
+      });
+      bumped++;
+    } catch (err) {
+      console.warn(`[templateMigration] ${seed.state}/${seed.category} failed:`, err);
+      errors++;
+    }
+  }
+  return { checked, bumped, skipped, errors };
+}
+
 // ─── Documents ──────────────────────────────────────────────────────────────
 
 export async function createLeaseDocument(input: InsertLeaseDocument): Promise<number | undefined> {

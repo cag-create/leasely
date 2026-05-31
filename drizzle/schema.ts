@@ -1199,6 +1199,11 @@ export const rentPayments = mysqlTable("rent_payments", {
   stripeInvoiceId: varchar("stripeInvoiceId", { length: 255 }),
   stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
   notes: text("notes"),
+  // Overdue-reminder tracking — set by the rentReminderScheduler when an
+  // overdue-rent email is dispatched. Lets the scheduler escalate (T+1,
+  // T+3, T+7) without re-sending the same milestone reminder twice.
+  lastReminderSentAt: timestamp("lastReminderSentAt"),
+  remindersSentCount: int("remindersSentCount").default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
@@ -1544,9 +1549,16 @@ export const rentBenchmarks = mysqlTable("rent_benchmarks", {
   // publishes Oct for the upcoming fiscal year — track separately).
   acsDataYear: int("acsDataYear"),
   hudDataYear: int("hudDataYear"),
+  // Leasely's own marketplace median — derived from active listings in this
+  // zip. Updates weekly. listingCount is the n behind the median so the UI
+  // can show confidence ("based on 14 active listings"). Below ~3 listings
+  // the median is statistically noisy; we still store it but flag it.
+  leaselyMedianRent: int("leaselyMedianRent"),
+  leaselyListingCount: int("leaselyListingCount"),
   // Source-of-truth timestamps so we can tell why a value is stale.
   acsRefreshedAt: timestamp("acsRefreshedAt"),
   hudRefreshedAt: timestamp("hudRefreshedAt"),
+  leaselyRefreshedAt: timestamp("leaselyRefreshedAt"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

@@ -324,9 +324,18 @@ async function startServer() {
     console.log(`Server running on port ${port}`);
     // Seed lease templates after the server is accepting traffic so DB
     // hiccups don't block startup. Idempotent: only inserts missing rows.
+    // Then immediately run the version-migration sweep so any edits to
+    // seed-templates.ts in this deploy are activated automatically (no
+    // more manual `tsx scripts/migrate-template-versions.ts` runs).
     import("../leases/db-helpers")
-      .then(m => m.seedLeaseTemplatesIfEmpty())
-      .catch(err => console.warn("[Leases] template seed failed:", err));
+      .then(async (m) => {
+        await m.seedLeaseTemplatesIfEmpty();
+        const r = await m.migrateLeaseTemplateVersionsIfChanged();
+        if (r.bumped || r.errors) {
+          console.log(`[Leases] template migration: bumped=${r.bumped} skipped=${r.skipped} errors=${r.errors} (checked=${r.checked})`);
+        }
+      })
+      .catch(err => console.warn("[Leases] template seed/migrate failed:", err));
     // Kick off the rent-benchmark scheduler — checks once a day whether
     // the ACS / HUD data is older than 27 days and refreshes nationwide.
     // Fully automatic; no manual CSV upload required.
@@ -339,6 +348,12 @@ async function startServer() {
     import("../leases/expiryScheduler")
       .then(m => m.startLeaseExpiryScheduler())
       .catch(err => console.warn("[leaseExpiry] scheduler init failed:", err));
+    // Daily sweep that emails tenants whose rent_payments rows are past
+    // due (T+1 gentle, T+3 firm, T+7 overdue notice cc landlord). Tracks
+    // sent-state on the row so milestones don't re-fire.
+    import("./rentReminders")
+      .then(m => m.startRentReminderScheduler())
+      .catch(err => console.warn("[rentReminders] scheduler init failed:", err));
   });
 }
 
