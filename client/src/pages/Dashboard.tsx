@@ -195,10 +195,23 @@ export default function Dashboard() {
     onError: () => toast.error("Failed to generate QR code"),
   });
 
-  // Stripe Connect
-  const { data: stripeStatus } = trpc.marketplace.getStripeConnectStatus.useQuery(undefined, {
+  // Stripe Connect — always refetch on mount so a return from Stripe onboarding
+  // (?stripe=success) reflects the freshly-active status without a hard reload.
+  const { data: stripeStatus, refetch: refetchStripeStatus } = trpc.marketplace.getStripeConnectStatus.useQuery(undefined, {
     enabled: isAuthenticated && (tierData?.tier === "paid"),
+    refetchOnMount: "always",
   });
+
+  // If we landed here from Stripe's return_url, force one extra refetch + strip the query param.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("stripe") === "success" || params.get("stripe") === "refresh") {
+      refetchStripeStatus();
+      params.delete("stripe");
+      const newSearch = params.toString();
+      window.history.replaceState({}, "", window.location.pathname + (newSearch ? `?${newSearch}` : ""));
+    }
+  }, [refetchStripeStatus]);
 
   const stripeConnectMutation = trpc.marketplace.createStripeConnectLink.useMutation({
     onSuccess: (data) => {
