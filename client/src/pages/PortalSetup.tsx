@@ -12,7 +12,8 @@ import {
   Palette, FileText, Award,
 } from "lucide-react";
 
-const CBP_URL = "https://certifybusinesspro.com";
+// Stripe Payment Link for CBP's website-builder package (custom website + logo + 1-yr domain + hosting).
+const CBP_WEBSITE_BUILDER_URL = "https://buy.stripe.com/00wbIUevX0t19mocl59ws09";
 const STEPS = ["Brand Setup", "Brand Brief", "Claim Free Package", "Go Live"];
 
 const LOGO_STYLES = [
@@ -112,13 +113,13 @@ export default function PortalSetup() {
   }
 
   function handleOpenCBP() {
+    // Stripe Payment Link params: prefilled_email auto-fills checkout, client_reference_id
+    // ships the Leasely redemption code to CBP so they can reconcile via webhook.
     const params = new URLSearchParams({
-      code: proCode?.code ?? "",
-      email: (user as any)?.email ?? "",
-      ref: "leasely_pro",
-      plan: "website_logo_domain",
+      prefilled_email: (user as any)?.email ?? "",
+      client_reference_id: proCode?.code ?? "",
     });
-    window.open(`${CBP_URL}?${params.toString()}`, "_blank");
+    window.open(`${CBP_WEBSITE_BUILDER_URL}?${params.toString()}`, "_blank");
   }
 
   return (
@@ -560,7 +561,7 @@ export default function PortalSetup() {
               Redeem at Certify Business Pro
               <ExternalLink className="ml-2 h-4 w-4" />
             </Button>
-            <p className="text-xs text-white/30 text-center">Opens certifybusinesspro.com · your code is pre-filled</p>
+            <p className="text-xs text-white/30 text-center">Opens Stripe checkout · email pre-filled · your Leasely code attached for CBP reconciliation</p>
 
             <Button
               variant="ghost"
