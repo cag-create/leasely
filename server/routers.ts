@@ -1338,8 +1338,23 @@ export const appRouter = router({
           paymentIntentData.application_fee_amount = platformFeeCents;
         }
 
+        // Only enable ACH on amounts >= $100 — Stripe ACH is best for
+        // larger payments (deposits, first month) where the $5 cap beats
+        // 2.9% on card. For small holding fees / app fees, card-only is
+        // simpler and the absolute fee delta is trivial.
+        const enableAch = amountCents >= 10000;
         const session = await stripe.checkout.sessions.create({
-          payment_method_types: ["card"],
+          payment_method_types: enableAch ? ["us_bank_account", "card"] : ["card"],
+          ...(enableAch && {
+            payment_method_options: {
+              us_bank_account: {
+                financial_connections: {
+                  permissions: ["payment_method", "balances"],
+                },
+                verification_method: "automatic" as const,
+              },
+            },
+          }),
           mode: "payment",
           customer_email: input.tenantEmail,
           line_items: [{
@@ -4240,15 +4255,64 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       lockboxCode: z.string().optional(),
       accessInstructions: z.string().optional(),
       notes: z.string().optional(),
+      // Off-platform-paid flags: landlord already collected deposit/first
+      // month via Zelle/check/cash. Setting these makes the lease skip the
+      // Stripe payment email after countersign and go straight to ACTIVE +
+      // move-in instructions.
+      firstMonthPaid: z.boolean().optional(),
+      depositPaid: z.boolean().optional(),
+      offPlatformPaymentMethod: z.string().max(40).optional(),
     })).mutation(async ({ ctx, input }) => {
       const sub = await getUserSubscription(ctx.user.id);
       if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
 
+      const { firstMonthPaid, depositPaid, offPlatformPaymentMethod, ...rest } = input;
+
+      const noteTrail = (firstMonthPaid || depositPaid)
+        ? `[${new Date().toISOString().slice(0, 10)}] Pre-marked as collected off-platform${offPlatformPaymentMethod ? ` via ${offPlatformPaymentMethod}` : ""}: ${[firstMonthPaid && "first month", depositPaid && "deposit"].filter(Boolean).join(" + ")}`
+        : "";
+
       const id = await createLeaseAgreement({
-        ...input,
+        ...rest,
         landlordUserId: ctx.user.id,
         status: "draft",
-      });
+        firstMonthPaid: firstMonthPaid ? 1 : 0,
+        depositPaid: depositPaid ? 1 : 0,
+        notes: noteTrail ? (rest.notes ? `${rest.notes}\n${noteTrail}` : noteTrail) : rest.notes,
+      } as any);
+
+      // Mirror pre-marked payments into accounting ledger so the books stay
+      // in sync without the landlord double-entering.
+      if (id && (firstMonthPaid || depositPaid)) {
+        const today = new Date().toISOString().slice(0, 10);
+        try {
+          if (firstMonthPaid) {
+            await createAccountingEntry({
+              userId: ctx.user.id,
+              type: "income",
+              category: "rent" as any,
+              amount: input.monthlyRent,
+              date: today,
+              description: `First month's rent — ${input.tenantName}${offPlatformPaymentMethod ? ` (${offPlatformPaymentMethod})` : ""}`,
+              propertyAddress: input.propertyAddress,
+              listingId: input.listingId ?? undefined,
+            } as any);
+          }
+          if (depositPaid && input.securityDeposit > 0) {
+            await createAccountingEntry({
+              userId: ctx.user.id,
+              type: "income",
+              category: "deposit" as any,
+              amount: input.securityDeposit,
+              date: today,
+              description: `Security deposit — ${input.tenantName}${offPlatformPaymentMethod ? ` (${offPlatformPaymentMethod})` : ""}`,
+              propertyAddress: input.propertyAddress,
+              listingId: input.listingId ?? undefined,
+            } as any);
+          }
+        } catch { /* ledger best-effort */ }
+      }
+
       return { id };
     }),
 
@@ -4786,7 +4850,17 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
 
       const setupIntent = await stripe.setupIntents.create({
         customer: customerId,
-        payment_method_types: ["card", "us_bank_account"],
+        // ACH first so the tenant defaults to bank → ~$5 cap on recurring
+        // rent vs ~$45 on card for a $1500/mo lease.
+        payment_method_types: ["us_bank_account", "card"],
+        payment_method_options: {
+          us_bank_account: {
+            financial_connections: {
+              permissions: ["payment_method"],
+            },
+            verification_method: "automatic" as const,
+          },
+        },
         usage: "off_session",
         metadata: { leaseAgreementId: String(lease.id) },
       });
@@ -5282,8 +5356,22 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
           throw new TRPCError({ code: "BAD_REQUEST", message: "Nothing to collect — deposit and first month are already paid." });
         }
 
+        // Order matters — Stripe Checkout displays methods in this order.
+        // Bank account FIRST so tenants default to ACH (~$5 cap) instead of
+        // card (2.9% + $0.30). On a $1500 rent that's $5 vs ~$45.
         const session = await stripe.checkout.sessions.create({
-          payment_method_types: ["card", "us_bank_account"],
+          payment_method_types: ["us_bank_account", "card"],
+          payment_method_options: {
+            // Instant Plaid verification via Financial Connections — no
+            // 2-day micro-deposit wait. Falls back to micro-deposits if
+            // the tenant's bank isn't Plaid-supported.
+            us_bank_account: {
+              financial_connections: {
+                permissions: ["payment_method", "balances"],
+              },
+              verification_method: "automatic" as const,
+            },
+          },
           mode: "subscription",
           customer_email: lease.tenantEmail,
           line_items: lineItems,

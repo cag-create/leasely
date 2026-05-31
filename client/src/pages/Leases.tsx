@@ -63,6 +63,8 @@ const emptyForm: {
   leaseTerm: "month_to_month" | "6_months" | "12_months" | "24_months" | "36_months";
   accessMethod: "lockbox" | "key_pickup" | "in_person" | "other";
   lockboxCode: string; accessInstructions: string; notes: string;
+  firstMonthPaidOffPlatform: boolean; depositPaidOffPlatform: boolean;
+  offPlatformPaymentMethod: string;
 } = {
   tenantName: "", tenantEmail: "", tenantPhone: "",
   state: "", propertyAddress: "",
@@ -71,6 +73,8 @@ const emptyForm: {
   leaseTerm: "12_months",
   accessMethod: "key_pickup",
   lockboxCode: "", accessInstructions: "", notes: "",
+  firstMonthPaidOffPlatform: false, depositPaidOffPlatform: false,
+  offPlatformPaymentMethod: "Zelle",
 };
 
 function LeaseEditForm({ lease, onClose }: { lease: any; onClose: () => void }) {
@@ -443,9 +447,10 @@ export default function Leases() {
               </DialogHeader>
               <div className="space-y-4 mt-2">
                 <p className="text-sm bg-blue-50 border border-blue-200 rounded-lg p-3 text-blue-800">
-                  <strong>How signing works:</strong> Send the lease → <strong>tenant signs first</strong> → tenant pays
-                  security deposit + first month's rent → you countersign to fully execute. The lease is conditional
-                  until you countersign, so funds are guaranteed before the tenancy is binding.
+                  <strong>How signing works:</strong> Send the lease → <strong>tenant signs first</strong> →
+                  <strong> you countersign</strong> → tenant gets a payment link for deposit + first month
+                  (unless you already collected off-platform — see below) → lease goes <strong>Active</strong> and
+                  move-in instructions are emailed automatically.
                 </p>
 
                 <div className="grid grid-cols-3 gap-3">
@@ -560,6 +565,73 @@ export default function Leases() {
                   <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Pet deposit, parking, utilities included..." rows={2} />
                 </div>
 
+                {/* Off-platform-paid escape hatch — collect Zelle/check/cash
+                    upfront, skip the Stripe payment email after countersign,
+                    go straight to ACTIVE + move-in instructions. */}
+                <div className="border border-emerald-200 bg-emerald-50/60 rounded-lg p-4 space-y-3">
+                  <div>
+                    <h3 className="font-semibold text-emerald-900 flex items-center gap-2 text-sm">
+                      <DollarSign className="w-4 h-4" /> Already collected deposit / first month off-platform?
+                    </h3>
+                    <p className="text-xs text-emerald-800/80 mt-1">
+                      Check the boxes below if you already took these payments via Zelle, Venmo, check, or cash.
+                      Leasely will skip the Stripe payment link after you countersign and email the tenant their
+                      move-in instructions immediately. Amounts auto-post to Accounting.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="flex items-start gap-2 cursor-pointer p-2 rounded-md bg-white/70 border border-emerald-100 hover:border-emerald-300 transition-colors">
+                      <input
+                        type="checkbox"
+                        className="mt-0.5 w-4 h-4 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+                        checked={form.firstMonthPaidOffPlatform}
+                        onChange={e => setForm(f => ({ ...f, firstMonthPaidOffPlatform: e.target.checked }))}
+                      />
+                      <div className="text-xs">
+                        <div className="font-semibold text-emerald-900">First month's rent collected</div>
+                        <div className="text-emerald-800/70">{form.monthlyRentDollars ? `$${form.monthlyRentDollars}` : "(set rent above)"}</div>
+                      </div>
+                    </label>
+                    <label className={`flex items-start gap-2 p-2 rounded-md bg-white/70 border transition-colors ${form.securityDepositDollars && parseFloat(form.securityDepositDollars) > 0 ? "border-emerald-100 hover:border-emerald-300 cursor-pointer" : "border-gray-200 opacity-50 cursor-not-allowed"}`}>
+                      <input
+                        type="checkbox"
+                        className="mt-0.5 w-4 h-4 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+                        disabled={!form.securityDepositDollars || parseFloat(form.securityDepositDollars) === 0}
+                        checked={form.depositPaidOffPlatform}
+                        onChange={e => setForm(f => ({ ...f, depositPaidOffPlatform: e.target.checked }))}
+                      />
+                      <div className="text-xs">
+                        <div className="font-semibold text-emerald-900">Security deposit collected</div>
+                        <div className="text-emerald-800/70">{form.securityDepositDollars ? `$${form.securityDepositDollars}` : "(no deposit set)"}</div>
+                      </div>
+                    </label>
+                  </div>
+                  {(form.firstMonthPaidOffPlatform || form.depositPaidOffPlatform) && (
+                    <div>
+                      <Label className="text-xs text-emerald-900">How did you collect it?</Label>
+                      <Select
+                        value={form.offPlatformPaymentMethod}
+                        onValueChange={v => setForm(f => ({ ...f, offPlatformPaymentMethod: v }))}
+                      >
+                        <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Zelle">Zelle</SelectItem>
+                          <SelectItem value="Venmo">Venmo</SelectItem>
+                          <SelectItem value="Cash App">Cash App</SelectItem>
+                          <SelectItem value="Check">Check</SelectItem>
+                          <SelectItem value="Cash">Cash</SelectItem>
+                          <SelectItem value="ACH (external bank)">ACH (external bank)</SelectItem>
+                          <SelectItem value="Wire">Wire</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[11px] text-emerald-800/70 mt-1">
+                        Logged in the lease's internal notes + posted to Accounting as income.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
                 <Button
                   className="w-full bg-[#1B2B5E] hover:bg-[#2D3F7C] text-white"
                   onClick={() => {
@@ -581,7 +653,12 @@ export default function Leases() {
                       lockboxCode: form.lockboxCode || undefined,
                       accessInstructions: form.accessInstructions || undefined,
                       notes: form.notes || undefined,
-                    });
+                      firstMonthPaid: form.firstMonthPaidOffPlatform || undefined,
+                      depositPaid: form.depositPaidOffPlatform || undefined,
+                      offPlatformPaymentMethod: (form.firstMonthPaidOffPlatform || form.depositPaidOffPlatform)
+                        ? form.offPlatformPaymentMethod
+                        : undefined,
+                    } as any);
                   }}
                   disabled={createMutation.isPending}
                 >
