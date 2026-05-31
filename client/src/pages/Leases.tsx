@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import {
   FileText, Plus, CheckCircle2, Clock, Send, AlertTriangle,
-  Home, DollarSign, Calendar, Key, ChevronRight, Users, Pencil, Trash2
+  Home, DollarSign, Calendar, Key, ChevronRight, Users, Pencil, Trash2, Upload
 } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -422,7 +422,13 @@ export default function Leases() {
             </h1>
             <p className="text-gray-500 mt-1">State-specific leases — create, send, and track e-signatures</p>
           </div>
-          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <div className="flex gap-2">
+            <Link href="/import-tenants">
+              <Button variant="outline" className="gap-2">
+                <Upload className="w-4 h-4" /> Import Tenants
+              </Button>
+            </Link>
+            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
               <Button className="bg-[#1B2B5E] hover:bg-[#2D3F7C] text-white gap-2">
                 <Plus className="w-4 h-4" /> New Lease
@@ -584,6 +590,7 @@ export default function Leases() {
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Stats / Filter Tabs */}

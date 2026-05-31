@@ -39,6 +39,7 @@ const Welcome             = lazy(() => import("./pages/Welcome"));
 const PortalSetup         = lazy(() => import("./pages/PortalSetup"));
 const EditListing         = lazy(() => import("./pages/EditListing"));
 const ImportListings      = lazy(() => import("./pages/ImportListings"));
+const ImportTenants       = lazy(() => import("./pages/ImportTenants"));
 const MyListings          = lazy(() => import("./pages/MyListings"));
 const AffiliateSignup     = lazy(() => import("./pages/AffiliateSignup"));
 const AffiliateDashboard  = lazy(() => import("./pages/AffiliateDashboard"));
@@ -100,6 +101,7 @@ function Router() {
         <Route path="/portal-setup" component={PortalSetup} />
         <Route path="/edit-listing/:id" component={EditListing} />
         <Route path="/import-listings" component={ImportListings} />
+        <Route path="/import-tenants" component={ImportTenants} />
         <Route path="/marketplace" component={Marketplace} />
         <Route path="/marketplace/map" component={MapViewPage} />
         <Route path="/listing/:id" component={ListingDetail} />

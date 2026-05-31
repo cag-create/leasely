@@ -5461,6 +5461,96 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       return { ok: true } as const;
     }),
   }),
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // IMPORT — bulk-migrate existing tenants + active leases from a competitor
+  // (AppFolio, Buildium, RentRedi, Avail, etc). The landlord exports CSV from
+  // the old tool, our /import-tenants UI parses + previews, then submits here.
+  //
+  // Imported leases are inserted as status="active" with synthetic signature
+  // markers ("Imported from prior system") so they immediately appear on the
+  // Leases page and Accounting can credit ongoing rent. A tenant portal
+  // account is auto-provisioned per row so the tenant can sign in and start
+  // paying through Leasely on the next cycle.
+  // ────────────────────────────────────────────────────────────────────────────
+  import: router({
+    bulkLeases: protectedProcedure
+      .input(z.object({
+        rows: z.array(z.object({
+          tenantName: z.string().trim().min(2).max(255),
+          tenantEmail: z.string().email(),
+          tenantPhone: z.string().trim().max(30).optional(),
+          propertyAddress: z.string().trim().min(3),
+          state: z.string().trim().length(2),
+          monthlyRentCents: z.number().int().positive(),
+          securityDepositCents: z.number().int().nonnegative().optional(),
+          leaseStartDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          leaseEndDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+          rentDueDay: z.number().int().min(1).max(28).optional(),
+          sourcePlatform: z.string().max(40).optional(),
+        })).min(1).max(500),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const out = { imported: 0, skipped: 0, errors: [] as string[], leaseIds: [] as number[] };
+        const now = new Date();
+
+        for (const r of input.rows) {
+          try {
+            const leaseId = await createLeaseAgreement({
+              landlordUserId: ctx.user.id,
+              tenantName: r.tenantName,
+              tenantEmail: r.tenantEmail.toLowerCase(),
+              tenantPhone: r.tenantPhone,
+              state: r.state.toUpperCase(),
+              propertyAddress: r.propertyAddress,
+              monthlyRent: r.monthlyRentCents,
+              securityDeposit: r.securityDepositCents ?? 0,
+              leaseStartDate: r.leaseStartDate,
+              leaseEndDate: r.leaseEndDate,
+              rentDueDay: r.rentDueDay ?? 1,
+              status: "active",
+              tenantSignedAt: now,
+              landlordSignedAt: now,
+              signedAt: now,
+              tenantSignatureName: `Imported from ${r.sourcePlatform ?? "prior system"}`,
+              landlordSignatureName: `Imported from ${r.sourcePlatform ?? "prior system"}`,
+              firstMonthPaid: 1,
+              depositPaid: r.securityDepositCents && r.securityDepositCents > 0 ? 1 : 0,
+              notes: `Imported on ${now.toISOString().slice(0, 10)} from ${r.sourcePlatform ?? "external source"}.`,
+            } as any);
+            out.leaseIds.push(leaseId);
+
+            // Auto-provision (or reuse) tenant portal account so they can
+            // pay rent through Leasely going forward.
+            try {
+              const existing = await getTenantByEmail(r.tenantEmail.toLowerCase());
+              if (!existing) {
+                const parseDateString = (s?: string) => (s ? new Date(`${s}T12:00:00Z`) : undefined);
+                await createTenantAccount({
+                  landlordUserId: ctx.user.id,
+                  leaseId,
+                  name: r.tenantName,
+                  email: r.tenantEmail.toLowerCase(),
+                  phone: r.tenantPhone,
+                  monthlyRentCents: r.monthlyRentCents,
+                  leaseStart: parseDateString(r.leaseStartDate),
+                  leaseEnd: parseDateString(r.leaseEndDate),
+                } as any);
+              }
+            } catch (err) {
+              console.warn("[import.bulkLeases] tenant portal provision failed:", err);
+            }
+
+            out.imported += 1;
+          } catch (err: any) {
+            out.skipped += 1;
+            out.errors.push(`${r.tenantEmail}: ${err?.message ?? "insert failed"}`);
+          }
+        }
+
+        return out;
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
