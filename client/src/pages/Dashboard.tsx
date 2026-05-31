@@ -23,10 +23,81 @@ import {
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { formatRent, getListingImage, PROPERTY_TYPE_LABELS } from "@/lib/marketplace";
+import { prepareImageForUpload } from "@/lib/imageUpload";
 import TenantInviteDialog from "@/components/TenantInviteDialog";
 
 const BRAND = "#1B2B5E";
 const ACCENT = "#F5A623";
+
+// Logo upload — file picker + preview. Replaces the old "paste a URL" input
+// since nobody hosts their logo at a public URL.
+function BrandLogoUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const [uploading, setUploading] = useState(false);
+  const inputId = "brand-logo-upload";
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const dataUrl = await prepareImageForUpload(file);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dataUrl, filename: file.name }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.url) {
+        onChange(data.url);
+        toast.success("Logo uploaded");
+      } else {
+        toast.error(data.error || `Upload failed (${res.status})`);
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Upload failed");
+    } finally {
+      setUploading(false);
+      e.target.value = ""; // allow re-selecting same file
+    }
+  }
+
+  return (
+    <div>
+      <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Logo</Label>
+      <div className="mt-1.5 flex items-center gap-3">
+        <label
+          htmlFor={inputId}
+          className="shrink-0 w-16 h-16 rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center cursor-pointer hover:border-gray-300 transition-colors overflow-hidden"
+        >
+          {value ? (
+            <img src={value} alt="Logo" className="w-full h-full object-contain" />
+          ) : (
+            <Palette className="w-5 h-5 text-gray-300" />
+          )}
+        </label>
+        <div className="flex-1">
+          <input id={inputId} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+          <label
+            htmlFor={inputId}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 cursor-pointer"
+          >
+            {uploading ? "Uploading…" : value ? "Replace logo" : "Upload logo"}
+          </label>
+          {value && (
+            <button
+              type="button"
+              onClick={() => onChange("")}
+              className="block text-xs text-gray-400 hover:text-red-500 mt-0.5"
+            >
+              Remove
+            </button>
+          )}
+          <p className="text-[11px] text-gray-400 mt-1">PNG, JPG, SVG. Auto-resized for the web.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Rent Rate Intelligence Widget (Pro only)
 function RentRateWidget() {
@@ -675,10 +746,10 @@ export default function Dashboard() {
                       <Input value={brandForm.brandColor} onChange={e => setBrandForm(f => ({ ...f, brandColor: e.target.value }))} placeholder="#1B2B5E" className="font-mono text-sm" />
                     </div>
                   </div>
-                  <div>
-                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Logo URL</Label>
-                    <Input value={brandForm.brandLogoUrl} onChange={e => setBrandForm(f => ({ ...f, brandLogoUrl: e.target.value }))} placeholder="https://yoursite.com/logo.png" className="mt-1.5" />
-                  </div>
+                  <BrandLogoUploader
+                    value={brandForm.brandLogoUrl}
+                    onChange={(url) => setBrandForm(f => ({ ...f, brandLogoUrl: url }))}
+                  />
                   <Button onClick={() => updateBrandingMutation.mutate(brandForm)} disabled={updateBrandingMutation.isPending} className="w-full font-bold" style={{ background: BRAND, color: "white" }}>
                     {updateBrandingMutation.isPending ? "Saving..." : "Save Branding"}
                   </Button>
@@ -1099,16 +1170,20 @@ function ProOnboardingChecklist() {
   const { data: sub } = trpc.marketplace.getMySubscription.useQuery();
 
   const portalSubdomain = (user as any)?.portalSubdomain;
+  const customDomain = (user as any)?.customDomain;
   const hasListings = myListings.length > 0;
   const hasConnect = (sub as any)?.stripeConnectStatus === "active";
-  const claimedCBP = proCode?.status === "redeemed";
+  // Branded portal counts as done if user has EITHER a leasely.net subdomain
+  // OR a custom domain (the "I have my own URL" path), since both flows
+  // satisfy "set up your branded portal".
+  const hasBrandedPortal = !!(portalSubdomain || customDomain);
+  void proCode; // CBP claim now lives inside the PortalSetup flow; no separate checklist row.
 
   const steps = [
     { label: "Activate Pro", done: true, href: undefined },
-    { label: "Set up your branded portal", done: !!portalSubdomain, href: "/portal-setup" },
+    { label: "Set up your branded portal", done: hasBrandedPortal, href: "/portal-setup" },
     { label: "Add your first listing", done: hasListings, href: "/list-property" },
     { label: "Connect Stripe for rent payouts", done: hasConnect, href: "/dashboard" },
-    { label: "Claim free website + logo (CBP)", done: claimedCBP, href: "/portal-setup" },
   ];
 
   const completedCount = steps.filter(s => s.done).length;
