@@ -1246,6 +1246,23 @@ export const appRouter = router({
       if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured. Please add STRIPE_SECRET_KEY." });
 
       let accountId = sub.stripeConnectAccountId;
+
+      // Verify any stored account ID still exists in the current Stripe mode (test vs live).
+      // If it doesn't (common when switching test → live), null it out and recreate.
+      if (accountId) {
+        try {
+          await stripe.accounts.retrieve(accountId);
+        } catch (err: any) {
+          if (err?.code === "account_invalid" || err?.statusCode === 404 || /No such account/i.test(err?.message ?? "")) {
+            console.warn(`[Stripe Connect] Stale account ${accountId} for user ${ctx.user.id} — clearing and recreating.`);
+            accountId = null;
+            await upsertUserSubscription({ userId: ctx.user.id, stripeConnectAccountId: null, stripeConnectStatus: "not_connected" });
+          } else {
+            throw err;
+          }
+        }
+      }
+
       if (!accountId) {
         const account = await stripe.accounts.create({
           type: "express",
