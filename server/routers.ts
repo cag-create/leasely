@@ -138,6 +138,64 @@ function getStripe() {
   return new Stripe(key, { apiVersion: "2025-01-27.acacia" as any });
 }
 
+// CBP's Stripe account (separate from Leasely's). Used to mint the per-user
+// 100%-off promotion code that redeems CBP's website-bundle Payment Link as
+// the bundled perk paid for by Leasely's $75 setup fee.
+function getCbpStripe() {
+  const key = process.env.CBP_STRIPE_SECRET_KEY;
+  if (!key) return null;
+  return new Stripe(key, { apiVersion: "2025-01-27.acacia" as any });
+}
+
+// Public Payment Link slug for the CBP website bundle. Used to auto-discover
+// the underlying product so the coupon can be restricted to it.
+const CBP_WEBSITE_BUNDLE_SLUG = "00wbIUevX0t19mocl59ws09";
+
+// Cached after first lookup — Stripe IDs don't change, no need to re-query.
+let _cbpWebsiteBundleProductId: string | null = null;
+let _cbpWebsiteBundleCouponId: string | null = null;
+
+async function getCbpWebsiteBundleProductId(cbp: Stripe): Promise<string | null> {
+  if (_cbpWebsiteBundleProductId) return _cbpWebsiteBundleProductId;
+  // Page through Payment Links to find the one matching our slug.
+  for await (const link of cbp.paymentLinks.list({ active: true, limit: 100 })) {
+    if (link.url?.includes(CBP_WEBSITE_BUNDLE_SLUG)) {
+      const items = await cbp.paymentLinks.listLineItems(link.id, { limit: 1 });
+      const productId = typeof items.data[0]?.price?.product === "string"
+        ? items.data[0].price.product
+        : items.data[0]?.price?.product?.id;
+      if (productId) {
+        _cbpWebsiteBundleProductId = productId;
+        return productId;
+      }
+    }
+  }
+  return null;
+}
+
+async function getOrCreateCbpWebsiteBundleCoupon(cbp: Stripe): Promise<string | null> {
+  if (_cbpWebsiteBundleCouponId) return _cbpWebsiteBundleCouponId;
+  const productId = await getCbpWebsiteBundleProductId(cbp);
+  if (!productId) return null;
+  // Coupons API has no .search — page through and filter by metadata so we
+  // don't re-create the same 100%-off coupon every cold start.
+  for await (const c of cbp.coupons.list({ limit: 100 })) {
+    if (c.metadata?.leaselyCbpWebsiteBundle === "true" && c.valid) {
+      _cbpWebsiteBundleCouponId = c.id;
+      return c.id;
+    }
+  }
+  const coupon = await cbp.coupons.create({
+    percent_off: 100,
+    duration: "once",
+    applies_to: { products: [productId] },
+    name: "Leasely Pro — bundled website",
+    metadata: { leaselyCbpWebsiteBundle: "true" },
+  });
+  _cbpWebsiteBundleCouponId = coupon.id;
+  return coupon.id;
+}
+
 const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
 
 const complexesRouter = router({
@@ -620,6 +678,42 @@ export const appRouter = router({
     getMine: protectedProcedure.query(async ({ ctx }) => {
       // Auto-provision on first access so PortalSetup never stalls on an empty row.
       return getOrCreateProCode(ctx.user.id);
+    }),
+
+    /**
+     * Mint (or return existing) per-user 100%-off promotion code that
+     * redeems CBP's website-bundle Payment Link as the bundled perk paid
+     * for by Leasely's $75 setup fee. Idempotent: re-clicking Redeem
+     * returns the same code so we don't pile up unused promo codes.
+     */
+    issueCbpWebsiteCoupon: protectedProcedure.mutation(async ({ ctx }) => {
+      const cbp = getCbpStripe();
+      if (!cbp) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "CBP Stripe not configured" });
+      }
+      const couponId = await getOrCreateCbpWebsiteBundleCoupon(cbp);
+      if (!couponId) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "CBP website bundle product not found" });
+      }
+      // Idempotency via deterministic code: the userId-derived code lets us
+      // look it up directly without a search index, so re-clicking Redeem
+      // never mints a duplicate.
+      const code = `LEASELY-USER${ctx.user.id}`;
+      const existing = await cbp.promotionCodes.list({ code, limit: 1 });
+      if (existing.data[0]) {
+        return { code: existing.data[0].code };
+      }
+      const promo = await cbp.promotionCodes.create({
+        coupon: couponId,
+        code,
+        max_redemptions: 1,
+        expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30, // 30 days
+        metadata: {
+          leaselyUserId: String(ctx.user.id),
+          leaselyEmail: (ctx.user as any).email ?? "",
+        },
+      } as any);
+      return { code: promo.code };
     }),
   }),
 

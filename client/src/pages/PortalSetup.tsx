@@ -112,11 +112,24 @@ export default function PortalSetup() {
     }
   }
 
-  function handleOpenCBP() {
-    // Stripe Payment Link params: prefilled_email auto-fills checkout, client_reference_id
-    // ships the Leasely redemption code to CBP so they can reconcile via webhook.
+  const issueCoupon = trpc.proCode.issueCbpWebsiteCoupon.useMutation();
+
+  async function handleOpenCBP() {
+    // Mint (or fetch existing) per-user 100%-off promo code restricted to
+    // CBP's website-bundle product. Idempotent server-side, so re-clicking
+    // returns the same code. The $397 list price drops to $0 at checkout —
+    // the website is already paid for by Leasely's $75 setup fee.
+    let promoCode: string | null = null;
+    try {
+      const result = await issueCoupon.mutateAsync();
+      promoCode = result.code;
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not issue redemption code");
+      return;
+    }
     const params = new URLSearchParams({
       prefilled_email: (user as any)?.email ?? "",
+      prefilled_promo_code: promoCode ?? "",
       client_reference_id: proCode?.code ?? "",
     });
     window.open(`${CBP_WEBSITE_BUILDER_URL}?${params.toString()}`, "_blank");
@@ -557,13 +570,16 @@ export default function PortalSetup() {
 
             <Button
               onClick={handleOpenCBP}
-              disabled={proCode?.status === "redeemed"}
+              disabled={proCode?.status === "redeemed" || issueCoupon.isPending}
               className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold h-12 text-base"
             >
-              Redeem at Certify Business Pro
-              <ExternalLink className="ml-2 h-4 w-4" />
+              {issueCoupon.isPending ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Preparing your code…</>
+              ) : (
+                <>Redeem at Certify Business Pro <ExternalLink className="ml-2 h-4 w-4" /></>
+              )}
             </Button>
-            <p className="text-xs text-white/30 text-center">Opens Stripe checkout · email pre-filled · your Leasely code attached for CBP reconciliation</p>
+            <p className="text-xs text-white/30 text-center">Opens Stripe checkout · website-bundle perk auto-applied (100% off via your Leasely Pro setup)</p>
 
             <Button
               variant="ghost"
