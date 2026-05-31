@@ -10,6 +10,7 @@ import crypto from "crypto";
 import { registerAuthRoutes } from "./auth";
 import { registerChatRoutes } from "./chat";
 import { registerStripeWebhook } from "../stripeWebhook";
+import { registerCbpStripeWebhook } from "../cbpStripeWebhook";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -56,6 +57,7 @@ async function startServer() {
   const server = createServer(app);
   // Stripe webhook MUST be registered before express.json() for raw body signature verification
   registerStripeWebhook(app);
+  registerCbpStripeWebhook(app);
   // Configure body parser — 10mb for normal requests, larger handled by specific routes
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ limit: "10mb", extended: true }));

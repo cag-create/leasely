@@ -3464,6 +3464,51 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
 
   // ─── Admin (Leasely superadmin only) ───────────────────────────────────────
   admin: router({
+    /**
+     * Smoke test: fire a $1 PaymentIntent against a Connect account using
+     * the Destination Charges model with Stripe's test token tok_visa.
+     * Use to validate live-mode Connect plumbing end-to-end without
+     * waiting on a real tenant to pay rent. Admin-only. Returns the
+     * PaymentIntent for inspection in the Stripe Dashboard.
+     */
+    fireTestRentCharge: protectedProcedure
+      .input(z.object({
+        connectAccountId: z.string().min(1),
+        amountCents: z.number().int().min(50).max(1000).default(100),
+        platformFeeCents: z.number().int().min(0).max(500).default(0),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        const stripe = getStripe();
+        if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured" });
+        // tok_visa works in test mode; in live mode this will fail with a
+        // "raw card data" error — switching to a Stripe test card in live
+        // requires a saved PM. Caller can opt to use a real PM by passing
+        // confirm:false and confirming client-side, but for smoke testing
+        // the most useful signal is whether the transfer_data wiring works.
+        const intent = await stripe.paymentIntents.create({
+          amount: input.amountCents,
+          currency: "usd",
+          payment_method_types: ["card"],
+          payment_method: "pm_card_visa",
+          confirm: true,
+          application_fee_amount: input.platformFeeCents > 0 ? input.platformFeeCents : undefined,
+          transfer_data: { destination: input.connectAccountId },
+          description: `Leasely smoke test — admin ${ctx.user.id}`,
+          metadata: {
+            leaselySmokeTest: "true",
+            firedBy: String(ctx.user.id),
+          },
+        });
+        return {
+          id: intent.id,
+          status: intent.status,
+          amount: intent.amount,
+          destination: input.connectAccountId,
+          dashboardUrl: `https://dashboard.stripe.com/${process.env.NODE_ENV === "production" ? "" : "test/"}payments/${intent.id}`,
+        };
+      }),
+
     stats: protectedProcedure.query(async ({ ctx }) => {
       if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
       const [totalUsers, paidUsers, totalListings, totalApplications] = await Promise.all([
