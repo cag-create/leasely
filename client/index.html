@@ -25,10 +25,21 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script
-      defer
-      src="%VITE_ANALYTICS_ENDPOINT%/umami"
-      data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
+    <script>
+      // Only load analytics when both env vars are substituted by Vite.
+      // Unsubstituted placeholders (e.g. "%VITE_ANALYTICS_ENDPOINT%") would
+      // produce a bad URL that crashes Express path decoding on the server.
+      (function () {
+        var ep = "%VITE_ANALYTICS_ENDPOINT%";
+        var id = "%VITE_ANALYTICS_WEBSITE_ID%";
+        if (!ep || ep.indexOf("%") === 0 || !id || id.indexOf("%") === 0) return;
+        var s = document.createElement("script");
+        s.defer = true;
+        s.src = ep + "/umami";
+        s.setAttribute("data-website-id", id);
+        document.body.appendChild(s);
+      })();
+    </script>
   </body>
 
 </html>
