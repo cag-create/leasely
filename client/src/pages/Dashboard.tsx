@@ -277,7 +277,7 @@ export default function Dashboard() {
 
   // Stripe Connect — always refetch on mount so a return from Stripe onboarding
   // (?stripe=success) reflects the freshly-active status without a hard reload.
-  const { data: stripeStatus, isFetched: stripeStatusFetched, refetch: refetchStripeStatus } = trpc.marketplace.getStripeConnectStatus.useQuery(undefined, {
+  const { data: stripeStatus, isFetching: stripeStatusFetching, refetch: refetchStripeStatus } = trpc.marketplace.getStripeConnectStatus.useQuery(undefined, {
     enabled: isAuthenticated && (tierData?.tier === "paid"),
     refetchOnMount: "always",
   });
@@ -461,7 +461,7 @@ export default function Dashboard() {
             Gated on `isFetched` (not `isLoading`) — isLoading is false for
             disabled queries, which would let the checklist render with empty
             defaults before auth/tier resolves and cause a "Connect Stripe" flash. */}
-        {isPaid && listingsFetched && stripeStatusFetched && leasesForChecklistFetched && (() => {
+        {isPaid && listingsFetched && !stripeStatusFetching && leasesForChecklistFetched && (() => {
           const hasListing = myListings.length > 0;
           const hasStripe = stripeStatus?.status === "active";
           const hasLease = (leasesForChecklist as any[]).length > 0;
@@ -1183,7 +1183,12 @@ function ProOnboardingChecklist() {
   // this sidebar agrees with reality. Reading `stripeConnectStatus` off the DB
   // subscription record returns stale data because that column only gets
   // updated when `getStripeConnectStatus` runs and confirms with Stripe.
-  const { data: stripeStatus, isFetched: stripeStatusFetched } = trpc.marketplace.getStripeConnectStatus.useQuery(undefined, {
+  // Gate on `!isFetching` (not `isFetched`) — isFetched flips true the moment
+  // React Query has *any* cached data, even stale "pending" from before Stripe
+  // finished onboarding. That causes a flash of "Connect Stripe ✗" before the
+  // live refetch confirms "active". Waiting for isFetching=false makes sure
+  // the displayed status is from the current live retrieve.
+  const { data: stripeStatus, isFetching: stripeStatusFetching } = trpc.marketplace.getStripeConnectStatus.useQuery(undefined, {
     refetchOnMount: "always",
   });
 
@@ -1208,10 +1213,10 @@ function ProOnboardingChecklist() {
   const allDone = completedCount === steps.length;
 
   // Don't render until queries settle — prevents a flash of "Connect Stripe"
-  // when the user actually has Stripe connected but data is still undefined.
-  // Use isFetched (not isLoading) so we wait for actual data, not just for
-  // an in-flight fetch to start.
-  if (!listingsFetched || !stripeStatusFetched) return null;
+  // when the user actually has Stripe connected but data is still undefined
+  // OR briefly stale from cache. Wait for the active refetch to complete so
+  // we're rendering the live status, not the cached one.
+  if (!listingsFetched || stripeStatusFetching) return null;
   if (allDone) return null;
 
   return (

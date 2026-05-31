@@ -92,6 +92,32 @@ export default function PortalSetup() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Resume the wizard at the right step on page load. Without this, hitting
+  // refresh (or coming back to /portal-setup after closing the tab) dumped
+  // the user back at "Brand Setup" even when they'd already saved a brand,
+  // submitted a brief, and redeemed their code. Step is derived from
+  // server state so it's authoritative across devices.
+  //   brandName saved          → at least step 1
+  //   existingBrief saved      → at least step 2
+  //   proCode redeemed         → step 3
+  // The user can still navigate backward manually via the Back buttons.
+  // Only auto-advance — never auto-rewind — so a partly-filled-out step
+  // isn't lost. The `?cbpRedeemed=1` branch above overrides this.
+  const [autoResumed, setAutoResumed] = useState(false);
+  useEffect(() => {
+    if (autoResumed) return;
+    // Wait until both queries have at least attempted to load.
+    if (proCode === undefined || existingBrief === undefined) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("cbpRedeemed") === "1") { setAutoResumed(true); return; }
+    let resumeStep = 0;
+    if ((user as any)?.brandName) resumeStep = 1;
+    if (existingBrief) resumeStep = 2;
+    if (proCode && (proCode as any).status === "redeemed") resumeStep = 3;
+    if (resumeStep > step) setStep(resumeStep);
+    setAutoResumed(true);
+  }, [proCode, existingBrief, user, step, autoResumed]);
+
   // Prefill brief form once we load it
   useEffect(() => {
     if (existingBrief) {

@@ -654,6 +654,7 @@ export const appRouter = router({
         brandLogoUrl: sub?.brandLogoUrl ?? null,
         brandColor: sub?.brandColor ?? null,
         portalSubdomain: sub?.portalSubdomain ?? null,
+        customDomain: (sub as any)?.customDomain ?? null,
       };
     }),
     logout: publicProcedure.mutation(async ({ ctx }) => {
