@@ -618,7 +618,8 @@ export const appRouter = router({
 
   proCode: router({
     getMine: protectedProcedure.query(async ({ ctx }) => {
-      return getProCodeByUserId(ctx.user.id);
+      // Auto-provision on first access so PortalSetup never stalls on an empty row.
+      return getOrCreateProCode(ctx.user.id);
     }),
   }),
 

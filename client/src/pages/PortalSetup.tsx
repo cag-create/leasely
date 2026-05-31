@@ -501,7 +501,13 @@ export default function PortalSetup() {
               <div>
                 <p className="text-xs font-bold text-amber-400 mb-1.5">Recurring (year 2 onward)</p>
                 <ul className="text-sm text-white/70 space-y-1 pl-4 list-disc marker:text-amber-400/50">
-                  <li>Domain + hosting renewal — <span className="text-white font-semibold">$30/yr</span> via CBP <span className="text-white/40">(or transfer the domain to your own registrar — free)</span></li>
+                  {domainMode === "leasely" ? (
+                    <li>Your <span className="text-white font-semibold">{cleanSubdomain || "yourname"}.leasely.net</span> subdomain — <span className="text-white font-semibold">free forever</span>. No renewals.</li>
+                  ) : customDomain ? (
+                    <li>Domain renewal — <span className="text-white font-semibold">paid to your own registrar</span> (you brought <span className="text-white/80 font-mono text-xs">{customDomain}</span>). Hosting via CBP — <span className="text-white font-semibold">$30/yr</span>.</li>
+                  ) : (
+                    <li>Domain + hosting renewal — <span className="text-white font-semibold">$30/yr</span> via CBP <span className="text-white/40">(or transfer the domain to your own registrar — free)</span></li>
+                  )}
                 </ul>
               </div>
 
