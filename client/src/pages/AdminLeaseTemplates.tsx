@@ -194,14 +194,14 @@ function CreateTemplatePanel({ onCreated }: { onCreated: (id: number) => void })
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
-      <h2 className="font-bold text-lg">New Template</h2>
+      <h2 className="font-bold text-lg text-foreground">New Template</h2>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">State</Label>
           <select
             value={state}
             onChange={(e) => setState(e.target.value)}
-            className="mt-1.5 w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+            className="mt-1.5 w-full h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground"
           >
             <option value="">Select state…</option>
             {STATE_CODES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -212,7 +212,7 @@ function CreateTemplatePanel({ onCreated }: { onCreated: (id: number) => void })
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as Category)}
-            className="mt-1.5 w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+            className="mt-1.5 w-full h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground"
           >
             {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
@@ -324,7 +324,7 @@ function EditTemplatePanel({
       <div className="rounded-2xl border border-border bg-card p-6 space-y-1">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <h2 className="font-bold text-lg">{template.name}</h2>
+            <h2 className="font-bold text-lg text-foreground">{template.name}</h2>
             <p className="text-xs text-muted-foreground">
               {template.state} · {template.category.replace(/_/g, " ")}
             </p>
@@ -345,7 +345,7 @@ function EditTemplatePanel({
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
-        <h3 className="font-semibold text-sm">Edit & Save New Version</h3>
+        <h3 className="font-semibold text-sm text-foreground">Edit & Save New Version</h3>
         <div>
           <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Body HTML (use {`{{placeholder}}`} for variables)
@@ -354,7 +354,7 @@ function EditTemplatePanel({
             value={bodyHtml}
             onChange={(e) => setBodyHtml(e.target.value)}
             rows={16}
-            className="mt-1.5 font-mono text-xs"
+            className="mt-1.5 font-mono text-xs text-foreground bg-background"
           />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -367,7 +367,7 @@ function EditTemplatePanel({
               onChange={(e) => setVariables(e.target.value)}
               rows={6}
               placeholder="landlord_name&#10;tenant_name&#10;monthly_rent"
-              className="mt-1.5 font-mono text-xs"
+              className="mt-1.5 font-mono text-xs text-foreground bg-background"
             />
           </div>
           <div>
@@ -379,7 +379,7 @@ function EditTemplatePanel({
               onChange={(e) => setCitations(e.target.value)}
               rows={6}
               placeholder="Nev. Rev. Stat. § 118A.242"
-              className="mt-1.5 font-mono text-xs"
+              className="mt-1.5 font-mono text-xs text-foreground bg-background"
             />
           </div>
           <div>
@@ -391,7 +391,7 @@ function EditTemplatePanel({
               onChange={(e) => setDisclosures(e.target.value)}
               rows={6}
               placeholder="Federal Lead-Paint Disclosure (pre-1978)"
-              className="mt-1.5 font-mono text-xs"
+              className="mt-1.5 font-mono text-xs text-foreground bg-background"
             />
           </div>
         </div>
@@ -410,7 +410,7 @@ function EditTemplatePanel({
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-6 space-y-3">
-        <h3 className="font-semibold text-sm">Version History</h3>
+        <h3 className="font-semibold text-sm text-foreground">Version History</h3>
         {(versionsQ.data ?? []).length === 0 && (
           <p className="text-xs text-muted-foreground">No versions yet — save one above.</p>
         )}
@@ -419,7 +419,7 @@ function EditTemplatePanel({
           return (
             <div key={v.id} className="flex items-center justify-between gap-3 border-t border-border pt-3 first:border-t-0 first:pt-0">
               <div>
-                <p className="text-sm font-semibold">
+                <p className="text-sm font-semibold text-foreground">
                   v{v.version}
                   {isActive && <Badge variant="outline" className="ml-2 text-emerald-600 border-emerald-300">active</Badge>}
                 </p>

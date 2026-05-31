@@ -2904,6 +2904,36 @@ export const appRouter = router({
       return { success: true, deletedId: input.id };
     }),
 
+    /**
+     * Landlord: reopen a denied/withdrawn application back to "reviewing".
+     *
+     * The 2026-05-31 pipeline audit flagged "denied" as a dead-end status
+     * with no path back — landlords who made a mistake or whose applicants
+     * provided new info had to ask the tenant to resubmit. This endpoint
+     * is the explicit undo: only the owning landlord can call it, and it
+     * only accepts transitions from terminal-but-undoable statuses
+     * ("denied", "withdrawn"). Approval still has to flow through the
+     * normal Lease Details modal.
+     */
+    reopen: protectedProcedure.input(z.object({
+      id: z.number(),
+      note: z.string().max(500).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const app = await getRentalApplicationById(input.id);
+      if (!app || app.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+      if (app.status !== "denied" && app.status !== "withdrawn") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Cannot reopen application in status "${app.status}". Use updateStatus instead.`,
+        });
+      }
+      const reopenNote = input.note?.trim()
+        ? `[Reopened by landlord]: ${input.note.trim()}`
+        : `[Reopened by landlord at ${new Date().toISOString()}]`;
+      await updateRentalApplicationStatus(input.id, ctx.user.id, "reviewing", reopenNote);
+      return { success: true };
+    }),
+
     /** Landlord: update status — approving auto-creates a draft lease */
     updateStatus: protectedProcedure.input(z.object({
       id: z.number(),
@@ -2941,6 +2971,39 @@ export const appRouter = router({
         ? { reason: input.overrideReason, recommendation: input.overrideRecommendation }
         : undefined;
       await updateRentalApplicationStatus(input.id, ctx.user.id, input.status, input.notes, override);
+
+      // When denied: email the applicant with a polite notice and a path
+      // back via the public application URL. Closes the applicant-side
+      // dead-end flagged in the 2026-05-31 pipeline audit. The reopen
+      // mutation handles the landlord-side undo separately.
+      if (input.status === "denied") {
+        const app = await getRentalApplicationById(input.id);
+        if (app?.applicantEmail) {
+          const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+          const reapplyHref = app.listingId
+            ? `${APP_URL}/apply/${app.listingId}`
+            : `${APP_URL}/marketplace`;
+          sendEmail({
+            to: app.applicantEmail,
+            subject: "Update on your rental application",
+            html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+              <h2 style="color:#1B2B5E;margin:0 0 12px">Application update</h2>
+              <p>Hi ${app.applicantName ?? "there"},</p>
+              <p>Thank you for applying. After review, the landlord has chosen not to move forward with your application at this time.</p>
+              <p>Landlords typically consider income, credit, prior rental history, and timing. If your circumstances have changed — or if you'd like to update any information and reapply — you can submit a new application below.</p>
+              <p style="margin-top:20px">
+                <a href="${reapplyHref}" style="background:#1B2B5E;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold">
+                  Reapply or browse other listings →
+                </a>
+              </p>
+              <p style="color:#6b7280;font-size:13px;margin-top:20px">
+                Leasely does not make rental decisions — those are made by the property owner / landlord. If you have questions about the specific reason, please contact them directly.
+              </p>
+              <p style="color:#9ca3af;font-size:12px;margin-top:16px">Powered by Leasely</p>
+            </div>`,
+          }).catch(() => {});
+        }
+      }
 
       // When approved: auto-create a draft lease pre-filled with the applicant's info
       if (input.status === "approved") {

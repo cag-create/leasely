@@ -9,7 +9,7 @@ import {
   Search, Eye, Download, Share2, Copy, Filter,
   Home, Building2, ChevronDown, AlertCircle, Plus, ShieldCheck,
   Sparkles, ThumbsUp, AlertTriangle, ThumbsDown, Briefcase, DollarSign,
-  ShieldAlert, Trash2,
+  ShieldAlert, Trash2, RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -223,6 +223,17 @@ function ReceivedApplications({
       utils.applications.list.invalidate();
     },
     onError: (e: any) => toast.error(e?.message ?? "Delete failed"),
+  });
+
+  // Reopen — undoes a denial / withdrawal so the landlord can re-evaluate
+  // without asking the applicant to resubmit. Closes the dead-end flagged
+  // in the 2026-05-31 pipeline audit.
+  const reopenMutation = (trpc as any).applications.reopen.useMutation({
+    onSuccess: () => {
+      toast.success("Application reopened — now under review");
+      utils.applications.list.invalidate();
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Reopen failed"),
   });
 
   // Override modal state — opened when a landlord clicks "Mark Approved"
@@ -666,6 +677,27 @@ function ReceivedApplications({
                     )}
 
                     <div className="flex gap-2 flex-wrap">
+                      {(app.status === "denied" || app.status === "withdrawn") && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-8 bg-blue-500/15 hover:bg-blue-500/25 text-blue-700 dark:text-blue-300 border border-blue-500/40 font-semibold gap-1.5"
+                          disabled={reopenMutation.isPending}
+                          onClick={e => {
+                            e.stopPropagation();
+                            const note = window.prompt(
+                              "Reopen this application back to Under Review?\n\n(Optional) Reason / note for the audit log:",
+                              "",
+                            );
+                            if (note === null) return; // user canceled
+                            reopenMutation.mutate({ id: app.id, note: note || undefined });
+                          }}
+                        >
+                          <RotateCcw className="h-3.5 w-3.5" />
+                          Reopen
+                        </Button>
+                      )}
+
                       {(["reviewing", "approved", "denied"] as const).map(s => {
                         const isCurrent = app.status === s;
                         // Color-coded high-contrast styling per action — readable
