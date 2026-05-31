@@ -6,10 +6,10 @@ import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Mail, Home, ArrowRight, Building2, Shield, CheckCircle2, Loader2 } from "lucide-react";
+import { LOGO_URL } from "@/lib/brand";
 
 const BRAND = "#1B2B5E";
 const ACCENT = "#F5A623";
-const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/112528410/Ucb4CaDiJcuyDWNAe95Wyq/leasely-logo-corrected_6f0929ef.png";
 
 export default function TenantLogin() {
   const [email, setEmail] = useState("");

@@ -11,9 +11,10 @@ import {
   Star, Users,
 } from "lucide-react";
 
+import { LOGO_URL } from "@/lib/brand";
+
 const BRAND = "#1B2B5E";
 const ACCENT = "#F5A623";
-const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/112528410/Ucb4CaDiJcuyDWNAe95Wyq/leasely-logo-corrected_6f0929ef.png";
 
 function formatCents(cents: number) {
   return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;

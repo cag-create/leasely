@@ -17,8 +17,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
-
-const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/112528410/Ucb4CaDiJcuyDWNAe95Wyq/leasely-logo-corrected_6f0929ef.png";
+import { LOGO_URL } from "@/lib/brand";
 
 // Scroll reveal — adds `.animate-fade-in-up` when the section enters the viewport.
 // Used by `reveal-on-scroll` wrappers so blocks slide+fade up on entry.

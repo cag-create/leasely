@@ -33,8 +33,7 @@ import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
-
-const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/112528410/Ucb4CaDiJcuyDWNAe95Wyq/leasely-logo-corrected_6f0929ef.png";
+import { LOGO_URL } from "@/lib/brand";
 
 const coreMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", group: "main" },

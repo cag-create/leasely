@@ -268,7 +268,7 @@ export default function Dashboard() {
 
   // Stripe Connect — always refetch on mount so a return from Stripe onboarding
   // (?stripe=success) reflects the freshly-active status without a hard reload.
-  const { data: stripeStatus, refetch: refetchStripeStatus } = trpc.marketplace.getStripeConnectStatus.useQuery(undefined, {
+  const { data: stripeStatus, isLoading: stripeStatusLoading, refetch: refetchStripeStatus } = trpc.marketplace.getStripeConnectStatus.useQuery(undefined, {
     enabled: isAuthenticated && (tierData?.tier === "paid"),
     refetchOnMount: "always",
   });
@@ -296,7 +296,7 @@ export default function Dashboard() {
     enabled: isAuthenticated && (tierData?.tier === "paid"),
   });
   // Lease count drives the first-success checklist below
-  const { data: leasesForChecklist = [] } = trpc.leases.list.useQuery(undefined, {
+  const { data: leasesForChecklist = [], isLoading: leasesForChecklistLoading } = trpc.leases.list.useQuery(undefined, {
     enabled: isAuthenticated,
     retry: false,
   });
@@ -448,8 +448,10 @@ export default function Dashboard() {
         )}
 
         {/* First-success checklist — collapses once all steps are complete.
-            Only shown to Pro users (free tier sees the upgrade banner above). */}
-        {isPaid && (() => {
+            Only shown to Pro users (free tier sees the upgrade banner above).
+            Gated on all 3 underlying queries having settled so the checklist
+            doesn't flash a stale "0/3 complete" state on first paint. */}
+        {isPaid && !listingsLoading && !stripeStatusLoading && !leasesForChecklistLoading && (() => {
           const hasListing = myListings.length > 0;
           const hasStripe = stripeStatus?.status === "active";
           const hasLease = (leasesForChecklist as any[]).length > 0;
@@ -1165,9 +1167,9 @@ export default function Dashboard() {
 
 function ProOnboardingChecklist() {
   const { user } = useAuth();
-  const { data: myListings = [] } = trpc.marketplace.getMyListings.useQuery();
+  const { data: myListings = [], isLoading: listingsLoading } = trpc.marketplace.getMyListings.useQuery();
   const { data: proCode } = trpc.proCode.getMine.useQuery();
-  const { data: sub } = trpc.marketplace.getMySubscription.useQuery();
+  const { data: sub, isLoading: subLoading } = trpc.marketplace.getMySubscription.useQuery();
 
   const portalSubdomain = (user as any)?.portalSubdomain;
   const customDomain = (user as any)?.customDomain;
@@ -1189,6 +1191,9 @@ function ProOnboardingChecklist() {
   const completedCount = steps.filter(s => s.done).length;
   const allDone = completedCount === steps.length;
 
+  // Don't render until queries settle — prevents a flash of "Connect Stripe"
+  // when the user actually has Stripe connected but `sub` is still undefined.
+  if (listingsLoading || subLoading) return null;
   if (allDone) return null;
 
   return (

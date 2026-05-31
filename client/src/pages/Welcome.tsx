@@ -10,8 +10,7 @@ import { Button } from "@/components/ui/button";
 import {
   CheckCircle2, Mail, Building2, Globe, CreditCard, ArrowRight, Sparkles,
 } from "lucide-react";
-
-const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/112528410/Ucb4CaDiJcuyDWNAe95Wyq/leasely-logo-corrected_6f0929ef.png";
+import { LOGO_URL } from "@/lib/brand";
 
 export default function Welcome() {
   const [, navigate] = useLocation();
