@@ -167,14 +167,14 @@ export default function Navbar() {
         }
       `}>
         <div className="container">
-          <div className="flex items-center justify-between h-[60px]">
+          <div className="flex items-center justify-between h-[76px]">
 
             {/* ── Logo ── */}
             <Link href="/" className="flex items-center shrink-0 group">
               <img
                 src={LOGO_URL}
                 alt="Leasely"
-                className="h-10 w-auto transition-opacity group-hover:opacity-80"
+                className="h-14 md:h-16 w-auto transition-opacity group-hover:opacity-80 drop-shadow-sm"
                 onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
               />
             </Link>
@@ -364,7 +364,7 @@ export default function Navbar() {
 
       {/* ── Mobile Menu ── */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-white/98 backdrop-blur-xl pt-[60px]">
+        <div className="md:hidden fixed inset-0 z-40 bg-white/98 backdrop-blur-xl pt-[76px]">
           <nav className="container py-6 flex flex-col gap-1">
             {[
               { href: "/marketplace", label: "Browse Rentals", icon: <Search className="h-4 w-4" /> },
