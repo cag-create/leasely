@@ -1179,12 +1179,18 @@ function ProOnboardingChecklist() {
   const { user } = useAuth();
   const { data: myListings = [], isFetched: listingsFetched } = trpc.marketplace.getMyListings.useQuery();
   const { data: proCode } = trpc.proCode.getMine.useQuery();
-  const { data: sub, isFetched: subFetched } = trpc.marketplace.getMySubscription.useQuery();
+  // Use the live Stripe-Connect status (same source as the inline checklist) so
+  // this sidebar agrees with reality. Reading `stripeConnectStatus` off the DB
+  // subscription record returns stale data because that column only gets
+  // updated when `getStripeConnectStatus` runs and confirms with Stripe.
+  const { data: stripeStatus, isFetched: stripeStatusFetched } = trpc.marketplace.getStripeConnectStatus.useQuery(undefined, {
+    refetchOnMount: "always",
+  });
 
   const portalSubdomain = (user as any)?.portalSubdomain;
   const customDomain = (user as any)?.customDomain;
   const hasListings = myListings.length > 0;
-  const hasConnect = (sub as any)?.stripeConnectStatus === "active";
+  const hasConnect = stripeStatus?.status === "active";
   // Branded portal counts as done if user has EITHER a leasely.net subdomain
   // OR a custom domain (the "I have my own URL" path), since both flows
   // satisfy "set up your branded portal".
@@ -1202,10 +1208,10 @@ function ProOnboardingChecklist() {
   const allDone = completedCount === steps.length;
 
   // Don't render until queries settle — prevents a flash of "Connect Stripe"
-  // when the user actually has Stripe connected but `sub` is still undefined.
+  // when the user actually has Stripe connected but data is still undefined.
   // Use isFetched (not isLoading) so we wait for actual data, not just for
   // an in-flight fetch to start.
-  if (!listingsFetched || !subFetched) return null;
+  if (!listingsFetched || !stripeStatusFetched) return null;
   if (allDone) return null;
 
   return (
