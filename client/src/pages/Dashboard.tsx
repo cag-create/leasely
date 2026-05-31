@@ -212,7 +212,7 @@ export default function Dashboard() {
     enabled: isAuthenticated,
   });
 
-  const { data: myListings = [], isLoading: listingsLoading } = trpc.marketplace.getMyListings.useQuery(undefined, {
+  const { data: myListings = [], isLoading: listingsLoading, isFetched: listingsFetched } = trpc.marketplace.getMyListings.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
@@ -277,7 +277,7 @@ export default function Dashboard() {
 
   // Stripe Connect — always refetch on mount so a return from Stripe onboarding
   // (?stripe=success) reflects the freshly-active status without a hard reload.
-  const { data: stripeStatus, isLoading: stripeStatusLoading, refetch: refetchStripeStatus } = trpc.marketplace.getStripeConnectStatus.useQuery(undefined, {
+  const { data: stripeStatus, isFetched: stripeStatusFetched, refetch: refetchStripeStatus } = trpc.marketplace.getStripeConnectStatus.useQuery(undefined, {
     enabled: isAuthenticated && (tierData?.tier === "paid"),
     refetchOnMount: "always",
   });
@@ -305,7 +305,7 @@ export default function Dashboard() {
     enabled: isAuthenticated && (tierData?.tier === "paid"),
   });
   // Lease count drives the first-success checklist below
-  const { data: leasesForChecklist = [], isLoading: leasesForChecklistLoading } = trpc.leases.list.useQuery(undefined, {
+  const { data: leasesForChecklist = [], isFetched: leasesForChecklistFetched } = trpc.leases.list.useQuery(undefined, {
     enabled: isAuthenticated,
     retry: false,
   });
@@ -458,9 +458,10 @@ export default function Dashboard() {
 
         {/* First-success checklist — collapses once all steps are complete.
             Only shown to Pro users (free tier sees the upgrade banner above).
-            Gated on all 3 underlying queries having settled so the checklist
-            doesn't flash a stale "0/3 complete" state on first paint. */}
-        {isPaid && !listingsLoading && !stripeStatusLoading && !leasesForChecklistLoading && (() => {
+            Gated on `isFetched` (not `isLoading`) — isLoading is false for
+            disabled queries, which would let the checklist render with empty
+            defaults before auth/tier resolves and cause a "Connect Stripe" flash. */}
+        {isPaid && listingsFetched && stripeStatusFetched && leasesForChecklistFetched && (() => {
           const hasListing = myListings.length > 0;
           const hasStripe = stripeStatus?.status === "active";
           const hasLease = (leasesForChecklist as any[]).length > 0;
@@ -1176,9 +1177,9 @@ export default function Dashboard() {
 
 function ProOnboardingChecklist() {
   const { user } = useAuth();
-  const { data: myListings = [], isLoading: listingsLoading } = trpc.marketplace.getMyListings.useQuery();
+  const { data: myListings = [], isFetched: listingsFetched } = trpc.marketplace.getMyListings.useQuery();
   const { data: proCode } = trpc.proCode.getMine.useQuery();
-  const { data: sub, isLoading: subLoading } = trpc.marketplace.getMySubscription.useQuery();
+  const { data: sub, isFetched: subFetched } = trpc.marketplace.getMySubscription.useQuery();
 
   const portalSubdomain = (user as any)?.portalSubdomain;
   const customDomain = (user as any)?.customDomain;
@@ -1202,7 +1203,9 @@ function ProOnboardingChecklist() {
 
   // Don't render until queries settle — prevents a flash of "Connect Stripe"
   // when the user actually has Stripe connected but `sub` is still undefined.
-  if (listingsLoading || subLoading) return null;
+  // Use isFetched (not isLoading) so we wait for actual data, not just for
+  // an in-flight fetch to start.
+  if (!listingsFetched || !subFetched) return null;
   if (allDone) return null;
 
   return (
