@@ -5397,6 +5397,35 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       status: z.enum(["draft","sent","expired","terminated"]).optional(),
     })).mutation(async ({ ctx, input }) => {
       const { leaseId, ...data } = input;
+      // Inline Stripe-subscription cancel on terminal status flips.
+      // The daily expiry cron is the safety net; this is the
+      // immediate-action path so a tenant whose lease is terminated
+      // mid-month isn't billed again at 12:01 AM on the 1st while we
+      // wait for the next sweep. Only fires when status is actually
+      // transitioning to a terminal state AND the lease has an
+      // outstanding subscription — both checks make this safe to
+      // re-run, since cancelling an already-canceled sub is a no-op
+      // we tolerate (see expiryScheduler.ts).
+      if (input.status === "terminated" || input.status === "expired") {
+        const existing = await getLeaseById(leaseId);
+        if (existing && existing.landlordUserId === ctx.user.id && existing.stripeSubscriptionId) {
+          const stripe = getStripe();
+          if (stripe) {
+            try {
+              await stripe.subscriptions.cancel(existing.stripeSubscriptionId);
+            } catch (err: any) {
+              const msg = err?.message ?? String(err);
+              if (!/No such|canceled/i.test(msg)) {
+                console.warn(`[leases.update] inline sub cancel failed for lease ${leaseId}:`, msg);
+              }
+            }
+          }
+          // Mirror the cron's behaviour: drop autopay so the dashboard
+          // stops showing "Active" billing indicators for a lease that
+          // is no longer live.
+          (data as any).autopayEnabled = 0;
+        }
+      }
       await updateLeaseAgreement(leaseId, ctx.user.id, data as any);
       return { success: true };
     }),
