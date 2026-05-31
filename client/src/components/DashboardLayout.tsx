@@ -297,16 +297,9 @@ function DashboardLayoutContent({
               {directoryMenuItems.map(item => <NavItem key={item.path} item={item} />)}
             </SidebarMenu>
 
-            {/* Support */}
-            <div className="mt-auto">
-              <SidebarMenu className="px-2 gap-0.5">
-                {supportMenuItems.map(item => <NavItem key={item.path} item={item} />)}
-              </SidebarMenu>
-            </div>
-
-            {/* Brand logo (after Contractors / at bottom) */}
+            {/* Brand logo — centered in the empty space between Directory and Support */}
             {!isCollapsed && (
-              <div className="flex items-center justify-center px-3 pt-4 pb-2">
+              <div className="flex-1 flex items-center justify-center px-3 min-h-0">
                 <img
                   src={LOGO_URL}
                   alt="Leasely"
@@ -315,6 +308,13 @@ function DashboardLayoutContent({
                 />
               </div>
             )}
+
+            {/* Support */}
+            <div className="mt-auto">
+              <SidebarMenu className="px-2 gap-0.5">
+                {supportMenuItems.map(item => <NavItem key={item.path} item={item} />)}
+              </SidebarMenu>
+            </div>
 
             {/* Upgrade CTA for free users */}
             {!isPro && !isCollapsed && (
