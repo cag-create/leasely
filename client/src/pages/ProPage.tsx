@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 const BRAND = "#0F1F4B";
-const TEAL = "#F5A623";
+const TEAL = "#4F46E5";
 
 // ─── Animated Counter ───────────────────────────────────────────────────────
 function AnimatedCounter({ end, suffix = "", prefix = "" }: { end: number; suffix?: string; prefix?: string }) {
@@ -186,7 +186,7 @@ const FEATURES = [
   {
     id: "payouts",
     icon: CreditCard,
-    color: "#F5A623",
+    color: "#4F46E5",
     badge: "Instant Payouts",
     title: "Get Paid the Same Day",
     subtitle: "Waived ACH fees for Pro",
@@ -354,7 +354,7 @@ const FEATURES = [
   {
     id: "qr",
     icon: QrCode,
-    color: "#F5A623",
+    color: "#4F46E5",
     badge: "QR Codes",
     title: "Two QR Codes. Zero Friction.",
     subtitle: "Portfolio QR + Listing QR",
@@ -557,9 +557,9 @@ export default function ProPage() {
             <p className="text-gray-500 mb-10">Almost always in the first 30 days.</p>
             <div className="grid md:grid-cols-3 gap-6">
               {[
-                { scenario: "1 vacancy filled faster", saving: "$1,300", desc: "Avg landlord loses $1,300/mo per vacant unit. Pro listings convert faster.", color: "#F5A623" },
+                { scenario: "1 vacancy filled faster", saving: "$1,300", desc: "Avg landlord loses $1,300/mo per vacant unit. Pro listings convert faster.", color: "#4F46E5" },
                 { scenario: "1 bad tenant avoided", saving: "$3,500", desc: "Average eviction costs $3,500 in legal fees + lost rent. AI screening prevents this.", color: "#6366F1" },
-                { scenario: "Hours saved monthly", saving: "8 hrs", desc: "Automated rent collection, work orders, and accounting saves ~8 hours/month.", color: "#F5A623" },
+                { scenario: "Hours saved monthly", saving: "8 hrs", desc: "Automated rent collection, work orders, and accounting saves ~8 hours/month.", color: "#4F46E5" },
               ].map((item, i) => (
                 <div key={i} className="rounded-2xl border border-gray-100 p-6 text-center">
                   <div className="text-3xl font-black mb-1" style={{ color: item.color }}>{item.saving}</div>
@@ -607,8 +607,8 @@ export default function ProPage() {
         <div className="container">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { value: "$0", label: "First Listing Free", sub: "No credit card needed", icon: Building2, color: "#F5A623" },
-              { value: "0%", label: "ACH Fees for Pro", sub: "Tenants pay at no cost", icon: DollarSign, color: "#F5A623" },
+              { value: "$0", label: "First Listing Free", sub: "No credit card needed", icon: Building2, color: "#4F46E5" },
+              { value: "0%", label: "ACH Fees for Pro", sub: "Tenants pay at no cost", icon: DollarSign, color: "#4F46E5" },
               { value: "∞", label: "Listings Allowed", sub: "Unlimited on Pro plan", icon: Globe, color: "#6366F1" },
               { value: "$25", label: "Per Month", sub: "Cancel anytime", icon: Star, color: "#10B981" },
             ].map((s, i) => (
@@ -721,7 +721,7 @@ export default function ProPage() {
             <div className="relative rounded-3xl overflow-hidden shadow-2xl cursor-pointer group" onClick={() => setVideoOpen(true)}>
               <div className="aspect-video bg-gradient-to-br from-[#2C2418] via-[#3A2A14] to-[#1F1A12] flex items-center justify-center relative">
                 {/* Subtle radial highlight to keep the placeholder from feeling muddy */}
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(245,166,35,0.18),transparent_65%)] pointer-events-none" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(79,70,229,0.18),transparent_65%)] pointer-events-none" />
                 {/* Background portal mockup */}
                 <div className="absolute inset-0 opacity-30">
                   <div className="grid grid-cols-3 gap-4 p-8 h-full">
@@ -766,7 +766,7 @@ export default function ProPage() {
       <section className="section-padding" style={{ background: "linear-gradient(135deg, #0a1628 0%, #0d1f3c 100%)" }}>
         <div className="container">
           <div className="text-center mb-12">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest" style={{ background: "rgba(245,166,35,0.15)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.3)" }}>
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest" style={{ background: "rgba(79,70,229,0.15)", color: "#4F46E5", border: "1px solid rgba(79,70,229,0.3)" }}>
               Real Stories
             </span>
             <h2 className="text-3xl md:text-4xl font-black text-white mt-4" style={{ fontFamily: 'Outfit, sans-serif' }}>Built from experience, not guesswork</h2>
@@ -775,13 +775,13 @@ export default function ProPage() {
             {/* Card 1 — AI Fraud Detection */}
             <div className="rounded-2xl p-6 flex flex-col" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
               <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_,i) => <Star key={i} className="w-4 h-4 fill-current" style={{ color: "#F5A623" }} />)}
+                {[...Array(5)].map((_,i) => <Star key={i} className="w-4 h-4 fill-current" style={{ color: "#4F46E5" }} />)}
               </div>
               <p className="text-white/80 text-sm leading-relaxed flex-1" style={{ fontFamily: 'Inter, sans-serif' }}>
                 &ldquo;I caught a fraudulent applicant using Leasely&apos;s AI fraud detector. It flagged a fake pay stub, a fabricated employer address, a disconnected phone number, and a virtual office address &mdash; all in seconds. That one catch alone was worth more than a year of the subscription.&rdquo;
               </p>
               <div className="mt-5 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0" style={{ background: "linear-gradient(135deg, #1B2B5E, #F5A623)", color: "white" }}>C</div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0" style={{ background: "linear-gradient(135deg, #1B2B5E, #4F46E5)", color: "white" }}>C</div>
                 <div>
                   <div className="font-bold text-white text-sm">Chad</div>
                   <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Property Manager &amp; Leasely Founder</div>
@@ -794,13 +794,13 @@ export default function ProPage() {
             {/* Card 2 — Branded Subdomain */}
             <div className="rounded-2xl p-6 flex flex-col" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
               <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_,i) => <Star key={i} className="w-4 h-4 fill-current" style={{ color: "#F5A623" }} />)}
+                {[...Array(5)].map((_,i) => <Star key={i} className="w-4 h-4 fill-current" style={{ color: "#4F46E5" }} />)}
               </div>
               <p className="text-white/80 text-sm leading-relaxed flex-1" style={{ fontFamily: 'Inter, sans-serif' }}>
                 &ldquo;Having my own branded portal at my name dot leasely dot net changed how tenants see me. I went from sharing random links to sending people to a professional website that looks like I spent thousands building it. My inquiry rate doubled the first week.&rdquo;
               </p>
               <div className="mt-5 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0" style={{ background: "linear-gradient(135deg, #1B2B5E, #F5A623)", color: "white" }}>C</div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0" style={{ background: "linear-gradient(135deg, #1B2B5E, #4F46E5)", color: "white" }}>C</div>
                 <div>
                   <div className="font-bold text-white text-sm">Chad</div>
                   <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Property Manager &amp; Leasely Founder</div>
@@ -813,19 +813,19 @@ export default function ProPage() {
             {/* Card 3 — Instant Payouts */}
             <div className="rounded-2xl p-6 flex flex-col" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
               <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_,i) => <Star key={i} className="w-4 h-4 fill-current" style={{ color: "#F5A623" }} />)}
+                {[...Array(5)].map((_,i) => <Star key={i} className="w-4 h-4 fill-current" style={{ color: "#4F46E5" }} />)}
               </div>
               <p className="text-white/80 text-sm leading-relaxed flex-1" style={{ fontFamily: 'Inter, sans-serif' }}>
                 &ldquo;Instant payouts are a game changer. Rent hits my bank account the same day it&apos;s paid &mdash; no waiting 3 business days, no chasing. And with zero ACH fees on Pro, I&apos;m keeping every dollar my tenants send me. It pays for itself every single month.&rdquo;
               </p>
               <div className="mt-5 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0" style={{ background: "linear-gradient(135deg, #1B2B5E, #F5A623)", color: "white" }}>C</div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0" style={{ background: "linear-gradient(135deg, #1B2B5E, #4F46E5)", color: "white" }}>C</div>
                 <div>
                   <div className="font-bold text-white text-sm">Chad</div>
                   <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Property Manager &amp; Leasely Founder</div>
                 </div>
                 <div className="ml-auto">
-                  <Zap className="w-4 h-4" style={{ color: "#F5A623" }} />
+                  <Zap className="w-4 h-4" style={{ color: "#4F46E5" }} />
                 </div>
               </div>
             </div>
@@ -851,7 +851,7 @@ export default function ProPage() {
                     <span className="text-5xl font-black text-white" style={{ fontFamily:'Outfit,sans-serif' }}>$25.00</span>
                     <span className="text-white/40">/month</span>
                   </div>
-                  <div className="text-sm font-semibold mt-1" style={{ color: '#F5A623' }}>+ $75 one-time setup fee</div>
+                  <div className="text-sm font-semibold mt-1" style={{ color: '#4F46E5' }}>+ $75 one-time setup fee</div>
                 </div>
                 <Badge className="bg-teal-500 text-[#3A2410] font-bold border-0">Most Popular</Badge>
               </div>

@@ -27,7 +27,7 @@ import { prepareImageForUpload } from "@/lib/imageUpload";
 import TenantInviteDialog from "@/components/TenantInviteDialog";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 // Logo upload — file picker + preview. Replaces the old "paste a URL" input
 // since nobody hosts their logo at a public URL.
@@ -1226,9 +1226,9 @@ function ProOnboardingChecklist() {
       <div className="space-y-2">
         {steps.map((s, i) => (
           <div key={i} className="flex items-center gap-2.5">
-            <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${s.done ? "bg-[#F5A623]/20" : "bg-white border border-gray-200"}`}>
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${s.done ? "bg-[#4F46E5]/20" : "bg-white border border-gray-200"}`}>
               {s.done
-                ? <CheckCircle2 className="h-3.5 w-3.5 text-[#F5A623]" />
+                ? <CheckCircle2 className="h-3.5 w-3.5 text-[#4F46E5]" />
                 : <span className="w-1.5 h-1.5 rounded-full bg-gray-300 block" />
               }
             </div>

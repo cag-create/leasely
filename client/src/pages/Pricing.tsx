@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 const BRAND = "#1F1A12";
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 const FREE_FEATURES = [
   { label: "1 property listing on marketplace", included: true },
@@ -505,13 +505,13 @@ export default function Pricing() {
 
       {/* Affiliate CTA */}
       <div className="py-10 px-4 bg-background border-t border-border">
-        <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 rounded-2xl bg-gradient-to-r from-[#F5A623]/8 to-[#4F46E5]/8 border border-[#F5A623]/15 px-8 py-6">
+        <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 rounded-2xl bg-gradient-to-r from-[#4F46E5]/8 to-[#4F46E5]/8 border border-[#4F46E5]/15 px-8 py-6">
           <div className="text-center md:text-left">
             <p className="text-foreground font-bold text-base">Refer landlords. Earn $50 one-time per signup.</p>
             <p className="text-muted-foreground text-sm mt-1">No cap, no expiry. Earn a $50 one-time bonus for every landlord who signs up using your affiliate code and pays their first full month plus setup fee.</p>
           </div>
           <Link href="/affiliate/signup">
-            <Button className="bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] font-bold gap-2 whitespace-nowrap shrink-0">
+            <Button className="bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold gap-2 whitespace-nowrap shrink-0">
               <Sparkles className="h-4 w-4" /> Join Affiliate Program
             </Button>
           </Link>
@@ -525,7 +525,7 @@ export default function Pricing() {
           {" · "}
           <Link href="/support" className="text-muted-foreground hover:underline font-medium">Support Center</Link>
           {" · "}
-          <Link href="/fees" className="text-[#F5A623] hover:underline font-medium">Fee Schedule</Link>
+          <Link href="/fees" className="text-[#4F46E5] hover:underline font-medium">Fee Schedule</Link>
         </p>
       </div>
     </div>

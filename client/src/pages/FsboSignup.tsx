@@ -81,8 +81,8 @@ export default function FsboSignup() {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center space-y-5">
-          <div className="h-20 w-20 rounded-full bg-[#F5A623]/10 flex items-center justify-center">
-            <CheckCircle2 className="h-10 w-10 text-[#F5A623]" />
+          <div className="h-20 w-20 rounded-full bg-[#4F46E5]/10 flex items-center justify-center">
+            <CheckCircle2 className="h-10 w-10 text-[#4F46E5]" />
           </div>
           <h1 className="text-3xl font-black text-foreground">Listing Submitted!</h1>
           <p className="text-muted-foreground max-w-md text-lg">
@@ -103,7 +103,7 @@ export default function FsboSignup() {
       {/* Hero */}
       <div className="bg-[#1B2B5E] text-white py-14 px-4">
         <div className="max-w-2xl mx-auto text-center space-y-3">
-          <Badge className="bg-[#F5A623]/20 text-[#F5A623] border-[#F5A623]/30 text-xs">
+          <Badge className="bg-[#4F46E5]/20 text-[#4F46E5] border-[#4F46E5]/30 text-xs">
             For Sale By Owner
           </Badge>
           <h1 className="text-3xl font-black">List Your Property — No Agent Needed</h1>

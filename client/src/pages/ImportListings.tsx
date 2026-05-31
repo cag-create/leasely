@@ -11,7 +11,7 @@ import {
   Layers
 } from "lucide-react";
 
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 const BRAND = "#1B2B5E";
 
 // ── CSV Template ──────────────────────────────────────────────────────────────

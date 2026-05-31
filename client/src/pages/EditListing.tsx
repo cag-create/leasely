@@ -217,7 +217,7 @@ export default function EditListing() {
         {/* Step progress */}
         <div className="flex gap-1 mb-8">
           {STEPS.map(s => (
-            <div key={s.id} className={`h-1.5 flex-1 rounded-full transition-colors ${s.id <= step ? "bg-[#F5A623]" : "bg-gray-200"}`} />
+            <div key={s.id} className={`h-1.5 flex-1 rounded-full transition-colors ${s.id <= step ? "bg-[#4F46E5]" : "bg-gray-200"}`} />
           ))}
         </div>
 
@@ -357,7 +357,7 @@ export default function EditListing() {
               <>
                 <div>
                   <Label>Photos</Label>
-                  <label className="mt-1.5 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl p-6 cursor-pointer hover:border-[#F5A623] transition-colors">
+                  <label className="mt-1.5 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl p-6 cursor-pointer hover:border-[#4F46E5] transition-colors">
                     <Upload className="h-8 w-8 text-gray-400 mb-2" />
                     <span className="text-sm text-gray-500">Click to upload more photos</span>
                     <input type="file" multiple accept="image/*" onChange={handlePhotoUpload} className="sr-only" />
@@ -423,7 +423,7 @@ export default function EditListing() {
               <Button
                 type="submit"
                 disabled={updateMutation.isPending}
-                className="gap-2 bg-[#F5A623] hover:bg-[#F5A623]/90 text-[#3A2410] font-bold"
+                className="gap-2 bg-[#4F46E5] hover:bg-[#4F46E5]/90 text-[#3A2410] font-bold"
               >
                 {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                 Save Changes

@@ -26,7 +26,7 @@ const STEPS = [
 ];
 
 const PRESET_COLORS = [
-  "#F5A623", "#1B2B5E", "#6366F1", "#F5A623",
+  "#4F46E5", "#1B2B5E", "#6366F1", "#4F46E5",
   "#EC4899", "#10B981", "#3B82F6", "#EF4444",
   "#8B5CF6", "#F59E0B", "#06B6D4", "#84CC16",
 ];
@@ -56,7 +56,7 @@ export default function ProSetup() {
 
   const [form, setForm] = useState({
     businessName: user?.name ? `${user.name.split(" ")[0]}'s Properties` : "",
-    brandColor: "#F5A623",
+    brandColor: "#4F46E5",
     subdomain: "",
     tagline: "",
     state: "",
@@ -122,11 +122,11 @@ export default function ProSetup() {
           <div
             className="rounded-2xl p-4 mb-6 text-left"
             style={{
-              background: "rgba(245,166,35,0.08)",
-              border: "1px solid rgba(245,166,35,0.25)",
+              background: "rgba(79,70,229,0.08)",
+              border: "1px solid rgba(79,70,229,0.25)",
             }}
           >
-            <p className="text-[#FFD166] text-xs font-bold uppercase tracking-widest mb-1.5">
+            <p className="text-[#818CF8] text-xs font-bold uppercase tracking-widest mb-1.5">
               Brand kit in production
             </p>
             <p className="text-white/75 text-sm leading-relaxed">
@@ -184,7 +184,7 @@ export default function ProSetup() {
         {step === 1 && (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(245,166,35,0.15)" }}>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(79,70,229,0.15)" }}>
                 <Building2 className="w-8 h-8 text-teal-400" />
               </div>
               <h1 className="text-3xl font-black text-white mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>What's your business called?</h1>
@@ -252,7 +252,7 @@ export default function ProSetup() {
                 <Input
                   value={form.brandColor}
                   onChange={e => update("brandColor", e.target.value)}
-                  placeholder="#F5A623"
+                  placeholder="#4F46E5"
                   className="font-mono"
                   style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.12)", color: "white" }}
                 />
@@ -302,7 +302,7 @@ export default function ProSetup() {
               <p className="text-white/30 text-xs">Only lowercase letters, numbers, and hyphens. Min 2 characters.</p>
             </div>
             {form.subdomain.length >= 2 && (
-              <div className="rounded-2xl p-4" style={{ background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.2)" }}>
+              <div className="rounded-2xl p-4" style={{ background: "rgba(79,70,229,0.08)", border: "1px solid rgba(79,70,229,0.2)" }}>
                 <p className="text-teal-400 text-sm font-semibold">Your portal will be live at:</p>
                 <p className="text-white font-mono text-sm mt-1">leasely.net/portal/<strong>{form.subdomain}</strong></p>
               </div>
@@ -314,7 +314,7 @@ export default function ProSetup() {
         {step === 4 && (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(245,166,35,0.15)" }}>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(79,70,229,0.15)" }}>
                 <MapPin className="w-8 h-8 text-yellow-400" />
               </div>
               <h1 className="text-3xl font-black text-white mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>Where do you operate?</h1>
@@ -386,7 +386,7 @@ export default function ProSetup() {
                 </div>
               ))}
             </div>
-            <div className="rounded-2xl p-4 text-center" style={{ background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.2)" }}>
+            <div className="rounded-2xl p-4 text-center" style={{ background: "rgba(79,70,229,0.08)", border: "1px solid rgba(79,70,229,0.2)" }}>
               <p className="text-teal-400 text-sm">
                 🎉 All Pro features unlock instantly — no waiting, no manual setup.
               </p>

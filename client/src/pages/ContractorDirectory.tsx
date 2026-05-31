@@ -49,7 +49,7 @@ const TRADES = [
 ];
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 export default function ContractorDirectory() {
   const [search, setSearch] = useState("");
@@ -75,7 +75,7 @@ export default function ContractorDirectory() {
         style={{ background: `linear-gradient(135deg, ${BRAND} 0%, #0f1f4a 60%, #062018 100%)` }}
       >
         <div className="absolute inset-0 opacity-10"
-          style={{ backgroundImage: "radial-gradient(circle at 20% 50%, #F5A623 0%, transparent 50%), radial-gradient(circle at 80% 20%, #4f8ef7 0%, transparent 40%)" }}
+          style={{ backgroundImage: "radial-gradient(circle at 20% 50%, #4F46E5 0%, transparent 50%), radial-gradient(circle at 80% 20%, #4f8ef7 0%, transparent 40%)" }}
         />
         <div className="relative max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-6"
@@ -174,8 +174,8 @@ export default function ContractorDirectory() {
                 onClick={() => setSelectedTrade(active ? "all" : t.value)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
                   active
-                    ? "border-[#F5A623] bg-[#F5A623]/10 text-[#F5A623]"
-                    : "border-border bg-card text-muted-foreground hover:border-[#F5A623]/50"
+                    ? "border-[#4F46E5] bg-[#4F46E5]/10 text-[#4F46E5]"
+                    : "border-border bg-card text-muted-foreground hover:border-[#4F46E5]/50"
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -283,7 +283,7 @@ function ContractorCard({ contractor, featured = false }: { contractor: any; fea
   return (
     <Link href={`/contractors/${contractor.slug ?? contractor.id}`}>
       <div className={`rounded-2xl border bg-card p-6 hover:shadow-lg transition-all cursor-pointer group ${
-        featured ? "border-[#F5A623]/40 shadow-[0_0_0_1px_rgba(245,166,35,0.15)]" : "border-border hover:border-[#F5A623]/40"
+        featured ? "border-[#4F46E5]/40 shadow-[0_0_0_1px_rgba(79,70,229,0.15)]" : "border-border hover:border-[#4F46E5]/40"
       }`}>
         {featured && (
           <div className="flex items-center gap-1 mb-3">
@@ -308,7 +308,7 @@ function ContractorCard({ contractor, featured = false }: { contractor: any; fea
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-foreground truncate group-hover:text-[#F5A623] transition-colors">
+            <h3 className="font-bold text-foreground truncate group-hover:text-[#4F46E5] transition-colors">
               {contractor.businessName}
             </h3>
             {contractor.ownerName && (

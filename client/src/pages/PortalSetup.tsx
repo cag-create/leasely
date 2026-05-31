@@ -48,7 +48,7 @@ export default function PortalSetup() {
   const [tagline, setTagline] = useState("");
   const [industry, setIndustry] = useState("");
   const [logoStyle, setLogoStyle] = useState<string>("");
-  const [palette, setPalette] = useState<string[]>(["#1B2B5E", "#F5A623", "#FFFFFF"]);
+  const [palette, setPalette] = useState<string[]>(["#1B2B5E", "#4F46E5", "#FFFFFF"]);
   const [domainPrimary, setDomainPrimary] = useState("");
   const [domainBackup1, setDomainBackup1] = useState("");
   const [domainBackup2, setDomainBackup2] = useState("");
@@ -171,7 +171,7 @@ export default function PortalSetup() {
             <div key={i} className="flex items-center">
               <div className="flex flex-col items-center">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
-                  i < step ? "bg-[#F5A623] text-[#3A2410]"
+                  i < step ? "bg-[#4F46E5] text-[#3A2410]"
                   : i === step ? "bg-white text-[#0a0a0a]"
                   : "bg-white/10 text-white/40"
                 }`}>
@@ -180,7 +180,7 @@ export default function PortalSetup() {
                 <span className={`text-xs mt-1.5 font-medium ${i === step ? "text-white" : "text-white/40"}`}>{label}</span>
               </div>
               {i < STEPS.length - 1 && (
-                <div className={`w-10 h-px mx-2 mb-4 ${i < step ? "bg-[#F5A623]" : "bg-white/10"}`} />
+                <div className={`w-10 h-px mx-2 mb-4 ${i < step ? "bg-[#4F46E5]" : "bg-white/10"}`} />
               )}
             </div>
           ))}
@@ -190,8 +190,8 @@ export default function PortalSetup() {
         {step === 0 && (
           <div className="bg-[#111] border border-white/10 rounded-2xl p-8 space-y-6">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-[#F5A623]/10 flex items-center justify-center">
-                <Globe className="h-5 w-5 text-[#F5A623]" />
+              <div className="w-10 h-10 rounded-xl bg-[#4F46E5]/10 flex items-center justify-center">
+                <Globe className="h-5 w-5 text-[#4F46E5]" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white">Set up your brand</h2>
@@ -219,14 +219,14 @@ export default function PortalSetup() {
                     onClick={() => setDomainMode("leasely")}
                     className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
                       domainMode === "leasely"
-                        ? "border-[#F5A623] bg-[#F5A623]/10 text-[#F5A623]"
+                        ? "border-[#4F46E5] bg-[#4F46E5]/10 text-[#4F46E5]"
                         : "border-white/10 bg-white/5 text-white/50 hover:text-white/70"
                     }`}
                   >
                     <Globe className="h-4 w-4 shrink-0" />
                     <div className="text-left">
                       <div>Leasely subdomain</div>
-                      <div className={`text-xs ${domainMode === "leasely" ? "text-[#F5A623]/70" : "text-white/30"}`}>yourname.leasely.net · free</div>
+                      <div className={`text-xs ${domainMode === "leasely" ? "text-[#4F46E5]/70" : "text-white/30"}`}>yourname.leasely.net · free</div>
                     </div>
                   </button>
                   <button
@@ -258,7 +258,7 @@ export default function PortalSetup() {
                       <span className="px-3 py-2 bg-white/5 text-white/40 text-sm font-mono border-l border-white/10">.leasely.net</span>
                     </div>
                     {cleanSubdomain && (
-                      <p className="text-xs text-[#F5A623] mt-1.5">
+                      <p className="text-xs text-[#4F46E5] mt-1.5">
                         Your portal: <span className="font-mono">{cleanSubdomain}.leasely.net</span>
                       </p>
                     )}
@@ -303,7 +303,7 @@ export default function PortalSetup() {
             <Button
               onClick={handleSaveBranding}
               disabled={updateBranding.isPending || saving}
-              className="w-full bg-[#F5A623] hover:bg-[#F5A623]/90 text-[#3A2410] font-bold h-12 text-base"
+              className="w-full bg-[#4F46E5] hover:bg-[#4F46E5]/90 text-[#3A2410] font-bold h-12 text-base"
             >
               {updateBranding.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Save & Continue
@@ -564,8 +564,8 @@ export default function PortalSetup() {
 
             {/* Code */}
             {proCode ? (
-              <div className="rounded-xl border-2 border-[#F5A623]/40 bg-[#F5A623]/5 p-5 text-center">
-                <p className="text-xs font-semibold text-[#F5A623] uppercase tracking-wider mb-2">Your One-Time Redemption Code</p>
+              <div className="rounded-xl border-2 border-[#4F46E5]/40 bg-[#4F46E5]/5 p-5 text-center">
+                <p className="text-xs font-semibold text-[#4F46E5] uppercase tracking-wider mb-2">Your One-Time Redemption Code</p>
                 <div className="flex items-center justify-center gap-3">
                   <span className="text-2xl font-mono font-black text-white tracking-widest">{proCode.code}</span>
                   <button
@@ -611,8 +611,8 @@ export default function PortalSetup() {
         {/* Step 3: Go Live */}
         {step === 3 && (
           <div className="bg-[#111] border border-white/10 rounded-2xl p-8 text-center space-y-6">
-            <div className="w-16 h-16 rounded-2xl bg-[#F5A623]/15 flex items-center justify-center mx-auto">
-              <CheckCircle2 className="h-8 w-8 text-[#F5A623]" />
+            <div className="w-16 h-16 rounded-2xl bg-[#4F46E5]/15 flex items-center justify-center mx-auto">
+              <CheckCircle2 className="h-8 w-8 text-[#4F46E5]" />
             </div>
             <div>
               <h2 className="text-2xl font-black text-white mb-2">You're live!</h2>
@@ -632,9 +632,9 @@ export default function PortalSetup() {
                 { label: "Claim free website + logo (CBP)", done: proCode?.status === "redeemed", href: undefined },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${item.done ? "bg-[#F5A623]/20" : "bg-white/10"}`}>
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${item.done ? "bg-[#4F46E5]/20" : "bg-white/10"}`}>
                     {item.done
-                      ? <CheckCircle2 className="h-3.5 w-3.5 text-[#F5A623]" />
+                      ? <CheckCircle2 className="h-3.5 w-3.5 text-[#4F46E5]" />
                       : <span className="w-1.5 h-1.5 rounded-full bg-white/30 block" />
                     }
                   </div>
@@ -650,7 +650,7 @@ export default function PortalSetup() {
             <div className="flex flex-col gap-3">
               <Button
                 onClick={() => navigate("/dashboard")}
-                className="w-full bg-[#F5A623] hover:bg-[#F5A623]/90 text-[#3A2410] font-bold h-12 text-base"
+                className="w-full bg-[#4F46E5] hover:bg-[#4F46E5]/90 text-[#3A2410] font-bold h-12 text-base"
               >
                 <Home className="mr-2 h-4 w-4" /> Go to My Dashboard
               </Button>

@@ -32,11 +32,11 @@ export default function Welcome() {
         </div>
 
         {/* Success hero */}
-        <div className="bg-white rounded-2xl shadow-lg border border-[#F5A623]/20 p-8 sm:p-12 text-center mb-8">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#4F46E5]/20 p-8 sm:p-12 text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 mb-4">
             <CheckCircle2 className="w-9 h-9 text-emerald-600" />
           </div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F5A623]/15 text-[#C8860A] text-xs font-bold mb-4">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#4F46E5]/15 text-[#C8860A] text-xs font-bold mb-4">
             <Sparkles className="w-3 h-3" />
             PAYMENT CONFIRMED
           </div>
@@ -122,13 +122,13 @@ function NextStep({
   onClick: () => void;
 }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-5 flex items-start gap-4 hover:shadow-md hover:border-[#F5A623]/40 transition-all">
+    <div className="bg-white border border-gray-200 rounded-xl p-5 flex items-start gap-4 hover:shadow-md hover:border-[#4F46E5]/40 transition-all">
       <div className="shrink-0 w-10 h-10 rounded-full bg-[#1B2B5E] text-white font-bold flex items-center justify-center">
         {number}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <Icon className="w-4 h-4 text-[#F5A623]" />
+          <Icon className="w-4 h-4 text-[#4F46E5]" />
           <h3 className="font-bold text-gray-900">{title}</h3>
         </div>
         <p className="text-sm text-gray-600">{description}</p>

@@ -25,7 +25,7 @@ const Row = ({
       {desc && <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{desc}</p>}
     </div>
     <div className="text-sm text-muted-foreground text-right md:text-center">{free}</div>
-    {/* Pro highlight color uses bronze #C8860A on light backgrounds — amber #F5A623
+    {/* Pro highlight color uses bronze #C8860A on light backgrounds — amber #4F46E5
         on white fails WCAG AA (~2:1). Bronze passes AA Large (~3.1:1) and reads
         as the same amber family. */}
     <div className={`text-sm text-right md:text-center font-semibold ${proHighlight ? "text-[#C8860A]" : "text-foreground"}`}>{pro}</div>
@@ -48,7 +48,7 @@ export default function FeeSchedule() {
             <DollarSign className="h-3 w-3 mr-1.5 text-[#C8860A]" /> Fee Schedule & Terms
           </Badge>
           <h1 className="text-4xl md:text-5xl font-black text-foreground mb-4">
-            Simple. Transparent. <span className="text-[#F5A623]">No surprises.</span>
+            Simple. Transparent. <span className="text-[#4F46E5]">No surprises.</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Every fee Leasely charges — for landlords, tenants, and agents — in plain English.
@@ -246,8 +246,8 @@ export default function FeeSchedule() {
         </div>
 
         {/* Summary callout */}
-        <div className="mt-10 rounded-2xl bg-gradient-to-br from-[#0A1628] to-[#1A3060] border border-[#F5A623]/15 p-8 text-center space-y-4">
-          <Sparkles className="h-8 w-8 text-[#F5A623] mx-auto" />
+        <div className="mt-10 rounded-2xl bg-gradient-to-br from-[#0A1628] to-[#1A3060] border border-[#4F46E5]/15 p-8 text-center space-y-4">
+          <Sparkles className="h-8 w-8 text-[#4F46E5] mx-auto" />
           <h2 className="text-2xl font-black text-white">Pro in plain English</h2>
           <div className="grid sm:grid-cols-3 gap-4 text-left mt-4">
             {[
@@ -269,7 +269,7 @@ export default function FeeSchedule() {
             ].map(({ icon: Icon, title, body }) => (
               <div key={title} className="rounded-xl bg-white/5 border border-white/8 p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Icon className="h-4 w-4 text-[#F5A623]" />
+                  <Icon className="h-4 w-4 text-[#4F46E5]" />
                   <span className="text-white font-bold text-sm">{title}</span>
                 </div>
                 <p className="text-white/60 text-xs leading-relaxed">{body}</p>
@@ -278,7 +278,7 @@ export default function FeeSchedule() {
           </div>
           <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
             <a href={getLoginUrl()}>
-              <Button className="bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] font-bold gap-2 px-8">
+              <Button className="bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold gap-2 px-8">
                 <Sparkles className="h-4 w-4" /> Start Pro — $75 setup + $25/mo
               </Button>
             </a>

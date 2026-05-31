@@ -24,7 +24,7 @@ import { PROPERTY_TYPES, BEDROOM_OPTIONS, US_STATES, formatRent } from "@/lib/ma
 import { SAMPLE_LISTINGS } from "@/lib/sampleListings";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 export default function Marketplace() {
   const [location] = useLocation();

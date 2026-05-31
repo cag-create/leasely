@@ -7,7 +7,7 @@ import {
   ArrowRight, Search,
 } from "lucide-react";
 
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 type Section = {
   id: string;
@@ -313,7 +313,7 @@ export default function ProGuide() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search the guide…"
-                className="w-full text-xs bg-card/40 border border-border/50 rounded-lg pl-7 pr-2 py-2 outline-none focus:border-[#F5A623]"
+                className="w-full text-xs bg-card/40 border border-border/50 rounded-lg pl-7 pr-2 py-2 outline-none focus:border-[#4F46E5]"
               />
             </div>
             <nav className="space-y-0.5">
@@ -323,7 +323,7 @@ export default function ProGuide() {
                   href={`#${s.id}`}
                   className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${
                     active === s.id
-                      ? "bg-[#F5A623]/10 text-foreground font-semibold"
+                      ? "bg-[#4F46E5]/10 text-foreground font-semibold"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
                   }`}
                 >

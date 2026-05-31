@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Sparkles, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 interface RentSuggestionWidgetProps {
   zip: string;

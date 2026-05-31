@@ -876,7 +876,7 @@ export default function Leases() {
                       {["tenant_signed", "awaiting_payment", "paid"].includes(lease.status) && !lease.landlordSignedAt && (
                         <Button
                           size="sm"
-                          className="bg-[#F5A623] hover:bg-[#e5961c] text-[#3A2410] font-bold gap-1 text-xs flex-1 sm:flex-none"
+                          className="bg-[#4F46E5] hover:bg-[#e5961c] text-[#3A2410] font-bold gap-1 text-xs flex-1 sm:flex-none"
                           onClick={e => { e.stopPropagation(); setCountersignFor(lease); }}
                         >
                           <CheckCircle2 className="w-3 h-3" /> Sign
@@ -1231,7 +1231,7 @@ export default function Leases() {
 
                 {selectedLease.status === "paid" && (
                   <Button
-                    className="w-full bg-[#F5A623] hover:bg-[#00b083] text-[#3A2410] gap-2 font-bold"
+                    className="w-full bg-[#4F46E5] hover:bg-[#00b083] text-[#3A2410] gap-2 font-bold"
                     onClick={() => {
                       setCountersignName("");
                       setCountersignFor(selectedLease);
@@ -1453,7 +1453,7 @@ export default function Leases() {
                     Cancel
                   </Button>
                   <Button
-                    className="flex-1 bg-[#F5A623] hover:bg-[#e5961c] text-[#3A2410] font-bold gap-2"
+                    className="flex-1 bg-[#4F46E5] hover:bg-[#e5961c] text-[#3A2410] font-bold gap-2"
                     disabled={countersignName.trim().length < 2 || landlordSignMutation.isPending}
                     onClick={async () => {
                       try {

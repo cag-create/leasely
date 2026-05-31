@@ -9,7 +9,7 @@ import {
   Users, X, AlertTriangle, Loader2, Plus, Trash2, BarChart3,
 } from "lucide-react";
 
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 // ── CSV Template ──────────────────────────────────────────────────────────────
 const CSV_HEADERS = [

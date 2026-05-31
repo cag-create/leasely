@@ -33,11 +33,11 @@ export default function FairHousing() {
       </LegalSection>
 
       <LegalSection title="Tenant Rights">
-        <p>If you believe you have experienced housing discrimination, you may file a complaint with the U.S. Department of Housing and Urban Development (HUD) at <a href="https://www.hud.gov" target="_blank" rel="noopener noreferrer" className="text-[#F5A623] hover:underline">www.hud.gov</a> or call 1-800-669-9777 (TTY 1-800-927-9275). You may also contact your state or local fair-housing agency. Filing a fair-housing complaint is free.</p>
+        <p>If you believe you have experienced housing discrimination, you may file a complaint with the U.S. Department of Housing and Urban Development (HUD) at <a href="https://www.hud.gov" target="_blank" rel="noopener noreferrer" className="text-[#4F46E5] hover:underline">www.hud.gov</a> or call 1-800-669-9777 (TTY 1-800-927-9275). You may also contact your state or local fair-housing agency. Filing a fair-housing complaint is free.</p>
       </LegalSection>
 
       <LegalSection title="Reporting Discrimination on Leasely">
-        <p>If you believe a Leasely listing, application process, or user violates fair-housing law, please report it to <a href="mailto:support@leasely.net" className="text-[#F5A623] hover:underline">support@leasely.net</a>. We review every report and may remove non-compliant content and suspend offending accounts.</p>
+        <p>If you believe a Leasely listing, application process, or user violates fair-housing law, please report it to <a href="mailto:support@leasely.net" className="text-[#4F46E5] hover:underline">support@leasely.net</a>. We review every report and may remove non-compliant content and suspend offending accounts.</p>
       </LegalSection>
 
       <LegalSection title="Equal Housing Opportunity">

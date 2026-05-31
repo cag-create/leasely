@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { formatRent, getListingImage, parsePhotos, PROPERTY_TYPE_LABELS } from "@/lib/marketplace";
 
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 const BRAND = "#1B2B5E";
 
 type StatusFilter = "all" | "active" | "inactive";

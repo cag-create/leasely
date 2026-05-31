@@ -2,7 +2,7 @@ import { Link, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Home, Receipt, ArrowRight } from "lucide-react";
 
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 export default function RentPaymentSuccess() {
   const { id } = useParams<{ id: string }>();

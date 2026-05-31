@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { formatRent, getListingImage, PROPERTY_TYPE_LABELS } from "@/lib/marketplace";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 type MapListing = {
   id: number;

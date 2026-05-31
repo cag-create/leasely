@@ -48,7 +48,7 @@ type MarketplaceListing = {
 };
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 interface PropertyCardProps {
   listing: MarketplaceListing;
@@ -121,10 +121,10 @@ export default function PropertyCard({ listing, view = "grid", isSaved = false, 
   const SampleBadge = () => (
     <span
       className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-md"
-      style={{ background: "rgba(255,255,255,0.95)", color: "#3A2410", border: "1px solid rgba(245,166,35,0.4)" }}
+      style={{ background: "rgba(255,255,255,0.95)", color: "#3A2410", border: "1px solid rgba(79,70,229,0.4)" }}
       title="Sample listing — illustrative content, not a real rental"
     >
-      <SparkIcon className="h-3 w-3" style={{ color: "#F5A623" }} />Sample listing
+      <SparkIcon className="h-3 w-3" style={{ color: "#4F46E5" }} />Sample listing
     </span>
   );
 

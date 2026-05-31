@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 const STATE_NAMES: Record<string, string> = {
   AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",
@@ -461,19 +461,19 @@ export default function ContractorProfile() {
               <h3 className="font-bold text-foreground mb-4">Contact</h3>
               <div className="space-y-3">
                 {contractor.phone && (
-                  <a href={`tel:${contractor.phone}`} className="flex items-center gap-3 text-sm text-foreground hover:text-[#F5A623] transition-colors">
+                  <a href={`tel:${contractor.phone}`} className="flex items-center gap-3 text-sm text-foreground hover:text-[#4F46E5] transition-colors">
                     <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
                     {contractor.phone}
                   </a>
                 )}
                 {contractor.email && (
-                  <a href={`mailto:${contractor.email}`} className="flex items-center gap-3 text-sm text-foreground hover:text-[#F5A623] transition-colors">
+                  <a href={`mailto:${contractor.email}`} className="flex items-center gap-3 text-sm text-foreground hover:text-[#4F46E5] transition-colors">
                     <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
                     {contractor.email}
                   </a>
                 )}
                 {contractor.website && (
-                  <a href={contractor.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm text-foreground hover:text-[#F5A623] transition-colors">
+                  <a href={contractor.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm text-foreground hover:text-[#4F46E5] transition-colors">
                     <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
                     Website
                     <ExternalLink className="h-3 w-3 ml-auto" />

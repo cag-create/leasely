@@ -9,7 +9,7 @@ import { Mail, Home, ArrowRight, Building2, Shield, CheckCircle2, Loader2 } from
 import { LOGO_URL } from "@/lib/brand";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 export default function TenantLogin() {
   const [email, setEmail] = useState("");

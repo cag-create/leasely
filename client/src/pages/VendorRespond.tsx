@@ -13,7 +13,7 @@ import {
 import { LOGO_URL } from "@/lib/brand";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 const TIME_SLOTS = [
   "7am – 9am", "9am – 12pm", "12pm – 3pm", "3pm – 5pm", "5pm – 7pm",

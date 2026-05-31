@@ -55,7 +55,7 @@ function NotificationBell() {
         >
           <Bell className="h-4.5 w-4.5 text-muted-foreground" />
           {unread > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F5A623] text-[#3A2410] text-[10px] font-bold flex items-center justify-center border-2 border-white">
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#4F46E5] text-[#3A2410] text-[10px] font-bold flex items-center justify-center border-2 border-white">
               {unread > 9 ? "9+" : unread}
             </span>
           )}
@@ -89,7 +89,7 @@ function NotificationBell() {
               >
                 <div className="flex items-start gap-2">
                   {!n.readAt && (
-                    <span className="mt-1.5 w-2 h-2 rounded-full bg-[#F5A623] shrink-0" />
+                    <span className="mt-1.5 w-2 h-2 rounded-full bg-[#4F46E5] shrink-0" />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{n.title}</p>
@@ -194,7 +194,7 @@ export default function Navbar() {
                 </>
               )}
 
-              <NavLink href="/pro" className="text-[#F5A623] hover:text-[#E8951A]">
+              <NavLink href="/pro" className="text-[#4F46E5] hover:text-[#4338CA]">
                 <span className="flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5" />Pro</span>
               </NavLink>
               <NavLink href="/contractors"><span className="flex items-center gap-1.5"><Wrench className="h-3.5 w-3.5" />Contractors</span></NavLink>
@@ -224,7 +224,7 @@ export default function Navbar() {
                     </Button>
                   </a>
                   <a href={getLoginUrl()}>
-                    <Button size="sm" className="text-sm font-semibold bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] gap-1.5 shadow-sm">
+                    <Button size="sm" className="text-sm font-semibold bg-[#4F46E5] hover:bg-[#4338CA] text-white gap-1.5 shadow-sm">
                       <Sparkles className="h-3.5 w-3.5" />
                       Get Started Free
                     </Button>
@@ -233,7 +233,7 @@ export default function Navbar() {
               ) : (
                 <>
                   {isPro && (
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-[#F5A623]/10 text-[#E8951A] border border-[#F5A623]/20">
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-[#4F46E5]/10 text-[#4338CA] border border-[#4F46E5]/20">
                       <Sparkles className="h-3 w-3" /> Pro
                     </span>
                   )}
@@ -269,7 +269,7 @@ export default function Navbar() {
                         <div className="mt-2">
                           {isRenter && <Badge variant="secondary" className="text-xs">Renter</Badge>}
                           {isLandlord && !isPro && <Badge variant="secondary" className="text-xs">Free Plan</Badge>}
-                          {isPro && <Badge className="text-xs font-semibold bg-[#F5A623]/10 text-[#E8951A] border-[#F5A623]/20">Pro Landlord</Badge>}
+                          {isPro && <Badge className="text-xs font-semibold bg-[#4F46E5]/10 text-[#4338CA] border-[#4F46E5]/20">Pro Landlord</Badge>}
                           {isAdmin && <Badge className="text-xs font-semibold bg-amber-100 text-amber-700 border-amber-200 ml-1">Admin</Badge>}
                         </div>
                       </div>
@@ -317,7 +317,7 @@ export default function Navbar() {
                           )}
                           {!isPro && (
                             <DropdownMenuItem asChild>
-                              <Link href="/pricing" className="flex items-center gap-2.5 cursor-pointer text-sm font-semibold text-[#E8951A]">
+                              <Link href="/pricing" className="flex items-center gap-2.5 cursor-pointer text-sm font-semibold text-[#4338CA]">
                                 <Sparkles className="h-4 w-4" /> Upgrade to Pro — $25/mo
                               </Link>
                             </DropdownMenuItem>
@@ -398,7 +398,7 @@ export default function Navbar() {
               {!isAuthenticated ? (
                 <div className="space-y-2">
                   <a href={getLoginUrl()} className="block">
-                    <Button className="w-full bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] font-semibold gap-2">
+                    <Button className="w-full bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold gap-2">
                       <Sparkles className="h-4 w-4" /> Get Started Free
                     </Button>
                   </a>

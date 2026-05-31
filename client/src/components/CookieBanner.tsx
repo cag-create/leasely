@@ -47,14 +47,14 @@ export default function CookieBanner() {
       </div>
       <p className="text-white/65 text-xs leading-relaxed mb-4">
         We use strictly necessary cookies to keep you signed in and the Services secure, plus optional functional and analytics cookies to improve your experience. We do not use cookies for cross-context behavioral advertising. Read our{" "}
-        <Link href="/legal/cookies"><span className="text-[#F5A623] hover:underline cursor-pointer">Cookie Policy</span></Link> and{" "}
-        <Link href="/legal/privacy"><span className="text-[#F5A623] hover:underline cursor-pointer">Privacy Policy</span></Link>.
+        <Link href="/legal/cookies"><span className="text-[#4F46E5] hover:underline cursor-pointer">Cookie Policy</span></Link> and{" "}
+        <Link href="/legal/privacy"><span className="text-[#4F46E5] hover:underline cursor-pointer">Privacy Policy</span></Link>.
       </p>
       <div className="flex flex-col sm:flex-row gap-2">
         <Button
           size="sm"
           onClick={() => recordChoice("all")}
-          className="bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] font-semibold flex-1"
+          className="bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold flex-1"
         >
           Accept all
         </Button>

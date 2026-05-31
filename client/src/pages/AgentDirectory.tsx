@@ -27,7 +27,7 @@ export default function AgentDirectory() {
       {/* Hero */}
       <div className="bg-[#1B2B5E] text-white py-16 px-4">
         <div className="max-w-4xl mx-auto text-center space-y-4">
-          <Badge className="bg-[#F5A623]/20 text-[#F5A623] border-[#F5A623]/30 text-xs">
+          <Badge className="bg-[#4F46E5]/20 text-[#4F46E5] border-[#4F46E5]/30 text-xs">
             Creme Agent Network
           </Badge>
           <h1 className="text-4xl font-black">Close Deals Faster.</h1>
@@ -36,8 +36,8 @@ export default function AgentDirectory() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
             {["Background-checked agents", "Available nationwide", "Investor & FSBO specialists", "No upfront cost"].map(item => (
-              <span key={item} className="flex items-center gap-1.5 text-sm text-[#F5A623] font-medium">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#F5A623] inline-block" />
+              <span key={item} className="flex items-center gap-1.5 text-sm text-[#4F46E5] font-medium">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#4F46E5] inline-block" />
                 {item}
               </span>
             ))}
@@ -86,7 +86,7 @@ export default function AgentDirectory() {
                 <p className="text-lg font-semibold text-foreground">Background-checked agents · Available nationwide</p>
                 <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
                   Our agent network is actively growing. Check back soon or{" "}
-                  <a href="mailto:support@leasely.net" className="text-[#F5A623] underline">contact us</a>{" "}
+                  <a href="mailto:support@leasely.net" className="text-[#4F46E5] underline">contact us</a>{" "}
                   to connect with a specialist in your area.
                 </p>
               </>
@@ -110,7 +110,7 @@ function AgentCard({ agent }: { agent: any }) {
 
   return (
     <Link href={`/agents/${agent.id}`}>
-      <div className="rounded-2xl border border-border bg-card p-6 hover:shadow-lg hover:border-[#F5A623]/40 transition-all cursor-pointer group">
+      <div className="rounded-2xl border border-border bg-card p-6 hover:shadow-lg hover:border-[#4F46E5]/40 transition-all cursor-pointer group">
         <div className="flex items-center gap-4 mb-4">
           {agent.photoUrl ? (
             <img
@@ -124,7 +124,7 @@ function AgentCard({ agent }: { agent: any }) {
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-foreground truncate group-hover:text-[#F5A623] transition-colors">
+            <h3 className="font-bold text-foreground truncate group-hover:text-[#4F46E5] transition-colors">
               {agent.name}
             </h3>
             {agent.licenseNumber && (
@@ -167,7 +167,7 @@ function AgentCard({ agent }: { agent: any }) {
         )}
 
         <div className="flex items-center justify-end text-xs pt-3 border-t border-border">
-          <span className="flex items-center gap-1 text-[#F5A623] font-semibold group-hover:gap-2 transition-all">
+          <span className="flex items-center gap-1 text-[#4F46E5] font-semibold group-hover:gap-2 transition-all">
             View Profile <ChevronRight className="h-3.5 w-3.5" />
           </span>
         </div>

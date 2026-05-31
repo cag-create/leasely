@@ -16,7 +16,7 @@ import {
 import Navbar from "@/components/Navbar";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 const FAQ_CATEGORIES = [
   {

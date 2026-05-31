@@ -14,7 +14,7 @@ import {
 import { LOGO_URL } from "@/lib/brand";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 function formatCents(cents: number) {
   return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
@@ -614,8 +614,8 @@ export default function TenantDashboard() {
                                 <Star
                                   className="h-5 w-5"
                                   style={{
-                                    color: isFav ? "#FFD166" : "#cbd5e1",
-                                    fill: isFav ? "#FFD166" : "transparent",
+                                    color: isFav ? "#818CF8" : "#cbd5e1",
+                                    fill: isFav ? "#818CF8" : "transparent",
                                   }}
                                 />
                               </button>

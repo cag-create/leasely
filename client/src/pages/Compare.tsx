@@ -75,13 +75,13 @@ type CellValue = boolean | string;
 function Cell({ value, isLeasely }: { value: CellValue; isLeasely: boolean }) {
   if (typeof value === "boolean") {
     return value ? (
-      <CheckCircle2 className={`h-5 w-5 mx-auto ${isLeasely ? "text-[#F5A623]" : "text-muted-foreground"}`} />
+      <CheckCircle2 className={`h-5 w-5 mx-auto ${isLeasely ? "text-[#4F46E5]" : "text-muted-foreground"}`} />
     ) : (
       <XCircle className="h-5 w-5 mx-auto text-muted/40" />
     );
   }
   return (
-    <span className={`text-sm font-medium ${isLeasely ? "text-[#F5A623]" : "text-muted-foreground"}`}>
+    <span className={`text-sm font-medium ${isLeasely ? "text-[#4F46E5]" : "text-muted-foreground"}`}>
       {value}
     </span>
   );
@@ -95,7 +95,7 @@ export default function Compare() {
       {/* Hero */}
       <div className="bg-[#1B2B5E] text-white py-14 px-4">
         <div className="max-w-3xl mx-auto text-center space-y-3">
-          <Badge className="bg-[#F5A623]/20 text-[#F5A623] border-[#F5A623]/30 text-xs">
+          <Badge className="bg-[#4F46E5]/20 text-[#4F46E5] border-[#4F46E5]/30 text-xs">
             Platform Comparison
           </Badge>
           <h1 className="text-3xl font-black">Why Leasely?</h1>
@@ -118,7 +118,7 @@ export default function Compare() {
                       <div className={`text-sm font-bold ${i === 0 ? "text-[#1B2B5E]" : "text-foreground"}`}>
                         {c}
                         {i === 0 && (
-                          <Badge className="ml-1.5 bg-[#F5A623]/20 text-[#F5A623] border-0 text-xs align-middle">
+                          <Badge className="ml-1.5 bg-[#4F46E5]/20 text-[#4F46E5] border-0 text-xs align-middle">
                             <Zap className="h-2.5 w-2.5 mr-0.5" />Us
                           </Badge>
                         )}
@@ -174,7 +174,7 @@ export default function Compare() {
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/pricing">
-              <Button className="bg-[#F5A623] hover:bg-[#F5A623]/90 text-white gap-2 h-11 px-6">
+              <Button className="bg-[#4F46E5] hover:bg-[#4F46E5]/90 text-white gap-2 h-11 px-6">
                 See Pricing <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>

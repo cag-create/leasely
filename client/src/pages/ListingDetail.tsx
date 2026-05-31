@@ -20,7 +20,7 @@ import {
 import { formatRent, getListingImage, parsePhotos, PROPERTY_TYPE_LABELS, PLACEHOLDER_IMAGES } from "@/lib/marketplace";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 export default function ListingDetail() {
   const params = useParams<{ id: string }>();

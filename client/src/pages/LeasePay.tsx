@@ -9,7 +9,7 @@ import { CheckCircle2, Lock, Loader2, Home, Wallet, Receipt } from "lucide-react
 import { LOGO_URL } from "@/lib/brand";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 function fmt(cents: number) {
   return `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;

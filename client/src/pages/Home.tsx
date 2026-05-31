@@ -85,7 +85,7 @@ function AnimatedStat({ value, suffix = "", prefix = "", label, sublabel }: {
 const proFeatures = [
   { icon: FileText, title: "Rental Applications", desc: "State-specific forms, co-living member applications, and custom upload support.", color: "from-blue-500 to-indigo-600" },
   { icon: Shield, title: "AI Fraud Detection", desc: "Automated applicant screening with risk scoring and background check integration.", color: "from-purple-500 to-violet-600" },
-  { icon: Zap, title: "Instant Payouts", desc: "Receive rent payments instantly via Stripe Connect — no waiting for ACH settlement.", color: "from-[#F5A623] to-teal-500" },
+  { icon: Zap, title: "Instant Payouts", desc: "Receive rent payments instantly via Stripe Connect — no waiting for ACH settlement.", color: "from-[#4F46E5] to-teal-500" },
   { icon: BarChart3, title: "Rent Rate Intelligence", desc: "See area market rates for any city and property type to price competitively.", color: "from-amber-500 to-orange-500" },
   { icon: Building2, title: "Apartment Complexes", desc: "Manage multi-unit buildings with individual unit listings and tenant tracking.", color: "from-rose-500 to-pink-600" },
   { icon: Wrench, title: "Work Order Management", desc: "Dispatch vendors, track maintenance, and get AI-generated repair summaries.", color: "from-slate-500 to-gray-600" },
@@ -162,7 +162,7 @@ export default function Home() {
           HERO
           ═══════════════════════════════════════════════════════ */}
       <section className="hero-bg min-h-[92vh] flex items-center relative overflow-hidden">
-        <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] rounded-full bg-[#F5A623]/8 blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] rounded-full bg-[#4F46E5]/8 blur-[120px] pointer-events-none" />
         <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] rounded-full bg-[#4F46E5]/10 blur-[100px] pointer-events-none" />
 
         <div className="container relative z-10 py-24">
@@ -171,7 +171,7 @@ export default function Home() {
             {/* Left — copy */}
             <div className="space-y-8">
               <div>
-                <Link href="/list-property" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#F5A623]/25 bg-[#F5A623]/8 text-[#F5A623] text-xs font-semibold mb-6 hover:bg-[#F5A623]/15 transition-colors">
+                <Link href="/list-property" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#4F46E5]/25 bg-[#4F46E5]/8 text-[#4F46E5] text-xs font-semibold mb-6 hover:bg-[#4F46E5]/15 transition-colors">
                   <Sparkles className="h-3.5 w-3.5" />
                   New: Leasely Market Intelligence — try it on any listing
                   <ChevronRight className="h-3 w-3" />
@@ -184,7 +184,7 @@ export default function Home() {
               </div>
 
               <p className="text-lg md:text-xl text-white/65 leading-relaxed max-w-lg">
-                List, screen, sign, collect, and dispatch — every step of the lease lifecycle on a single screen. <span className="text-white font-semibold">$25/month flat.</span> No per-unit fees. No per-transaction fees. No vendor invoice markups. <span className="text-[#F5A623] font-semibold">We don't nickel-and-dime.</span>
+                List, screen, sign, collect, and dispatch — every step of the lease lifecycle on a single screen. <span className="text-white font-semibold">$25/month flat.</span> No per-unit fees. No per-transaction fees. No vendor invoice markups. <span className="text-[#4F46E5] font-semibold">We don't nickel-and-dime.</span>
               </p>
 
               {/* Competitive strip */}
@@ -219,7 +219,7 @@ export default function Home() {
 
               <p className="text-sm text-white/50">
                 Already have an account?{" "}
-                <Link href="/login" className="text-white hover:text-[#F5A623] font-medium underline underline-offset-4">
+                <Link href="/login" className="text-white hover:text-[#4F46E5] font-medium underline underline-offset-4">
                   Sign in
                 </Link>
               </p>
@@ -240,13 +240,13 @@ export default function Home() {
                   "First listing free, $25/mo",
                 ].map(item => (
                   <span key={item} className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-[#F5A623] shrink-0" />
+                    <CheckCircle2 className="h-3.5 w-3.5 text-[#4F46E5] shrink-0" />
                     <span className="truncate">{item}</span>
                   </span>
                 ))}
               </div>
 
-              <Link href="/pro" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#F5A623] hover:text-white transition-colors">
+              <Link href="/pro" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#4F46E5] hover:text-white transition-colors">
                 See all 12 Pro features in detail
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
@@ -261,7 +261,7 @@ export default function Home() {
                       <p className="text-white/50 text-xs font-medium uppercase tracking-wider">Pro Portal</p>
                       <p className="text-white font-bold text-lg mt-0.5">Property Dashboard</p>
                     </div>
-                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-[#F5A623]/10 text-[#E8951A] border border-[#F5A623]/20">
+                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-[#4F46E5]/10 text-[#4338CA] border border-[#4F46E5]/20">
                       <Sparkles className="h-3 w-3" /> Pro
                     </span>
                   </div>
@@ -275,7 +275,7 @@ export default function Home() {
                       <div key={stat.label} className="bg-white/5 rounded-xl p-3 border border-white/8">
                         <p className="text-white/50 text-[10px] font-medium">{stat.label}</p>
                         <p className="text-white font-bold text-lg mt-1">{stat.value}</p>
-                        <p className="text-[#F5A623] text-[10px] font-semibold mt-0.5">{stat.change} this month</p>
+                        <p className="text-[#4F46E5] text-[10px] font-semibold mt-0.5">{stat.change} this month</p>
                       </div>
                     ))}
                   </div>
@@ -284,7 +284,7 @@ export default function Home() {
                     <p className="text-white/40 text-[10px] font-semibold uppercase tracking-wider">Recent Activity</p>
                     {[
                       { icon: FileText, text: "New application received", time: "2m ago", color: "text-blue-400" },
-                      { icon: DollarSign, text: "Rent payment — Unit 4B", time: "1h ago", color: "text-[#F5A623]" },
+                      { icon: DollarSign, text: "Rent payment — Unit 4B", time: "1h ago", color: "text-[#4F46E5]" },
                       { icon: Wrench, text: "Work order completed", time: "3h ago", color: "text-amber-400" },
                     ].map((item, i) => (
                       <div key={i} className="flex items-center gap-3 py-2 border-b border-white/5 last:border-0">
@@ -301,12 +301,12 @@ export default function Home() {
                 {/* Floating accent cards */}
                 <div className="absolute -bottom-4 -left-6 glass rounded-xl p-3 border border-white/10 shadow-xl">
                   <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-lg bg-[#F5A623]/20 flex items-center justify-center">
-                      <Zap className="h-4 w-4 text-[#F5A623]" />
+                    <div className="h-8 w-8 rounded-lg bg-[#4F46E5]/20 flex items-center justify-center">
+                      <Zap className="h-4 w-4 text-[#4F46E5]" />
                     </div>
                     <div>
                       <p className="text-white text-xs font-semibold">Instant Payout</p>
-                      <p className="text-[#F5A623] text-[10px]">$2,100 available</p>
+                      <p className="text-[#4F46E5] text-[10px]">$2,100 available</p>
                     </div>
                   </div>
                 </div>
@@ -360,12 +360,12 @@ export default function Home() {
         <div className="container max-w-7xl mx-auto px-4">
           {/* Header */}
           <div className="text-center mb-10 reveal-on-scroll opacity-0">
-            <Badge className="mb-4 text-xs font-semibold px-3 py-1 bg-[#F5A623]/10 text-[#E8951A] border-0">
+            <Badge className="mb-4 text-xs font-semibold px-3 py-1 bg-[#4F46E5]/10 text-[#4338CA] border-0">
               <Globe className="h-3 w-3 mr-1.5" /> Live Marketplace
             </Badge>
             <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
               Find your next rental,<br />
-              <span className="text-[#F5A623]">anywhere in the US.</span>
+              <span className="text-[#4F46E5]">anywhere in the US.</span>
             </h2>
             <p className="text-gray-500 text-lg max-w-xl mx-auto">
               Browse verified listings across all 50 states. Filter by city, type, and beds — then contact the landlord directly.
@@ -415,7 +415,7 @@ export default function Home() {
                 <Button
                   onClick={handleMarketplaceSearch}
                   className="h-10 px-6 font-bold text-sm gap-2 shrink-0"
-                  style={{ background: "#F5A623", color: "#062018" }}
+                  style={{ background: "#4F46E5", color: "#062018" }}
                 >
                   <Search className="h-4 w-4" /> Search
                 </Button>
@@ -470,7 +470,7 @@ export default function Home() {
               <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-3" />
               <p className="text-gray-500 font-medium mb-4">Be the first to list in your area!</p>
               <Link href="/list-property">
-                <Button style={{ background: "#F5A623", color: "#062018" }} className="font-bold gap-2">
+                <Button style={{ background: "#4F46E5", color: "#062018" }} className="font-bold gap-2">
                   List Your Property Free
                 </Button>
               </Link>
@@ -503,7 +503,7 @@ export default function Home() {
                     <ChevronRight className="h-3.5 w-3.5 text-muted-foreground absolute -right-2 -top-1.5" />
                   </div>
                 )}
-                <div className="rounded-2xl border border-border bg-card p-6 h-full hover:border-[#F5A623]/30 hover:shadow-lg transition-all duration-200">
+                <div className="rounded-2xl border border-border bg-card p-6 h-full hover:border-[#4F46E5]/30 hover:shadow-lg transition-all duration-200">
                   <div className="flex items-start justify-between mb-4">
                     <div className="h-11 w-11 rounded-xl bg-primary/8 flex items-center justify-center">
                       <step.icon className="h-5 w-5 text-primary" />
@@ -525,7 +525,7 @@ export default function Home() {
       <section className="py-20 bg-secondary/20 border-y border-border">
         <div className="container max-w-6xl mx-auto px-4">
           <div className="text-center mb-12 reveal-on-scroll opacity-0">
-            <Badge className="mb-4 text-xs font-semibold px-3 py-1 bg-[#F5A623]/10 text-[#E8951A] border-0">
+            <Badge className="mb-4 text-xs font-semibold px-3 py-1 bg-[#4F46E5]/10 text-[#4338CA] border-0">
               From Our Beta Landlords
             </Badge>
             <h2 className="text-3xl md:text-4xl font-black text-foreground mb-3">
@@ -541,17 +541,17 @@ export default function Home() {
             {TESTIMONIALS.map((t, i) => (
               <div
                 key={t.name}
-                className="reveal-on-scroll opacity-0 rounded-2xl border border-border bg-card p-6 hover:border-[#F5A623]/40 hover:shadow-lg transition-all duration-300"
+                className="reveal-on-scroll opacity-0 rounded-2xl border border-border bg-card p-6 hover:border-[#4F46E5]/40 hover:shadow-lg transition-all duration-300"
                 style={{ animationDelay: `${i * 120}ms` }}
               >
                 <div className="flex gap-1 mb-4" aria-label="5 star testimonial">
                   {Array.from({ length: 5 }).map((_, idx) => (
-                    <svg key={idx} className="h-4 w-4 fill-[#F5A623] text-[#F5A623]" viewBox="0 0 20 20"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9 4.8 17.6l1-5.8L1.5 7.7l5.9-.9z"/></svg>
+                    <svg key={idx} className="h-4 w-4 fill-[#4F46E5] text-[#4F46E5]" viewBox="0 0 20 20"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9 4.8 17.6l1-5.8L1.5 7.7l5.9-.9z"/></svg>
                   ))}
                 </div>
                 <p className="text-sm text-foreground/85 leading-relaxed mb-5">&ldquo;{t.quote}&rdquo;</p>
                 <div className="flex items-center gap-3 pt-4 border-t border-border">
-                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#F5A623] to-[#E8951A] flex items-center justify-center text-[#3A2410] font-black text-sm">
+                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#4F46E5] to-[#4338CA] flex items-center justify-center text-[#3A2410] font-black text-sm">
                     {t.name.split(" ").map(n => n[0]).join("")}
                   </div>
                   <div>
@@ -593,14 +593,14 @@ export default function Home() {
                   "Save and compare listings",
                 ].map(item => (
                   <div key={item} className="flex items-center gap-3 text-sm text-foreground">
-                    <CheckCircle2 className="h-4 w-4 text-[#F5A623] shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 text-[#4F46E5] shrink-0" />
                     {item}
                   </div>
                 ))}
               </div>
               <div className="flex gap-3">
                 <Link href="/marketplace">
-                  <Button size="lg" className="gap-2 bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] font-semibold">
+                  <Button size="lg" className="gap-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold">
                     <Search className="h-4 w-4" /> Browse Listings
                   </Button>
                 </Link>
@@ -613,8 +613,8 @@ export default function Home() {
             </div>
 
             {/* Landlords */}
-            <div className="rounded-2xl border border-[#F5A623]/15 p-8 md:p-10 bg-gradient-to-br from-[#0A1628] to-[#1A3060] hover:shadow-lg transition-all duration-200">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F5A623]/12 text-[#F5A623] text-xs font-semibold mb-6 border border-[#F5A623]/20">
+            <div className="rounded-2xl border border-[#4F46E5]/15 p-8 md:p-10 bg-gradient-to-br from-[#0A1628] to-[#1A3060] hover:shadow-lg transition-all duration-200">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#4F46E5]/12 text-[#4F46E5] text-xs font-semibold mb-6 border border-[#4F46E5]/20">
                 <Building2 className="h-3.5 w-3.5" /> For Landlords & Property Managers
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Your entire portfolio,<br />one platform.</h2>
@@ -630,14 +630,14 @@ export default function Home() {
                   "Work orders, accounting, CRM & apartment complexes",
                 ].map(item => (
                   <div key={item} className="flex items-center gap-3 text-sm text-white/80">
-                    <CheckCircle2 className="h-4 w-4 text-[#F5A623] shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 text-[#4F46E5] shrink-0" />
                     {item}
                   </div>
                 ))}
               </div>
               <div className="flex gap-3">
                 <Link href="/pro">
-                  <Button size="lg" className="gap-2 bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] font-semibold">
+                  <Button size="lg" className="gap-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold">
                     <Sparkles className="h-4 w-4" /> See Pro Features
                   </Button>
                 </Link>
@@ -659,7 +659,7 @@ export default function Home() {
         <div className="container">
           <div className="text-center mb-16 reveal-on-scroll opacity-0">
             <Badge variant="secondary" className="mb-4 text-xs font-semibold px-3 py-1">
-              <Sparkles className="h-3 w-3 mr-1.5 text-[#F5A623]" /> Pro Features
+              <Sparkles className="h-3 w-3 mr-1.5 text-[#4F46E5]" /> Pro Features
             </Badge>
             <h2 className="text-3xl md:text-4xl font-black text-foreground mb-4">
               Every tool to run a pro portfolio —<br />
@@ -674,7 +674,7 @@ export default function Home() {
             {proFeatures.map((feature, i) => (
               <div
                 key={i}
-                className={`rounded-2xl border bg-card p-6 cursor-pointer hover:border-[#F5A623]/30 hover:shadow-lg transition-all duration-200 ${activeFeature === i ? "border-[#F5A623]/30 shadow-lg" : "border-border"}`}
+                className={`rounded-2xl border bg-card p-6 cursor-pointer hover:border-[#4F46E5]/30 hover:shadow-lg transition-all duration-200 ${activeFeature === i ? "border-[#4F46E5]/30 shadow-lg" : "border-border"}`}
                 onClick={() => setActiveFeature(i)}
               >
                 <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 shadow-sm`}>
@@ -688,7 +688,7 @@ export default function Home() {
 
           <div className="text-center mt-10">
             <Link href="/pro">
-              <Button size="lg" className="gap-2 bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] font-semibold px-8">
+              <Button size="lg" className="gap-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold px-8">
                 <Sparkles className="h-4 w-4" /> Explore All Pro Features
                 <ArrowRight className="h-4 w-4" />
               </Button>
@@ -754,14 +754,14 @@ export default function Home() {
             </div>
 
             {/* Pro */}
-            <div className="rounded-3xl border-2 p-8 relative overflow-hidden" style={{ borderColor: "#F5A623", background: "linear-gradient(160deg, #1F1A12 0%, #3A2410 100%)" }}>
+            <div className="rounded-3xl border-2 p-8 relative overflow-hidden" style={{ borderColor: "#4F46E5", background: "linear-gradient(160deg, #1F1A12 0%, #3A2410 100%)" }}>
               <div className="absolute top-4 right-4">
-                <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: "#F5A623", color: "#3A2410" }}>
+                <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: "#4F46E5", color: "#3A2410" }}>
                   <Sparkles className="h-3 w-3 inline mr-1" />Most Popular
                 </span>
               </div>
               <div className="mb-6">
-                <p className="text-sm font-black uppercase tracking-widest mb-2" style={{ color: "#F5A623" }}>Pro</p>
+                <p className="text-sm font-black uppercase tracking-widest mb-2" style={{ color: "#4F46E5" }}>Pro</p>
                 <div className="flex items-baseline gap-1">
                   <span className="text-5xl font-black text-white">$25</span>
                   <span className="text-white/50 text-sm">/ month</span>
@@ -785,13 +785,13 @@ export default function Home() {
                   "Priority support — 24hr SLA",
                 ].map(f => (
                   <div key={f} className="flex items-start gap-2.5 text-sm text-white/80">
-                    <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "#F5A623" }} />
+                    <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "#4F46E5" }} />
                     {f}
                   </div>
                 ))}
               </div>
               <Link href="/pricing">
-                <Button size="lg" className="w-full font-bold gap-2" style={{ background: "#F5A623", color: "#3A2410" }}>
+                <Button size="lg" className="w-full font-bold gap-2" style={{ background: "#4F46E5", color: "#3A2410" }}>
                   <Sparkles className="h-4 w-4" /> Get Pro — $75 setup + $25/mo
                 </Button>
               </Link>
@@ -808,7 +808,7 @@ export default function Home() {
               <div className="grid grid-cols-3 bg-gray-50 border-b border-gray-100">
                 <div className="p-4 text-sm font-bold text-gray-500">Feature</div>
                 <div className="p-4 text-sm font-bold text-gray-700 text-center">Free</div>
-                <div className="p-4 text-sm font-bold text-center" style={{ color: "#F5A623", background: "#1F1A1210" }}>
+                <div className="p-4 text-sm font-bold text-center" style={{ color: "#4F46E5", background: "#1F1A1210" }}>
                   <Sparkles className="inline h-3.5 w-3.5 mr-1" />Pro
                 </div>
               </div>
@@ -844,8 +844,8 @@ export default function Home() {
                   </div>
                   <div className="p-4 flex items-center justify-center" style={{ background: "#1F1A1204" }}>
                     {typeof row.pro === "boolean" ? (
-                      row.pro ? <CheckCircle2 className="h-5 w-5" style={{ color: "#F5A623" }} /> : <XCircle className="h-5 w-5 text-gray-200" />
-                    ) : <span className="text-sm font-bold" style={{ color: "#F5A623" }}>{row.pro}</span>}
+                      row.pro ? <CheckCircle2 className="h-5 w-5" style={{ color: "#4F46E5" }} /> : <XCircle className="h-5 w-5 text-gray-200" />
+                    ) : <span className="text-sm font-bold" style={{ color: "#4F46E5" }}>{row.pro}</span>}
                   </div>
                 </div>
               ))}
@@ -899,14 +899,14 @@ export default function Home() {
           ═══════════════════════════════════════════════════════ */}
       <section className="bg-[#0A1628] border-t border-white/8 py-10">
         <div className="container">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 rounded-2xl bg-gradient-to-r from-[#F5A623]/10 to-[#4F46E5]/10 border border-[#F5A623]/20 px-8 py-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 rounded-2xl bg-gradient-to-r from-[#4F46E5]/10 to-[#4F46E5]/10 border border-[#4F46E5]/20 px-8 py-6">
             <div className="text-center md:text-left">
               <p className="text-white font-bold text-lg">Refer landlords. Earn $50 one-time per signup.</p>
               <p className="text-white/50 text-sm mt-1">Join the Leasely affiliate program — earn a $50 one-time bonus for every landlord who signs up using your affiliate code and pays their first full month plus setup fee. No cap. No expiry.</p>
             </div>
             <div className="flex gap-3 shrink-0">
               <Link href="/affiliate/signup">
-                <Button className="bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] font-bold gap-2 whitespace-nowrap">
+                <Button className="bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold gap-2 whitespace-nowrap">
                   <TrendingUp className="h-4 w-4" /> Join Affiliate Program
                 </Button>
               </Link>
@@ -1014,7 +1014,7 @@ export default function Home() {
               <p className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-3">Get Started</p>
               <div className="space-y-3">
                 <a href={getLoginUrl()}>
-                  <Button size="sm" className="w-full bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] font-semibold gap-1.5 text-xs">
+                  <Button size="sm" className="w-full bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold gap-1.5 text-xs">
                     <Sparkles className="h-3.5 w-3.5" /> Start Free
                   </Button>
                 </a>

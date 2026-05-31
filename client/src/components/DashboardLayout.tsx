@@ -76,11 +76,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
   }, [sidebarWidth]);
 
-  if (loading) return <div className="dark"><DashboardLayoutSkeleton /></div>;
+  // No more `dark` wrappers — the ThemeProvider drives theme selection
+  // from <App /> (defaultTheme="light"). Forcing dark here used to
+  // override the provider on every dashboard page, leaving the entire
+  // logged-in product stuck on a near-black background regardless of
+  // user preference.
+  if (loading) return <DashboardLayoutSkeleton />;
 
   if (!user) {
     return (
-      <div className="dark flex items-center justify-center min-h-screen bg-background">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-6 p-8 max-w-sm w-full text-center">
           <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
             <LayoutDashboard className="h-7 w-7 text-primary" />
@@ -93,7 +98,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           <Button
             onClick={() => { window.location.href = getLoginUrl(); }}
-            className="w-full bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] font-semibold"
+            className="w-full bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold"
             size="lg"
           >
             Sign In
@@ -104,13 +109,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="dark">
-      <SidebarProvider style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}>
-        <DashboardLayoutContent setSidebarWidth={setSidebarWidth}>
-          {children}
-        </DashboardLayoutContent>
-      </SidebarProvider>
-    </div>
+    <SidebarProvider style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}>
+      <DashboardLayoutContent setSidebarWidth={setSidebarWidth}>
+        {children}
+      </DashboardLayoutContent>
+    </SidebarProvider>
   );
 }
 
@@ -181,7 +184,7 @@ function DashboardLayoutContent({
             }
           `}
         >
-          <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-[#F5A623]" : ""}`} />
+          <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-[#4F46E5]" : ""}`} />
           <span>{item.label}</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -208,7 +211,7 @@ function DashboardLayoutContent({
                 <PanelLeft className="h-4 w-4 text-muted-foreground" />
               </button>
               {!isCollapsed && isPro && (
-                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#F5A623]/15 text-[#E8951A] border border-[#F5A623]/20 shrink-0">
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#4F46E5]/15 text-[#4338CA] border border-[#4F46E5]/20 shrink-0">
                   PRO
                 </span>
               )}
@@ -247,7 +250,7 @@ function DashboardLayoutContent({
                         <item.icon className="h-4 w-4 shrink-0 opacity-50" />
                         <span className="opacity-50">{item.label}</span>
                         {!isCollapsed && (
-                          <Sparkles className="h-3 w-3 ml-auto text-[#F5A623]/60 shrink-0" />
+                          <Sparkles className="h-3 w-3 ml-auto text-[#4F46E5]/60 shrink-0" />
                         )}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -317,12 +320,12 @@ function DashboardLayoutContent({
 
             {/* Upgrade CTA for free users */}
             {!isPro && !isCollapsed && (
-              <div className="mx-3 mt-3 mb-1 p-3 rounded-xl bg-gradient-to-br from-[#F5A623]/8 to-[#4F46E5]/8 border border-[#F5A623]/15">
+              <div className="mx-3 mt-3 mb-1 p-3 rounded-xl bg-gradient-to-br from-[#4F46E5]/8 to-[#4F46E5]/8 border border-[#4F46E5]/15">
                 <p className="text-xs font-semibold text-foreground">Unlock Pro Portal</p>
                 <p className="text-[11px] text-muted-foreground mt-0.5 mb-2">Applications, payouts, AI screening & more</p>
                 <button
                   onClick={() => setLocation("/pricing")}
-                  className="w-full text-xs font-semibold py-1.5 px-3 rounded-lg bg-[#F5A623] hover:bg-[#E8951A] text-[#062018] transition-colors flex items-center justify-center gap-1.5"
+                  className="w-full text-xs font-semibold py-1.5 px-3 rounded-lg bg-[#4F46E5] hover:bg-[#4338CA] text-white transition-colors flex items-center justify-center gap-1.5"
                 >
                   <Sparkles className="h-3 w-3" /> Upgrade — $25/mo
                 </button>
@@ -375,7 +378,7 @@ function DashboardLayoutContent({
         {/* Resize handle */}
         {!isCollapsed && (
           <div
-            className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-[#F5A623]/30 active:bg-[#F5A623]/50 transition-colors z-50"
+            className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-[#4F46E5]/30 active:bg-[#4F46E5]/50 transition-colors z-50"
             onMouseDown={() => setIsResizing(true)}
           />
         )}
@@ -392,7 +395,7 @@ function DashboardLayoutContent({
               </span>
             </div>
             {isPro && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F5A623]/10 text-[#E8951A] border border-[#F5A623]/20">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#4F46E5]/10 text-[#4338CA] border border-[#4F46E5]/20">
                 PRO
               </span>
             )}

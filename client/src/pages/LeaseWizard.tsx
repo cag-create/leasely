@@ -188,7 +188,7 @@ export default function LeaseWizard() {
             Pick the state and lease type. We&apos;ll preload the right template with the required state-specific clauses.
           </p>
           <div className="h-1.5 bg-muted rounded-full mb-6 overflow-hidden">
-            <div className="h-full rounded-full transition-all" style={{ width: "50%", background: "#F5A623" }} />
+            <div className="h-full rounded-full transition-all" style={{ width: "50%", background: "#4F46E5" }} />
           </div>
 
           <Card>
@@ -248,7 +248,7 @@ export default function LeaseWizard() {
         <p className="text-muted-foreground mb-3">Step 2 of 2 — fill in the variables; we&apos;ll render the lease for you to review. <span className="text-xs">Your draft is autosaved locally — refresh-safe.</span></p>
         {/* Two-step progress */}
         <div className="h-1.5 bg-muted rounded-full mb-6 overflow-hidden">
-          <div className="h-full rounded-full transition-all" style={{ width: "100%", background: "#F5A623" }} />
+          <div className="h-full rounded-full transition-all" style={{ width: "100%", background: "#4F46E5" }} />
         </div>
 
         {templateQuery.isLoading && (

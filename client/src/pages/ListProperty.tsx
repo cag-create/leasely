@@ -26,7 +26,7 @@ import { Link } from "wouter";
 import RentSuggestionWidget from "@/components/RentSuggestionWidget";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 const STEPS = [
   { id: 1, title: "Property Details", icon: Building2 },

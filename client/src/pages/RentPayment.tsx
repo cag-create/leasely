@@ -13,7 +13,7 @@ import {
 import { formatRent, getListingImage } from "@/lib/marketplace";
 
 const BRAND = "#1B2B5E";
-const ACCENT = "#F5A623";
+const ACCENT = "#4F46E5";
 
 export default function RentPayment() {
   const { id } = useParams<{ id: string }>();

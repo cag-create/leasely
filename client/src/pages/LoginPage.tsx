@@ -164,7 +164,7 @@ export default function LoginPage() {
                   type="checkbox"
                   checked={agreed}
                   onChange={e => setAgreed(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-white/20 bg-white/5 accent-[#F5A623]"
+                  className="mt-0.5 h-4 w-4 rounded border-white/20 bg-white/5 accent-[#4F46E5]"
                 />
                 <span>
                   I agree to the <a href="/legal/terms" target="_blank" rel="noopener" className="text-white/80 underline hover:text-white">Terms of Service</a> and <a href="/legal/privacy" target="_blank" rel="noopener" className="text-white/80 underline hover:text-white">Privacy Policy</a>, and acknowledge Leasely's <a href="/legal/fair-housing" target="_blank" rel="noopener" className="text-white/80 underline hover:text-white">Fair Housing</a> and <a href="/legal/cookies" target="_blank" rel="noopener" className="text-white/80 underline hover:text-white">Cookie</a> policies.
