@@ -525,9 +525,11 @@ export default function PortalSetup() {
                 </ul>
               </div>
 
-              <p className="text-xs text-white/40 pt-1 border-t border-white/5">
-                Leasely charges <span className="text-white/60 font-semibold">$75 one-time setup + $25/mo</span>. Everything else above is between you and CBP — no markups, no kickbacks.
-              </p>
+              {(user as any)?.role !== "admin" && (
+                <p className="text-xs text-white/40 pt-1 border-t border-white/5">
+                  Leasely charges <span className="text-white/60 font-semibold">$75 one-time setup + $25/mo</span>. Everything else above is between you and CBP — no markups, no kickbacks.
+                </p>
+              )}
             </div>
 
             {/* Code */}
