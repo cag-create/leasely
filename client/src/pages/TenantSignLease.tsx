@@ -20,8 +20,8 @@ function formatCents(cents: number) {
 function JourneyFooter({ currentStep }: { currentStep: 1 | 2 | 3 | 4 }) {
   const steps = [
     { n: 1, label: "Sign" },
-    { n: 2, label: "Pay" },
-    { n: 3, label: "Landlord countersigns" },
+    { n: 2, label: "Landlord countersigns" },
+    { n: 3, label: "Pay" },
     { n: 4, label: "Move in" },
   ];
   return (
@@ -66,7 +66,7 @@ export default function TenantSignLease() {
   const signMutation = trpc.leases.sign.useMutation({
     onSuccess: () => {
       setSigned(true);
-      toast.success("Signed! Check your email for payment instructions to activate your lease.");
+      toast.success("Signed! Your landlord will countersign next, then we'll email you next steps.");
     },
     onError: (e) => toast.error(e.message),
   });
@@ -91,16 +91,16 @@ export default function TenantSignLease() {
           </div>
           <h2 className="text-2xl font-black text-gray-900 mb-2">Signature Received</h2>
           <p className="text-gray-600 mb-4">
-            Your signature is on file. To <strong>activate</strong> your lease, please complete the payment steps below — your landlord will countersign once payment clears.
+            Your signature is on file. Your landlord will <strong>countersign</strong> next — once they do, we'll email you payment and move-in instructions automatically.
           </p>
           <ol className="text-left text-sm text-gray-600 space-y-2 mb-6 bg-gray-50 rounded-xl p-4">
-            <li className="flex items-start gap-2"><span className="font-bold text-emerald-600">1.</span> Pay your <strong>security deposit</strong> via the link in your email</li>
-            <li className="flex items-start gap-2"><span className="font-bold text-emerald-600">2.</span> Pay your <strong>first month's rent</strong> via the link in your email</li>
-            <li className="flex items-start gap-2"><span className="font-bold text-emerald-600">3.</span> Landlord countersigns — lease is then fully executed</li>
-            <li className="flex items-start gap-2"><span className="font-bold text-emerald-600">4.</span> You'll receive move-in access instructions automatically</li>
+            <li className="flex items-start gap-2"><span className="font-bold text-emerald-600">1.</span> Your landlord <strong>countersigns</strong> the lease</li>
+            <li className="flex items-start gap-2"><span className="font-bold text-emerald-600">2.</span> You receive an email with a secure link to pay your <strong>security deposit + first month's rent</strong> (if not already paid)</li>
+            <li className="flex items-start gap-2"><span className="font-bold text-emerald-600">3.</span> Lease is fully executed and goes <strong>active</strong></li>
+            <li className="flex items-start gap-2"><span className="font-bold text-emerald-600">4.</span> You receive <strong>move-in access instructions</strong> (lockbox code, key pickup, or in-person handoff)</li>
           </ol>
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800 mb-4">
-            <strong>Note:</strong> Your signature is conditional. The lease is not legally binding until both deposit and first month's rent are paid <em>and</em> your landlord has countersigned.
+            <strong>Note:</strong> Your signature is conditional until your landlord countersigns and any required move-in payment clears.
           </div>
           <div className="flex gap-2 mb-4">
             <Button
@@ -154,16 +154,17 @@ export default function TenantSignLease() {
               <p className="text-xs font-bold text-emerald-900 mb-1.5">How signing works</p>
               <ol className="text-xs text-emerald-800 leading-relaxed space-y-1">
                 <li><strong>1.</strong> You sign first (right now).</li>
-                <li><strong>2.</strong> You pay your security deposit + first month's rent.</li>
-                <li><strong>3.</strong> Your landlord countersigns — lease is then fully executed.</li>
+                <li><strong>2.</strong> Your landlord countersigns.</li>
+                <li><strong>3.</strong> You pay your security deposit + first month's rent (if not already paid) via a secure link we email you.</li>
+                <li><strong>4.</strong> Lease goes active and you receive move-in access instructions.</li>
               </ol>
-              <p className="text-[11px] text-emerald-900/80 mt-2">Your signature is conditional until payment clears and the landlord countersigns.</p>
+              <p className="text-[11px] text-emerald-900/80 mt-2">Your signature is conditional until the landlord countersigns and any required move-in payment clears.</p>
             </div>
 
             {/* Legal disclosure */}
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
               <p className="text-xs text-blue-800 leading-relaxed">
-                <strong>Electronic Signature Notice:</strong> By signing below, you agree that your electronic signature is legally binding and has the same force and effect as a handwritten signature. This lease becomes effective only after the security deposit and first month's rent are paid and your landlord countersigns. This lease is compliant with your state's landlord-tenant law.
+                <strong>Electronic Signature Notice:</strong> By signing below, you agree that your electronic signature is legally binding and has the same force and effect as a handwritten signature. This lease becomes effective only after your landlord countersigns and any required security deposit / first month's rent has cleared. This lease is compliant with your state's landlord-tenant law.
               </p>
             </div>
 

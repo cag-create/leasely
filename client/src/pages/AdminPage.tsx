@@ -1224,19 +1224,19 @@ const SOP_LIST: Sop[] = [
         heading: "1. The Flow at a Glance",
         items: [
           "Step 1 — You create the lease and click Send. Tenant receives an emailed signing link.",
-          "Step 2 — Tenant signs first. The lease is now CONDITIONAL (not fully executed). Status: 'Tenant signed / Awaiting payment'.",
-          "Step 3 — Tenant is automatically prompted to pay (a) security deposit, then (b) first month's rent via Stripe.",
-          "Step 4 — Both payments clear → Leasely emails you to countersign.",
-          "Step 5 — You countersign in the Leases tab → lease becomes fully executed → tenant receives move-in instructions.",
+          "Step 2 — Tenant signs first. Status flips to 'Tenant signed — your turn'. Leasely emails you a countersign prompt.",
+          "Step 3 — You countersign in the Leases tab. This is the gate — nothing moves forward until you do.",
+          "Step 4 — If deposit + first month are still owed, Leasely automatically emails the tenant a secure Stripe link (or skips this if you already logged the payment off-platform). Status: 'Awaiting payment' until cleared.",
+          "Step 5 — Once funds clear (or if none were required), the lease goes ACTIVE and the tenant automatically receives move-in access instructions: lockbox code, key-pickup details, or in-person handoff — whichever you selected on the lease.",
         ],
       },
       {
         heading: "2. Why This Order",
         items: [
-          "Tenant signing first commits them legally to the agreement (subject to the conditions).",
-          "Requiring payment before your countersignature protects you from a tenant who signs but never pays — there's nothing to enforce because the lease is not executed.",
-          "Move-in instructions (lockbox codes, key pickup details) are only released AFTER you countersign — never give them out earlier.",
-          "If a tenant signs but does not pay within 7 days, follow up. If 14 days pass with no payment, you may withdraw the lease without prejudice.",
+          "Tenant signs first to lock in legal commitment to the agreement (subject to your countersignature).",
+          "You countersign BEFORE asking for money — this protects the tenant from paying into a lease you might never execute, and gives you a chance to bail out at no cost to them.",
+          "Move-in instructions (lockbox codes, key pickup details, in-person addresses) are only released AFTER countersign AND any required payment clears — never give them out earlier.",
+          "If a tenant signs and you don't countersign within 7 days, the offer expires by default — set expectations clearly in the listing.",
         ],
       },
       {
@@ -1244,18 +1244,19 @@ const SOP_LIST: Sop[] = [
         items: [
           "Draft — created but not sent. Edit freely.",
           "Sent to tenant — emailed; awaiting tenant signature.",
-          "Tenant signed / Awaiting payment — tenant has e-signed; deposit + first month due.",
-          "Paid — countersign — funds cleared; click Countersign to execute.",
-          "Fully executed — both parties signed and funds collected. Move-in can proceed.",
+          "Tenant signed — your turn — tenant has e-signed; click Sign on the lease row to countersign.",
+          "Awaiting payment — you countersigned; tenant has been emailed a payment link for deposit + first month.",
+          "Active — fully executed and funded. Move-in instructions have been sent. Lease is in force.",
         ],
       },
       {
         heading: "4. Disputes & Edge Cases",
         items: [
-          "Tenant disputes a charge after paying: Stripe handles the chargeback flow. Do NOT countersign until the dispute resolves.",
+          "Tenant disputes a charge after paying: Stripe handles the chargeback flow. The lease stays ACTIVE during dispute; consult counsel before terminating.",
           "Tenant pays only the deposit, not first month: lease stays in 'Awaiting payment' until both clear. Reach out and offer a payment plan only if you choose.",
-          "Tenant wants to cancel after signing but before paying: nothing to enforce; mark the lease 'Terminated' in Leases.",
-          "You change your mind after the tenant signs: only refunds-via-Stripe are permitted; never collect deposit/rent off-platform.",
+          "Tenant wants to cancel after signing but before you countersign: simply don't countersign; click Delete on the lease row. No money has changed hands.",
+          "You collected deposit + first month off-platform (cash/check): mark it in the lease detail so Leasely skips the payment email and goes straight to move-in instructions.",
+          "Refunds: only refunds-via-Stripe are tracked in Leasely; off-platform refunds must be documented manually.",
         ],
       },
     ],
@@ -1279,7 +1280,7 @@ const SOP_LIST: Sop[] = [
       {
         heading: "2. Move-In Day",
         items: [
-          "CRITICAL: Move-in only proceeds AFTER the lease is fully executed. Lease execution requires (a) tenant signature, (b) tenant payment of security deposit and first month's rent, and (c) your countersignature. Do NOT release keys before all three are complete — Leasely automatically gates this in the dashboard.",
+          "CRITICAL: Move-in only proceeds AFTER the lease is ACTIVE. That requires (a) tenant signature, (b) your countersignature, and (c) any required deposit + first month's rent cleared. Do NOT release keys before all three are complete — Leasely automatically gates this and only emails move-in instructions once status flips to Active.",
           "Meet the tenant at the property. Do not just mail keys — a brief in-person walkthrough is your best protection against future disputes.",
           "Walk through the entire unit with the tenant and complete the move-in condition report together. Both parties sign.",
           "Explain the maintenance request process: how to submit via Leasely, expected response times, what constitutes an emergency.",
