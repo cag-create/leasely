@@ -681,6 +681,18 @@ export const appRouter = router({
     }),
 
     /**
+     * Mark the current user's Pro code as redeemed. Called when the user
+     * returns from CBP's Stripe checkout with ?cbpRedeemed=1 so the portal
+     * setup wizard can auto-advance to "Go Live" without manual click.
+     */
+    markMineRedeemed: protectedProcedure.mutation(async ({ ctx }) => {
+      const existing = await getOrCreateProCode(ctx.user.id);
+      if (existing.status === "redeemed") return existing;
+      await redeemProCode(existing.code);
+      return getOrCreateProCode(ctx.user.id);
+    }),
+
+    /**
      * Mint (or return existing) per-user 100%-off promotion code that
      * redeems CBP's website-bundle Payment Link as the bundled perk paid
      * for by Leasely's $75 setup fee. Idempotent: re-clicking Redeem

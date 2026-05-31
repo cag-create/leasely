@@ -75,6 +75,23 @@ export default function PortalSetup() {
   const { data: proCode } = trpc.proCode.getMine.useQuery();
   const { data: existingBrief } = trpc.marketplace.getBrandBrief.useQuery();
 
+  // Returning from CBP's Stripe checkout — auto-mark redeemed and advance
+  // to Go Live so the user doesn't have to know to click anything.
+  const markRedeemed = trpc.proCode.markMineRedeemed.useMutation({
+    onSuccess: () => utils.proCode.getMine.invalidate(),
+  });
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("cbpRedeemed") === "1") {
+      markRedeemed.mutate();
+      setStep(3);
+      params.delete("cbpRedeemed");
+      const newSearch = params.toString();
+      window.history.replaceState({}, "", window.location.pathname + (newSearch ? `?${newSearch}` : ""));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Prefill brief form once we load it
   useEffect(() => {
     if (existingBrief) {
