@@ -27,6 +27,7 @@ import {
   createTemplateVersion, createLeaseDocument, getLeaseDocument, updateLeaseDocument,
   listLeaseDocumentsByLandlord, listLeaseDocumentsByAgreement, createLeaseSignature,
   listSignaturesForDocument, logLeaseAudit, listLeaseAudit,
+  createLeaseTemplateRow, activateLeaseTemplateVersion, softDeleteLeaseTemplate,
 } from "./db-helpers";
 import { updateLeaseAgreement, getLeaseById, getUserById } from "../db";
 import { sendEmail, leaseAgreementEmail } from "../_core/email";
@@ -420,5 +421,63 @@ export const adminLeaseTemplatesRouter = router({
       if (!ver) throw new TRPCError({ code: "NOT_FOUND" });
       const citations: string[] = ver.citations ? JSON.parse(ver.citations) : [];
       return renderTemplate(ver.bodyHtml, input.variables as any, citations);
+    }),
+
+  /**
+   * Create a new template row for a state + category. Returns the new
+   * template id so the UI can immediately POST a `saveVersion` with the
+   * initial body. If a (soft-deleted) row already exists for the same
+   * state+category, it's re-activated instead of inserted, so admins
+   * can't accidentally create duplicates that break the
+   * `getLatestTemplateVersionForState` lookup.
+   */
+  create: protectedProcedure
+    .input(z.object({
+      state: STATE_CODE,
+      category: CATEGORY,
+      name: z.string().min(1).max(255),
+      description: z.string().max(2000).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      assertAdmin(ctx);
+      const id = await createLeaseTemplateRow(input);
+      if (!id) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unreachable" });
+      await logLeaseAudit({
+        actorUserId: ctx.user.id, event: "template_created",
+        details: JSON.stringify({ templateId: id, state: input.state, category: input.category }),
+      });
+      return { templateId: id };
+    }),
+
+  /**
+   * Point `activeVersionId` at a specific version. Used to roll back to
+   * an older revision without writing a new version row.
+   */
+  activate: protectedProcedure
+    .input(z.object({
+      templateId: z.number().int().positive(),
+      versionId: z.number().int().positive(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      assertAdmin(ctx);
+      await activateLeaseTemplateVersion(input.templateId, input.versionId);
+      await logLeaseAudit({
+        actorUserId: ctx.user.id, event: "template_activated",
+        details: JSON.stringify(input),
+      });
+      return { ok: true };
+    }),
+
+  /** Soft-delete (isActive=0). Versions preserved for undo. */
+  softDelete: protectedProcedure
+    .input(z.object({ templateId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      assertAdmin(ctx);
+      await softDeleteLeaseTemplate(input.templateId);
+      await logLeaseAudit({
+        actorUserId: ctx.user.id, event: "template_deleted",
+        details: JSON.stringify(input),
+      });
+      return { ok: true };
     }),
 });

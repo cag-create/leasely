@@ -18,8 +18,8 @@ function fmt(cents: number) {
 function JourneyFooter({ currentStep }: { currentStep: 1 | 2 | 3 | 4 }) {
   const steps = [
     { n: 1, label: "Sign" },
-    { n: 2, label: "Pay" },
-    { n: 3, label: "Landlord countersigns" },
+    { n: 2, label: "Landlord countersigns" },
+    { n: 3, label: "Pay" },
     { n: 4, label: "Move in" },
   ];
   return (

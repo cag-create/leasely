@@ -817,7 +817,7 @@ export default function Dashboard() {
                 <LockedFeatureCard icon={Globe} title="Branded Portal" desc="yourname.leasely.net with your logo and colors." />
                 <LockedFeatureCard icon={Shield} title="AI Fraud Detection" desc="Screen every applicant for fake employers and inflated income." />
                 <LockedFeatureCard icon={FileText} title="Rental Applications" desc="Receive and manage full rental applications." />
-                <LockedFeatureCard icon={Users} title="Background Checks" desc="One-click TransUnion SmartMove integration." />
+                <LockedFeatureCard icon={Users} title="Background Checks" desc="One-click ApplyConnect (TransUnion-backed) integration." />
               </div>
             )}
 

@@ -22,6 +22,64 @@ export async function listLeaseTemplates(): Promise<LeaseTemplate[]> {
   return db.select().from(leaseTemplates).where(eq(leaseTemplates.isActive, 1));
 }
 
+/**
+ * Admin: create a new template row for a state + category. Caller
+ * supplies an initial version body via a follow-up `saveVersion` call;
+ * we don't seed a version here so the admin UI can validate the body
+ * before persisting. Returns the new template id.
+ */
+export async function createLeaseTemplateRow(input: {
+  state: string;
+  category: LeaseTemplate["category"];
+  name: string;
+  description?: string;
+}): Promise<number | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  // Enforce one active template per (state, category). If a deleted row
+  // exists for the same pair, re-activate it instead of inserting a dup.
+  const existing = await db.select().from(leaseTemplates)
+    .where(and(eq(leaseTemplates.state, input.state), eq(leaseTemplates.category, input.category)))
+    .limit(1);
+  if (existing[0]) {
+    await db.update(leaseTemplates)
+      .set({ isActive: 1, name: input.name, description: input.description })
+      .where(eq(leaseTemplates.id, existing[0].id));
+    return existing[0].id;
+  }
+  const ins: any = await db.insert(leaseTemplates).values({
+    state: input.state,
+    category: input.category,
+    name: input.name,
+    description: input.description,
+    isActive: 1,
+  });
+  return (ins?.insertId ?? ins?.[0]?.insertId) as number | undefined;
+}
+
+export async function activateLeaseTemplateVersion(templateId: number, versionId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  // Sanity check: version belongs to this template
+  const ver = await db.select().from(leaseTemplateVersions)
+    .where(and(eq(leaseTemplateVersions.id, versionId), eq(leaseTemplateVersions.templateId, templateId)))
+    .limit(1);
+  if (!ver[0]) return;
+  await db.update(leaseTemplates).set({ activeVersionId: versionId }).where(eq(leaseTemplates.id, templateId));
+}
+
+/**
+ * Soft-delete: flip isActive=0 so the template stops appearing in the
+ * landlord-facing pickers and the approval-flow lookup ignores it.
+ * Versions are preserved so an undo is possible (re-create via
+ * createLeaseTemplateRow with the same state+category).
+ */
+export async function softDeleteLeaseTemplate(templateId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(leaseTemplates).set({ isActive: 0 }).where(eq(leaseTemplates.id, templateId));
+}
+
 export async function getLeaseTemplate(state: string, category: LeaseTemplate["category"]): Promise<LeaseTemplate | undefined> {
   const db = await getDb();
   if (!db) return undefined;

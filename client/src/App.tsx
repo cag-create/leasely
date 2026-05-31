@@ -33,6 +33,7 @@ const ProPage             = lazy(() => import("./pages/ProPage"));
 const ApartmentComplexes  = lazy(() => import("./pages/ApartmentComplexes"));
 const AdminPage           = lazy(() => import("./pages/AdminPage"));
 const AdminStripeSmoke    = lazy(() => import("./pages/AdminStripeSmoke"));
+const AdminLeaseTemplates = lazy(() => import("./pages/AdminLeaseTemplates"));
 const RentalApplications  = lazy(() => import("./pages/RentalApplications"));
 const PublicApplication   = lazy(() => import("./pages/PublicApplication"));
 const ProSetup            = lazy(() => import("./pages/ProSetup"));
@@ -162,6 +163,7 @@ function Router() {
         {/* Admin only */}
         <Route path="/admin" component={AdminPage} />
         <Route path="/admin/stripe-smoke" component={AdminStripeSmoke} />
+        <Route path="/admin/lease-templates" component={AdminLeaseTemplates} />
 
         {/* Tenant portal */}
         <Route path="/tenant/login" component={TenantLogin} />

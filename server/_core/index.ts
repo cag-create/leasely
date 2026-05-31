@@ -333,6 +333,12 @@ async function startServer() {
     import("./rentBenchmarks")
       .then(m => m.startRentBenchmarkScheduler())
       .catch(err => console.warn("[rentBenchmarks] scheduler init failed:", err));
+    // Daily sweep that expires leases past their end date and cancels the
+    // associated recurring rent Stripe Subscription so we don't keep
+    // billing a moved-out tenant.
+    import("../leases/expiryScheduler")
+      .then(m => m.startLeaseExpiryScheduler())
+      .catch(err => console.warn("[leaseExpiry] scheduler init failed:", err));
   });
 }
 
