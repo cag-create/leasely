@@ -1223,10 +1223,16 @@ export const appRouter = router({
     /** Update portal branding (paid landlords only) */
     updatePortalBranding: protectedProcedure
       .input(z.object({
-        brandName: z.string().min(1).optional(),
-        brandLogoUrl: z.string().url().optional(),
+        // The Dashboard "Save Branding" form sends every field even when blank,
+        // so each schema must accept "" as a no-op (treated the same as undefined
+        // by `updatePortalBranding`). `.optional()` alone accepts only `undefined`.
+        brandName: z.union([z.literal(""), z.string().min(1)]).optional(),
+        brandLogoUrl: z.union([z.literal(""), z.string().url()]).optional(),
         brandColor: z.string().optional(),
-        portalSubdomain: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/, "Subdomain must be lowercase letters, numbers, and hyphens only").optional(),
+        portalSubdomain: z.union([
+          z.literal(""),
+          z.string().min(2).max(50).regex(/^[a-z0-9-]+$/, "Subdomain must be lowercase letters, numbers, and hyphens only"),
+        ]).optional(),
         customDomain: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {

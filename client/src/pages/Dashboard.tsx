@@ -240,7 +240,16 @@ export default function Dashboard() {
       utils.auth.me.invalidate();
       toast.success("Portal branding updated!");
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err) => {
+      // tRPC serializes Zod validation errors as a JSON array in `err.message`.
+      // Parse and surface the first readable message so users don't see raw JSON.
+      let msg = err.message;
+      try {
+        const parsed = JSON.parse(msg);
+        if (Array.isArray(parsed) && parsed[0]?.message) msg = parsed[0].message;
+      } catch { /* not JSON, use raw message */ }
+      toast.error(msg);
+    },
   });
 
   const upgradeMutation = trpc.marketplace.upgradeToPaid.useMutation({
