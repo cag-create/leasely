@@ -1117,6 +1117,13 @@ export async function setApplicationDraftLeaseId(id: number, landlordUserId: num
     .where(and(eq(rentalApplications.id, id), eq(rentalApplications.landlordUserId, landlordUserId)));
 }
 
+/** Hard-delete a rental application. Owner check enforced by composite WHERE. */
+export async function deleteRentalApplication(id: number, landlordUserId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(rentalApplications).where(and(eq(rentalApplications.id, id), eq(rentalApplications.landlordUserId, landlordUserId)));
+}
+
 export async function updateApplicationAiScreening(id: number, landlordUserId: number, result: unknown): Promise<void> {
   const db = await getDb();
   if (!db) return;

@@ -80,6 +80,7 @@ import {
   // Rental applications
   createRentalApplication, getRentalApplicationsByLandlord, getRentalApplicationsByListing,
   getRentalApplicationById, updateRentalApplicationStatus, updateApplicationAiScreening, setApplicationDraftLeaseId,
+  deleteRentalApplication,
   // Custom templates
   getCustomTemplatesByUser, createCustomTemplate, deleteCustomTemplate,
   // Rent rates
@@ -2750,6 +2751,20 @@ export const appRouter = router({
       return app;
     }),
 
+    /**
+     * Landlord: manually delete a rental application. Applications are NEVER
+     * auto-purged — every submission stays until the landlord explicitly
+     * deletes it (audit trail + fair-housing record-keeping). Owner check
+     * enforced server-side; no Pro requirement for deleting applications
+     * (unlike lease deletion, which is Pro-only).
+     */
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      const app = await getRentalApplicationById(input.id);
+      if (!app || app.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+      await deleteRentalApplication(input.id, ctx.user.id);
+      return { success: true, deletedId: input.id };
+    }),
+
     /** Landlord: update status — approving auto-creates a draft lease */
     updateStatus: protectedProcedure.input(z.object({
       id: z.number(),
@@ -4395,74 +4410,51 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       }
 
       const now = new Date();
-      // Conditional signature: tenant has signed, awaiting payment before landlord countersigns.
-      // We capture the typed name + IP so the rendered lease has a real artifact, not just a status flag.
+      // NEW FLOW: tenant signs first → landlord countersigns next → payment link
+      // (or key pickup if Pro logged payment manually). Status moves to
+      // `tenant_signed` and the LANDLORD is prompted to countersign — the
+      // tenant does not receive a payment link until after the countersign.
       const signerIp = (ctx as any)?.req?.headers?.["x-forwarded-for"]?.toString().split(",")[0].trim()
         ?? (ctx as any)?.req?.ip
         ?? null;
       await updateLeaseAgreement(lease.id, lease.landlordUserId, {
-        status: "awaiting_payment",
+        status: "tenant_signed",
         tenantSignedAt: now,
         tenantSignatureName: input.signatureName.trim(),
         tenantSignatureIp: signerIp ?? undefined,
-        firstMonthPaymentSent: 1,
-        depositPaymentSent: lease.securityDeposit ? 1 : 0,
       } as any);
 
-      // Build payment links for tenant
       const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
-      const emailParam = encodeURIComponent(lease.tenantEmail);
-      const rentPayUrl = `${APP_URL}/lease-pay/${lease.id}?email=${emailParam}&kind=rent`;
-      const depositPayUrl = lease.securityDeposit ? `${APP_URL}/lease-pay/${lease.id}?email=${emailParam}&kind=deposit` : undefined;
 
-      // Format the move-in date for the email body ("June 1, 2026"). The
-      // stored leaseStartDate is a YYYY-MM-DD string; parse it as UTC noon
-      // so timezone slop doesn't flip the day.
-      const leaseStartDateFormatted = lease.leaseStartDate
-        ? new Date(`${lease.leaseStartDate}T12:00:00Z`).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            timeZone: "UTC",
-          })
-        : undefined;
-
-      // Auto-send payment request email to tenant (lease not yet fully executed)
-      sendEmail({
-        to: lease.tenantEmail,
-        subject: `Action Required: Pay First Month + Deposit to Activate Your Lease — ${lease.propertyAddress}`,
-        html: leaseSignedPaymentEmail({
-          tenantName: lease.tenantName,
-          propertyAddress: lease.propertyAddress,
-          monthlyRentDollars: lease.monthlyRent / 100,
-          securityDepositDollars: (lease.securityDeposit ?? 0) / 100,
-          rentPaymentUrl: rentPayUrl,
-          depositPaymentUrl: depositPayUrl ?? rentPayUrl,
-          accessMethod: lease.accessMethod ?? "key_pickup",
-          lockboxCode: lease.lockboxCode ?? undefined,
-          accessInstructions: lease.accessInstructions ?? undefined,
-          leaseStartDateFormatted,
-        }),
-      }).catch(() => {});
-
-      // Notify landlord — payment is pending; lease is conditional, NOT executed
+      // Notify landlord — your turn to countersign. NO payment link sent yet.
       const landlord = await getUserById(lease.landlordUserId);
       if (landlord?.email) {
         sendEmail({
           to: landlord.email,
-          subject: `Tenant Signed (Pending Payment) — ${lease.propertyAddress}`,
+          subject: `Tenant Signed — Countersign to Continue (${lease.propertyAddress})`,
           html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
-            <h2 style="color:#1B2B5E">Tenant Has Signed — Awaiting Payment</h2>
-            <p><strong>${lease.tenantName}</strong> has signed the lease for <strong>${lease.propertyAddress}</strong>.</p>
-            <p style="background:#fff7ed;border-left:4px solid #f59e0b;padding:12px 14px;border-radius:6px">
-              <strong>Note:</strong> This lease is <strong>conditional</strong> and not fully executed.
-              The tenant must pay <strong>first month's rent</strong>${lease.securityDeposit ? " and the <strong>security deposit</strong>" : ""} before you countersign.
-              You'll receive another email once payment clears, prompting you to add your signature.
+            <h2 style="color:#1B2B5E">Tenant Has Signed — Your Countersignature Is Needed</h2>
+            <p><strong>${lease.tenantName}</strong> just signed the lease for <strong>${lease.propertyAddress}</strong>.</p>
+            <p style="background:#eff6ff;border-left:4px solid #1B2B5E;padding:12px 14px;border-radius:6px">
+              <strong>Next step — your countersignature:</strong> Once you countersign, Leasely will automatically email the tenant a payment link for first month&apos;s rent${lease.securityDeposit ? " + security deposit" : ""}.
+              If you&apos;ve already collected payment off-platform, log it first and the tenant will instead receive their move-in / key-pickup instructions.
             </p>
-            <p style="margin-top:16px"><a href="${APP_URL}/leases" style="background:#1B2B5E;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none">View Lease</a></p>
+            <p style="margin-top:16px"><a href="${APP_URL}/leases" style="background:#1B2B5E;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:700">Open Leases &amp; Countersign</a></p>
           </div>`,
         }).catch(() => {});
       }
+
+      // Light confirmation to the tenant — no payment link yet.
+      sendEmail({
+        to: lease.tenantEmail,
+        subject: `Lease Signed — Awaiting Landlord Countersignature (${lease.propertyAddress})`,
+        html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+          <h2 style="color:#1B2B5E">Thanks for Signing!</h2>
+          <p>Hi ${lease.tenantName}, your signature for <strong>${lease.propertyAddress}</strong> is locked in.</p>
+          <p>Your landlord will countersign next. As soon as they do, we&apos;ll email you next steps — either a secure payment link for first month&apos;s rent${lease.securityDeposit ? " and the security deposit" : ""}, or — if your landlord already has your payment on file — your move-in instructions.</p>
+          <p style="margin-top:16px;font-size:13px;color:#666">You can sign in to your tenant portal any time to check status.</p>
+        </div>`,
+      }).catch(() => {});
 
       // In-app notification for landlord
       try {
@@ -4470,7 +4462,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
           userId: lease.landlordUserId,
           type: "lease_signed",
           title: `Tenant signed · ${lease.propertyAddress}`,
-          body: `${lease.tenantName} signed the lease. Awaiting payment before countersign.`,
+          body: `${lease.tenantName} signed. Your countersignature is needed next.`,
           link: "/leases",
         });
       } catch (err) {
@@ -4554,27 +4546,69 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       const needsDeposit = (lease.securityDeposit ?? 0) > 0;
       const willHaveDeposit = !needsDeposit || patch.depositPaid === 1 || lease.depositPaid === 1;
 
+      // Status branching:
+      //  - If landlord ALREADY countersigned (status === "awaiting_payment"
+      //    or "signed") and payment now clears → status = "active" and tenant
+      //    gets their key-pickup / move-in email.
+      //  - If landlord hasn't countersigned yet (legacy flow) → status = "paid"
+      //    and landlord gets the "ready to countersign" prompt.
+      const alreadyCountersigned = !!lease.landlordSignedAt;
       if (willHaveRent && willHaveDeposit) {
-        patch.status = "paid";
+        patch.status = alreadyCountersigned ? "active" : "paid";
         patch.paidAt = new Date();
       }
       await updateLeaseAgreement(lease.id, lease.landlordUserId, patch as any);
 
-      // If everything is paid, prompt landlord to countersign
       if (willHaveRent && willHaveDeposit) {
         const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
-        const landlord = await getUserById(lease.landlordUserId);
-        if (landlord?.email) {
+
+        if (alreadyCountersigned) {
+          // Landlord already countersigned. Payment clearing means the lease
+          // is now fully active → send tenant their move-in / key-pickup email.
+          const accessMethod = lease.accessMethod ?? "key_pickup";
+          const accessBlock = (() => {
+            if (accessMethod === "lockbox" && lease.lockboxCode) {
+              return `<p style="background:#ecfdf5;border-left:4px solid #10B981;padding:12px 14px;border-radius:6px">
+                <strong>Lockbox code:</strong> <span style="font-family:monospace;font-size:18px;letter-spacing:2px">${lease.lockboxCode}</span>
+                ${lease.accessInstructions ? `<br/><span style="font-size:13px;color:#374151">${lease.accessInstructions}</span>` : ""}
+              </p>`;
+            }
+            if (accessMethod === "key_pickup") {
+              return `<p style="background:#ecfdf5;border-left:4px solid #10B981;padding:12px 14px;border-radius:6px"><strong>Key pickup:</strong> ${lease.accessInstructions ?? "Your landlord will contact you to arrange key pickup."}</p>`;
+            }
+            if (accessMethod === "in_person") {
+              return `<p style="background:#ecfdf5;border-left:4px solid #10B981;padding:12px 14px;border-radius:6px"><strong>In-person handoff:</strong> ${lease.accessInstructions ?? "Your landlord will meet you at the property to hand off keys."}</p>`;
+            }
+            return lease.accessInstructions
+              ? `<p style="background:#ecfdf5;border-left:4px solid #10B981;padding:12px 14px;border-radius:6px"><strong>Move-in instructions:</strong> ${lease.accessInstructions}</p>`
+              : "";
+          })();
+
           sendEmail({
-            to: landlord.email,
-            subject: `Payment Received — Countersign to Execute Lease (${lease.propertyAddress})`,
+            to: lease.tenantEmail,
+            subject: `Payment Received — Move-In Details Inside (${lease.propertyAddress})`,
             html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
-              <h2 style="color:#1B2B5E">Payment Received — Action Required</h2>
-              <p><strong>${lease.tenantName}</strong> has paid first month's rent${needsDeposit ? " and the security deposit" : ""}.</p>
-              <p>The lease is ready for your countersignature to be fully executed.</p>
-              <p style="margin-top:16px"><a href="${APP_URL}/leases" style="background:#00C896;color:#0a2a1f;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:700">Countersign Lease</a></p>
+              <h2 style="color:#1B2B5E">Welcome Home — Your Lease Is Active</h2>
+              <p>Hi ${lease.tenantName}, your payment has cleared and your lease for <strong>${lease.propertyAddress}</strong> is now fully active.</p>
+              ${accessBlock}
+              <p style="margin-top:16px"><a href="${APP_URL}/tenant/dashboard" style="background:#00C896;color:#0a2a1f;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:700">Open Tenant Portal</a></p>
             </div>`,
           }).catch(() => {});
+        } else {
+          // Legacy: landlord hasn't countersigned yet → prompt them.
+          const landlord = await getUserById(lease.landlordUserId);
+          if (landlord?.email) {
+            sendEmail({
+              to: landlord.email,
+              subject: `Payment Received — Countersign to Execute Lease (${lease.propertyAddress})`,
+              html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+                <h2 style="color:#1B2B5E">Payment Received — Action Required</h2>
+                <p><strong>${lease.tenantName}</strong> has paid first month&apos;s rent${needsDeposit ? " and the security deposit" : ""}.</p>
+                <p>The lease is ready for your countersignature to be fully executed.</p>
+                <p style="margin-top:16px"><a href="${APP_URL}/leases" style="background:#00C896;color:#0a2a1f;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:700">Countersign Lease</a></p>
+              </div>`,
+            }).catch(() => {});
+          }
         }
       }
 
@@ -4606,9 +4640,10 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       const willHaveRent = patch.firstMonthPaid === 1 || lease.firstMonthPaid === 1;
       const needsDeposit = (lease.securityDeposit ?? 0) > 0;
       const willHaveDeposit = !needsDeposit || patch.depositPaid === 1 || lease.depositPaid === 1;
+      const alreadyCountersigned = !!lease.landlordSignedAt;
 
       if (willHaveRent && willHaveDeposit) {
-        patch.status = "paid";
+        patch.status = alreadyCountersigned ? "active" : "paid";
         patch.paidAt = new Date();
       }
 
@@ -4652,22 +4687,56 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         console.warn("[confirmPaymentReceived] auto-accounting entry failed:", e);
       }
 
-      // Email the landlord a confirmation that the countersign step is unlocked,
-      // mirroring the Stripe-webhook behaviour so the UX feels identical.
+      // Notification branching mirrors the Stripe-webhook markPaid path:
+      //  - Landlord already countersigned → tenant gets the key-pickup email.
+      //  - Not yet countersigned → landlord gets the "ready to countersign" email.
       if (willHaveRent && willHaveDeposit) {
         const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
-        const landlord = await getUserById(lease.landlordUserId);
-        if (landlord?.email) {
+
+        if (alreadyCountersigned) {
+          const accessMethod = lease.accessMethod ?? "key_pickup";
+          const accessBlock = (() => {
+            if (accessMethod === "lockbox" && lease.lockboxCode) {
+              return `<p style="background:#ecfdf5;border-left:4px solid #10B981;padding:12px 14px;border-radius:6px">
+                <strong>Lockbox code:</strong> <span style="font-family:monospace;font-size:18px;letter-spacing:2px">${lease.lockboxCode}</span>
+                ${lease.accessInstructions ? `<br/><span style="font-size:13px;color:#374151">${lease.accessInstructions}</span>` : ""}
+              </p>`;
+            }
+            if (accessMethod === "key_pickup") {
+              return `<p style="background:#ecfdf5;border-left:4px solid #10B981;padding:12px 14px;border-radius:6px"><strong>Key pickup:</strong> ${lease.accessInstructions ?? "Your landlord will contact you to arrange key pickup."}</p>`;
+            }
+            if (accessMethod === "in_person") {
+              return `<p style="background:#ecfdf5;border-left:4px solid #10B981;padding:12px 14px;border-radius:6px"><strong>In-person handoff:</strong> ${lease.accessInstructions ?? "Your landlord will meet you at the property to hand off keys."}</p>`;
+            }
+            return lease.accessInstructions
+              ? `<p style="background:#ecfdf5;border-left:4px solid #10B981;padding:12px 14px;border-radius:6px"><strong>Move-in instructions:</strong> ${lease.accessInstructions}</p>`
+              : "";
+          })();
+
           sendEmail({
-            to: landlord.email,
-            subject: `Payment Confirmed — Countersign to Execute Lease (${lease.propertyAddress})`,
+            to: lease.tenantEmail,
+            subject: `Payment Received — Move-In Details Inside (${lease.propertyAddress})`,
             html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
-              <h2 style="color:#1B2B5E">Payment Confirmed — Action Required</h2>
-              <p>You confirmed receipt of first month's rent${needsDeposit ? " and security deposit" : ""} from <strong>${lease.tenantName}</strong>${input.method ? ` (via ${input.method})` : ""}.</p>
-              <p>The lease is ready for your countersignature to be fully executed.</p>
-              <p style="margin-top:16px"><a href="${APP_URL}/leases" style="background:#00C896;color:#0a2a1f;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:700">Countersign Lease</a></p>
+              <h2 style="color:#1B2B5E">Welcome Home — Your Lease Is Active</h2>
+              <p>Hi ${lease.tenantName}, your landlord confirmed your payment${input.method ? ` (via ${input.method})` : ""} and your lease for <strong>${lease.propertyAddress}</strong> is now fully active.</p>
+              ${accessBlock}
+              <p style="margin-top:16px"><a href="${APP_URL}/tenant/dashboard" style="background:#00C896;color:#0a2a1f;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:700">Open Tenant Portal</a></p>
             </div>`,
           }).catch(() => {});
+        } else {
+          const landlord = await getUserById(lease.landlordUserId);
+          if (landlord?.email) {
+            sendEmail({
+              to: landlord.email,
+              subject: `Payment Confirmed — Countersign to Execute Lease (${lease.propertyAddress})`,
+              html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+                <h2 style="color:#1B2B5E">Payment Confirmed — Action Required</h2>
+                <p>You confirmed receipt of first month&apos;s rent${needsDeposit ? " and security deposit" : ""} from <strong>${lease.tenantName}</strong>${input.method ? ` (via ${input.method})` : ""}.</p>
+                <p>The lease is ready for your countersignature to be fully executed.</p>
+                <p style="margin-top:16px"><a href="${APP_URL}/leases" style="background:#00C896;color:#0a2a1f;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:700">Countersign Lease</a></p>
+              </div>`,
+            }).catch(() => {});
+          }
         }
       }
 
@@ -4882,7 +4951,18 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       return out;
     }),
 
-    /** Landlord countersigns the lease (only allowed once payment has cleared). */
+    /**
+     * Landlord countersigns the lease. NEW FLOW (2026-05):
+     * - Required precondition: tenant has signed (status === "tenant_signed").
+     * - After countersign we branch:
+     *     a) If first month + deposit are already marked paid (Pro logged
+     *        them off-platform) → status="active", email tenant their
+     *        move-in / key-pickup instructions.
+     *     b) Otherwise → status="awaiting_payment", email tenant the secure
+     *        payment link for first month's rent + deposit.
+     * - We also still accept legacy "paid" status for any lease that went
+     *   through the old workflow (tenant paid before countersign).
+     */
     landlordSign: protectedProcedure.input(z.object({
       leaseId: z.number(),
       signatureName: z.string().trim().min(2, "Type your full legal name to countersign.").max(120),
@@ -4891,40 +4971,103 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       if (!lease || lease.landlordUserId !== ctx.user.id) {
         throw new TRPCError({ code: "NOT_FOUND" });
       }
-      if (lease.status !== "paid") {
+      if (!["tenant_signed", "awaiting_payment", "paid"].includes(lease.status)) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
-          message: "Lease cannot be countersigned until tenant has paid first month's rent and security deposit.",
+          message: "Lease cannot be countersigned until the tenant has signed.",
         });
       }
+
       const now = new Date();
       const signerIp = (ctx as any)?.req?.headers?.["x-forwarded-for"]?.toString().split(",")[0].trim()
         ?? (ctx as any)?.req?.ip
         ?? null;
+
+      // Branch on whether payment was already logged off-platform.
+      const needsDeposit = (lease.securityDeposit ?? 0) > 0;
+      const paymentSatisfied = (lease.firstMonthPaid ?? 0) === 1 && (!needsDeposit || (lease.depositPaid ?? 0) === 1);
+
       await updateLeaseAgreement(lease.id, ctx.user.id, {
-        status: "signed",
+        status: paymentSatisfied ? "active" : "awaiting_payment",
         landlordSignedAt: now,
         landlordSignatureName: input.signatureName.trim(),
         landlordSignatureIp: signerIp ?? undefined,
         signedAt: now,
+        // Mark the payment-request emails as sent when we send them below
+        ...(paymentSatisfied ? {} : {
+          firstMonthPaymentSent: 1,
+          depositPaymentSent: needsDeposit ? 1 : 0,
+        }),
       } as any);
 
-      // Notify tenant the lease is fully executed and provide access details
       const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
-      sendEmail({
-        to: lease.tenantEmail,
-        subject: `Lease Fully Executed — Welcome Home (${lease.propertyAddress})`,
-        html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
-          <h2 style="color:#1B2B5E">Your Lease Is Fully Executed</h2>
-          <p>Hi ${lease.tenantName},</p>
-          <p>Your landlord has countersigned. The lease for <strong>${lease.propertyAddress}</strong> is now in effect.</p>
-          ${lease.accessMethod === "lockbox" && lease.lockboxCode ? `<p><strong>Lockbox code:</strong> ${lease.lockboxCode}</p>` : ""}
-          ${lease.accessInstructions ? `<p><strong>Move-in instructions:</strong> ${lease.accessInstructions}</p>` : ""}
-          <p style="margin-top:16px"><a href="${APP_URL}/tenant/dashboard" style="background:#00C896;color:#0a2a1f;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:700">Open Tenant Portal</a></p>
-        </div>`,
-      }).catch(() => {});
+      const leaseStartDateFormatted = lease.leaseStartDate
+        ? new Date(`${lease.leaseStartDate}T12:00:00Z`).toLocaleDateString("en-US", {
+            year: "numeric", month: "long", day: "numeric", timeZone: "UTC",
+          })
+        : undefined;
 
-      return { success: true };
+      if (paymentSatisfied) {
+        // ── PATH A: payment already collected → send key-pickup / move-in email
+        const accessMethod = lease.accessMethod ?? "key_pickup";
+        const accessBlock = (() => {
+          if (accessMethod === "lockbox" && lease.lockboxCode) {
+            return `<p style="background:#ecfdf5;border-left:4px solid #10B981;padding:12px 14px;border-radius:6px">
+              <strong>Lockbox code:</strong> <span style="font-family:monospace;font-size:18px;letter-spacing:2px">${lease.lockboxCode}</span>
+              ${lease.accessInstructions ? `<br/><span style="font-size:13px;color:#374151">${lease.accessInstructions}</span>` : ""}
+            </p>`;
+          }
+          if (accessMethod === "key_pickup") {
+            return `<p style="background:#ecfdf5;border-left:4px solid #10B981;padding:12px 14px;border-radius:6px">
+              <strong>Key pickup:</strong> ${lease.accessInstructions ?? "Your landlord will contact you to arrange key pickup."}
+            </p>`;
+          }
+          if (accessMethod === "in_person") {
+            return `<p style="background:#ecfdf5;border-left:4px solid #10B981;padding:12px 14px;border-radius:6px">
+              <strong>In-person handoff:</strong> ${lease.accessInstructions ?? "Your landlord will meet you at the property to hand off keys."}
+            </p>`;
+          }
+          return lease.accessInstructions
+            ? `<p style="background:#ecfdf5;border-left:4px solid #10B981;padding:12px 14px;border-radius:6px"><strong>Move-in instructions:</strong> ${lease.accessInstructions}</p>`
+            : "";
+        })();
+
+        sendEmail({
+          to: lease.tenantEmail,
+          subject: `Lease Fully Executed — Move-In Details Inside (${lease.propertyAddress})`,
+          html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+            <h2 style="color:#1B2B5E">Welcome Home — Lease Is Fully Executed</h2>
+            <p>Hi ${lease.tenantName},</p>
+            <p>Your landlord has countersigned the lease for <strong>${lease.propertyAddress}</strong>.${leaseStartDateFormatted ? ` Your move-in date is <strong>${leaseStartDateFormatted}</strong>.` : ""} Because your payment is already on file, you can go straight to move-in.</p>
+            ${accessBlock}
+            <p style="margin-top:16px"><a href="${APP_URL}/tenant/dashboard" style="background:#00C896;color:#0a2a1f;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:700">Open Tenant Portal</a></p>
+          </div>`,
+        }).catch(() => {});
+      } else {
+        // ── PATH B: payment not yet collected → send payment link
+        const emailParam = encodeURIComponent(lease.tenantEmail);
+        const rentPayUrl = `${APP_URL}/lease-pay/${lease.id}?email=${emailParam}&kind=rent`;
+        const depositPayUrl = needsDeposit ? `${APP_URL}/lease-pay/${lease.id}?email=${emailParam}&kind=deposit` : undefined;
+
+        sendEmail({
+          to: lease.tenantEmail,
+          subject: `Lease Countersigned — Final Step: Pay to Move In (${lease.propertyAddress})`,
+          html: leaseSignedPaymentEmail({
+            tenantName: lease.tenantName,
+            propertyAddress: lease.propertyAddress,
+            monthlyRentDollars: lease.monthlyRent / 100,
+            securityDepositDollars: (lease.securityDeposit ?? 0) / 100,
+            rentPaymentUrl: rentPayUrl,
+            depositPaymentUrl: depositPayUrl ?? rentPayUrl,
+            accessMethod: lease.accessMethod ?? "key_pickup",
+            lockboxCode: lease.lockboxCode ?? undefined,
+            accessInstructions: lease.accessInstructions ?? undefined,
+            leaseStartDateFormatted,
+          }),
+        }).catch(() => {});
+      }
+
+      return { success: true, branch: paymentSatisfied ? "key_pickup" : "payment_link" };
     }),
 
     /** Landlord: update a draft lease */

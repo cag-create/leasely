@@ -793,6 +793,18 @@ export default function Leases() {
                           <Send className="w-3 h-3" /> Resend
                         </Button>
                       )}
+                      {/* Per-row Countersign — visible the moment the tenant signs.
+                          New flow: landlord countersigns BEFORE payment link goes out.
+                          Legacy "paid" leases (tenant paid first) also work. */}
+                      {["tenant_signed", "awaiting_payment", "paid"].includes(lease.status) && !lease.landlordSignedAt && (
+                        <Button
+                          size="sm"
+                          className="bg-[#F5A623] hover:bg-[#e5961c] text-[#3A2410] font-bold gap-1 text-xs flex-1 sm:flex-none"
+                          onClick={e => { e.stopPropagation(); setCountersignFor(lease); }}
+                        >
+                          <CheckCircle2 className="w-3 h-3" /> Sign
+                        </Button>
+                      )}
                       {lease.status !== "draft" && (
                         <Button
                           size="sm"
@@ -803,6 +815,18 @@ export default function Leases() {
                           <ChevronRight className="w-3 h-3" /> Details
                         </Button>
                       )}
+                      {/* Per-row Delete — Pro-only on the server. Visible to all
+                          landlords so they discover the capability; server
+                          rejects with FORBIDDEN if they're not on Pro. */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 text-xs flex-1 sm:flex-none border-red-200 text-red-600 hover:bg-red-50"
+                        onClick={e => { e.stopPropagation(); setDeleteFor(lease); }}
+                        title="Delete lease (Pro)"
+                      >
+                        <Trash2 className="w-3 h-3" /> Delete
+                      </Button>
                       <span className="text-xs text-gray-400 hidden sm:inline">
                         {new Date(lease.createdAt).toLocaleDateString()}
                       </span>
@@ -1322,7 +1346,13 @@ export default function Leases() {
               <div className="space-y-4 pt-2">
                 <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
                   <p className="font-semibold mb-1">{countersignFor.propertyAddress}</p>
-                  <p className="text-xs">Tenant <strong>{countersignFor.tenantName}</strong> has signed and paid. Type your full legal name below to countersign and execute the lease.</p>
+                  <p className="text-xs">
+                    Tenant <strong>{countersignFor.tenantName}</strong> has signed. Type your full legal name below to countersign.
+                    {(countersignFor.firstMonthPaid ?? 0) === 1 && (((countersignFor.securityDeposit ?? 0) === 0) || (countersignFor.depositPaid ?? 0) === 1)
+                      ? <> Payment is already on file — after you sign, the tenant will receive their <strong>move-in / key-pickup instructions</strong>.</>
+                      : <> After you sign, Leasely will email the tenant a <strong>payment link</strong> for first month&apos;s rent{((countersignFor.securityDeposit ?? 0) > 0) ? " + security deposit" : ""}.</>
+                    }
+                  </p>
                 </div>
                 <div>
                   <Label className="text-sm font-semibold text-gray-700 mb-1.5">Your Full Legal Name *</Label>

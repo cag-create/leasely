@@ -9,7 +9,7 @@ import {
   Search, Eye, Download, Share2, Copy, Filter,
   Home, Building2, ChevronDown, AlertCircle, Plus, ShieldCheck,
   Sparkles, ThumbsUp, AlertTriangle, ThumbsDown, Briefcase, DollarSign,
-  ShieldAlert,
+  ShieldAlert, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -212,6 +212,17 @@ function ReceivedApplications({
   const utils = trpc.useUtils();
   const updateStatus = trpc.applications.updateStatus.useMutation({
     onSuccess: () => utils.applications.list.invalidate(),
+  });
+
+  // Manual delete — applications are NEVER auto-purged; landlord must
+  // explicitly delete. Confirmation via native window.confirm to keep this
+  // change scoped (no new modal scaffolding).
+  const deleteMutation = (trpc as any).applications.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Application deleted");
+      utils.applications.list.invalidate();
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Delete failed"),
   });
 
   // Override modal state — opened when a landlord clicks "Mark Approved"
@@ -721,6 +732,29 @@ function ReceivedApplications({
                           Applicant did not consent to background check
                         </span>
                       )}
+
+                      {/* Manual delete — applications never auto-expire; the
+                          landlord controls the lifecycle. Confirmation gate so
+                          one stray click can't wipe the row + AI screening
+                          history. */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs h-8 gap-1.5 border-red-500/40 text-red-600 hover:bg-red-500/10 dark:text-red-400 ml-auto"
+                        disabled={deleteMutation.isPending}
+                        onClick={e => {
+                          e.stopPropagation();
+                          const ok = window.confirm(
+                            `Delete this application from ${app.applicantName ?? "applicant"}?\n\n` +
+                            `This permanently removes the application, AI screening results, and any draft lease metadata.\n` +
+                            `This cannot be undone.`
+                          );
+                          if (ok) deleteMutation.mutate({ id: app.id });
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        {deleteMutation.isPending ? "Deleting…" : "Delete"}
+                      </Button>
                     </div>
                   </div>
                 )}
