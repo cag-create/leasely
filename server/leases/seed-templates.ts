@@ -571,6 +571,472 @@ const GENERIC_MULTISTATE: SeedTemplate = {
 </article>`,
 };
 
+// ─── California ───────────────────────────────────────────────────────────────
+const CA_RESIDENTIAL: SeedTemplate = {
+  state: "CA",
+  category: "standard_residential",
+  name: "California Residential Lease",
+  description: "Grounded in Cal. Civ. Code §§ 1950.5 (security deposit), 1954 (entry), 1941–1942 (habitability).",
+  variables: [
+    "landlord_name", "landlord_address", "tenant_name", "tenant_email",
+    "property_address", "unit_number", "state", "monthly_rent", "security_deposit",
+    "lease_start_date", "lease_end_date", "rent_due_day", "late_fee", "grace_period_days",
+    "landlord_repair_days", "early_termination_notice_days",
+    "utilities", "pets_allowed", "parking", "occupants", "payment_methods",
+  ],
+  citations: [
+    "Cal. Civ. Code § 1950.5", "Cal. Civ. Code § 1950.5(b)", "Cal. Civ. Code § 1950.5(g)",
+    "Cal. Civ. Code § 1954", "Cal. Civ. Code § 1954(d)",
+    "Cal. Civ. Code § 1941", "Cal. Civ. Code § 1942",
+    "42 U.S.C. § 4852d",
+  ],
+  disclosures: ["federal_lead_paint"],
+  bodyHtml: `
+<article class="lease-document" data-state="CA" data-tenancy="residential">
+  <header>
+    <h1>California Residential Lease Agreement</h1>
+    <p class="lease-subtitle">Governed by Cal. Civ. Code §§ 1940–1954.1</p>
+  </header>
+
+  <section><h2>1. Parties</h2>
+    <p><strong>Landlord:</strong> {{landlord_name}} ({{landlord_address}})</p>
+    <p><strong>Tenant:</strong> {{tenant_name}} ({{tenant_email}})</p>
+  </section>
+
+  <section><h2>2. Property</h2>
+    <p>Landlord leases to Tenant the residential premises at <strong>{{property_address}}</strong>, Unit <strong>{{unit_number}}</strong> (the "Property"). Authorized occupants: {{occupants}}.</p>
+  </section>
+
+  <section><h2>3. Term</h2>
+    <p>This Lease begins on <strong>{{lease_start_date}}</strong> and ends on <strong>{{lease_end_date}}</strong>, at which point Tenant shall vacate unless the parties execute a written renewal or the tenancy converts to month-to-month.</p>
+  </section>
+
+  <section><h2>4. Rent</h2>
+    <p>Monthly rent is <strong>{{monthly_rent}}</strong>, due on the <strong>{{rent_due_day}}</strong> of each month via {{payment_methods}}. California law does not mandate a statutory grace period; rent is due on the stated date. A late fee of <strong>{{late_fee}}</strong> is assessed if rent is not received within <strong>{{grace_period_days}}</strong> calendar days of the due date, provided the fee is reasonable and not a penalty.</p>
+  </section>
+
+  <section><h2>5. Security Deposit</h2>
+    <p>Tenant shall pay a security deposit of <strong>{{security_deposit}}</strong>. Per <em>Cal. Civ. Code § 1950.5(b)</em>, the deposit may not exceed two (2) months' rent for an unfurnished unit or three (3) months' rent for a furnished unit. Landlord shall return the deposit with an itemized written statement of any deductions no later than <strong>21 calendar days</strong> after Tenant vacates, per <em>Cal. Civ. Code § 1950.5(g)</em>. Deductions of $125 or more require copies of receipts or invoices; if Landlord performed the work, Landlord must state the hourly rate and hours spent. Deductions for ordinary wear and tear are prohibited.</p>
+  </section>
+
+  <section><h2>6. Utilities</h2>
+    <p>Utilities included: {{utilities}}. All others are Tenant's responsibility.</p>
+  </section>
+
+  <section><h2>7. Pets &amp; Parking</h2>
+    <p>Pets: {{pets_allowed}}. Parking: {{parking}}.</p>
+  </section>
+
+  <section><h2>8. Landlord Entry</h2>
+    <p>Landlord may enter for repairs, inspections, or showings only with reasonable advance written notice stating the date, approximate time, and purpose. <em>Cal. Civ. Code § 1954(d)</em> establishes <strong>24 hours as presumed reasonable notice</strong>. Entry without notice is permitted only in an emergency or with Tenant's consent at the time of entry.</p>
+  </section>
+
+  <section><h2>9. Habitability &amp; Repairs</h2>
+    <p>Landlord shall maintain the Property in a habitable condition per <em>Cal. Civ. Code § 1941</em>, including weatherproofing, plumbing, heating, and freedom from vermin. Upon written notice of a defective condition, Landlord shall remedy material habitability defects within <strong>{{landlord_repair_days}} days</strong>. If Landlord fails to act within the time required by <em>Cal. Civ. Code § 1942</em>, Tenant may repair and deduct the cost from rent (up to one month's rent, no more than twice per 12 months) or vacate and terminate.</p>
+  </section>
+
+  <section><h2>10. Early Termination</h2>
+    <p>Either party may terminate a month-to-month tenancy by providing at least <strong>{{early_termination_notice_days}} days</strong> written notice. For fixed-term leases, early termination by Tenant may result in liability for rent through re-letting or the end of the term, subject to Landlord's duty to mitigate. Servicemembers may terminate pursuant to 50 U.S.C. § 3955.</p>
+  </section>
+
+  <section><h2>11. Governing Law</h2>
+    <p>This lease is governed by <strong>California Residential Landlord-Tenant Law</strong>, <em>Cal. Civ. Code §§ 1940–1954.1</em>. Any provision conflicting with California law is void.</p>
+  </section>
+
+  ${FEDERAL_LEAD_PAINT}
+  ${COMPLIANCE_BLOCK}
+  ${SIGNATURE_BLOCK}
+</article>`,
+};
+
+// ─── Texas ────────────────────────────────────────────────────────────────────
+const TX_RESIDENTIAL: SeedTemplate = {
+  state: "TX",
+  category: "standard_residential",
+  name: "Texas Residential Lease",
+  description: "Grounded in Tex. Prop. Code Ch. 91 (termination/notice) and Ch. 92 (security deposit, habitability, entry).",
+  variables: [
+    "landlord_name", "landlord_address", "tenant_name", "tenant_email",
+    "property_address", "unit_number", "state", "monthly_rent", "security_deposit",
+    "lease_start_date", "lease_end_date", "rent_due_day", "late_fee", "grace_period_days",
+    "landlord_repair_days", "early_termination_notice_days",
+    "utilities", "pets_allowed", "parking", "occupants", "payment_methods",
+  ],
+  citations: [
+    "Tex. Prop. Code § 91.001", "Tex. Prop. Code § 92.017", "Tex. Prop. Code § 92.019",
+    "Tex. Prop. Code § 92.052", "Tex. Prop. Code § 92.056", "Tex. Prop. Code § 92.058",
+    "Tex. Prop. Code § 92.103", "Tex. Prop. Code § 92.104", "Tex. Prop. Code § 92.153",
+    "42 U.S.C. § 4852d",
+  ],
+  disclosures: ["federal_lead_paint"],
+  bodyHtml: `
+<article class="lease-document" data-state="TX" data-tenancy="residential">
+  <header>
+    <h1>Texas Residential Lease Agreement</h1>
+    <p class="lease-subtitle">Governed by Tex. Prop. Code Chs. 91–92</p>
+  </header>
+
+  <section><h2>1. Parties</h2>
+    <p><strong>Landlord:</strong> {{landlord_name}} ({{landlord_address}})</p>
+    <p><strong>Tenant:</strong> {{tenant_name}} ({{tenant_email}})</p>
+  </section>
+
+  <section><h2>2. Property</h2>
+    <p>Landlord leases to Tenant the residential premises at <strong>{{property_address}}</strong>, Unit <strong>{{unit_number}}</strong> (the "Property"). Authorized occupants: {{occupants}}.</p>
+  </section>
+
+  <section><h2>3. Term</h2>
+    <p>This Lease begins on <strong>{{lease_start_date}}</strong> and ends on <strong>{{lease_end_date}}</strong>. Holdover after expiration converts the tenancy to month-to-month subject to <em>Tex. Prop. Code § 91.001</em>.</p>
+  </section>
+
+  <section><h2>4. Rent</h2>
+    <p>Monthly rent is <strong>{{monthly_rent}}</strong>, due on the <strong>{{rent_due_day}}</strong> of each month via {{payment_methods}}. Texas law provides no statutory grace period. A late fee of <strong>{{late_fee}}</strong> applies if rent is not received within <strong>{{grace_period_days}}</strong> days of the due date, provided the fee is reasonable per <em>Tex. Prop. Code § 92.019</em>.</p>
+  </section>
+
+  <section><h2>5. Security Deposit</h2>
+    <p>Tenant shall pay a security deposit of <strong>{{security_deposit}}</strong>. Texas law imposes no statutory maximum. Landlord shall refund the deposit on or before the <strong>30th day</strong> after Tenant surrenders the premises per <em>Tex. Prop. Code § 92.103</em>. If any portion is withheld, Landlord must provide an itemized written description of deductions; deductions for ordinary wear and tear are prohibited per <em>Tex. Prop. Code § 92.104</em>. Tenant must provide a forwarding address in writing.</p>
+  </section>
+
+  <section><h2>6. Utilities</h2>
+    <p>Utilities included: {{utilities}}. All others are Tenant's responsibility.</p>
+  </section>
+
+  <section><h2>7. Pets &amp; Parking</h2>
+    <p>Pets: {{pets_allowed}}. Parking: {{parking}}.</p>
+  </section>
+
+  <section><h2>8. Landlord Entry</h2>
+    <p>Texas law does not specify a statutory advance-notice period for landlord entry. Landlord agrees to provide reasonable notice (at least <strong>24 hours</strong>) before entering for repairs, inspections, or showings, except in emergencies requiring immediate access to prevent damage or injury.</p>
+  </section>
+
+  <section><h2>9. Habitability &amp; Repairs</h2>
+    <p>Landlord shall make reasonable repairs to keep the Property fit for human habitation as required by <em>Tex. Prop. Code §§ 92.052–92.061</em>. Upon written notice, Landlord shall remedy conditions materially affecting health or safety within <strong>{{landlord_repair_days}} days</strong>. Tenant remedies for failure to repair include repair-and-deduct (up to one month's rent), lease termination, or suit for damages per <em>Tex. Prop. Code § 92.056</em>.</p>
+  </section>
+
+  <section><h2>10. Early Termination</h2>
+    <p>For a month-to-month tenancy, either party must give at least <strong>{{early_termination_notice_days}} days</strong> written notice before the next rental payment date per <em>Tex. Prop. Code § 91.001</em>. Military personnel may terminate pursuant to <em>Tex. Prop. Code § 92.017</em> and 50 U.S.C. § 3955.</p>
+  </section>
+
+  <section><h2>11. Governing Law</h2>
+    <p>This lease is governed by <strong>Texas Residential Landlord-Tenant Law</strong>, <em>Tex. Prop. Code Chs. 91–92</em>. Any provision conflicting with Texas law is void.</p>
+  </section>
+
+  ${FEDERAL_LEAD_PAINT}
+  ${COMPLIANCE_BLOCK}
+  ${SIGNATURE_BLOCK}
+</article>`,
+};
+
+// ─── Florida ──────────────────────────────────────────────────────────────────
+const FL_RESIDENTIAL: SeedTemplate = {
+  state: "FL",
+  category: "standard_residential",
+  name: "Florida Residential Lease",
+  description: "Grounded in the Florida Residential Landlord and Tenant Act, Fla. Stat. Ch. 83 (§§ 83.49, 83.51, 83.53, 83.56, 83.57).",
+  variables: [
+    "landlord_name", "landlord_address", "tenant_name", "tenant_email",
+    "property_address", "unit_number", "state", "monthly_rent", "security_deposit",
+    "lease_start_date", "lease_end_date", "rent_due_day", "late_fee", "grace_period_days",
+    "landlord_repair_days", "early_termination_notice_days",
+    "utilities", "pets_allowed", "parking", "occupants", "payment_methods",
+  ],
+  citations: [
+    "Fla. Stat. § 83.49", "Fla. Stat. § 83.51", "Fla. Stat. § 83.53",
+    "Fla. Stat. § 83.56", "Fla. Stat. § 83.57",
+    "42 U.S.C. § 4852d",
+  ],
+  disclosures: ["federal_lead_paint"],
+  bodyHtml: `
+<article class="lease-document" data-state="FL" data-tenancy="residential">
+  <header>
+    <h1>Florida Residential Lease Agreement</h1>
+    <p class="lease-subtitle">Governed by Fla. Stat. Ch. 83, Part II (Florida Residential Landlord and Tenant Act)</p>
+  </header>
+
+  <section><h2>1. Parties</h2>
+    <p><strong>Landlord:</strong> {{landlord_name}} ({{landlord_address}})</p>
+    <p><strong>Tenant:</strong> {{tenant_name}} ({{tenant_email}})</p>
+  </section>
+
+  <section><h2>2. Property</h2>
+    <p>Landlord leases to Tenant the residential premises at <strong>{{property_address}}</strong>, Unit <strong>{{unit_number}}</strong> (the "Property"). Authorized occupants: {{occupants}}.</p>
+  </section>
+
+  <section><h2>3. Term</h2>
+    <p>This Lease begins on <strong>{{lease_start_date}}</strong> and ends on <strong>{{lease_end_date}}</strong>. Holdover converts the tenancy to month-to-month subject to termination provisions of <em>Fla. Stat. § 83.57</em>.</p>
+  </section>
+
+  <section><h2>4. Rent</h2>
+    <p>Monthly rent is <strong>{{monthly_rent}}</strong>, due on the <strong>{{rent_due_day}}</strong> of each month without demand, via {{payment_methods}}. Florida law provides no statutory grace period. If rent is not received within <strong>{{grace_period_days}}</strong> days, Landlord may serve a three (3)-day written notice to pay or vacate per <em>Fla. Stat. § 83.56(3)</em>. A late fee of <strong>{{late_fee}}</strong> may be assessed as provided in this lease.</p>
+  </section>
+
+  <section><h2>5. Security Deposit</h2>
+    <p>Tenant shall pay a security deposit of <strong>{{security_deposit}}</strong>. Florida law imposes no statutory maximum. Per <em>Fla. Stat. § 83.49</em>, Landlord shall hold the deposit in a separate Florida financial institution account (non-interest-bearing, or interest-bearing at ≥75% of the prevailing money market rate, or secured by surety bond). If Landlord imposes no claim, the deposit shall be returned within <strong>15 days</strong> after Tenant vacates. If Landlord intends to impose a claim, Landlord must provide written notice of the claim within <strong>30 days</strong>; Tenant has 15 days to object in writing.</p>
+  </section>
+
+  <section><h2>6. Utilities</h2>
+    <p>Utilities included: {{utilities}}. All others are Tenant's responsibility.</p>
+  </section>
+
+  <section><h2>7. Pets &amp; Parking</h2>
+    <p>Pets: {{pets_allowed}}. Parking: {{parking}}.</p>
+  </section>
+
+  <section><h2>8. Landlord Entry</h2>
+    <p>Per <em>Fla. Stat. § 83.53</em>, Landlord may enter only at reasonable times (between <strong>7:30 a.m. and 8:00 p.m.</strong>) with at least <strong>24 hours</strong> advance notice, except in an emergency or when Tenant has been absent for one-half the rental period with rent current and no written notice of absence on file.</p>
+  </section>
+
+  <section><h2>9. Habitability &amp; Repairs</h2>
+    <p>Per <em>Fla. Stat. § 83.51</em>, Landlord shall maintain the roofs, windows, doors, floors, exterior walls, plumbing, electrical systems, and provide functioning heat, running water, hot water, and pest extermination. Upon written notice, Landlord shall remedy material habitability defects within <strong>{{landlord_repair_days}} days</strong>. Tenant remedies for failure include rent withholding or termination after seven (7) days' written notice per <em>Fla. Stat. § 83.56(1)</em>.</p>
+  </section>
+
+  <section><h2>10. Early Termination</h2>
+    <p>Per <em>Fla. Stat. § 83.57</em>, termination of a month-to-month tenancy requires at least <strong>{{early_termination_notice_days}} days</strong> written notice (minimum 30 days for month-to-month; 60 days for year-to-year). For early termination of a fixed-term lease, Tenant remains liable for rent through re-letting, subject to Landlord's duty to mitigate.</p>
+  </section>
+
+  <section><h2>11. Governing Law</h2>
+    <p>This lease is governed by the <strong>Florida Residential Landlord and Tenant Act</strong>, <em>Fla. Stat. Ch. 83, Part II (§§ 83.40–83.683)</em>. Any provision conflicting with Florida law is void.</p>
+  </section>
+
+  ${FEDERAL_LEAD_PAINT}
+  ${COMPLIANCE_BLOCK}
+  ${SIGNATURE_BLOCK}
+</article>`,
+};
+
+// ─── New York ─────────────────────────────────────────────────────────────────
+const NY_RESIDENTIAL: SeedTemplate = {
+  state: "NY",
+  category: "standard_residential",
+  name: "New York Residential Lease",
+  description: "Grounded in N.Y. Real Prop. Law Art. 7 (§§ 235-b, 226-c, 232-a, 238-a) and N.Y. Gen. Oblig. Law § 7-108.",
+  variables: [
+    "landlord_name", "landlord_address", "tenant_name", "tenant_email",
+    "property_address", "unit_number", "state", "monthly_rent", "security_deposit",
+    "lease_start_date", "lease_end_date", "rent_due_day", "late_fee", "grace_period_days",
+    "landlord_repair_days", "early_termination_notice_days",
+    "utilities", "pets_allowed", "parking", "occupants", "payment_methods",
+  ],
+  citations: [
+    "N.Y. Real Prop. Law § 235-b", "N.Y. Real Prop. Law § 226-c",
+    "N.Y. Real Prop. Law § 232-a", "N.Y. Real Prop. Law § 232-b",
+    "N.Y. Real Prop. Law § 238-a", "N.Y. Gen. Oblig. Law § 7-108",
+    "42 U.S.C. § 4852d",
+  ],
+  disclosures: ["federal_lead_paint"],
+  bodyHtml: `
+<article class="lease-document" data-state="NY" data-tenancy="residential">
+  <header>
+    <h1>New York Residential Lease Agreement</h1>
+    <p class="lease-subtitle">Governed by N.Y. Real Prop. Law Art. 7 and N.Y. Gen. Oblig. Law § 7-108</p>
+  </header>
+
+  <section><h2>1. Parties</h2>
+    <p><strong>Landlord:</strong> {{landlord_name}} ({{landlord_address}})</p>
+    <p><strong>Tenant:</strong> {{tenant_name}} ({{tenant_email}})</p>
+  </section>
+
+  <section><h2>2. Property</h2>
+    <p>Landlord leases to Tenant the residential premises at <strong>{{property_address}}</strong>, Apt./Unit <strong>{{unit_number}}</strong> (the "Property"). Authorized occupants: {{occupants}}.</p>
+  </section>
+
+  <section><h2>3. Term</h2>
+    <p>This Lease begins on <strong>{{lease_start_date}}</strong> and ends on <strong>{{lease_end_date}}</strong>. For non-renewal or rent increases of 5% or more, Landlord must provide advance written notice per <em>N.Y. Real Prop. Law § 226-c</em>: at least 30 days for tenancies under one year, 60 days for one-to-two-year tenancies, and 90 days for tenancies over two years.</p>
+  </section>
+
+  <section><h2>4. Rent</h2>
+    <p>Monthly rent is <strong>{{monthly_rent}}</strong>, due on the <strong>{{rent_due_day}}</strong> of each month via {{payment_methods}}. New York law provides a statutory <strong>5-day grace period</strong> before a late fee may be charged per <em>N.Y. Real Prop. Law § 238-a</em>. After the grace period, a late fee of <strong>{{late_fee}}</strong> (not to exceed $50 or 5% of the monthly rent, whichever is less) may be assessed per <em>§ 238-a(2)</em>. The grace period under this lease is <strong>{{grace_period_days}} days</strong>.</p>
+  </section>
+
+  <section><h2>5. Security Deposit</h2>
+    <p>Tenant shall pay a security deposit of <strong>{{security_deposit}}</strong>. Per <em>N.Y. Gen. Oblig. Law § 7-108</em>, the deposit may not exceed <strong>one (1) month's rent</strong>. Landlord shall return the deposit with an itemized statement of deductions within <strong>14 days</strong> after Tenant vacates and surrenders the premises. Failure to timely return the deposit or provide required itemization forfeits Landlord's right to retain any portion. Deductions for ordinary wear and tear are prohibited.</p>
+  </section>
+
+  <section><h2>6. Utilities</h2>
+    <p>Utilities included: {{utilities}}. All others are Tenant's responsibility.</p>
+  </section>
+
+  <section><h2>7. Pets &amp; Parking</h2>
+    <p>Pets: {{pets_allowed}}. Parking: {{parking}}.</p>
+  </section>
+
+  <section><h2>8. Landlord Entry</h2>
+    <p>Landlord agrees to provide reasonable written notice of at least <strong>24 hours</strong> before entering for inspections, repairs, or showings, except in genuine emergencies. Entry shall occur at reasonable times. Harassment or abuse of entry rights is prohibited under <em>N.Y. Real Prop. Law § 235-d</em>.</p>
+  </section>
+
+  <section><h2>9. Habitability &amp; Repairs</h2>
+    <p>Landlord covenants, per <em>N.Y. Real Prop. Law § 235-b</em> (Warranty of Habitability), that the Property is fit for human habitation and free from conditions dangerous or detrimental to Tenant's life, health, or safety. This warranty cannot be waived by Tenant. Upon written notice of defective conditions, Landlord shall remedy material defects within <strong>{{landlord_repair_days}} days</strong>. Tenant's remedies include rent withholding, rent abatement, and repair-and-deduct as permitted by law.</p>
+  </section>
+
+  <section><h2>10. Early Termination</h2>
+    <p>To terminate a month-to-month tenancy in New York City, either party must provide at least <strong>{{early_termination_notice_days}} days</strong> written notice per <em>N.Y. Real Prop. Law § 232-a</em> (minimum 30 days in NYC). Outside New York City, at least one month's notice is required per <em>§ 232-b</em>. For longer tenancies, <em>§ 226-c</em> governs required notice periods of 30–90 days based on tenancy duration.</p>
+  </section>
+
+  <section><h2>11. Governing Law</h2>
+    <p>This lease is governed by <strong>New York Real Property Law</strong>, <em>N.Y. Real Prop. Law Art. 7 (§§ 220–238-a)</em>, and <em>N.Y. Gen. Oblig. Law § 7-108</em>. Any provision conflicting with New York law is void.</p>
+  </section>
+
+  ${FEDERAL_LEAD_PAINT}
+  ${COMPLIANCE_BLOCK}
+  ${SIGNATURE_BLOCK}
+</article>`,
+};
+
+// ─── Illinois ─────────────────────────────────────────────────────────────────
+const IL_RESIDENTIAL: SeedTemplate = {
+  state: "IL",
+  category: "standard_residential",
+  name: "Illinois Residential Lease",
+  description: "Grounded in the IL Security Deposit Return Act (765 ILCS 710), Security Deposit Interest Act (765 ILCS 720), and Landlord and Tenant Act (765 ILCS 735).",
+  variables: [
+    "landlord_name", "landlord_address", "tenant_name", "tenant_email",
+    "property_address", "unit_number", "state", "monthly_rent", "security_deposit",
+    "lease_start_date", "lease_end_date", "rent_due_day", "late_fee", "grace_period_days",
+    "landlord_repair_days", "early_termination_notice_days",
+    "utilities", "pets_allowed", "parking", "occupants", "payment_methods",
+  ],
+  citations: [
+    "765 ILCS 710/1", "765 ILCS 710/2", "765 ILCS 720/1", "765 ILCS 735/1", "765 ILCS 735/2",
+    "42 U.S.C. § 4852d",
+  ],
+  disclosures: ["federal_lead_paint"],
+  bodyHtml: `
+<article class="lease-document" data-state="IL" data-tenancy="residential">
+  <header>
+    <h1>Illinois Residential Lease Agreement</h1>
+    <p class="lease-subtitle">Governed by 765 ILCS 710 (Security Deposit Return Act), 765 ILCS 720 (Security Deposit Interest Act), and 765 ILCS 735 (Landlord and Tenant Act)</p>
+  </header>
+
+  <section><h2>1. Parties</h2>
+    <p><strong>Landlord:</strong> {{landlord_name}} ({{landlord_address}})</p>
+    <p><strong>Tenant:</strong> {{tenant_name}} ({{tenant_email}})</p>
+  </section>
+
+  <section><h2>2. Property</h2>
+    <p>Landlord leases to Tenant the residential premises at <strong>{{property_address}}</strong>, Unit <strong>{{unit_number}}</strong> (the "Property"). Authorized occupants: {{occupants}}.</p>
+  </section>
+
+  <section><h2>3. Term</h2>
+    <p>This Lease begins on <strong>{{lease_start_date}}</strong> and ends on <strong>{{lease_end_date}}</strong>. Holdover without a new written agreement converts the tenancy to month-to-month.</p>
+  </section>
+
+  <section><h2>4. Rent</h2>
+    <p>Monthly rent is <strong>{{monthly_rent}}</strong>, due on the <strong>{{rent_due_day}}</strong> of each month via {{payment_methods}}. Illinois statewide law does not mandate a grace period. A late fee of <strong>{{late_fee}}</strong> may be assessed if rent is not received within <strong>{{grace_period_days}}</strong> days of the due date. <em>Note: Chicago and other municipalities may impose local grace period requirements; confirm local ordinance applicability.</em></p>
+  </section>
+
+  <section><h2>5. Security Deposit</h2>
+    <p>Tenant shall pay a security deposit of <strong>{{security_deposit}}</strong>. Illinois law imposes no statewide maximum. Per <em>765 ILCS 710/1</em>, Landlord shall return the deposit within <strong>30 days</strong> after Tenant vacates, with an itemized written statement of any deductions; failure to comply entitles Tenant to the full deposit plus costs. Per <em>765 ILCS 720/1</em>, if the building contains 25 or more units, Landlord must pay interest on the deposit at the rate announced by the Illinois Commissioner of Banks and Trust Companies. Deductions for ordinary wear and tear are prohibited.</p>
+  </section>
+
+  <section><h2>6. Utilities</h2>
+    <p>Utilities included: {{utilities}}. All others are Tenant's responsibility.</p>
+  </section>
+
+  <section><h2>7. Pets &amp; Parking</h2>
+    <p>Pets: {{pets_allowed}}. Parking: {{parking}}.</p>
+  </section>
+
+  <section><h2>8. Landlord Entry</h2>
+    <p>Illinois statewide law does not specify a fixed advance-notice period for landlord entry. Landlord agrees to provide reasonable written notice of at least <strong>24 hours</strong> before entering for repairs, inspections, or showings, except in genuine emergencies. <em>Note: Chicago RLTO § 5-12-050 requires at least 2 days' notice for Chicago properties; confirm local ordinance applicability.</em></p>
+  </section>
+
+  <section><h2>9. Habitability &amp; Repairs</h2>
+    <p>Per <em>765 ILCS 735/1–2</em>, Landlord shall maintain the Property in a habitable condition, including sound structure, working plumbing, heating adequate to maintain 68°F, and functioning electrical systems. Upon written notice, Landlord shall remedy material habitability defects within <strong>{{landlord_repair_days}} days</strong>. Where local ordinances (such as the Chicago RLTO) apply, Tenant may have additional remedies including rent withholding and repair-and-deduct.</p>
+  </section>
+
+  <section><h2>10. Early Termination</h2>
+    <p>Either party may terminate a month-to-month tenancy by providing at least <strong>{{early_termination_notice_days}} days</strong> written notice (minimum 30 days statewide). For fixed-term leases, early termination by Tenant may result in liability for remaining rent, subject to Landlord's duty to mitigate. Servicemembers may terminate pursuant to 50 U.S.C. § 3955.</p>
+  </section>
+
+  <section><h2>11. Governing Law</h2>
+    <p>This lease is governed by the <strong>Illinois Landlord and Tenant Act</strong> (<em>765 ILCS 735</em>), the <strong>Illinois Security Deposit Return Act</strong> (<em>765 ILCS 710</em>), and the <strong>Illinois Security Deposit Interest Act</strong> (<em>765 ILCS 720</em>). Any provision conflicting with Illinois law is void.</p>
+  </section>
+
+  ${FEDERAL_LEAD_PAINT}
+  ${COMPLIANCE_BLOCK}
+  ${SIGNATURE_BLOCK}
+</article>`,
+};
+
+// ─── Washington ───────────────────────────────────────────────────────────────
+const WA_RESIDENTIAL: SeedTemplate = {
+  state: "WA",
+  category: "standard_residential",
+  name: "Washington Residential Lease",
+  description: "Grounded in the Washington Residential Landlord-Tenant Act, RCW 59.18 (§§ 59.18.060, 59.18.150, 59.18.260, 59.18.280).",
+  variables: [
+    "landlord_name", "landlord_address", "tenant_name", "tenant_email",
+    "property_address", "unit_number", "state", "monthly_rent", "security_deposit",
+    "lease_start_date", "lease_end_date", "rent_due_day", "late_fee", "grace_period_days",
+    "landlord_repair_days", "early_termination_notice_days",
+    "utilities", "pets_allowed", "parking", "occupants", "payment_methods",
+  ],
+  citations: [
+    "RCW 59.18.060", "RCW 59.18.070", "RCW 59.18.100",
+    "RCW 59.18.150", "RCW 59.18.200", "RCW 59.18.260", "RCW 59.18.280", "RCW 59.18.650",
+    "42 U.S.C. § 4852d",
+  ],
+  disclosures: ["federal_lead_paint"],
+  bodyHtml: `
+<article class="lease-document" data-state="WA" data-tenancy="residential">
+  <header>
+    <h1>Washington Residential Lease Agreement</h1>
+    <p class="lease-subtitle">Governed by the Washington Residential Landlord-Tenant Act, RCW Ch. 59.18</p>
+  </header>
+
+  <section><h2>1. Parties</h2>
+    <p><strong>Landlord:</strong> {{landlord_name}} ({{landlord_address}})</p>
+    <p><strong>Tenant:</strong> {{tenant_name}} ({{tenant_email}})</p>
+  </section>
+
+  <section><h2>2. Property</h2>
+    <p>Landlord leases to Tenant the residential premises at <strong>{{property_address}}</strong>, Unit <strong>{{unit_number}}</strong> (the "Property"). Authorized occupants: {{occupants}}.</p>
+  </section>
+
+  <section><h2>3. Term</h2>
+    <p>This Lease begins on <strong>{{lease_start_date}}</strong> and ends on <strong>{{lease_end_date}}</strong>. Holdover after lease expiration converts to month-to-month subject to <em>RCW 59.18.200</em>.</p>
+  </section>
+
+  <section><h2>4. Rent</h2>
+    <p>Monthly rent is <strong>{{monthly_rent}}</strong>, due on the <strong>{{rent_due_day}}</strong> of each month via {{payment_methods}}. Washington law does not mandate a statewide statutory grace period. A late fee of <strong>{{late_fee}}</strong> may be assessed if rent is not received within <strong>{{grace_period_days}}</strong> days of the due date, provided the fee is reasonable and disclosed in the lease.</p>
+  </section>
+
+  <section><h2>5. Security Deposit</h2>
+    <p>Tenant shall pay a security deposit of <strong>{{security_deposit}}</strong>. Washington law imposes no statutory maximum deposit amount. Per <em>RCW 59.18.260</em>, at commencement Landlord must provide a written checklist signed by both parties describing the condition of the premises; failure to provide this checklist makes Landlord liable to return the full deposit. Per <em>RCW 59.18.280</em>, Landlord shall return the deposit with a full itemized written statement of deductions within <strong>30 days</strong> after Tenant vacates. Deductions must be accompanied by receipts, invoices, or labor-rate records. Deductions for ordinary wear and tear are prohibited. Intentional failure to comply entitles Tenant to up to twice the withheld deposit amount.</p>
+  </section>
+
+  <section><h2>6. Utilities</h2>
+    <p>Utilities included: {{utilities}}. All others are Tenant's responsibility.</p>
+  </section>
+
+  <section><h2>7. Pets &amp; Parking</h2>
+    <p>Pets: {{pets_allowed}}. Parking: {{parking}}.</p>
+  </section>
+
+  <section><h2>8. Landlord Entry</h2>
+    <p>Per <em>RCW 59.18.150</em>, Landlord must provide at least <strong>two (2) days' written notice</strong> before entering to inspect, make repairs, or show the unit. Notice must specify the date and approximate time. Entry must occur at reasonable times. Landlord may enter without notice only in an emergency or upon tenant abandonment. Landlord may not abuse access rights or use entry to harass Tenant.</p>
+  </section>
+
+  <section><h2>9. Habitability &amp; Repairs</h2>
+    <p>Per <em>RCW 59.18.060</em>, Landlord shall maintain the Property in a habitable condition, including weatherproofing, structural soundness, working plumbing and electrical systems, adequate heat, and hot and cold running water. Per <em>RCW 59.18.070</em>, upon written notice, Landlord shall remedy: emergency conditions affecting health or safety within <strong>24 hours</strong>; essential services failures within <strong>10 days</strong>; other habitability defects within <strong>{{landlord_repair_days}} days</strong>. If Landlord fails to remedy, Tenant may pursue repair-and-deduct (up to two months' rent) or terminate per <em>RCW 59.18.100</em>.</p>
+  </section>
+
+  <section><h2>10. Early Termination</h2>
+    <p>Per <em>RCW 59.18.200</em>, either party may terminate a month-to-month tenancy by providing at least <strong>{{early_termination_notice_days}} days</strong> written notice (minimum 20 days prior to the end of the rental period). Per <em>RCW 59.18.650</em>, evictions require just-cause grounds and proper notice. Servicemembers may terminate pursuant to 50 U.S.C. § 3955.</p>
+  </section>
+
+  <section><h2>11. Governing Law</h2>
+    <p>This lease is governed by the <strong>Washington Residential Landlord-Tenant Act</strong>, <em>RCW Ch. 59.18</em>. Any provision conflicting with Washington law is void.</p>
+  </section>
+
+  ${FEDERAL_LEAD_PAINT}
+  ${COMPLIANCE_BLOCK}
+  ${SIGNATURE_BLOCK}
+</article>`,
+};
+
 export const SEED_TEMPLATES: SeedTemplate[] = [
   NC_RESIDENTIAL, NC_COLIVING, TN_RESIDENTIAL, TN_COLIVING, GENERIC_MULTISTATE,
+  CA_RESIDENTIAL, TX_RESIDENTIAL, FL_RESIDENTIAL, NY_RESIDENTIAL,
+  IL_RESIDENTIAL, WA_RESIDENTIAL,
 ];
