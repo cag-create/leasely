@@ -69,6 +69,7 @@ export default function ListProperty() {
   const [step, setStep] = useState(1);
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [geocodedCoords, setGeocodedCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -139,11 +140,21 @@ export default function ListProperty() {
     }
   }, [watchedValues.address, watchedValues.city, watchedValues.state, watchedValues.zip]);
 
-  const handlePhotoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
+  const MAX_PHOTOS = 10;
+
+  const uploadFiles = useCallback(async (files: File[]) => {
+    setPhotos(prev => {
+      const remaining = MAX_PHOTOS - prev.length;
+      if (remaining <= 0) { toast.error(`Maximum ${MAX_PHOTOS} photos allowed`); return prev; }
+      return prev; // actual add happens after upload
+    });
     setUploading(true);
     for (const file of files) {
       try {
+        setPhotos(prev => {
+          if (prev.length >= MAX_PHOTOS) { toast.error(`Maximum ${MAX_PHOTOS} photos allowed`); return prev; }
+          return prev;
+        });
         const dataUrl = await prepareImageForUpload(file);
         const res = await fetch("/api/upload", {
           method: "POST",
@@ -152,7 +163,10 @@ export default function ListProperty() {
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok && data.url) {
-          setPhotos(prev => [...prev, data.url]);
+          setPhotos(prev => {
+            if (prev.length >= MAX_PHOTOS) { toast.error(`Maximum ${MAX_PHOTOS} photos allowed`); return prev; }
+            return [...prev, data.url];
+          });
         } else {
           toast.error(data.error || `Upload failed (${res.status})`);
         }
@@ -161,8 +175,21 @@ export default function ListProperty() {
       }
     }
     setUploading(false);
-    e.target.value = "";
   }, []);
+
+  const handlePhotoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    await uploadFiles(files);
+  }, [uploadFiles]);
+
+  const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragging(false);
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/"));
+    if (files.length === 0) return;
+    await uploadFiles(files);
+  }, [uploadFiles]);
 
   const onSubmit = (data: FormData) => {
     if (!isAuthenticated) {
@@ -517,7 +544,13 @@ export default function ListProperty() {
                 <h2 className="text-xl font-black text-gray-900">Photos & Description</h2>
                 <div>
                   <Label>Photos (up to 10)</Label>
-                  <div className="mt-1.5 border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center hover:border-emerald-400 transition-colors">
+                  <div
+                    className={`mt-1.5 border-2 border-dashed rounded-2xl p-8 text-center transition-colors ${dragging ? "border-emerald-400 bg-emerald-50" : "border-gray-200 hover:border-emerald-400"} ${photos.length >= MAX_PHOTOS ? "opacity-50 pointer-events-none" : ""}`}
+                    onDragOver={e => { e.preventDefault(); setDragging(true); }}
+                    onDragEnter={e => { e.preventDefault(); setDragging(true); }}
+                    onDragLeave={() => setDragging(false)}
+                    onDrop={handleDrop}
+                  >
                     <input
                       type="file"
                       accept="image/*"
@@ -525,11 +558,14 @@ export default function ListProperty() {
                       className="hidden"
                       id="photo-upload"
                       onChange={handlePhotoUpload}
+                      disabled={photos.length >= MAX_PHOTOS}
                     />
-                    <label htmlFor="photo-upload" className="cursor-pointer">
+                    <label htmlFor="photo-upload" className={photos.length >= MAX_PHOTOS ? "cursor-not-allowed" : "cursor-pointer"}>
                       {uploading
                         ? <><Loader2 className="h-10 w-10 text-emerald-400 mx-auto mb-3 animate-spin" /><p className="text-gray-500 font-medium">Uploading...</p></>
-                        : <><Upload className="h-10 w-10 text-gray-300 mx-auto mb-3" /><p className="text-gray-500 font-medium">Click to upload photos</p><p className="text-gray-400 text-sm mt-1">JPG, PNG, WebP up to 10MB each</p></>
+                        : photos.length >= MAX_PHOTOS
+                          ? <><Upload className="h-10 w-10 text-gray-200 mx-auto mb-3" /><p className="text-gray-400 font-medium">Maximum {MAX_PHOTOS} photos reached</p></>
+                          : <><Upload className={`h-10 w-10 mx-auto mb-3 ${dragging ? "text-emerald-400" : "text-gray-300"}`} /><p className="text-gray-500 font-medium">{dragging ? "Drop photos here" : "Drag & drop or click to upload"}</p><p className="text-gray-400 text-sm mt-1">JPG, PNG, WebP · up to {MAX_PHOTOS - photos.length} more photo{MAX_PHOTOS - photos.length !== 1 ? "s" : ""}</p></>
                       }
                     </label>
                   </div>
@@ -549,9 +585,6 @@ export default function ListProperty() {
                       ))}
                     </div>
                   )}
-                  <p className="text-xs text-gray-400 mt-2">
-                    Note: Photos are stored locally for preview. For production, they will be uploaded to secure cloud storage.
-                  </p>
                 </div>
                 <div>
                   <Label htmlFor="description">Description</Label>
