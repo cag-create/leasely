@@ -18,6 +18,7 @@ import { LEASELY_PRO, LEASELY_PRO_SETUP, DOMAIN_RENEWAL_ANNUAL } from "./product
 import QRCode from "qrcode";
 import { generateObject } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
+import { createAnthropic } from "@ai-sdk/anthropic";
 import { ENV } from "./_core/env";
 import { createPatchedFetch } from "./_core/patchedFetch";
 
@@ -3368,60 +3369,36 @@ Target monthly rent: $${targetRent.toFixed(2)}
 APPLICATION
 ${JSON.stringify(applicantPayload, null, 2)}`;
 
-      // Reuse the same Forge-API-backed OpenAI provider the chat handler uses.
-      const baseURL = ENV.forgeApiUrl.endsWith("/v1") ? ENV.forgeApiUrl : `${ENV.forgeApiUrl}/v1`;
-      if (!ENV.forgeApiKey) {
+      if (!ENV.anthropicApiKey) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
-          message: "AI screening is not configured on this server (missing API key). Ask your admin to set BUILT_IN_FORGE_API_KEY or OPENAI_API_KEY in the environment.",
+          message: "AI screening is not configured on this server. Ask your admin to set ANTHROPIC_API_KEY in the environment.",
         });
       }
-      const openai = createOpenAI({
-        baseURL,
-        apiKey: ENV.forgeApiKey,
-        fetch: createPatchedFetch(fetch),
-      });
-
-      // Swapped back to gpt-4o-mini — on Manus this ran through the Forge
-      // proxy (BUILT_IN_FORGE_API_URL) which is heavily optimized. On Railway
-      // we go to api.openai.com directly, and gpt-4o + this nested schema was
-      // consistently exceeding 60s. gpt-4o-mini is 3–10× faster on structured
-      // outputs and handles this schema cleanly.
-      const MODEL = "gpt-4o-mini";
+      const anthropic = createAnthropic({ apiKey: ENV.anthropicApiKey });
+      // claude-sonnet-4-6 handles the nested schema reliably and is fast
+      // enough that the 80s timeout is rarely needed.
+      const MODEL = "claude-sonnet-4-6";
       const startedAt = Date.now();
       console.log("[runAiScreening] starting", {
         appId: input.id,
-        baseURL,
         model: MODEL,
-        hasKey: !!ENV.forgeApiKey,
         promptChars: systemPrompt.length + userPrompt.length,
       });
       try {
-        // Hard timeout via Promise.race — the SDK's abortSignal does NOT
-        // actually cancel the in-flight request through the
-        // createPatchedFetch wrapper, so we add a wall-clock racer that
-        // forcibly rejects. 80s server cutoff < 120s client cutoff leaves
-        // headroom for the round trip.
         const HARD_TIMEOUT_MS = 80_000;
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), HARD_TIMEOUT_MS);
         const racedTimeout = new Promise<never>((_, reject) => {
           setTimeout(() => reject(new Error(`HARD_TIMEOUT after ${HARD_TIMEOUT_MS}ms`)), HARD_TIMEOUT_MS);
         });
         const generation = generateObject({
-          model: openai(MODEL),
+          model: anthropic(MODEL),
           schema: ScreeningSchema,
           system: systemPrompt,
           prompt: userPrompt,
-          maxRetries: 0,
-          abortSignal: controller.signal,
+          maxRetries: 1,
         });
         let object: any;
-        try {
-          ({ object } = await Promise.race([generation, racedTimeout]));
-        } finally {
-          clearTimeout(timer);
-        }
+        ({ object } = await Promise.race([generation, racedTimeout]));
         console.log("[runAiScreening] success", {
           appId: input.id,
           elapsedMs: Date.now() - startedAt,
