@@ -17,7 +17,7 @@ import {
   Zap, Wind, Utensils, Calendar, DollarSign, Eye, Bookmark,
   Building2, ExternalLink, CheckCircle2, X, Image as ImageIcon, Camera,
 } from "lucide-react";
-import { formatRent, getListingImage, parsePhotos, PROPERTY_TYPE_LABELS, PLACEHOLDER_IMAGES } from "@/lib/marketplace";
+import { formatRent, getListingImage, parsePhotos, PROPERTY_TYPE_LABELS } from "@/lib/marketplace";
 
 const BRAND = "#1B2B5E";
 const ACCENT = "#4F46E5";

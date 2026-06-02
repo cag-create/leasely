@@ -84,18 +84,34 @@ export function getFirstPhoto(photosJson: string | null | undefined): string | n
   return photos[0] ?? null;
 }
 
-// Placeholder images for listings without photos
-export const PLACEHOLDER_IMAGES = [
-  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
-  "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
-  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80",
-  "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80",
-  "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&q=80",
-  "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80",
-];
+// Neutral "no photo" placeholder for real listings that haven't uploaded yet.
+// Self-contained SVG data URI — no hot-linking, no rate-limit risk, and clearly
+// reads as "empty state" rather than masquerading as a real interior photo.
+// Sample listings (negative IDs) bake their own Unsplash URLs into `photos`
+// so they never hit this fallback.
+const NO_PHOTO_SVG =
+  "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600' preserveAspectRatio='xMidYMid slice'>" +
+  "<defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'>" +
+  "<stop offset='0' stop-color='%23f3f4f6'/><stop offset='1' stop-color='%23e5e7eb'/>" +
+  "</linearGradient></defs>" +
+  "<rect width='800' height='600' fill='url(%23g)'/>" +
+  "<g transform='translate(400 270)' fill='none' stroke='%239ca3af' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'>" +
+  "<rect x='-80' y='-40' width='160' height='110' rx='12'/>" +
+  "<circle cx='0' cy='20' r='32'/>" +
+  "<rect x='-28' y='-58' width='56' height='22' rx='5'/>" +
+  "</g>" +
+  "<text x='400' y='430' font-family='system-ui,-apple-system,Segoe UI,sans-serif' font-size='30' font-weight='600' fill='%239ca3af' text-anchor='middle'>No photos yet</text>" +
+  "</svg>";
 
-export function getListingImage(photosJson: string | null | undefined, id: number): string {
-  const first = getFirstPhoto(photosJson);
-  if (first) return first;
-  return PLACEHOLDER_IMAGES[id % PLACEHOLDER_IMAGES.length];
+export const NO_PHOTO_PLACEHOLDER = `data:image/svg+xml;charset=utf-8,${NO_PHOTO_SVG}`;
+
+/** Back-compat: a few callsites still import this name. Single-entry array of the SVG placeholder. */
+export const PLACEHOLDER_IMAGES = [NO_PHOTO_PLACEHOLDER];
+
+export function hasUploadedPhoto(photosJson: string | null | undefined): boolean {
+  return getFirstPhoto(photosJson) !== null;
+}
+
+export function getListingImage(photosJson: string | null | undefined, _id?: number): string {
+  return getFirstPhoto(photosJson) ?? NO_PHOTO_PLACEHOLDER;
 }

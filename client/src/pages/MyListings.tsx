@@ -178,6 +178,17 @@ function ListingRow({
       {/* Photo */}
       <div className="relative w-full sm:w-48 h-40 sm:h-auto shrink-0">
         <img src={photo} alt={listing.title} className="w-full h-full object-cover" />
+        {photoCount === 0 && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-gradient-to-t from-black/55 via-black/15 to-transparent text-white text-xs font-semibold hover:bg-black/40 transition-colors"
+            aria-label="Upload photos for this listing"
+          >
+            <Camera className="h-5 w-5 drop-shadow" />
+            <span className="drop-shadow">Upload photos →</span>
+          </button>
+        )}
         {photoCount > 1 && (
           <div className="absolute bottom-2 right-2 flex items-center gap-1 text-white text-xs font-semibold px-2 py-1 rounded-full bg-black/60">
             <Camera className="h-3 w-3" />{photoCount}
