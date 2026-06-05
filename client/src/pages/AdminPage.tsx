@@ -12,7 +12,7 @@ import {
   Search, ChevronRight, Crown, CheckCircle2,
   RefreshCw, BarChart3, Zap, Globe, Star,
   Award, Clock, XCircle, MessageSquare, Bell, Loader2, FileText, BookOpen, Wrench, Sparkles,
-  Pencil, Trash2, ExternalLink,
+  Pencil, Trash2, ExternalLink, Plus,
 } from "lucide-react";
 
 type AdminTab = "overview" | "users" | "listings" | "subs" | "agents" | "contractors" | "waitlist" | "sop" | "growth" | "intelligence";
@@ -280,6 +280,9 @@ function ListingsTab() {
               className="pl-9 h-8 text-sm w-64"
             />
           </div>
+          <Button size="sm" className="h-8 gap-1.5 font-semibold" onClick={() => navigate("/list-property")}>
+            <Plus className="h-3.5 w-3.5" /> Add Listing
+          </Button>
         </div>
       </div>
       {isLoading ? (
