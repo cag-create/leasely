@@ -232,7 +232,10 @@ export default function CRM() {
           <div className="col-span-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-gray-800">Properties</h2>
-              <Dialog open={addPropertyOpen} onOpenChange={setAddPropertyOpen}>
+              <Dialog open={addPropertyOpen} onOpenChange={(open) => {
+                if (open) setPropertyForm({ address: "", city: "", state: "", zip: "", propertyType: "single_family", totalUnits: 1, purchasePrice: "", currentValue: "", yearBuilt: "", squareFeet: "", notes: "" });
+                setAddPropertyOpen(open);
+              }}>
                 <DialogTrigger asChild>
                   <Button size="sm" className="bg-[#1B4332] hover:bg-[#2D6A4F] text-white gap-1">
                     <Plus className="w-3.5 h-3.5" /> Add
@@ -400,7 +403,10 @@ export default function CRM() {
                   {/* Tenants Tab */}
                   <TabsContent value="tenants">
                     <div className="flex justify-end mb-3">
-                      <Dialog open={addTenantOpen} onOpenChange={setAddTenantOpen}>
+                      <Dialog open={addTenantOpen} onOpenChange={(open) => {
+                        if (open) setTenantForm({ crmPropertyId: 0, firstName: "", lastName: "", email: "", phone: "", moveInDate: "", monthlyRent: "", securityDeposit: "", notes: "" });
+                        setAddTenantOpen(open);
+                      }}>
                         <DialogTrigger asChild>
                           <Button size="sm" className="bg-[#1B4332] hover:bg-[#2D6A4F] text-white gap-1">
                             <Plus className="w-3.5 h-3.5" /> Add Tenant
@@ -532,7 +538,10 @@ export default function CRM() {
                   {/* Leases Tab */}
                   <TabsContent value="leases">
                     <div className="flex justify-end mb-3">
-                      <Dialog open={addLeaseOpen} onOpenChange={setAddLeaseOpen}>
+                      <Dialog open={addLeaseOpen} onOpenChange={(open) => {
+                        if (open) setLeaseForm({ crmPropertyId: 0, crmTenantId: 0, startDate: "", endDate: "", monthlyRent: "", securityDeposit: "", leaseType: "fixed_term", notes: "" });
+                        setAddLeaseOpen(open);
+                      }}>
                         <DialogTrigger asChild>
                           <Button size="sm" className="bg-[#1B4332] hover:bg-[#2D6A4F] text-white gap-1">
                             <Plus className="w-3.5 h-3.5" /> Add Lease
