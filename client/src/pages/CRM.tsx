@@ -59,6 +59,11 @@ export default function CRM() {
     enabled: isAuthenticated, retry: false,
   });
 
+  const { data: allTenants } = trpc.crm.listTenants.useQuery(
+    {},
+    { enabled: isAuthenticated, retry: false }
+  );
+
   const { data: tenants, refetch: refetchTenants } = trpc.crm.listTenants.useQuery(
     { propertyId: selectedPropertyId ?? undefined },
     { enabled: isAuthenticated, retry: false }
@@ -211,7 +216,7 @@ export default function CRM() {
             <CardContent className="pt-4 pb-4 flex items-center gap-3">
               <Users className="w-7 h-7 text-purple-600" />
               <div>
-                <div className="text-2xl font-bold">{tenants?.length ?? 0}</div>
+                <div className="text-2xl font-bold">{allTenants?.length ?? 0}</div>
                 <div className="text-xs text-gray-500">Tenants</div>
               </div>
             </CardContent>
