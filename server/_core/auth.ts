@@ -171,7 +171,12 @@ export function registerAuthRoutes(app: Express) {
 
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: SESSION_TTL_MS });
-      res.json({ success: true, emailVerified: !!user.emailVerified });
+      res.json({
+        success: true,
+        emailVerified: !!user.emailVerified,
+        role: willBeAdmin ? "admin" : (user.role ?? "user"),
+        accountType: (user as any).accountType ?? null,
+      });
     } catch (error) {
       console.error("[Auth] Login error:", error);
       res.status(500).json({ error: "Login failed" });

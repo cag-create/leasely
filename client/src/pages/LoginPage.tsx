@@ -55,7 +55,13 @@ export default function LoginPage() {
       if (mode === "login" && data?.emailVerified === false) {
         try { sessionStorage.setItem("leasely_show_verify_banner", "1"); } catch {}
       }
-      navigate("/onboarding");
+      // Admins and users who already chose an account type go straight to dashboard.
+      // New users who haven't picked renter/landlord yet go to onboarding.
+      if (data?.role === "admin" || data?.accountType) {
+        navigate("/dashboard");
+      } else {
+        navigate("/onboarding");
+      }
     } catch {
       setError("Network error — please try again");
     } finally {
