@@ -7,7 +7,6 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import PropertyCard from "@/components/PropertyCard";
-import { SAMPLE_LISTINGS } from "@/lib/sampleListings";
 import {
   Sparkles, ArrowRight, Search, Map, Shield, Zap, Building2,
   DollarSign, FileText, BarChart3, CheckCircle2,
@@ -145,7 +144,7 @@ export default function Home() {
     limit: 6,
     sort: "newest",
   });
-  const featuredListings = [...realListings, ...SAMPLE_LISTINGS].slice(0, 6);
+  const featuredListings = realListings.slice(0, 6);
 
   const handleMarketplaceSearch = () => {
     const params = new URLSearchParams();

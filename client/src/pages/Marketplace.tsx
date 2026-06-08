@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/sheet";
 import { Link } from "wouter";
 import { PROPERTY_TYPES, BEDROOM_OPTIONS, US_STATES, formatRent } from "@/lib/marketplace";
-import { SAMPLE_LISTINGS } from "@/lib/sampleListings";
 
 const BRAND = "#1B2B5E";
 const ACCENT = "#4F46E5";
@@ -75,27 +74,7 @@ export default function Marketplace() {
   const hasFilters = appliedCity || selectedState !== "all" || propertyType !== "all" ||
     bedrooms !== "any" || priceRange[0] > 0 || priceRange[1] < 10000 || petFriendly || isCoLiving;
 
-  // Inject sample listings client-side so the marketplace doesn't look empty
-  // on a fresh install. They respect the active filters so a search for
-  // "Miami" doesn't return Boston samples. Real listings are always shown
-  // first; samples fill the remaining space.
-  const filteredSamples = SAMPLE_LISTINGS.filter(s => {
-    if (appliedCity && !s.city.toLowerCase().includes(appliedCity.toLowerCase())) return false;
-    if (selectedState !== "all" && s.state !== selectedState) return false;
-    if (propertyType !== "all" && s.propertyType !== propertyType) return false;
-    if (bedrooms !== "any") {
-      if (bedrooms === "studio" && s.bedrooms !== "studio") return false;
-      if (bedrooms !== "studio" && s.bedrooms !== bedrooms) return false;
-    }
-    if (priceRange[0] > 0 && s.monthlyRent < priceRange[0]) return false;
-    if (priceRange[1] < 10000 && s.monthlyRent > priceRange[1]) return false;
-    if (petFriendly && s.petFriendly !== 1) return false;
-    if (isCoLiving && s.isCoLiving !== 1) return false;
-    return true;
-  });
-
-  // Merge for rendering — real listings first, then samples to pad.
-  const displayListings = [...listings, ...filteredSamples];
+  const displayListings = listings;
 
   const FilterPanel = () => (
     <div className="space-y-6">
@@ -221,7 +200,7 @@ export default function Marketplace() {
                 {appliedCity ? `Rentals in ${appliedCity}` : "Browse All Rentals"}
               </h1>
               <p className="text-gray-500 text-sm mt-1">
-                {isLoading ? "Loading..." : `${displayListings.length} listings`}{!isLoading && filteredSamples.length > 0 && <span className="text-xs text-gray-400 font-normal"> · includes {filteredSamples.length} sample{filteredSamples.length === 1 ? "" : "s"}</span>}
+                {isLoading ? "Loading..." : `${displayListings.length} listing${displayListings.length === 1 ? "" : "s"}`}
                 {hasFilters && " · Filters applied"}
               </p>
             </div>
