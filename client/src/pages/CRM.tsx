@@ -16,7 +16,7 @@ import Navbar from "@/components/Navbar";
 import {
   Building2, Users, FileText, Plus, Pencil, Trash2,
   Phone, Mail, MapPin, Calendar, DollarSign, AlertCircle,
-  ChevronRight, StickyNote, Home, CheckCircle2
+  ChevronRight, StickyNote, Home, CheckCircle2, Wrench, Receipt
 } from "lucide-react";
 
 function getDaysUntilExpiry(endDate: string): number {
@@ -77,6 +77,18 @@ export default function CRM() {
   const { data: tenantNotes, refetch: refetchTenantNotes } = trpc.crm.listNotes.useQuery(
     { entityType: "tenant", entityId: selectedTenantId ?? 0 },
     { enabled: isAuthenticated && !!selectedTenantId, retry: false }
+  );
+
+  const selectedPropertyListingId = properties?.find(p => p.id === selectedPropertyId)?.listingId ?? null;
+
+  const { data: workOrdersForProperty } = trpc.crm.listWorkOrders.useQuery(
+    { crmPropertyId: selectedPropertyId ?? undefined, listingId: selectedPropertyListingId ?? undefined },
+    { enabled: isAuthenticated && !!selectedPropertyId, retry: false }
+  );
+
+  const { data: rentPaymentsForProperty } = trpc.crm.listRentPayments.useQuery(
+    { listingId: selectedPropertyListingId ?? 0 },
+    { enabled: isAuthenticated && !!selectedPropertyListingId, retry: false }
   );
 
   const createPropertyMutation = trpc.crm.createProperty.useMutation({
@@ -377,9 +389,11 @@ export default function CRM() {
                 </Card>
 
                 <Tabs defaultValue="tenants">
-                  <TabsList>
+                  <TabsList className="flex-wrap h-auto">
                     <TabsTrigger value="tenants">Tenants ({tenants?.length ?? 0})</TabsTrigger>
                     <TabsTrigger value="leases">Leases ({leases?.length ?? 0})</TabsTrigger>
+                    <TabsTrigger value="maintenance">Maintenance ({workOrdersForProperty?.length ?? 0})</TabsTrigger>
+                    <TabsTrigger value="accounting">Accounting ({rentPaymentsForProperty?.length ?? 0})</TabsTrigger>
                     <TabsTrigger value="notes">Notes ({propertyNotes?.length ?? 0})</TabsTrigger>
                   </TabsList>
 
@@ -620,6 +634,104 @@ export default function CRM() {
                             </Card>
                           );
                         })}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* Maintenance Tab */}
+                  <TabsContent value="maintenance">
+                    {!workOrdersForProperty || workOrdersForProperty.length === 0 ? (
+                      <Card className="text-center py-8">
+                        <CardContent>
+                          <Wrench className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                          <p className="text-sm text-gray-500">No maintenance requests for this property</p>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <div className="space-y-2">
+                        {workOrdersForProperty.map(wo => (
+                          <Card key={wo.id}>
+                            <CardContent className="py-3 px-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                      wo.status === "resolved" || wo.status === "cancelled" ? "bg-gray-100 text-gray-600"
+                                      : wo.status === "open" ? "bg-red-100 text-red-700"
+                                      : "bg-blue-100 text-blue-700"
+                                    }`}>{wo.status?.replace("_", " ")}</span>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                      wo.priority === "emergency" ? "bg-red-100 text-red-700"
+                                      : wo.priority === "high" ? "bg-orange-100 text-orange-700"
+                                      : "bg-gray-100 text-gray-600"
+                                    }`}>{wo.priority}</span>
+                                    <span className="text-xs text-gray-400 capitalize">{wo.category?.replace("_", " ")}</span>
+                                  </div>
+                                  <p className="text-sm font-medium text-gray-900">{wo.title}</p>
+                                  {wo.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{wo.description}</p>}
+                                  {wo.tenantName && <p className="text-xs text-gray-400 mt-1">Submitted by: {wo.tenantName}</p>}
+                                  {wo.vendorName && <p className="text-xs text-blue-600 mt-0.5">Vendor: {wo.vendorName}</p>}
+                                </div>
+                                <div className="text-xs text-gray-400 shrink-0 ml-3">
+                                  {new Date(wo.createdAt).toLocaleDateString()}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* Accounting Tab */}
+                  <TabsContent value="accounting">
+                    {!selectedPropertyListingId ? (
+                      <Card className="text-center py-8">
+                        <CardContent>
+                          <Receipt className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                          <p className="text-sm text-gray-500">No listing linked to this property</p>
+                        </CardContent>
+                      </Card>
+                    ) : !rentPaymentsForProperty || rentPaymentsForProperty.length === 0 ? (
+                      <Card className="text-center py-8">
+                        <CardContent>
+                          <Receipt className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                          <p className="text-sm text-gray-500">No rent payments recorded yet</p>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs text-gray-500 px-1 mb-1">
+                          <span>Period</span>
+                          <span>Amount · Status</span>
+                        </div>
+                        {rentPaymentsForProperty.map(p => (
+                          <Card key={p.id}>
+                            <CardContent className="py-3 px-4">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">{p.periodMonth}</p>
+                                  <p className="text-xs text-gray-500">Due: {p.dueDate}{p.paymentMethod ? ` · ${p.paymentMethod}` : ""}</p>
+                                  {p.tenantEmail && <p className="text-xs text-gray-400">{p.tenantEmail}</p>}
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm font-semibold text-gray-900">${(p.amountCents / 100).toLocaleString()}</p>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                    p.status === "paid" ? "bg-green-100 text-green-700"
+                                    : p.status === "late" ? "bg-red-100 text-red-700"
+                                    : p.status === "pending" ? "bg-yellow-100 text-yellow-700"
+                                    : "bg-gray-100 text-gray-600"
+                                  }`}>{p.status}</span>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                        <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                          <p className="text-sm font-semibold text-green-800">
+                            Total collected: ${((rentPaymentsForProperty.filter(p => p.status === "paid").reduce((s, p) => s + (p.paidAmountCents ?? p.amountCents), 0)) / 100).toLocaleString()}
+                          </p>
+                        </div>
                       </div>
                     )}
                   </TabsContent>

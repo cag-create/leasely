@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lte, like, or, sql, asc } from "drizzle-orm";
+import { and, desc, eq, gte, lte, like, or, sql, asc, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser, users,
@@ -13,6 +13,7 @@ import {
   crmTenants, InsertCrmTenant, CrmTenant,
   crmLeases, InsertCrmLease, CrmLease,
   crmNotes, InsertCrmNote,
+  leaseAgreements, rentPayments, RentPayment,
   tenantPortalAccounts, InsertTenantPortalAccount, TenantPortalAccount,
   supportTickets, InsertSupportTicket, SupportTicket,
   supportReplies, InsertSupportReply,
@@ -822,6 +823,28 @@ export async function createCrmProperty(data: InsertCrmProperty): Promise<number
   if (!db) throw new Error("DB unavailable");
   const result = await db.insert(crmProperties).values(data);
   return (result[0] as any).insertId;
+}
+
+export async function getWorkOrdersForProperty(userId: number, crmPropertyId?: number, listingId?: number): Promise<WorkOrder[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions: any[] = [eq(workOrders.userId, userId)];
+  if (crmPropertyId) conditions.push(eq(workOrders.crmPropertyId, crmPropertyId));
+  else if (listingId) conditions.push(eq(workOrders.listingId, listingId));
+  return db.select().from(workOrders).where(and(...conditions)).orderBy(desc(workOrders.createdAt));
+}
+
+export async function getRentPaymentsForListing(landlordUserId: number, listingId: number): Promise<RentPayment[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const leases = await db.select({ id: leaseAgreements.id })
+    .from(leaseAgreements)
+    .where(and(eq(leaseAgreements.landlordUserId, landlordUserId), eq(leaseAgreements.listingId, listingId)));
+  if (!leases.length) return [];
+  const leaseIds = leases.map(l => l.id);
+  return db.select().from(rentPayments)
+    .where(inArray(rentPayments.leaseAgreementId, leaseIds))
+    .orderBy(desc(rentPayments.periodMonth));
 }
 
 export async function updateCrmProperty(id: number, userId: number, data: Partial<InsertCrmProperty>) {

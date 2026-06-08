@@ -72,6 +72,7 @@ import {
   getCrmTenants, createCrmTenant, updateCrmTenant, deleteCrmTenant,
   getCrmLeases, createCrmLease, updateCrmLease,
   getCrmNotes, createCrmNote,
+  getWorkOrdersForProperty, getRentPaymentsForListing,
   // Tenant portal
   getTenantByEmail, getTenantByToken, createTenantAccount, updateTenantToken,
   getTenantsByLandlord, getTenantById, getUserById,
@@ -932,6 +933,28 @@ export const appRouter = router({
           viewCount: 0,
           saveCount: 0,
         });
+
+        // Auto-populate CRM when a new listing is created
+        try {
+          const crmTypeMap: Record<string, string> = {
+            apartment: "apartment", house: "single_family", condo: "condo",
+            townhouse: "townhouse", co_living: "other", studio: "apartment",
+            room: "other", other: "other",
+          };
+          await createCrmProperty({
+            userId: ctx.user.id,
+            address: input.address,
+            city: input.city,
+            state: input.state,
+            zip: input.zip,
+            propertyType: (crmTypeMap[input.propertyType] ?? "other") as any,
+            totalUnits: 1,
+            listingId: id,
+            status: "active",
+          });
+        } catch (e) {
+          console.warn("[CRM] Auto-sync on createListing failed:", e);
+        }
 
         return { id, success: true };
       }),
@@ -2596,6 +2619,21 @@ export const appRouter = router({
     })).mutation(async ({ ctx, input }) => {
       const id = await createCrmNote({ ...input, userId: ctx.user.id });
       return { id };
+    }),
+
+    // Maintenance (work orders) for a property
+    listWorkOrders: protectedProcedure.input(z.object({
+      crmPropertyId: z.number().optional(),
+      listingId: z.number().optional(),
+    })).query(async ({ ctx, input }) => {
+      return getWorkOrdersForProperty(ctx.user.id, input.crmPropertyId, input.listingId);
+    }),
+
+    // Rent payment history for a property (via linked listing → lease agreements)
+    listRentPayments: protectedProcedure.input(z.object({
+      listingId: z.number(),
+    })).query(async ({ ctx, input }) => {
+      return getRentPaymentsForListing(ctx.user.id, input.listingId);
     }),
   }),
   // ─── Tenant Portal Router ────────────────────────────────────────────────────
