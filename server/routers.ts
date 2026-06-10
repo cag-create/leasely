@@ -3220,20 +3220,40 @@ export const appRouter = router({
             await setApplicationDraftLeaseId(input.id, ctx.user.id, leaseDocumentId);
           }
 
-          // Notify landlord a draft lease is waiting
-          const landlord = await getUserByOpenId(ctx.user.openId);
+          // Auto-send the lease to the tenant immediately on approval — no manual "Send" step.
           const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+          const landlord = await getUserByOpenId(ctx.user.openId);
+          await updateLeaseAgreement(leaseId, ctx.user.id, { status: "sent", sentAt: new Date() } as any);
+          sendEmail({
+            to: app.applicantEmail,
+            subject: `Your Lease Agreement is Ready to Sign — ${finalAddress}`,
+            html: leaseAgreementEmail({
+              tenantName: app.applicantName ?? "Tenant",
+              landlordName: landlord?.name ?? finalLandlordName ?? "Your Landlord",
+              propertyAddress: finalAddress,
+              state,
+              monthlyRentDollars: finalRent / 100,
+              securityDepositDollars: finalDeposit / 100,
+              leaseStartDate: finalStartDate,
+              leaseTerm: finalTerm,
+              leaseUrl: `${APP_URL}/tenant/sign-lease/${leaseId}`,
+            }),
+          }).catch(() => {});
+
+          // Notify landlord that the lease was auto-sent
           if (landlord?.email) {
             sendEmail({
               to: landlord.email,
-              subject: `✅ Application Approved — Draft Lease Created for ${app.applicantName}`,
+              subject: `✅ Lease Auto-Sent to ${app.applicantName} for Signing`,
               html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
-                <h2 style="color:#1B2B5E">Application Approved — Draft Lease Ready</h2>
-                <p>You approved <strong>${app.applicantName}</strong>'s application for <strong>${propertyAddress}</strong>.</p>
-                <p>A draft lease has been automatically created. Review the details (rent, dates, access instructions) and send it to the tenant when ready.</p>
+                <h2 style="color:#1B2B5E">Lease Sent — Awaiting Tenant Signature</h2>
+                <p>You approved <strong>${app.applicantName}</strong>'s application for <strong>${finalAddress}</strong>.</p>
+                <p style="background:#eff6ff;border-left:4px solid #1B2B5E;padding:12px 14px;border-radius:6px">
+                  The lease has been automatically sent to <strong>${app.applicantEmail}</strong> for signing. You'll be notified as soon as they sign so you can countersign.
+                </p>
                 <p style="margin-top:16px">
                   <a href="${APP_URL}/leases" style="background:#1B2B5E;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold">
-                    Review &amp; Send Lease →
+                    View Lease →
                   </a>
                 </p>
                 <p style="color:#9ca3af;font-size:12px;margin-top:16px">Powered by Leasely</p>

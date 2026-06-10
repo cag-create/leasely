@@ -384,20 +384,11 @@ function ReceivedApplications({
       {
         onSuccess: (data: any) => {
           if (data?.draftLeaseId) {
-            // Backend successfully rendered the state-specific template into
-            // a lease_documents row — /leases/draft/:id will resolve.
-            toast.success(
-              <span>
-                Draft lease created.{" "}
-                <a href={draftLeaseHref(data.draftLeaseId)} className="underline font-semibold">
-                  Review &amp; send →
-                </a>
-              </span>,
-              { duration: 10000 },
-            );
+            // Lease was auto-sent to the tenant. Redirect to /leases to track signing.
+            toast.success("Lease auto-sent to tenant for signing. You'll be notified when they sign.", { duration: 8000 });
             setLeaseDetails(null);
             setTimeout(() => {
-              window.location.href = draftLeaseHref(data.draftLeaseId);
+              window.location.href = "/leases";
             }, 1500);
           } else {
             // The leaseAgreement row was created but no state template
@@ -655,7 +646,7 @@ function ReceivedApplications({
                         Surface it inline so the landlord doesn't have to dig. */}
                     {app.status === "approved" && app.draftLeaseId && (
                       <a
-                        href={draftLeaseHref(app.draftLeaseId)}
+                        href="/leases"
                         onClick={e => e.stopPropagation()}
                         className="flex items-center justify-between gap-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 hover:bg-emerald-500/15 transition-colors group"
                       >
@@ -663,15 +654,15 @@ function ReceivedApplications({
                           <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                           <div>
                             <div className="font-semibold text-emerald-700 dark:text-emerald-300">
-                              Draft lease ready for {app.state ?? "this state"}
+                              Lease sent — awaiting tenant signature
                             </div>
                             <div className="text-xs text-emerald-700/80 dark:text-emerald-300/80">
-                              Pre-filled with applicant info and state-specific clauses. Review and send to tenant.
+                              Lease auto-sent to {app.applicantEmail ?? "tenant"}. You'll be notified when they sign.
                             </div>
                           </div>
                         </div>
                         <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 group-hover:translate-x-0.5 transition-transform">
-                          Open →
+                          View in Leases →
                         </span>
                       </a>
                     )}
