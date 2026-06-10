@@ -13,7 +13,11 @@ import {
   crmTenants, InsertCrmTenant, CrmTenant,
   crmLeases, InsertCrmLease, CrmLease,
   crmNotes, InsertCrmNote,
-  leaseAgreements, rentPayments, RentPayment,
+  leaseAgreements, InsertLeaseAgreement, LeaseAgreement,
+  leaseDocuments,
+  propertyManagerAccess, InsertPropertyManagerAccess, PropertyManagerAccess,
+  vendorDispatchRequests, InsertVendorDispatchRequest, VendorDispatchRequest,
+  rentPayments, InsertRentPayment, RentPayment,
   tenantPortalAccounts, InsertTenantPortalAccount, TenantPortalAccount,
   supportTickets, InsertSupportTicket, SupportTicket,
   supportReplies, InsertSupportReply,
@@ -1819,13 +1823,6 @@ export async function getAllContractorLeads(): Promise<ContractorLead[]> {
 }
 
 // ─── Lease Agreements ─────────────────────────────────────────────────────────
-import {
-  leaseAgreements, InsertLeaseAgreement, LeaseAgreement,
-  leaseDocuments,
-  propertyManagerAccess, InsertPropertyManagerAccess, PropertyManagerAccess,
-  vendorDispatchRequests, InsertVendorDispatchRequest, VendorDispatchRequest,
-  rentPayments, InsertRentPayment, RentPayment,
-} from "../drizzle/schema";
 
 export async function createLeaseAgreement(data: Omit<InsertLeaseAgreement, "id" | "createdAt" | "updatedAt">): Promise<number> {
   const db = await getDb();

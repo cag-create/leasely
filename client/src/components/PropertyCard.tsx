@@ -17,7 +17,7 @@ type MarketplaceListing = {
   address: string;
   city: string;
   state: string;
-  zip: string;
+  zip: string | null;
   neighborhood: string | null;
   latitude: number | null;
   longitude: number | null;
