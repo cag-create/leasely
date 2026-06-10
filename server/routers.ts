@@ -118,7 +118,7 @@ import {
   createPropertyManagerAccess, getPropertyManagersByOwner, getPropertiesManagedBy, updatePropertyManagerAccess, revokePropertyManagerAccess,
   // Vendor Dispatch
   createVendorDispatchRequest, getDispatchsByWorkOrder, getDispatchsByVendor, updateVendorDispatchRequest, getDispatchById,
-  createRentPayment, updateRentPayment, listRentPaymentsByLease, listRentPaymentsByLandlord, getRentPaymentByLeasePeriod,
+  createRentPayment, updateRentPayment, listRentPaymentsByLease, listRentPaymentsByLandlord, getRentPaymentByLeasePeriod, getRentPaymentById,
   // In-app notifications
   createNotification, listNotificationsForUser, countUnreadNotifications, markNotificationRead, markAllNotificationsRead,
   // Auth: session revocation
@@ -5247,6 +5247,28 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       }
 
       return { success: true, id };
+    }),
+
+    /** Edit an existing rent payment record (change status, amount, method, notes). */
+    editRentPayment: protectedProcedure.input(z.object({
+      paymentId: z.number().int(),
+      status: z.enum(["pending", "paid", "late", "skipped", "partial"]).optional(),
+      paidAmountCents: z.number().int().positive().optional(),
+      paymentMethod: z.string().max(60).optional(),
+      notes: z.string().max(500).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const payment = await getRentPaymentById(input.paymentId);
+      if (!payment || payment.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+      const update: Record<string, unknown> = {};
+      if (input.status !== undefined) {
+        update.status = input.status;
+        if (input.status === "paid" && !payment.paidAt) update.paidAt = new Date();
+      }
+      if (input.paidAmountCents !== undefined) update.paidAmountCents = input.paidAmountCents;
+      if (input.paymentMethod !== undefined) update.paymentMethod = input.paymentMethod;
+      if (input.notes !== undefined) update.notes = input.notes;
+      await updateRentPayment(input.paymentId, update as any);
+      return { success: true };
     }),
 
     /**

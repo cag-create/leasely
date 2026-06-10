@@ -1990,6 +1990,13 @@ export async function getRentPaymentByLeasePeriod(leaseAgreementId: number, peri
   return rows[0];
 }
 
+export async function getRentPaymentById(id: number): Promise<RentPayment | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(rentPayments).where(eq(rentPayments.id, id)).limit(1);
+  return rows[0];
+}
+
 // ─── In-app Notifications ─────────────────────────────────────────────────────
 import { notifications, InsertNotification, Notification } from "../drizzle/schema";
 
