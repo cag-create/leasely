@@ -8,7 +8,7 @@ import { trpc } from "@/lib/trpc";
 import {
   Map, PlusCircle, LayoutDashboard, Heart, Menu, X,
   LogOut, ChevronDown, Sparkles, Search, Building2,
-  Headphones, Shield, Settings, Wrench, Bell, CheckCheck
+  Headphones, Shield, Settings, Wrench, Bell, CheckCheck, Trash2
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -125,6 +125,9 @@ export default function Navbar() {
   const needsOnboarding = isAuthenticated && !accountType;
 
   const logoutMutation = trpc.auth.logout.useMutation({
+    onSuccess: () => { logout(); window.location.href = "/"; }
+  });
+  const deleteAccountMutation = trpc.auth.deleteAccount.useMutation({
     onSuccess: () => { logout(); window.location.href = "/"; }
   });
 
@@ -342,6 +345,16 @@ export default function Navbar() {
                         className="flex items-center gap-2.5 cursor-pointer text-sm text-destructive focus:text-destructive"
                       >
                         <LogOut className="h-4 w-4" /> Sign Out
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          if (window.confirm("Delete your account permanently? This cannot be undone. All your listings will be removed.")) {
+                            deleteAccountMutation.mutate();
+                          }
+                        }}
+                        className="flex items-center gap-2.5 cursor-pointer text-xs text-red-400 hover:text-red-600 focus:text-red-600"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Delete Account
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

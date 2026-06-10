@@ -88,7 +88,7 @@ export const marketplaceListings = mysqlTable("marketplace_listings", {
   address: text("address").notNull(),
   city: varchar("city", { length: 100 }).notNull(),
   state: varchar("state", { length: 50 }).notNull(),
-  zip: varchar("zip", { length: 20 }).notNull(),
+  zip: varchar("zip", { length: 20 }),
   neighborhood: varchar("neighborhood", { length: 100 }),
 
   // Geocoded coordinates
@@ -133,6 +133,10 @@ export const marketplaceListings = mysqlTable("marketplace_listings", {
   // Aggregate counters (denormalized for performance)
   viewCount: int("viewCount").default(0).notNull(),
   saveCount: int("saveCount").default(0).notNull(),
+
+  // Drip email tracking — photo nudge (Day 1) + upgrade pitch (Day 3)
+  photoNudgeSentAt: timestamp("photoNudgeSentAt"),
+  upgradeNudgeSentAt: timestamp("upgradeNudgeSentAt"),
 
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

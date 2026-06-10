@@ -88,6 +88,15 @@ export async function getUserById(id: number) {
   return result[0];
 }
 
+export async function deleteUserById(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  // Soft-delete all their listings first (hard delete can cause FK issues)
+  await db.update(marketplaceListings).set({ status: "inactive" }).where(eq(marketplaceListings.userId, id));
+  // Hard-delete the user row — cascade-deletes handled by app layer above
+  await db.delete(users).where(eq(users.id, id));
+}
+
 export async function getUserByEmail(email: string) {
   const db = await getDb();
   if (!db) return undefined;

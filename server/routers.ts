@@ -89,7 +89,7 @@ import {
   getAreaRentRates, getAreaRentRatesByState,
   // Admin
   getAllUsers, getUserCount, getPaidUserCount, getListingCount, getApplicationCount,
-  setUserRole, getAllSubscriptions, getAllListingsAdmin,
+  setUserRole, getAllSubscriptions, getAllListingsAdmin, deleteUserById,
   getOrCreateProCode, getProCodeByUserId, getAllProCodes, redeemProCode,
   // Creme Agents
   getCremeAgentByUserId, getCremeAgentById, getApprovedCremeAgents, getAllCremeAgents,
@@ -673,6 +673,13 @@ export const appRouter = router({
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
+
+    deleteAccount: protectedProcedure.mutation(async ({ ctx }) => {
+      await deleteUserById(ctx.user.id);
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      return { success: true } as const;
+    }),
   }),
 
   // ─── Pro Redemption Codes (user-facing) ──────────────────────────────────
@@ -865,7 +872,7 @@ export const appRouter = router({
         address: z.string().min(5),
         city: z.string().min(1),
         state: z.string().min(2),
-        zip: z.string().min(5),
+        zip: z.string().optional().default(""),
         neighborhood: z.string().optional(),
         latitude: z.number().optional(),
         longitude: z.number().optional(),
@@ -908,7 +915,7 @@ export const appRouter = router({
           address: input.address,
           city: input.city,
           state: input.state,
-          zip: input.zip,
+          zip: input.zip || "",
           neighborhood: input.neighborhood ?? null,
           latitude: input.latitude ?? null,
           longitude: input.longitude ?? null,
@@ -3642,6 +3649,15 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
     })).mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
       await setUserRole(input.userId, input.role);
+      return { success: true };
+    }),
+
+    deleteUser: protectedProcedure.input(z.object({
+      userId: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      if (input.userId === ctx.user.id) throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot delete your own account here" });
+      await deleteUserById(input.userId);
       return { success: true };
     }),
 

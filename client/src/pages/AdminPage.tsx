@@ -525,6 +525,10 @@ function AdminUsersTable({ searchQuery }: { searchQuery: string }) {
   const promoteUser = trpc.admin.setUserRole.useMutation({
     onSuccess: () => utils.admin.getUsers.invalidate(),
   });
+  const deleteUser = trpc.admin.deleteUser.useMutation({
+    onSuccess: () => { toast.success("User deleted"); utils.admin.getUsers.invalidate(); },
+    onError: (e) => toast.error(e.message),
+  });
 
   const filtered = (users ?? []).filter(u =>
     !searchQuery ||
@@ -596,17 +600,34 @@ function AdminUsersTable({ searchQuery }: { searchQuery: string }) {
                 {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "—"}
               </td>
               <td className="px-5 py-3.5 text-right">
-                {u.role !== "admin" && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs h-7 gap-1"
-                    onClick={() => promoteUser.mutate({ userId: u.id, role: "admin" })}
-                    disabled={promoteUser.isPending}
-                  >
-                    <Shield className="h-3 w-3" /> Make Admin
-                  </Button>
-                )}
+                <div className="flex items-center justify-end gap-1">
+                  {u.role !== "admin" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-7 gap-1"
+                      onClick={() => promoteUser.mutate({ userId: u.id, role: "admin" })}
+                      disabled={promoteUser.isPending}
+                    >
+                      <Shield className="h-3 w-3" /> Make Admin
+                    </Button>
+                  )}
+                  {u.role !== "admin" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => {
+                        if (window.confirm(`Delete ${u.name || u.email}? This cannot be undone.`)) {
+                          deleteUser.mutate({ userId: u.id });
+                        }
+                      }}
+                      disabled={deleteUser.isPending}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
               </td>
             </tr>
           ))}
