@@ -96,6 +96,38 @@ export default function CRM() {
     { enabled: isAuthenticated && !!selectedPropertyListingId, retry: false }
   );
 
+  const { data: connectStatus } = trpc.marketplace.getStripeConnectStatus.useQuery(undefined, {
+    enabled: isAuthenticated, retry: false,
+  });
+  const bankReady = connectStatus?.status === "active";
+
+  const buildPaymentLink = (t: { firstName: string; lastName: string; email?: string | null; monthlyRent?: number | null }) => {
+    if (!selectedPropertyListingId) return null;
+    const params = new URLSearchParams();
+    params.set("name", `${t.firstName} ${t.lastName}`.trim());
+    if (t.email) params.set("email", t.email);
+    if (t.monthlyRent) params.set("amount", String(t.monthlyRent / 100));
+    return `${window.location.origin}/pay/${selectedPropertyListingId}?${params.toString()}`;
+  };
+
+  const sendPaymentLink = async (t: { firstName: string; lastName: string; email?: string | null; monthlyRent?: number | null }) => {
+    const link = buildPaymentLink(t);
+    if (!link) {
+      toast.error("Link this property to a marketplace listing first to collect rent online.");
+      return;
+    }
+    if (!bankReady) {
+      toast.error("Connect your bank account (Settings → Payments) before sending payment links.");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success(`Payment link copied — send it to ${t.firstName}.`);
+    } catch {
+      toast.success(link);
+    }
+  };
+
   const createPropertyMutation = trpc.crm.createProperty.useMutation({
     onSuccess: () => { toast.success("Property added"); setAddPropertyOpen(false); refetchProperties(); },
     onError: (e) => toast.error(e.message),
@@ -479,13 +511,18 @@ export default function CRM() {
                       </Card>
                     ) : (
                       <div className="space-y-2">
-                        {tenants.map(t => (
-                          <Card key={t.id} className={`cursor-pointer hover:shadow-sm transition-all ${selectedTenantId === t.id ? "ring-2 ring-[#1B4332]" : ""}`}
-                            onClick={() => setSelectedTenantId(t.id)}>
+                        {tenants.map(t => {
+                          const isOpen = selectedTenantId === t.id;
+                          return (
+                          <Card key={t.id} className={`cursor-pointer hover:shadow-sm transition-all ${isOpen ? "ring-2 ring-[#1B4332]" : ""}`}
+                            onClick={() => setSelectedTenantId(isOpen ? null : t.id)}>
                             <CardContent className="py-3 px-4">
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <p className="font-medium text-sm">{t.firstName} {t.lastName}</p>
+                                  <p className="font-medium text-sm flex items-center gap-1">
+                                    {t.firstName} {t.lastName}
+                                    <ChevronRight className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                                  </p>
                                   <div className="flex gap-3 mt-0.5">
                                     {t.email && <p className="text-xs text-gray-500 flex items-center gap-1"><Mail className="w-3 h-3" />{t.email}</p>}
                                     {t.phone && <p className="text-xs text-gray-500 flex items-center gap-1"><Phone className="w-3 h-3" />{t.phone}</p>}
@@ -502,9 +539,49 @@ export default function CRM() {
                                   </Button>
                                 </div>
                               </div>
+
+                              {isOpen && (
+                                <div className="mt-3 pt-3 border-t border-gray-100 space-y-3" onClick={e => e.stopPropagation()}>
+                                  <div className="grid grid-cols-2 gap-y-1.5 gap-x-4 text-xs">
+                                    <div><span className="text-gray-400">Email:</span> <span className="text-gray-700">{t.email || "—"}</span></div>
+                                    <div><span className="text-gray-400">Phone:</span> <span className="text-gray-700">{t.phone || "—"}</span></div>
+                                    <div><span className="text-gray-400">Move-in:</span> <span className="text-gray-700">{t.moveInDate || "—"}</span></div>
+                                    <div><span className="text-gray-400">Monthly rent:</span> <span className="text-gray-700">{t.monthlyRent ? `$${(t.monthlyRent / 100).toLocaleString()}` : "—"}</span></div>
+                                    <div><span className="text-gray-400">Deposit:</span> <span className="text-gray-700">{t.securityDeposit ? `$${(t.securityDeposit / 100).toLocaleString()}` : "—"}</span></div>
+                                  </div>
+
+                                  <div className="rounded-lg bg-gray-50 border border-gray-100 p-3">
+                                    <p className="text-xs font-semibold text-gray-700 flex items-center gap-1 mb-1">
+                                      <DollarSign className="w-3.5 h-3.5 text-[#1B4332]" /> Collect rent online
+                                    </p>
+                                    {!selectedPropertyListingId ? (
+                                      <p className="text-xs text-amber-600">Link this property to a marketplace listing to collect rent online.</p>
+                                    ) : !bankReady ? (
+                                      <p className="text-xs text-amber-600">Connect your bank account (Settings → Payments) to enable rent payments.</p>
+                                    ) : (
+                                      <div className="flex flex-wrap gap-2">
+                                        <Button size="sm" className="bg-[#1B4332] hover:bg-[#2D6A4F] text-white gap-1 h-8"
+                                          onClick={() => sendPaymentLink(t)}>
+                                          <DollarSign className="w-3.5 h-3.5" /> Copy Payment Link
+                                        </Button>
+                                        {t.email && (
+                                          <a
+                                            href={`mailto:${t.email}?subject=${encodeURIComponent("Rent payment link")}&body=${encodeURIComponent(`Hi ${t.firstName},\n\nYou can pay your rent securely here:\n${buildPaymentLink(t)}\n\nThank you.`)}`}
+                                          >
+                                            <Button size="sm" variant="outline" className="gap-1 h-8">
+                                              <Mail className="w-3.5 h-3.5" /> Email Link
+                                            </Button>
+                                          </a>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
                             </CardContent>
                           </Card>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                     {/* Tenant Notes */}

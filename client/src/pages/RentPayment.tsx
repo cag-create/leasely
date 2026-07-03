@@ -19,10 +19,14 @@ export default function RentPayment() {
   const { id } = useParams<{ id: string }>();
   const listingId = parseInt(id ?? "0");
 
-  const [tenantName, setTenantName] = useState("");
-  const [tenantEmail, setTenantEmail] = useState("");
-  const [amount, setAmount] = useState("");
-  const [description, setDescription] = useState("");
+  // Landlords can send a pre-filled link, e.g.
+  // /pay/12?name=Jane%20Smith&email=jane@x.com&amount=1600&desc=June%20Rent
+  const prefill = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+
+  const [tenantName, setTenantName] = useState(prefill.get("name") ?? "");
+  const [tenantEmail, setTenantEmail] = useState(prefill.get("email") ?? "");
+  const [amount, setAmount] = useState(prefill.get("amount") ?? "");
+  const [description, setDescription] = useState(prefill.get("desc") ?? "");
   const [submitting, setSubmitting] = useState(false);
 
   const { data: listing, isLoading } = trpc.marketplace.getListingById.useQuery(
