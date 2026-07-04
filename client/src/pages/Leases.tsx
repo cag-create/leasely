@@ -1652,6 +1652,15 @@ function RentLedgerPanel({ lease }: { lease: any }) {
     onError: (e: any) => toast.error(e.message),
   });
 
+  // Adjust the tenant's NEXT autopay charge (one-off concession/surcharge).
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [adjustAmount, setAdjustAmount] = useState((lease.monthlyRent / 100).toString());
+  const [adjustReason, setAdjustReason] = useState("");
+  const adjustMutation = (trpc as any).leases.adjustNextRent.useMutation({
+    onSuccess: (r: any) => { toast.success(r?.message ?? "Next charge adjusted"); setAdjustOpen(false); setAdjustReason(""); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   // Build lookup: periodMonth → payment record
   const paymentMap: Record<string, any> = Object.fromEntries(
     (payments ?? []).map((p: any) => [p.periodMonth, p])
@@ -1711,6 +1720,73 @@ function RentLedgerPanel({ lease }: { lease: any }) {
           </span>
         )}
       </div>
+
+      {/* One-off adjustment to the next autopay charge — e.g. a partial-rent
+          concession for a single month. Only meaningful when autopay is live. */}
+      {lease.autopayEnabled === 1 && (
+        <div className="rounded border border-indigo-100 bg-indigo-50/60 p-2.5">
+          {!adjustOpen ? (
+            <button
+              type="button"
+              className="text-xs font-medium text-indigo-700 hover:text-indigo-900 flex items-center gap-1"
+              onClick={() => { setAdjustAmount((lease.monthlyRent / 100).toString()); setAdjustOpen(true); }}
+            >
+              <Pencil className="w-3 h-3" /> Adjust next month's charge
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-[11px] text-indigo-900">
+                Set the amount to charge on the <strong>next</strong> autopay cycle. Normal
+                rent is ${(lease.monthlyRent / 100).toLocaleString("en-US")}/mo — this changes
+                only the next invoice, not the recurring amount.
+              </p>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Label className="text-[10px] text-gray-600">Next charge ($)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={adjustAmount}
+                    onChange={e => setAdjustAmount(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label className="text-[10px] text-gray-600">Reason (optional)</Label>
+                  <Input
+                    value={adjustReason}
+                    onChange={e => setAdjustReason(e.target.value)}
+                    placeholder="e.g. Prorated / concession"
+                    className="h-8 text-xs"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs flex-1"
+                  onClick={() => { setAdjustOpen(false); setAdjustReason(""); }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-7 text-xs flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                  disabled={adjustMutation.isPending || adjustAmount === "" || parseFloat(adjustAmount) < 0}
+                  onClick={() => adjustMutation.mutate({
+                    leaseId: lease.id,
+                    adjustedAmountCents: Math.round(parseFloat(adjustAmount) * 100),
+                    reason: adjustReason.trim() || undefined,
+                  })}
+                >
+                  {adjustMutation.isPending ? "Applying…" : "Apply to next charge"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {unpaidCount > 0 && (
         <div className="bg-red-50 border border-red-200 rounded p-2 text-xs text-red-900">

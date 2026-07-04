@@ -5725,6 +5725,69 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
     }),
 
     /**
+     * One-off adjustment to the tenant's NEXT autopay rent invoice — e.g. a
+     * partial-rent concession for a single month. The recurring rent amount
+     * is left untouched; we add a one-off Stripe invoice item that Stripe
+     * rolls into the tenant's upcoming subscription invoice: a credit
+     * (negative) when the adjusted amount is below normal rent, or an extra
+     * charge (positive) when above. The credit/charge flows through the same
+     * destination charge to the landlord's bank. Pro-only.
+     */
+    adjustNextRent: protectedProcedure.input(z.object({
+      leaseId: z.number(),
+      adjustedAmountCents: z.number().int().min(0),
+      reason: z.string().trim().max(200).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Rent adjustments are a Pro feature." });
+      }
+      const lease = await getLeaseById(input.leaseId);
+      if (!lease || lease.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+      if (!lease.autopayEnabled || !lease.stripeSubscriptionId || !lease.stripeCustomerId) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "This lease has no active autopay subscription to adjust. Adjust manually in the ledger instead." });
+      }
+
+      const delta = input.adjustedAmountCents - lease.monthlyRent;
+      if (delta === 0) {
+        return { applied: false, deltaCents: 0, message: "Adjusted amount matches the normal rent — nothing to change." };
+      }
+
+      const stripe = getStripe();
+      if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured" });
+
+      const label = delta < 0
+        ? `Rent credit — ${lease.propertyAddress}${input.reason ? ` (${input.reason})` : ""}`
+        : `Rent adjustment — ${lease.propertyAddress}${input.reason ? ` (${input.reason})` : ""}`;
+
+      // Negative amount = credit applied to the subscription's next invoice.
+      await stripe.invoiceItems.create({
+        customer: lease.stripeCustomerId,
+        subscription: lease.stripeSubscriptionId,
+        amount: delta,
+        currency: "usd",
+        description: label,
+      });
+
+      // Audit trail on the lease notes.
+      const stamp = new Date().toISOString().slice(0, 10);
+      const deltaDollars = (Math.abs(delta) / 100).toFixed(2);
+      const targetDollars = (input.adjustedAmountCents / 100).toFixed(2);
+      const trail = `[${stamp}] Next rent charge ${delta < 0 ? "reduced" : "increased"} by $${deltaDollars} (one cycle → $${targetDollars})${input.reason ? ` — ${input.reason}` : ""}.`;
+      const notes = lease.notes ? `${lease.notes}\n${trail}` : trail;
+      await updateLeaseAgreement(lease.id, ctx.user.id, { notes });
+
+      return {
+        applied: true,
+        deltaCents: delta,
+        adjustedAmountCents: input.adjustedAmountCents,
+        message: delta < 0
+          ? `Credited $${deltaDollars} off the next invoice — tenant will be charged $${targetDollars}.`
+          : `Added $${deltaDollars} to the next invoice — tenant will be charged $${targetDollars}.`,
+      };
+    }),
+
+    /**
      * Unwind a lease back to a fresh draft state. Clears every signature
      * artifact, payment flag, and payment-link record, then resets status
      * to "draft". Audit-trailed in notes. Use when a lease ended up in a
