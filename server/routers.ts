@@ -1214,11 +1214,11 @@ export const appRouter = router({
       const stripe = getStripe();
       if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured. Please add STRIPE_SECRET_KEY in Settings → Payment." });
       const origin = (ctx.req as any).headers?.origin ?? APP_URL;
-      // $99 one-time setup fee line item
+      // $75 one-time setup fee line item
       const setupLineItem = LEASELY_PRO_SETUP.priceId
         ? { price: LEASELY_PRO_SETUP.priceId, quantity: 1 }
         : { price_data: { currency: "usd", product_data: { name: LEASELY_PRO_SETUP.name, description: LEASELY_PRO_SETUP.description }, unit_amount: LEASELY_PRO_SETUP.setupPrice }, quantity: 1 };
-      // $39.99/month recurring subscription line item
+      // $25/month recurring subscription line item
       const subscriptionLineItem = LEASELY_PRO.priceId
         ? { price: LEASELY_PRO.priceId, quantity: 1 }
         : { price_data: { currency: "usd", product_data: { name: LEASELY_PRO.name, description: LEASELY_PRO.description }, unit_amount: LEASELY_PRO.monthlyPrice, recurring: { interval: "month" as const } }, quantity: 1 };

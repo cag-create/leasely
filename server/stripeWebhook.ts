@@ -184,7 +184,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
             <li>1-year domain registration (your choice)</li>
             <li>1-year managed website hosting</li>
           </ul>
-          <p style="color:#6b7280;font-size:13px">A <strong>$299 value</strong>, yours at no extra charge as a Leasely Pro member.</p>`
+          <p style="color:#6b7280;font-size:13px">A <strong>$397 value</strong>, yours at no extra charge as a Leasely Pro member.</p>`
         : "";
 
       // Primary welcome email — includes the brand kit code and the explicit
