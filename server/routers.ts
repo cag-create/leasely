@@ -2368,6 +2368,72 @@ export const appRouter = router({
         }
       }
 
+      // Escalate on decline: if the favorite / round-robin vendor turns the job
+      // down and nobody else is still in play, automatically fan the request out
+      // to every other active vendor with an email so the job doesn't stall.
+      if (input.action === "decline") {
+        const dr = await getDispatchById(input.dispatchId);
+        if (dr) {
+          const wo = await getWorkOrderById(dr.workOrderId, dr.landlordUserId);
+          // Only escalate while the work order is still unassigned.
+          if (wo && (wo.status === "open" || wo.status === "dispatched")) {
+            const allDispatches = await getDispatchsByWorkOrder(dr.workOrderId);
+            const stillInPlay = allDispatches.filter(d => d.status === "sent" || d.status === "viewed" || d.status === "accepted");
+            if (stillInPlay.length === 0) {
+              const alreadyTried = new Set(allDispatches.map(d => d.vendorId));
+              const allVendors = await getVendors(dr.landlordUserId);
+              const remaining = allVendors.filter(v => v.email && v.isActive && !alreadyTried.has(v.id));
+              if (remaining.length > 0) {
+                const APP_URL_ESC = process.env.VITE_APP_URL ?? "https://leasely.net";
+                let woPhotos: string[] = [];
+                try { woPhotos = wo.photos ? JSON.parse(wo.photos) : []; } catch { /* ignore */ }
+                const isEmergency = wo.priority === "emergency";
+
+                await updateWorkOrder(dr.workOrderId, dr.landlordUserId, {
+                  status: "dispatched",
+                  dispatchedAt: new Date(),
+                  dispatchReason: "all_vendors",
+                });
+
+                for (const v of remaining) {
+                  const newDispatchId = await createVendorDispatchRequest({
+                    workOrderId: dr.workOrderId,
+                    vendorId: v.id,
+                    landlordUserId: dr.landlordUserId,
+                    status: "sent",
+                    sentAt: new Date(),
+                  });
+                  sendEmail({
+                    to: v.email!,
+                    subject: `${isEmergency ? "🚨 EMERGENCY — " : ""}Work Request: ${wo.title} — ${wo.propertyAddress ?? ""}`,
+                    html: vendorDispatchRequestEmail({
+                      vendorName: v.name,
+                      propertyAddress: wo.propertyAddress ?? "",
+                      issueTitle: wo.title,
+                      description: wo.description ?? "",
+                      priority: (wo.priority as any) ?? "medium",
+                      photos: woPhotos,
+                      responseUrl: `${APP_URL_ESC}/vendor/respond/${newDispatchId}`,
+                      isEmergency,
+                    }),
+                  }).catch(() => {});
+                }
+
+                // Let the landlord know we escalated on their behalf.
+                const landlord = await getUserById(dr.landlordUserId);
+                if (landlord?.email) {
+                  sendEmail({
+                    to: landlord.email,
+                    subject: `↪️ Vendor declined — escalated to ${remaining.length} more vendor(s): ${wo.title}`,
+                    html: `<p>Hi ${landlord.name ?? ""},</p><p>Your assigned vendor declined the request "<b>${wo.title}</b>" at ${wo.propertyAddress ?? ""}. We've automatically sent it to <b>${remaining.length}</b> more active vendor(s) so it keeps moving.</p><p><a href="${APP_URL_ESC}/work-orders">View in Work Orders →</a></p>`,
+                  }).catch(() => {});
+                }
+              }
+            }
+          }
+        }
+      }
+
       return { success: true };
     }),
 
