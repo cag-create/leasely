@@ -14,7 +14,7 @@ import {
 } from "./_core/email";
 import Stripe from "stripe";
 import { createHmac, timingSafeEqual, randomBytes } from "crypto";
-import { LEASELY_PRO, LEASELY_PRO_SETUP, DOMAIN_RENEWAL_ANNUAL } from "./products";
+import { LEASELY_PRO, LEASELY_PRO_SETUP } from "./products";
 import QRCode from "qrcode";
 import { generateObject } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
@@ -1231,34 +1231,6 @@ export const appRouter = router({
         allow_promotion_codes: true,
         success_url: `${origin}/portal-setup?session_id={CHECKOUT_SESSION_ID}&pro_welcome=1`,
         cancel_url: `${origin}/pro`,
-      });
-      return { url: session.url };
-    }),
-
-    /**
-     * Create Stripe Checkout session for $30/yr Pro Annual Portal Renewal (Pro users only).
-     * Applies to all Pro users — covers SSL, branded portal hosting, brand assets, and
-     * (for custom-domain users) registrar fees.
-     */
-    createPortalRenewalCheckout: protectedProcedure.mutation(async ({ ctx }) => {
-      const stripe = getStripe();
-      if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured." });
-      const sub = await getUserSubscription(ctx.user.id);
-      if (!sub || sub.tier !== "paid") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Portal renewal requires a Pro subscription." });
-      }
-      const origin = (ctx.req as any).headers?.origin ?? APP_URL;
-      const lineItem = DOMAIN_RENEWAL_ANNUAL.priceId
-        ? { price: DOMAIN_RENEWAL_ANNUAL.priceId, quantity: 1 }
-        : { price_data: { currency: "usd", product_data: { name: DOMAIN_RENEWAL_ANNUAL.name, description: DOMAIN_RENEWAL_ANNUAL.description }, unit_amount: DOMAIN_RENEWAL_ANNUAL.annualPrice }, quantity: 1 };
-      const session = await stripe.checkout.sessions.create({
-        mode: "payment",
-        line_items: [lineItem],
-        customer_email: ctx.user.email ?? undefined,
-        client_reference_id: ctx.user.id.toString(),
-        metadata: { user_id: ctx.user.id.toString(), product: "portal_renewal" },
-        success_url: `${origin}/portal-setup?portal_renewed=1`,
-        cancel_url: `${origin}/portal-setup`,
       });
       return { url: session.url };
     }),

@@ -14,6 +14,9 @@ import {
 
 // Stripe Payment Link for CBP's website-builder package (custom website + logo + 1-yr domain + hosting).
 const CBP_WEBSITE_BUILDER_URL = "https://buy.stripe.com/00wbIUevX0t19mocl59ws09";
+// CBP-hosted $37/yr domain + hosting renewal (year 2 onward). Lives on CBP's Stripe —
+// CBP owns the domain/hosting, so renewals are billed by them, not Leasely.
+const CBP_DOMAIN_RENEWAL_URL = "https://buy.stripe.com/6oU28k9bDb7F9mofxh9ws08";
 const STEPS = ["Brand Setup", "Brand Brief", "Claim Free Package", "Go Live"];
 
 const LOGO_STYLES = [
@@ -560,9 +563,9 @@ export default function PortalSetup() {
                   {domainMode === "leasely" ? (
                     <li>Your <span className="text-white font-semibold">{cleanSubdomain || "yourname"}.leasely.net</span> subdomain — <span className="text-white font-semibold">free forever</span>. No renewals.</li>
                   ) : customDomain ? (
-                    <li>Domain renewal — <span className="text-white font-semibold">paid to your own registrar</span> (you brought <span className="text-white/80 font-mono text-xs">{customDomain}</span>). Hosting via CBP — <span className="text-white font-semibold">$37/yr</span>.</li>
+                    <li>Domain renewal — <span className="text-white font-semibold">paid to your own registrar</span> (you brought <span className="text-white/80 font-mono text-xs">{customDomain}</span>). Hosting via CBP — <a href={CBP_DOMAIN_RENEWAL_URL} target="_blank" rel="noopener" className="text-amber-300 underline hover:text-amber-200 font-semibold">$37/yr</a>.</li>
                   ) : (
-                    <li>Domain + hosting renewal — <span className="text-white font-semibold">$37/yr</span> via CBP <span className="text-white/40">(or transfer the domain to your own registrar — free)</span></li>
+                    <li>Domain + hosting renewal — <a href={CBP_DOMAIN_RENEWAL_URL} target="_blank" rel="noopener" className="text-amber-300 underline hover:text-amber-200 font-semibold">$37/yr</a> via CBP <span className="text-white/40">(or bring / transfer your own domain to your own registrar — no CBP renewal)</span></li>
                   )}
                 </ul>
               </div>
