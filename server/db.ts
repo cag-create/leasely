@@ -589,7 +589,9 @@ async function sub_to_portal_shape(sub: any) {
 // ─── Payment Records ──────────────────────────────────────────────────────────
 
 export async function createPaymentRecord(data: {
-  listingId: number;
+  listingId?: number | null;
+  crmPropertyId?: number | null;
+  crmTenantId?: number | null;
   landlordUserId: number;
   tenantName: string;
   tenantEmail: string;
@@ -600,7 +602,9 @@ export async function createPaymentRecord(data: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(paymentRecords).values({
-    listingId: data.listingId,
+    listingId: data.listingId ?? null,
+    crmPropertyId: data.crmPropertyId ?? null,
+    crmTenantId: data.crmTenantId ?? null,
     landlordUserId: data.landlordUserId,
     tenantName: data.tenantName,
     tenantEmail: data.tenantEmail,
@@ -886,6 +890,13 @@ export async function getCrmTenants(userId: number, propertyId?: number): Promis
   return db.select().from(crmTenants)
     .where(and(...conditions))
     .orderBy(asc(crmTenants.lastName));
+}
+
+export async function getCrmTenantById(id: number): Promise<CrmTenant | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(crmTenants).where(eq(crmTenants.id, id)).limit(1);
+  return result[0];
 }
 
 export async function createCrmTenant(data: InsertCrmTenant): Promise<number> {

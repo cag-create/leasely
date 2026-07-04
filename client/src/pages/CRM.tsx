@@ -96,35 +96,51 @@ export default function CRM() {
     { enabled: isAuthenticated && !!selectedPropertyListingId, retry: false }
   );
 
+  const utils = trpc.useUtils();
+
   const { data: connectStatus } = trpc.marketplace.getStripeConnectStatus.useQuery(undefined, {
     enabled: isAuthenticated, retry: false,
   });
   const bankReady = connectStatus?.status === "active";
 
-  const buildPaymentLink = (t: { firstName: string; lastName: string; email?: string | null; monthlyRent?: number | null }) => {
-    if (!selectedPropertyListingId) return null;
-    const params = new URLSearchParams();
-    params.set("name", `${t.firstName} ${t.lastName}`.trim());
-    if (t.email) params.set("email", t.email);
-    if (t.monthlyRent) params.set("amount", String(t.monthlyRent / 100));
-    return `${window.location.origin}/pay/${selectedPropertyListingId}?${params.toString()}`;
+  // Fetch a private rent-payment link for a CRM tenant (works for occupied
+  // units that are never publicly listed — no marketplace listing required).
+  const getRentLink = async (tenantId: number) => {
+    const res = await utils.crm.getRentLink.fetch({ crmTenantId: tenantId });
+    return res.url;
   };
 
-  const sendPaymentLink = async (t: { firstName: string; lastName: string; email?: string | null; monthlyRent?: number | null }) => {
-    const link = buildPaymentLink(t);
-    if (!link) {
-      toast.error("Link this property to a marketplace listing first to collect rent online.");
-      return;
-    }
+  const copyPaymentLink = async (t: { id: number; firstName: string }) => {
     if (!bankReady) {
       toast.error("Connect your bank account (Settings → Payments) before sending payment links.");
       return;
     }
     try {
-      await navigator.clipboard.writeText(link);
-      toast.success(`Payment link copied — send it to ${t.firstName}.`);
-    } catch {
-      toast.success(link);
+      const url = await getRentLink(t.id);
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success(`Payment link copied — send it to ${t.firstName}.`);
+      } catch {
+        toast.success(url);
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not generate payment link.");
+    }
+  };
+
+  const emailPaymentLink = async (t: { id: number; firstName: string; email?: string | null }) => {
+    if (!t.email) return;
+    if (!bankReady) {
+      toast.error("Connect your bank account (Settings → Payments) before sending payment links.");
+      return;
+    }
+    try {
+      const url = await getRentLink(t.id);
+      const subject = encodeURIComponent("Rent payment link");
+      const body = encodeURIComponent(`Hi ${t.firstName},\n\nYou can pay your rent securely here:\n${url}\n\nThank you.`);
+      window.location.href = `mailto:${t.email}?subject=${subject}&body=${body}`;
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not generate payment link.");
     }
   };
 
@@ -554,26 +570,24 @@ export default function CRM() {
                                     <p className="text-xs font-semibold text-gray-700 flex items-center gap-1 mb-1">
                                       <DollarSign className="w-3.5 h-3.5 text-[#1B4332]" /> Collect rent online
                                     </p>
-                                    {!selectedPropertyListingId ? (
-                                      <p className="text-xs text-amber-600">Link this property to a marketplace listing to collect rent online.</p>
-                                    ) : !bankReady ? (
-                                      <p className="text-xs text-amber-600">Connect your bank account (Settings → Payments) to enable rent payments.</p>
+                                    {!bankReady ? (
+                                      <p className="text-xs text-amber-600">Connect your bank account (Settings → Payments) to enable rent payments. Works for occupied units — nothing gets publicly listed.</p>
                                     ) : (
-                                      <div className="flex flex-wrap gap-2">
-                                        <Button size="sm" className="bg-[#1B4332] hover:bg-[#2D6A4F] text-white gap-1 h-8"
-                                          onClick={() => sendPaymentLink(t)}>
-                                          <DollarSign className="w-3.5 h-3.5" /> Copy Payment Link
-                                        </Button>
-                                        {t.email && (
-                                          <a
-                                            href={`mailto:${t.email}?subject=${encodeURIComponent("Rent payment link")}&body=${encodeURIComponent(`Hi ${t.firstName},\n\nYou can pay your rent securely here:\n${buildPaymentLink(t)}\n\nThank you.`)}`}
-                                          >
-                                            <Button size="sm" variant="outline" className="gap-1 h-8">
+                                      <>
+                                        <div className="flex flex-wrap gap-2">
+                                          <Button size="sm" className="bg-[#1B4332] hover:bg-[#2D6A4F] text-white gap-1 h-8"
+                                            onClick={() => copyPaymentLink(t)}>
+                                            <DollarSign className="w-3.5 h-3.5" /> Copy Payment Link
+                                          </Button>
+                                          {t.email && (
+                                            <Button size="sm" variant="outline" className="gap-1 h-8"
+                                              onClick={() => emailPaymentLink(t)}>
                                               <Mail className="w-3.5 h-3.5" /> Email Link
                                             </Button>
-                                          </a>
-                                        )}
-                                      </div>
+                                          )}
+                                        </div>
+                                        <p className="text-[11px] text-gray-400 mt-1.5">Private link — routes rent straight to your connected bank. No marketplace listing needed.</p>
+                                      </>
                                     )}
                                   </div>
                                 </div>

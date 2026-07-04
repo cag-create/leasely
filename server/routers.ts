@@ -48,6 +48,30 @@ function verifyTenantToken(token: string): { id: number; ts: number } | null {
     return null;
   }
 }
+
+// Signed CRM rent-collection token: identifies a CRM tenant for a private
+// (never-publicly-listed) rent payment. Long-lived so a landlord can reuse the
+// same link every month. Not a session — it only authorizes paying rent.
+function signCrmRentToken(crmTenantId: number): string {
+  const payload = Buffer.from(JSON.stringify({ ct: crmTenantId })).toString("base64url");
+  const sig = createHmac("sha256", tenantTokenSecret()).update(`rent:${payload}`).digest("base64url");
+  return `${payload}.${sig}`;
+}
+function verifyCrmRentToken(token: string): { ct: number } | null {
+  const [payload, sig] = token.split(".");
+  if (!payload || !sig) return null;
+  const expected = createHmac("sha256", tenantTokenSecret()).update(`rent:${payload}`).digest("base64url");
+  const a = Buffer.from(sig);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+  try {
+    const decoded = JSON.parse(Buffer.from(payload, "base64url").toString()) as { ct: number };
+    if (typeof decoded.ct !== "number") return null;
+    return decoded;
+  } catch {
+    return null;
+  }
+}
 import { storagePut } from "./storage";
 import { affiliates, w9Submissions, affiliateReferrals, affiliatePayouts, marketplaceListings, rentalApplications, leaseAgreements } from "../drizzle/schema";
 import { eq, sql, and } from "drizzle-orm";
@@ -69,7 +93,7 @@ import {
   getWorkOrders, getWorkOrderById, createWorkOrder, updateWorkOrder,
   getAccountingEntries, createAccountingEntry, updateAccountingEntry, deleteAccountingEntry,
   getCrmProperties, getCrmPropertyById, createCrmProperty, updateCrmProperty, deleteCrmProperty,
-  getCrmTenants, createCrmTenant, updateCrmTenant, deleteCrmTenant,
+  getCrmTenants, getCrmTenantById, createCrmTenant, updateCrmTenant, deleteCrmTenant,
   getCrmLeases, createCrmLease, updateCrmLease,
   getCrmNotes, createCrmNote,
   getWorkOrdersForProperty, getRentPaymentsForListing,
@@ -1540,6 +1564,109 @@ export const appRouter = router({
         return { sessionUrl: session.url, paymentId };
       }),
 
+    // ─── Private CRM Rent Collection (no public listing required) ─────────────
+    // Display info for the private rent pay page, resolved from a signed token.
+    getCrmRentInfo: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .query(async ({ input }) => {
+        const decoded = verifyCrmRentToken(input.token);
+        if (!decoded) throw new TRPCError({ code: "NOT_FOUND", message: "Invalid payment link" });
+        const tenant = await getCrmTenantById(decoded.ct);
+        if (!tenant) throw new TRPCError({ code: "NOT_FOUND", message: "This payment link is no longer valid." });
+        const property = await getCrmPropertyById(tenant.crmPropertyId, tenant.userId);
+        const sub = await getUserSubscription(tenant.userId);
+        const bankReady = !!sub?.stripeConnectAccountId && sub.stripeConnectStatus === "active";
+        return {
+          tenantName: `${tenant.firstName} ${tenant.lastName}`.trim(),
+          tenantEmail: tenant.email ?? "",
+          monthlyRent: tenant.monthlyRent ?? null,
+          bankReady,
+          propertyAddress: property
+            ? [property.address, property.city, property.state].filter(Boolean).join(", ")
+            : "",
+        };
+      }),
+
+    // Create a Stripe Checkout session for rent on a CRM property. Funds route
+    // via destination charge to the landlord's connected bank. No listing.
+    createCrmRentPaymentSession: publicProcedure
+      .input(z.object({
+        token: z.string(),
+        amountDollars: z.number().min(1).max(50000),
+        description: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const decoded = verifyCrmRentToken(input.token);
+        if (!decoded) throw new TRPCError({ code: "NOT_FOUND", message: "Invalid payment link" });
+        const tenant = await getCrmTenantById(decoded.ct);
+        if (!tenant) throw new TRPCError({ code: "NOT_FOUND", message: "This payment link is no longer valid." });
+        const sub = await getUserSubscription(tenant.userId);
+        if (!sub || !sub.stripeConnectAccountId) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Landlord has not set up payments" });
+        }
+        const stripe = getStripe();
+        if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured" });
+
+        const property = await getCrmPropertyById(tenant.crmPropertyId, tenant.userId);
+        const amountCents = Math.round(input.amountDollars * 100);
+        const desc = input.description ?? `Rent payment — ${property?.address ?? "your rental"}`;
+        // Pro landlords: 0% platform fee. Free tier: 1% Leasely platform fee.
+        const isProLandlord = sub.tier === "paid";
+        const platformFeeCents = isProLandlord ? 0 : Math.round(amountCents * 0.01);
+
+        const paymentId = await createPaymentRecord({
+          crmPropertyId: tenant.crmPropertyId,
+          crmTenantId: tenant.id,
+          landlordUserId: tenant.userId,
+          tenantName: `${tenant.firstName} ${tenant.lastName}`.trim(),
+          tenantEmail: tenant.email ?? "",
+          amountCents,
+          description: desc,
+          status: "pending",
+        });
+
+        const paymentIntentData: any = {
+          transfer_data: { destination: sub.stripeConnectAccountId },
+          metadata: { leaselyPaymentId: String(paymentId), crmTenantId: String(tenant.id) },
+        };
+        if (platformFeeCents > 0) {
+          paymentIntentData.application_fee_amount = platformFeeCents;
+        }
+
+        const enableAch = amountCents >= 10000;
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: enableAch ? ["us_bank_account", "card"] : ["card"],
+          ...(enableAch && {
+            payment_method_options: {
+              us_bank_account: {
+                financial_connections: { permissions: ["payment_method", "balances"] },
+                verification_method: "automatic" as const,
+              },
+            },
+          }),
+          mode: "payment",
+          ...(tenant.email ? { customer_email: tenant.email } : {}),
+          line_items: [{
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name: desc,
+                ...(property ? { description: [property.address, property.city, property.state].filter(Boolean).join(", ") } : {}),
+              },
+              unit_amount: amountCents,
+            },
+            quantity: 1,
+          }],
+          payment_intent_data: paymentIntentData,
+          success_url: `${APP_URL}/pay/rent/${input.token}/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${APP_URL}/pay/rent/${input.token}`,
+          metadata: { leaselyPaymentId: String(paymentId) },
+        });
+
+        await updatePaymentStatus(paymentId, "pending", session.id, undefined);
+        return { sessionUrl: session.url, paymentId };
+      }),
+
      getPaymentHistory: protectedProcedure.query(async ({ ctx }) => {
       const sub = await getUserSubscription(ctx.user.id);
       if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
@@ -2641,6 +2768,20 @@ export const appRouter = router({
       listingId: z.number(),
     })).query(async ({ ctx, input }) => {
       return getRentPaymentsForListing(ctx.user.id, input.listingId);
+    }),
+
+    // Generate a private rent-payment link for a CRM tenant. Works for occupied
+    // units that are never publicly listed — routes to the landlord's bank.
+    getRentLink: protectedProcedure.input(z.object({
+      crmTenantId: z.number(),
+    })).query(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      const tenant = await getCrmTenantById(input.crmTenantId);
+      if (!tenant || tenant.userId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+      const bankReady = !!sub.stripeConnectAccountId && sub.stripeConnectStatus === "active";
+      const token = signCrmRentToken(tenant.id);
+      return { token, url: `${APP_URL}/pay/rent/${token}`, bankReady };
     }),
   }),
   // ─── Tenant Portal Router ────────────────────────────────────────────────────

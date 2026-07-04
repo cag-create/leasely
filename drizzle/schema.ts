@@ -204,7 +204,12 @@ export type ListingInquiry = typeof listingInquiries.$inferSelect;
  */
 export const paymentRecords = mysqlTable("payment_records", {
   id: int("id").autoincrement().primaryKey(),
-  listingId: int("listingId").notNull(),
+  // Nullable: a payment can originate from a public marketplace listing OR
+  // directly from a CRM property that is intentionally never publicly listed
+  // (occupied units collecting rent). Exactly one source is set.
+  listingId: int("listingId"),
+  crmPropertyId: int("crmPropertyId"),
+  crmTenantId: int("crmTenantId"),
   landlordUserId: int("landlordUserId").notNull(),
   tenantName: varchar("tenantName", { length: 255 }).notNull(),
   tenantEmail: varchar("tenantEmail", { length: 320 }).notNull(),

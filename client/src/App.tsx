@@ -22,6 +22,8 @@ const Onboarding          = lazy(() => import("./pages/Onboarding"));
 const PortalPage          = lazy(() => import("./pages/PortalPage"));
 const RentPayment         = lazy(() => import("./pages/RentPayment"));
 const RentPaymentSuccess  = lazy(() => import("./pages/RentPaymentSuccess"));
+const RentPaymentPrivate        = lazy(() => import("./pages/RentPaymentPrivate"));
+const RentPaymentPrivateSuccess = lazy(() => import("./pages/RentPaymentPrivateSuccess"));
 const WorkOrders          = lazy(() => import("./pages/WorkOrders"));
 const Accounting          = lazy(() => import("./pages/Accounting"));
 const CRM                 = lazy(() => import("./pages/CRM"));
@@ -112,6 +114,8 @@ function Router() {
         <Route path="/portal/:subdomain" component={PortalPage} />
 
         {/* Tenant rent payment (public) */}
+        <Route path="/pay/rent/:token" component={RentPaymentPrivate} />
+        <Route path="/pay/rent/:token/success" component={RentPaymentPrivateSuccess} />
         <Route path="/pay/:id" component={RentPayment} />
         <Route path="/pay/:id/success" component={RentPaymentSuccess} />
 
