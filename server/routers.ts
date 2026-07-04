@@ -5488,6 +5488,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       const out: Array<{
         leaseId: number; tenantName: string; tenantEmail: string; propertyAddress: string;
         monthlyRent: number; monthsBehind: number; amountOwedCents: number; lastPaidPeriod: string | null;
+        rentDueDay: number; unpaidPeriods: string[];
       }> = [];
 
       for (const lease of leases) {
@@ -5499,12 +5500,13 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         if (Number.isNaN(start.getTime())) continue;
         let monthsBehind = 0;
         let lastPaid: string | null = null;
+        const unpaidPeriods: string[] = [];
         const cur = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1));
         const cutoff = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
         while (cur.getTime() <= cutoff.getTime()) {
           const period = `${cur.getUTCFullYear()}-${String(cur.getUTCMonth() + 1).padStart(2, "0")}-01`;
           if (paidPeriods.has(period)) lastPaid = period;
-          else monthsBehind += 1;
+          else { monthsBehind += 1; unpaidPeriods.push(period); }
           cur.setUTCMonth(cur.getUTCMonth() + 1);
         }
         if (monthsBehind > 0) {
@@ -5517,6 +5519,8 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
             monthsBehind,
             amountOwedCents: monthsBehind * lease.monthlyRent,
             lastPaidPeriod: lastPaid,
+            rentDueDay: lease.rentDueDay ?? 1,
+            unpaidPeriods,
           });
         }
       }

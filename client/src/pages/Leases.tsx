@@ -312,6 +312,136 @@ function LeaseFieldEditForm({ lease, onClose, onSaved }: { lease: any; onClose: 
   );
 }
 
+/**
+ * OfflinePaymentDialog — lets a landlord mark arrears months as paid when the
+ * tenant paid off-platform (cash, Zelle, check, etc.). Reuses the existing
+ * `leases.recordRentPayment` mutation (one call per selected month), which also
+ * mirrors the payment into the accounting ledger. Clearing a month removes it
+ * from the arrears banner.
+ */
+function OfflinePaymentDialog({ row, onClose }: { row: any; onClose: () => void }) {
+  const utils = trpc.useUtils();
+  const periods: string[] = row?.unpaidPeriods ?? [];
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [method, setMethod] = useState("Cash");
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // Reset selections whenever a new row is opened (default: all months checked).
+  const rowKey = row ? `${row.leaseId}:${periods.join(",")}` : "";
+  const [lastKey, setLastKey] = useState("");
+  if (row && rowKey !== lastKey) {
+    setLastKey(rowKey);
+    setSelected(new Set(periods));
+    setMethod("Cash");
+    setNote("");
+  }
+
+  const fmt = (p: string) => {
+    const d = new Date(`${p}T12:00:00Z`);
+    return d.toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+  };
+
+  const recordMutation = (trpc as any).leases.recordRentPayment.useMutation();
+
+  const toggle = (p: string) =>
+    setSelected((s) => { const n = new Set(s); n.has(p) ? n.delete(p) : n.add(p); return n; });
+
+  const submit = async () => {
+    if (!row || selected.size === 0) return;
+    setSaving(true);
+    try {
+      for (const period of periods.filter((p) => selected.has(p))) {
+        await recordMutation.mutateAsync({
+          leaseId: row.leaseId,
+          periodMonth: period,
+          amountCents: row.monthlyRent,
+          method: method.trim() || "Offline",
+          note: note.trim() || undefined,
+        });
+      }
+      toast.success(`Recorded ${selected.size} month${selected.size === 1 ? "" : "s"} as paid (${method.trim() || "Offline"})`);
+      await (utils as any).leases.arrearsByLandlord.invalidate();
+      onClose();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not record payment");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const selectedCents = periods.filter((p) => selected.has(p)).length * (row?.monthlyRent ?? 0);
+
+  return (
+    <Dialog open={!!row} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Record offline payment{row ? ` — ${row.tenantName}` : ""}</DialogTitle>
+        </DialogHeader>
+        {row && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Mark the months {row.tenantName} paid you directly (cash, Zelle, check, etc.).
+              This clears them from arrears and logs the income to Accounting.
+            </p>
+            <div>
+              <Label className="text-xs uppercase tracking-wide text-gray-500">Months to mark paid</Label>
+              <div className="mt-2 space-y-1.5 max-h-48 overflow-y-auto rounded-md border border-gray-200 p-3">
+                {periods.map((p) => (
+                  <label key={p} className="flex items-center justify-between gap-3 text-sm cursor-pointer">
+                    <span className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(p)}
+                        onChange={() => toggle(p)}
+                        className="w-4 h-4 accent-[#1B2B5E]"
+                      />
+                      {fmt(p)}
+                    </span>
+                    <span className="font-mono text-gray-500">${(row.monthlyRent / 100).toLocaleString("en-US")}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Payment method</Label>
+                <Select value={method} onValueChange={setMethod}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["Cash", "Zelle", "Venmo", "Cash App", "Check", "Bank transfer", "Money order", "Other"].map((m) => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Note (optional)</Label>
+                <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. check #1042" />
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <span className="text-sm text-gray-600">
+                {selected.size} month{selected.size === 1 ? "" : "s"} · <strong>${(selectedCents / 100).toLocaleString("en-US")}</strong>
+              </span>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+                <Button
+                  className="bg-[#1B2B5E] hover:bg-[#2D3F7C] text-white"
+                  disabled={saving || selected.size === 0}
+                  onClick={submit}
+                >
+                  {saving ? "Recording..." : "Mark as paid"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function Leases() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
@@ -333,6 +463,8 @@ export default function Leases() {
     enabled: isAuthenticated,
     retry: false,
   });
+  // Arrears row the landlord is recording an offline (cash/Zelle/check) payment for.
+  const [offlinePayRow, setOfflinePayRow] = useState<any>(null);
 
   const createMutation = trpc.leases.create.useMutation({
     onSuccess: () => {
@@ -802,10 +934,19 @@ export default function Leases() {
                   </p>
                   <ul className="text-sm text-red-800 mt-2 space-y-1">
                     {arrears.map((t: any) => (
-                      <li key={t.leaseId} className="flex flex-wrap justify-between gap-2">
+                      <li key={t.leaseId} className="flex flex-wrap items-center justify-between gap-2">
                         <span><strong>{t.tenantName}</strong> · {t.propertyAddress}</span>
-                        <span className="font-mono">
-                          {t.monthsBehind} mo · ${(t.amountOwedCents / 100).toLocaleString("en-US")}
+                        <span className="flex items-center gap-3">
+                          <span className="font-mono">
+                            {t.monthsBehind} mo · ${(t.amountOwedCents / 100).toLocaleString("en-US")}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setOfflinePayRow(t)}
+                            className="text-xs font-semibold text-red-700 hover:text-red-900 underline underline-offset-2 whitespace-nowrap"
+                          >
+                            Paid offline?
+                          </button>
                         </span>
                       </li>
                     ))}
@@ -815,6 +956,9 @@ export default function Leases() {
             </CardContent>
           </Card>
         )}
+
+        {/* Record-offline-payment dialog for an arrears row */}
+        <OfflinePaymentDialog row={offlinePayRow} onClose={() => setOfflinePayRow(null)} />
 
         {/* Active filter label */}
         {statusFilter && (
