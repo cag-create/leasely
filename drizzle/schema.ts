@@ -125,7 +125,13 @@ export const marketplaceListings = mysqlTable("marketplace_listings", {
   contactPhone: varchar("contactPhone", { length: 30 }),
 
   // Status
-  status: mysqlEnum("status", ["active", "inactive", "pending"]).default("active").notNull(),
+  //  active   — publicly visible on the marketplace / map / search
+  //  inactive — hidden (paused by owner)
+  //  pending  — awaiting review
+  //  private  — intentionally UNLISTED: managed inside Leasely (CRM, rent
+  //             collection, leases) but never shown as an available rental.
+  //             Used for already-occupied units the owner is not advertising.
+  status: mysqlEnum("status", ["active", "inactive", "pending", "private"]).default("active").notNull(),
 
   // Linked to a Leasely portal property (for paid subscribers)
   portalPropertyId: int("portalPropertyId"),

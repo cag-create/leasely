@@ -172,6 +172,7 @@ function ListingRow({
   const photoCount = parsePhotos(listing.photos).length;
   const typeLabel = PROPERTY_TYPE_LABELS[listing.propertyType] ?? listing.propertyType;
   const isActive = listing.status === "active";
+  const isPrivate = listing.status === "private";
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col sm:flex-row hover:shadow-md transition-shadow">
@@ -198,12 +199,15 @@ function ListingRow({
           <Badge
             className="text-xs"
             style={
-              isActive
+              isPrivate
+                ? { background: "#4F46E520", color: "#3730a3", border: "1px solid #4F46E540" }
+                : isActive
                 ? { background: `${ACCENT}20`, color: "#0a6b4f", border: `1px solid ${ACCENT}40` }
                 : { background: "#9ca3af20", color: "#4b5563", border: "1px solid #9ca3af40" }
             }
+            title={isPrivate ? "Managed in Leasely — not shown on the marketplace" : undefined}
           >
-            {isActive ? "Active" : "Inactive"}
+            {isPrivate ? "Private" : isActive ? "Active" : "Inactive"}
           </Badge>
         </div>
       </div>
@@ -268,9 +272,9 @@ function ListingRow({
             </button>
             <button
               onClick={onDelete}
-              disabled={!isActive}
+              disabled={listing.status === "inactive"}
               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 text-red-500 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              title={isActive ? "Deactivate listing" : "Already inactive"}
+              title={listing.status === "inactive" ? "Already inactive" : "Deactivate listing"}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>

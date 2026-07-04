@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,7 @@ type FormData = {
   contactName: string;
   contactEmail: string;
   contactPhone: string;
+  listPublicly: boolean;
 };
 
 export default function ListProperty() {
@@ -82,10 +83,17 @@ export default function ListProperty() {
     enabled: isAuthenticated,
   });
 
+  const wasPrivateRef = useRef(false);
+
   const createMutation = trpc.marketplace.createListing.useMutation({
     onSuccess: ({ id }) => {
-      toast.success("Your listing is live! 🎉");
-      navigate(`/listing/${id}`);
+      if (wasPrivateRef.current) {
+        toast.success("Property added privately — it won't appear on the marketplace.");
+        navigate("/my-listings");
+      } else {
+        toast.success("Your listing is live! 🎉");
+        navigate(`/listing/${id}`);
+      }
     },
     onError: (err) => {
       if (err.message === "UPGRADE_REQUIRED") {
@@ -105,6 +113,7 @@ export default function ListProperty() {
       state: "NC",
       contactName: user?.name ?? "",
       contactEmail: user?.email ?? "",
+      listPublicly: true,
     },
   });
 
@@ -197,7 +206,9 @@ export default function ListProperty() {
       return;
     }
 
+    wasPrivateRef.current = !data.listPublicly;
     createMutation.mutate({
+      listPublicly: data.listPublicly,
       title: data.title,
       description: data.description,
       propertyType: data.propertyType as any,
@@ -601,8 +612,33 @@ export default function ListProperty() {
             {/* Step 5: Contact Info */}
             {step === 5 && (
               <div className="space-y-6">
-                <h2 className="text-xl font-black text-gray-900">Contact Information</h2>
-                <p className="text-gray-500 text-sm">This is how interested renters will reach you.</p>
+                <h2 className="text-xl font-black text-gray-900">Visibility & Contact</h2>
+
+                {/* Public vs. private (management-only) */}
+                <div className={`rounded-2xl border-2 p-4 transition-all ${watchedValues.listPublicly ? "border-emerald-200 bg-emerald-50/40" : "border-indigo-200 bg-indigo-50/40"}`}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="font-semibold text-gray-900">
+                        {watchedValues.listPublicly ? "List on the marketplace" : "Private — management only"}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1 max-w-md">
+                        {watchedValues.listPublicly
+                          ? "Your property will be publicly visible in search, on the map, and open to applications."
+                          : "The property is added for rent collection, leases, and CRM only. It will NOT appear on the marketplace, map, or search — ideal for already-occupied units."}
+                      </div>
+                    </div>
+                    <Switch
+                      checked={watchedValues.listPublicly}
+                      onCheckedChange={v => setValue("listPublicly", v)}
+                    />
+                  </div>
+                </div>
+
+                <p className="text-gray-500 text-sm">
+                  {watchedValues.listPublicly
+                    ? "This is how interested renters will reach you."
+                    : "Contact details stay on file for your records."}
+                </p>
                 <div>
                   <Label htmlFor="contactName">Your Name *</Label>
                   <Input id="contactName" placeholder="Jane Smith" className="mt-1.5" {...register("contactName", { required: true })} />
@@ -624,7 +660,8 @@ export default function ListProperty() {
                   <div className="flex justify-between"><span className="text-gray-500">Location</span><span className="font-medium">{watchedValues.city}, {watchedValues.state}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">Rent</span><span className="font-medium text-emerald-600">${watchedValues.monthlyRent}/mo</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">Beds/Baths</span><span className="font-medium">{watchedValues.bedrooms} bd / {watchedValues.bathrooms} ba</span></div>
-                  {geocodedCoords && <div className="flex justify-between"><span className="text-gray-500">Map Pin</span><span className="font-medium text-emerald-600">✅ Will appear on map</span></div>}
+                  <div className="flex justify-between"><span className="text-gray-500">Visibility</span><span className="font-medium">{watchedValues.listPublicly ? "Public listing" : "Private (management only)"}</span></div>
+                  {geocodedCoords && watchedValues.listPublicly && <div className="flex justify-between"><span className="text-gray-500">Map Pin</span><span className="font-medium text-emerald-600">✅ Will appear on map</span></div>}
                 </div>
               </div>
             )}
@@ -645,7 +682,9 @@ export default function ListProperty() {
                   className="gap-2 font-bold px-8"
                   style={{ background: ACCENT, color: "#3A2410" }}
                 >
-                  {createMutation.isPending ? "Publishing..." : "Publish Listing 🚀"}
+                  {createMutation.isPending
+                    ? "Saving..."
+                    : watchedValues.listPublicly ? "Publish Listing 🚀" : "Add Private Property"}
                 </Button>
               )}
             </div>

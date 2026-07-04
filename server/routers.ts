@@ -917,14 +917,21 @@ export const appRouter = router({
         contactName: z.string().optional(),
         contactEmail: z.string().email().optional(),
         contactPhone: z.string().optional(),
+        // When false, the property is added for management only (CRM, rent
+        // collection, leases) and is NEVER shown on the public marketplace,
+        // map, or search. Used for already-occupied units the owner isn't
+        // advertising as available.
+        listPublicly: z.boolean().default(true),
       }))
       .mutation(async ({ input, ctx }) => {
-        // Check tier limits
+        // Check tier limits — the free-tier "1 listing" cap only applies to
+        // PUBLIC marketplace listings. Private management-only properties do
+        // not consume a public slot.
         const sub = await getUserSubscription(ctx.user.id);
         const tier = sub?.tier ?? "free";
         const existingCount = await countUserListings(ctx.user.id);
 
-        if (tier === "free" && existingCount >= 1) {
+        if (input.listPublicly && tier === "free" && existingCount >= 1) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "UPGRADE_REQUIRED",
@@ -960,7 +967,7 @@ export const appRouter = router({
           contactName: input.contactName ?? ctx.user.name ?? null,
           contactEmail: input.contactEmail ?? ctx.user.email ?? null,
           contactPhone: input.contactPhone ?? null,
-          status: "active",
+          status: input.listPublicly ? "active" : "private",
           viewCount: 0,
           saveCount: 0,
         });
