@@ -234,6 +234,84 @@ function LeaseEditForm({ lease, onClose }: { lease: any; onClose: () => void }) 
   );
 }
 
+// Field editor for non-draft (sent/signed/active) leases. Uses leases.update,
+// which edits the stored fields WITHOUT re-rendering or re-issuing the signed
+// document — safe to run on an executed lease. For drafts use LeaseEditForm.
+function LeaseFieldEditForm({ lease, onClose, onSaved }: { lease: any; onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState({
+    tenantName: lease.tenantName ?? "",
+    tenantEmail: lease.tenantEmail ?? "",
+    tenantPhone: lease.tenantPhone ?? "",
+    monthlyRent: lease.monthlyRent ? (lease.monthlyRent / 100).toString() : "",
+    securityDeposit: lease.securityDeposit ? (lease.securityDeposit / 100).toString() : "",
+    leaseStartDate: lease.leaseStartDate ?? "",
+    leaseEndDate: lease.leaseEndDate ?? "",
+  });
+
+  const updateMutation = trpc.leases.update.useMutation({
+    onSuccess: () => { toast.success("Lease updated"); onSaved(); onClose(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-md bg-blue-50 border border-blue-200 p-3 text-xs text-blue-900">
+        Updates the lease record only — it does not re-render or re-issue the
+        signed document. Changing the tenant email updates where future links go.
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label>Tenant Name</Label>
+          <Input value={form.tenantName} onChange={e => setForm(f => ({ ...f, tenantName: e.target.value }))} />
+        </div>
+        <div>
+          <Label>Tenant Email</Label>
+          <Input type="email" autoComplete="off" value={form.tenantEmail} onChange={e => setForm(f => ({ ...f, tenantEmail: e.target.value }))} />
+        </div>
+        <div>
+          <Label>Tenant Phone</Label>
+          <Input value={form.tenantPhone} onChange={e => setForm(f => ({ ...f, tenantPhone: e.target.value }))} />
+        </div>
+        <div>
+          <Label>Monthly Rent ($)</Label>
+          <Input type="number" value={form.monthlyRent} onChange={e => setForm(f => ({ ...f, monthlyRent: e.target.value }))} />
+        </div>
+        <div>
+          <Label>Security Deposit ($)</Label>
+          <Input type="number" value={form.securityDeposit} onChange={e => setForm(f => ({ ...f, securityDeposit: e.target.value }))} />
+        </div>
+        <div>
+          <Label>Start Date</Label>
+          <Input type="date" value={form.leaseStartDate} onChange={e => setForm(f => ({ ...f, leaseStartDate: e.target.value }))} />
+        </div>
+        <div>
+          <Label>End Date</Label>
+          <Input type="date" value={form.leaseEndDate} onChange={e => setForm(f => ({ ...f, leaseEndDate: e.target.value }))} />
+        </div>
+      </div>
+      <div className="flex gap-2 pt-1">
+        <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
+        <Button
+          className="flex-1 bg-[#1B2B5E] hover:bg-[#2D3F7C] text-white"
+          disabled={updateMutation.isPending}
+          onClick={() => updateMutation.mutate({
+            leaseId: lease.id,
+            tenantName: form.tenantName.trim() || undefined,
+            tenantEmail: form.tenantEmail.trim() || undefined,
+            tenantPhone: form.tenantPhone.trim() || undefined,
+            monthlyRent: form.monthlyRent ? Math.round(parseFloat(form.monthlyRent) * 100) : undefined,
+            securityDeposit: form.securityDeposit ? Math.round(parseFloat(form.securityDeposit) * 100) : undefined,
+            leaseStartDate: form.leaseStartDate || undefined,
+            leaseEndDate: form.leaseEndDate || undefined,
+          })}
+        >
+          {updateMutation.isPending ? "Saving..." : "Save Changes"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function Leases() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
@@ -241,6 +319,7 @@ export default function Leases() {
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedLease, setSelectedLease] = useState<any>(null);
   const [editLease, setEditLease] = useState<any>(null);
+  const [editFieldsLease, setEditFieldsLease] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<"draft" | "active" | null>(null);
   const [form, setForm] = useState(emptyForm);
 
@@ -883,14 +962,24 @@ export default function Leases() {
                         </Button>
                       )}
                       {lease.status !== "draft" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="gap-1 text-xs flex-1 sm:flex-none"
-                          onClick={e => { e.stopPropagation(); setSelectedLease(lease); }}
-                        >
-                          <ChevronRight className="w-3 h-3" /> Details
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1 text-xs flex-1 sm:flex-none"
+                            onClick={e => { e.stopPropagation(); setEditFieldsLease(lease as any); }}
+                          >
+                            <Pencil className="w-3 h-3" /> Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1 text-xs flex-1 sm:flex-none"
+                            onClick={e => { e.stopPropagation(); setSelectedLease(lease); }}
+                          >
+                            <ChevronRight className="w-3 h-3" /> Details
+                          </Button>
+                        </>
                       )}
                       {/* Per-row Delete — Pro-only on the server. Visible to all
                           landlords so they discover the capability; server
@@ -925,6 +1014,23 @@ export default function Leases() {
               <LeaseEditForm
                 lease={editLease}
                 onClose={() => { setEditLease(null); utils.leases.list.invalidate(); }}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Edit Fields Dialog — for sent/signed/active leases. Uses leases.update
+            (no document re-render), unlike the draft-only LeaseEditForm above. */}
+        {editFieldsLease && (
+          <Dialog open={!!editFieldsLease} onOpenChange={() => setEditFieldsLease(null)}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit Lease — {editFieldsLease.tenantName}</DialogTitle>
+              </DialogHeader>
+              <LeaseFieldEditForm
+                lease={editFieldsLease}
+                onClose={() => setEditFieldsLease(null)}
+                onSaved={() => { refetch(); utils.leases.list.invalidate(); }}
               />
             </DialogContent>
           </Dialog>
@@ -1105,6 +1211,20 @@ export default function Leases() {
                   <FileText className="w-4 h-4" />
                   {duplicateMutation.isPending ? "Duplicating..." : "Duplicate as new draft"}
                 </Button>
+
+                {selectedLease.status !== "draft" && (
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={() => {
+                      const l = selectedLease;
+                      setSelectedLease(null);
+                      setEditFieldsLease(l);
+                    }}
+                  >
+                    <Pencil className="w-4 h-4" /> Edit lease details
+                  </Button>
+                )}
 
                 {selectedLease.status === "draft" && (
                   <div className="flex gap-2">
