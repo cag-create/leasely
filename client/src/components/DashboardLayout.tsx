@@ -27,7 +27,7 @@ import { trpc } from "@/lib/trpc";
 import {
   LayoutDashboard, LogOut, PanelLeft, Home, Building2,
   Briefcase, Calculator, UserCircle, HeadphonesIcon, Heart,
-  FileText, Sparkles, Shield, ChevronDown, Wrench, BookOpen, Award
+  FileText, Sparkles, Shield, ChevronDown, Wrench, BookOpen, Award, Landmark
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -47,6 +47,7 @@ const proMenuItems = [
   { icon: Briefcase, label: "Work Orders", path: "/work-orders", group: "pro" },
   { icon: FileText, label: "Lease Agreements", path: "/leases", group: "pro" },
   { icon: Calculator, label: "Accounting", path: "/accounting", group: "pro" },
+  { icon: Landmark, label: "Payouts", path: "/payouts", group: "pro" },
   { icon: UserCircle, label: "Tenants / CRM", path: "/crm", group: "pro" },
 ];
 

@@ -1702,6 +1702,53 @@ export const appRouter = router({
         return { availableCents: available?.amount ?? 0, pendingCents: pending?.amount ?? 0 };
       } catch { return { availableCents: 0, pendingCents: 0 }; }
     }),
+
+    /**
+     * Masked details of the bank account the landlord connected via Stripe
+     * Express onboarding. Bank numbers live at Stripe (never in Leasely's DB);
+     * this returns only display-safe fields (bank name + last4) so the landlord
+     * can confirm which account their rent is deposited into.
+     */
+    getBankAccount: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid" || !sub.stripeConnectAccountId) return { connected: false as const };
+      const stripe = getStripe();
+      if (!stripe) return { connected: false as const };
+      try {
+        const account = await stripe.accounts.retrieve(sub.stripeConnectAccountId);
+        const ext = (account.external_accounts?.data ?? []).find((e: any) => e.object === "bank_account") as any;
+        const schedule = (account.settings as any)?.payouts?.schedule;
+        return {
+          connected: true as const,
+          accountId: sub.stripeConnectAccountId,
+          chargesEnabled: account.charges_enabled,
+          payoutsEnabled: account.payouts_enabled,
+          bank: ext ? {
+            bankName: ext.bank_name ?? null,
+            last4: ext.last4 ?? null,
+            routingLast4: (ext.routing_number ?? "").slice(-4) || null,
+            currency: (ext.currency ?? "usd").toUpperCase(),
+          } : null,
+          payoutInterval: schedule?.interval ?? "standard",
+        };
+      } catch {
+        return { connected: false as const };
+      }
+    }),
+
+    /**
+     * One-time login link to the landlord's Stripe Express dashboard, where
+     * they can view/update the bank account, see the full payout history, and
+     * manage tax details. This is the canonical place bank info is edited.
+     */
+    createExpressLoginLink: protectedProcedure.mutation(async ({ ctx }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || !sub.stripeConnectAccountId) throw new TRPCError({ code: "BAD_REQUEST", message: "Connect your bank account first." });
+      const stripe = getStripe();
+      if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured" });
+      const link = await stripe.accounts.createLoginLink(sub.stripeConnectAccountId);
+      return { url: link.url };
+    }),
   }),
 
   // ── VENDORS ──────────────────────────────────────────────────────────────

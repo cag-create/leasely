@@ -833,88 +833,45 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Pro: Stripe Connect Payouts */}
+            {/* Pro: Payouts summary — full controls live on the /payouts tab */}
             {isPaid && (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Banknote className="h-5 w-5" style={{ color: ACCENT }} />
-                  <h3 className="font-black text-gray-900">Tenant Payments</h3>
-                </div>
-                {stripeStatus?.status === "active" ? (
-                  <div>
-                    <div className="flex items-center gap-2 mb-3 p-3 bg-green-50 rounded-xl">
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
-                      <span className="text-sm font-semibold text-green-700">Payouts Active</span>
+              <Link href="/payouts">
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:border-gray-200 hover:shadow transition-all cursor-pointer">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Banknote className="h-5 w-5" style={{ color: ACCENT }} />
+                      <h3 className="font-black text-gray-900">Payouts</h3>
                     </div>
-                    {/* Balance & Instant Payout */}
-                    <div className="rounded-xl p-4 mb-4" style={{ background: `linear-gradient(135deg, ${BRAND}10, ${ACCENT}10)` }}>
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <p className="text-xs text-gray-500 font-medium">Available Balance</p>
-                          <p className="text-2xl font-black text-gray-900">${((balanceData?.availableCents ?? 0) / 100).toFixed(2)}</p>
-                          {(balanceData?.pendingCents ?? 0) > 0 && (
-                            <p className="text-xs text-gray-400">${((balanceData?.pendingCents ?? 0) / 100).toFixed(2)} pending</p>
-                          )}
-                        </div>
-                        <Button
-                          size="sm"
-                          onClick={() => instantPayoutMutation.mutate({})}
-                          disabled={instantPayoutMutation.isPending || (balanceData?.availableCents ?? 0) < 100}
-                          className="font-bold gap-1.5"
-                          style={{ background: ACCENT, color: "#3A2410" }}
-                        >
-                          <Zap className="h-3.5 w-3.5" />
-                          {instantPayoutMutation.isPending ? "Processing..." : "Instant Payout"}
-                        </Button>
-                      </div>
-                      <p className="text-xs text-gray-500">Funds arrive in your bank account instantly (debit card) or within 1-2 business days (standard).</p>
-                    </div>
-                    {paymentHistory.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Recent Payments</p>
-                        {paymentHistory.slice(0, 3).map((p: any) => (
-                          <div key={p.id} className="flex items-center justify-between text-sm p-2 rounded-lg bg-gray-50">
-                            <div>
-                              <div className="font-medium text-gray-800">{p.tenantName}</div>
-                              <div className="text-xs text-gray-400">{new Date(p.createdAt).toLocaleDateString()}</div>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-bold text-gray-900">${(p.amountCents / 100).toFixed(2)}</div>
-                              <div className={`text-xs font-medium ${p.status === 'paid' ? 'text-green-600' : 'text-yellow-600'}`}>{p.status}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                    {stripeStatus?.status === "active" ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Active
+                      </span>
+                    ) : stripeStatus?.status === "pending" ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-yellow-700 bg-yellow-50 px-2.5 py-1 rounded-full">
+                        <Zap className="h-3.5 w-3.5" /> Setup in progress
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+                        Not connected
+                      </span>
                     )}
                   </div>
-                ) : stripeStatus?.status === "pending" ? (
-                  <div>
-                    <div className="flex items-center gap-2 mb-3 p-3 bg-yellow-50 rounded-xl">
-                      <Zap className="h-4 w-4 text-yellow-600" />
-                      <span className="text-sm font-semibold text-yellow-700">Setup In Progress</span>
+                  {stripeStatus?.status === "active" ? (
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium">Available balance</p>
+                        <p className="text-2xl font-black text-gray-900">${((balanceData?.availableCents ?? 0) / 100).toFixed(2)}</p>
+                      </div>
+                      <span className="text-sm font-semibold" style={{ color: ACCENT }}>Manage payouts →</span>
                     </div>
-                    <p className="text-xs text-gray-500 mb-3">Complete your Stripe account setup to start receiving tenant payments.</p>
-                    <Button size="sm" className="w-full font-bold gap-2" onClick={() => stripeConnectMutation.mutate()} disabled={stripeConnectMutation.isPending} style={{ background: BRAND, color: "white" }}>
-                      <CreditCard className="h-3.5 w-3.5" /> Continue Setup
-                    </Button>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-sm text-gray-600 mb-4">Enable tenants to pay rent directly through Leasely. Funds go straight to your bank account with instant payouts.</p>
-                    <div className="space-y-2 mb-4">
-                      {["Instant ACH & card payments", "Automatic receipts to tenants", "Direct deposits to your bank", "Full payment history & records"].map(f => (
-                        <div key={f} className="flex items-center gap-2 text-xs text-gray-600">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />{f}
-                        </div>
-                      ))}
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-gray-600">Connect your bank to collect rent with instant payouts.</p>
+                      <span className="text-sm font-semibold whitespace-nowrap ml-3" style={{ color: ACCENT }}>Set up →</span>
                     </div>
-                    <Button size="sm" className="w-full font-bold gap-2" onClick={() => stripeConnectMutation.mutate()} disabled={stripeConnectMutation.isPending} style={{ background: ACCENT, color: "#3A2410" }}>
-                      <CreditCard className="h-3.5 w-3.5" /> {stripeConnectMutation.isPending ? "Connecting..." : "Connect Bank Account"}
-                    </Button>
-                    <p className="text-xs text-gray-400 text-center mt-2">Powered by Stripe Connect · Bank-level security</p>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              </Link>
             )}
 
             {/* Pro: Portal Link */}

@@ -60,6 +60,7 @@ const Compare             = lazy(() => import("./pages/Compare"));
 const BrokerDashboard     = lazy(() => import("./pages/BrokerDashboard"));
 const FeeSchedule         = lazy(() => import("./pages/FeeSchedule"));
 const Leases              = lazy(() => import("./pages/Leases"));
+const Payouts             = lazy(() => import("./pages/Payouts"));
 const VendorRespond       = lazy(() => import("./pages/VendorRespond"));
 const TenantSignLease     = lazy(() => import("./pages/TenantSignLease"));
 const Privacy             = lazy(() => import("./pages/Privacy"));
@@ -139,6 +140,9 @@ function Router() {
         </Route>
         <Route path="/crm">
           {() => <ProGate featureName="Property CRM"><CRM /></ProGate>}
+        </Route>
+        <Route path="/payouts">
+          {() => <ProGate featureName="Payouts &amp; Banking"><Payouts /></ProGate>}
         </Route>
         <Route path="/complexes">
           {() => <ProGate featureName="Apartment Complexes"><ApartmentComplexes /></ProGate>}
