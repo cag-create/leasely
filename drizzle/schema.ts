@@ -1516,7 +1516,7 @@ export type InsertContractorLead = typeof contractorLeads.$inferInsert;
 
 /**
  * One-time use Pro redemption codes — each Pro subscriber gets one code
- * redeemable at certifybusinesspro.com for the free $397 website + logo + domain package.
+ * redeemable at certifybusinesspro.com for the free $299 website + logo + domain package.
  */
 export const proRedemptionCodes = mysqlTable("pro_redemption_codes", {
   id: int("id").autoincrement().primaryKey(),

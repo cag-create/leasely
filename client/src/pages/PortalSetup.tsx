@@ -160,7 +160,7 @@ export default function PortalSetup() {
   async function handleOpenCBP() {
     // Mint (or fetch existing) per-user 100%-off promo code restricted to
     // CBP's website-bundle product. Idempotent server-side, so re-clicking
-    // returns the same code. The $397 list price drops to $0 at checkout —
+    // returns the same code. The $299 list price drops to $0 at checkout —
     // the website is already paid for by Leasely's $75 setup fee.
     let promoCode: string | null = null;
     try {
@@ -300,7 +300,7 @@ export default function PortalSetup() {
                     <div className="mt-2 rounded-lg bg-amber-500/5 border border-amber-500/20 p-3 text-xs text-amber-300/80 space-y-1">
                       <p className="font-semibold text-amber-300">DNS setup instructions</p>
                       <p>Point a <strong>CNAME</strong> record for your domain to <span className="font-mono">portal.leasely.net</span></p>
-                      <p className="text-amber-300/60">Domain included free in your CBP package · $30/yr renewal · or use your own registrar</p>
+                      <p className="text-amber-300/60">Domain included free in your CBP package · $37/yr renewal · or use your own registrar</p>
                     </div>
                   </>
                 )}
@@ -508,7 +508,7 @@ export default function PortalSetup() {
                 <Sparkles className="h-5 w-5 text-amber-400" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Claim your free $397 package</h2>
+                <h2 className="text-lg font-bold text-white">Claim your free $299 package</h2>
                 <p className="text-sm text-white/50">Website · Logo · 1-Year Domain — included with Pro</p>
               </div>
             </div>
@@ -525,11 +525,10 @@ export default function PortalSetup() {
             <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
               <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-3">What's included in your free package</p>
               {[
-                "Custom professional website design (1–2 business days)",
-                "7 unique logo concepts to choose from",
-                "1-year domain registration (URL of your choice)",
-                "1-year managed website hosting",
-                "AI-powered color palette recommendations",
+                "Professional website — delivered in 24 hours",
+                "1 custom logo + 3 rounds of revisions + final files",
+                "Year 1 domain & hosting included",
+                "DNS + SSL + uptime monitoring",
                 "Mobile-responsive, SEO-optimized design",
                 "Contact form integration + social media links",
               ].map((f, i) => (
@@ -538,7 +537,7 @@ export default function PortalSetup() {
                   <span className="text-sm text-white/80">{f}</span>
                 </div>
               ))}
-              <p className="text-xs text-amber-400/70 mt-3">Valued at $397 + $30/yr portal renewal · yours free as a Pro member</p>
+              <p className="text-xs text-amber-400/70 mt-3">Valued at $299 + $37/yr domain renewal · yours free as a Pro member</p>
             </div>
 
             {/* Cost breakdown — one-time vs. recurring vs. optional add-ons */}
@@ -548,10 +547,10 @@ export default function PortalSetup() {
               <div>
                 <p className="text-xs font-bold text-emerald-400 mb-1.5">Included free (one-time)</p>
                 <ul className="text-sm text-white/70 space-y-1 pl-4 list-disc marker:text-emerald-400/50">
-                  <li>Custom website design</li>
-                  <li>7 logo concepts</li>
-                  <li>1-year domain registration</li>
-                  <li>1-year managed hosting</li>
+                  <li>Professional website (delivered in 24 hours)</li>
+                  <li>1 custom logo + 3 rounds of revisions + final files</li>
+                  <li>Year 1 domain & hosting included</li>
+                  <li>DNS + SSL + uptime monitoring</li>
                 </ul>
               </div>
 
@@ -561,9 +560,9 @@ export default function PortalSetup() {
                   {domainMode === "leasely" ? (
                     <li>Your <span className="text-white font-semibold">{cleanSubdomain || "yourname"}.leasely.net</span> subdomain — <span className="text-white font-semibold">free forever</span>. No renewals.</li>
                   ) : customDomain ? (
-                    <li>Domain renewal — <span className="text-white font-semibold">paid to your own registrar</span> (you brought <span className="text-white/80 font-mono text-xs">{customDomain}</span>). Hosting via CBP — <span className="text-white font-semibold">$30/yr</span>.</li>
+                    <li>Domain renewal — <span className="text-white font-semibold">paid to your own registrar</span> (you brought <span className="text-white/80 font-mono text-xs">{customDomain}</span>). Hosting via CBP — <span className="text-white font-semibold">$37/yr</span>.</li>
                   ) : (
-                    <li>Domain + hosting renewal — <span className="text-white font-semibold">$30/yr</span> via CBP <span className="text-white/40">(or transfer the domain to your own registrar — free)</span></li>
+                    <li>Domain + hosting renewal — <span className="text-white font-semibold">$37/yr</span> via CBP <span className="text-white/40">(or transfer the domain to your own registrar — free)</span></li>
                   )}
                 </ul>
               </div>

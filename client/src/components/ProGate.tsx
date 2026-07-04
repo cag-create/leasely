@@ -96,7 +96,7 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
             {/* Feature highlights */}
             <div className="grid grid-cols-2 gap-3 text-left">
               {[
-                "Free $397 website + logo",
+                "Free $299 website + logo",
                 "Branded tenant portal",
                 "Unlimited listings",
                 "AI fraud screening",
@@ -121,7 +121,7 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
                 className="mt-0.5 w-4 h-4 rounded border-border accent-indigo-600 cursor-pointer flex-shrink-0"
               />
               <span className="text-xs text-muted-foreground leading-relaxed">
-                I understand: the <strong className="text-foreground">$75 setup fee is non-refundable once design work begins</strong> (work starts immediately after payment, with delivery in 1–2 business days). The $25/mo Pro subscription is cancellable anytime — no contracts, no pro-rated refunds. I keep my website, logo, and domain regardless of subscription status. I agree to Leasely's{" "}
+                I understand: the <strong className="text-foreground">$75 setup fee is non-refundable once design work begins</strong> (work starts immediately after payment, with delivery in 24–48 hours). The $25/mo Pro subscription is cancellable anytime — no contracts, no pro-rated refunds. I keep my website, logo, and domain regardless of subscription status. I agree to Leasely's{" "}
                 <Link href="/terms" className="text-indigo-600 hover:underline" target="_blank">Terms of Service</Link>{" "}and{" "}
                 <Link href="/privacy" className="text-indigo-600 hover:underline" target="_blank">Privacy Policy</Link>.
               </span>

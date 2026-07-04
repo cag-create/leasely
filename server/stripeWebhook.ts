@@ -177,18 +177,18 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
             <p style="margin:0 0 8px;font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Your Brand Kit Code (One-Time Use)</p>
             <p style="margin:0;font-size:28px;font-weight:900;font-family:monospace;letter-spacing:.1em;color:#3A2410">${proCode}</p>
           </div>
-          <p style="color:#374151">Redeem this code at <a href="${CBP_URL}" style="color:#E8951A;font-weight:600">certifybusinesspro.com</a> to claim your free brand kit. <strong>Delivery: 1–2 business days.</strong> You'll receive:</p>
+          <p style="color:#374151">Redeem this code at <a href="${CBP_URL}" style="color:#E8951A;font-weight:600">certifybusinesspro.com</a> to claim your free brand kit. <strong>Delivery: 24–48 hours.</strong> You'll receive:</p>
           <ul style="color:#374151;line-height:1.9;margin:8px 0 16px">
-            <li>7 unique logo concepts to choose from</li>
-            <li>Custom professional website design</li>
-            <li>1-year domain registration (your choice)</li>
-            <li>1-year managed website hosting</li>
+            <li>1 custom logo + 3 rounds of revisions + final logo files</li>
+            <li>Professional website — delivered in 24 hours</li>
+            <li>Year 1 domain &amp; hosting included</li>
+            <li>DNS + SSL + uptime monitoring</li>
           </ul>
-          <p style="color:#6b7280;font-size:13px">A <strong>$397 value</strong>, yours at no extra charge as a Leasely Pro member.</p>`
+          <p style="color:#6b7280;font-size:13px">A <strong>$299 value</strong> ($37/yr domain renewal after year 1), yours at no extra charge as a Leasely Pro member.</p>`
         : "";
 
       // Primary welcome email — includes the brand kit code and the explicit
-      // 1–2 business day delivery promise so the member knows exactly what's
+      // 24–48 hour delivery promise so the member knows exactly what's
       // arriving and when.
       await sendEmail({
         to: user.email,

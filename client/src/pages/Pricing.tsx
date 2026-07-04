@@ -124,7 +124,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What's actually recurring vs. one-time?",
-    a: "Leasely: $75 one-time setup + $25/mo recurring (cancel anytime). The CBP brand kit ($397 value — free with Pro) is one-time; only the domain + hosting renewal at $30/yr is recurring after year 1, and you can transfer your domain to your own registrar to avoid it. Optional CBP add-ons like EIN filing (~$79 one-time — or apply free yourself at irs.gov), LLC formation, and trademark filing are billed directly by CBP at their listed prices — Leasely takes no markup and no kickback on any of it."
+    a: "Leasely: $75 one-time setup + $25/mo recurring (cancel anytime). The CBP brand kit ($299 value — free with Pro) is one-time; only the domain + hosting renewal at $37/yr is recurring after year 1, and you can transfer your domain to your own registrar to avoid it. Optional CBP add-ons like EIN filing (~$79 one-time — or apply free yourself at irs.gov), LLC formation, and trademark filing are billed directly by CBP at their listed prices — Leasely takes no markup and no kickback on any of it."
   },
 ];
 
@@ -280,7 +280,7 @@ export default function Pricing() {
                     style={{ accentColor: ACCENT }}
                   />
                   <span className="text-xs text-white/65 leading-relaxed">
-                    I agree: <strong className="text-white">$75 setup is non-refundable once design begins</strong> (work starts immediately, delivered in 1–2 business days). $25/mo cancellable anytime, no pro-rated refunds. I keep my website &amp; logo regardless. <Link href="/terms" className="underline hover:text-white" target="_blank">Terms</Link> ·{" "}
+                    I agree: <strong className="text-white">$75 setup is non-refundable once design begins</strong> (work starts immediately, delivered in 24–48 hours). $25/mo cancellable anytime, no pro-rated refunds. I keep my website &amp; logo regardless. <Link href="/terms" className="underline hover:text-white" target="_blank">Terms</Link> ·{" "}
                     <Link href="/privacy" className="underline hover:text-white" target="_blank">Privacy</Link>.
                   </span>
                 </label>

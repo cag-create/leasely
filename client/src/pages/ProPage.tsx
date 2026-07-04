@@ -441,15 +441,15 @@ export default function ProPage() {
             {/* Free package badge — the hook */}
             <div className="inline-flex items-center gap-2.5 bg-amber-500/15 border border-amber-500/30 rounded-full px-5 py-2.5 mb-8">
               <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-              <span className="text-amber-300 text-sm font-bold">$397 website + logo + domain — included free with Pro</span>
+              <span className="text-amber-300 text-sm font-bold">$299 website + logo + domain — included free with Pro</span>
             </div>
 
             <h1 className="text-5xl lg:text-7xl font-black text-white mb-5" style={{ fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.03em' }}>
-              Get a $397 website.<br /><span className="text-gradient">Pay $75.</span>
+              Get a $299 website.<br /><span className="text-gradient">Pay $75.</span>
             </h1>
 
             <p className="text-xl text-white/60 mb-4 max-w-2xl mx-auto leading-relaxed">
-              Every Leasely Pro member gets a <strong className="text-white">free professional website, custom logo, and 1-year domain</strong> — built by Certify Business Pro.
+              Every Leasely Pro member gets a <strong className="text-white">free professional website, custom logo, and Year 1 domain & hosting</strong> — built by Certify Business Pro.
               Plus a full landlord OS for $25/month.
             </p>
 
@@ -477,7 +477,7 @@ export default function ProPage() {
 
             {/* Trust strip */}
             <div className="flex flex-wrap items-center justify-center gap-5 text-white/40 text-sm">
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span className="text-white/60 font-medium">1–2 business day delivery</span></div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span className="text-white/60 font-medium">24–48 hour delivery</span></div>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>Cancel anytime</span></div>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>0% ACH fees</span></div>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>No contracts</span></div>
@@ -495,7 +495,7 @@ export default function ProPage() {
             <div className="flex flex-col md:flex-row items-center gap-10">
               <div className="flex-1">
                 <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1.5 rounded-full mb-3">
-                  <Star className="w-3.5 h-3.5 fill-amber-500" /> Included Free · $397 Value
+                  <Star className="w-3.5 h-3.5 fill-amber-500" /> Included Free · $299 Value
                 </div>
                 <div className="inline-flex items-center gap-1.5 text-xs text-amber-700/80 mb-4 pl-1">
                   <span className="font-semibold">Brand Kit by</span>
@@ -508,18 +508,18 @@ export default function ProPage() {
                 <p className="text-gray-600 mb-6 leading-relaxed">
                   Every Pro member gets a complete online presence package — designed and delivered by
                   <a href="https://certifybusinesspro.com" target="_blank" rel="noopener" className="text-amber-600 font-semibold hover:underline"> Certify Business Pro</a>.
-                  Delivered in 1–2 business days.
+                  Delivered in 24–48 hours.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {[
-                    "Custom professional website design",
-                    "7 unique logo concepts",
-                    "1-year domain registration (your choice)",
-                    "1-year managed hosting",
-                    "AI color palette recommendations",
+                    "Professional website — delivered in 24 hours",
+                    "1 custom logo + 3 rounds of revisions",
+                    "Final logo files (all formats)",
+                    "Year 1 domain & hosting included",
+                    "DNS + SSL + uptime monitoring",
                     "Mobile-responsive + SEO optimized",
                     "Contact form + social media links",
-                    "$30/yr portal renewal after year 1",
+                    "$37/yr domain renewal after year 1",
                   ].map((f, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
@@ -529,8 +529,8 @@ export default function ProPage() {
                 </div>
               </div>
               <div className="shrink-0 w-full md:w-72 rounded-2xl border-2 border-amber-200 bg-white p-6 shadow-lg text-center">
-                <div className="text-4xl font-black text-amber-500 mb-1">$397</div>
-                <div className="text-sm text-gray-500 mb-4 line-through">+ $30/yr portal renewal</div>
+                <div className="text-4xl font-black text-amber-500 mb-1">$299</div>
+                <div className="text-sm text-gray-500 mb-4 line-through">+ $37/yr domain renewal</div>
                 <div className="text-2xl font-black text-green-600 mb-1">FREE</div>
                 <div className="text-xs text-gray-400 mb-5">with every Leasely Pro subscription</div>
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-5">
@@ -573,7 +573,7 @@ export default function ProPage() {
                 Pro costs <strong>$75 setup + $25/mo</strong>.
                 One avoided vacancy or bad tenant returns <strong className="text-green-600">52× to 140×</strong> your investment.
               </p>
-              <p className="text-gray-400 text-xs mt-1">Plus you get a $397 free website. It's not even close.</p>
+              <p className="text-gray-400 text-xs mt-1">Plus you get a $299 free website. It's not even close.</p>
             </div>
           </div>
         </div>
@@ -882,7 +882,7 @@ export default function ProPage() {
               </a>
               <p className="text-center text-white/30 text-sm mt-4">$75 one-time setup (website, logo & URL) · then $25/mo · Cancel anytime</p>
               <p className="text-center text-white/25 text-xs mt-2 leading-relaxed">
-                Setup fee non-refundable once design begins (work starts immediately, delivered in 1–2 business days).
+                Setup fee non-refundable once design begins (work starts immediately, delivered in 24–48 hours).
                 Subscription cancellable anytime. <Link href="/terms" className="underline hover:text-white/50">Terms</Link>.
               </p>
             </div>

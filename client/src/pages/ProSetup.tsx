@@ -130,7 +130,7 @@ export default function ProSetup() {
               Brand kit in production
             </p>
             <p className="text-white/75 text-sm leading-relaxed">
-              Your custom logo from <a href="https://certifybusinesspro.com" target="_blank" rel="noopener" className="underline hover:text-white">Certify Business Pro</a> is in production — <strong className="text-white">7 unique concepts arriving within 1–2 business days</strong>. We'll email you the redemption code shortly. In the meantime your portal uses a clean monogram.
+              Your custom logo from <a href="https://certifybusinesspro.com" target="_blank" rel="noopener" className="underline hover:text-white">Certify Business Pro</a> is in production — <strong className="text-white">1 custom logo with 3 rounds of revisions, arriving within 24–48 hours</strong>. We'll email you the redemption code shortly. In the meantime your portal uses a clean monogram.
             </p>
           </div>
 
@@ -271,7 +271,7 @@ export default function ProSetup() {
                 </div>
               </div>
               <p className="text-white/35 text-[11px] mt-3 italic">
-                Preview only — your CBP-designed logo replaces this within 1–2 business days.
+                Preview only — your CBP-designed logo replaces this within 24–48 hours.
               </p>
             </div>
           </div>
