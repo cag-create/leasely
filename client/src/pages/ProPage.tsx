@@ -441,16 +441,16 @@ export default function ProPage() {
             {/* Free package badge — the hook */}
             <div className="inline-flex items-center gap-2.5 bg-amber-500/15 border border-amber-500/30 rounded-full px-5 py-2.5 mb-8">
               <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-              <span className="text-amber-300 text-sm font-bold">$299 website + logo + domain — included free with Pro</span>
+              <span className="text-amber-300 text-sm font-bold">Setup includes a $299 website + logo + domain — free with Pro</span>
             </div>
 
             <h1 className="text-5xl lg:text-7xl font-black text-white mb-5" style={{ fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.03em' }}>
-              Get a $299 website.<br /><span className="text-gradient">Pay $75.</span>
+              Get fully set up on Leasely.<br /><span className="text-gradient">Just $75.</span>
             </h1>
 
             <p className="text-xl text-white/60 mb-4 max-w-2xl mx-auto leading-relaxed">
-              Every Leasely Pro member gets a <strong className="text-white">free professional website, custom logo, and Year 1 domain & hosting</strong> — built by Certify Business Pro.
-              Plus a full landlord OS for $25/month.
+              A one-time <strong className="text-white">$75 setup</strong> gets your whole rental operation live — listings, applications, leases, rent collection & accounting.
+              It even includes a <strong className="text-white">free professional website, custom logo, and Year 1 domain & hosting</strong> built by Certify Business Pro. Then just $25/month.
             </p>
 
             {/* ROI proof */}
@@ -462,7 +462,7 @@ export default function ProPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
               <a href={isAuthenticated ? "/dashboard" : getLoginUrl()}>
                 <Button size="lg" className="btn-teal font-black px-10 py-4 text-base gap-2">
-                  <Sparkles className="w-5 h-5" /> Get Pro — $75 setup + $25/mo
+                  <Sparkles className="w-5 h-5" /> Get fully set up — $75 + $25/mo
                 </Button>
               </a>
               <Button

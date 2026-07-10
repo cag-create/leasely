@@ -183,6 +183,25 @@ export async function upsertUserSubscription(data: InsertUserSubscription): Prom
   });
 }
 
+/**
+ * Directly update the Stripe Connect columns on an existing subscription row.
+ * upsertUserSubscription's onDuplicateKeyUpdate does NOT touch these columns,
+ * so writes to them must go through this dedicated UPDATE. Pass accountId=null
+ * to clear a stale/orphaned Connect account (e.g. one created under a former
+ * platform key that the current key can no longer access).
+ */
+export async function setStripeConnectAccount(
+  userId: number,
+  accountId: string | null,
+  status: "not_connected" | "pending" | "active",
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(userSubscriptions)
+    .set({ stripeConnectAccountId: accountId, stripeConnectStatus: status })
+    .where(eq(userSubscriptions.userId, userId));
+}
+
 export async function updatePortalBranding(
   userId: number,
   data: { brandName?: string; brandLogoUrl?: string; brandColor?: string; portalSubdomain?: string; customDomain?: string; brandBrief?: string }

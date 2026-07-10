@@ -83,7 +83,7 @@ import {
   incrementViewCount, countUserListings,
   saveListing, unsaveListing, getSavedListings, isListingSaved,
   createInquiry, getListingAnalytics,
-  getUserSubscription, upsertUserSubscription,
+  getUserSubscription, upsertUserSubscription, setStripeConnectAccount,
   setAccountType, updatePortalBranding,
   getSavedSearches, createSavedSearch, deleteSavedSearch,
   getPortalBySubdomain, getPaymentsByLandlord, createPaymentRecord, updatePaymentStatus,
@@ -171,6 +171,28 @@ function getCbpStripe() {
   const key = process.env.CBP_STRIPE_SECRET_KEY;
   if (!key) return null;
   return new Stripe(key, { apiVersion: "2025-01-27.acacia" as any });
+}
+
+/**
+ * True when a Stripe error means the stored Connect account can no longer be
+ * reached by the current platform key — it was deleted, belongs to a former
+ * platform account, or the app's access was revoked. In every case the stored
+ * account id is dead and should be cleared so the user can reconnect fresh.
+ * Covers both the 404 "No such account" and the 403 "does not have access to
+ * account … Application access may have been revoked" responses.
+ */
+function isStripeAccountInaccessible(err: any): boolean {
+  const msg = String(err?.raw?.message ?? err?.message ?? "");
+  const code = err?.raw?.code ?? err?.code;
+  const status = err?.raw?.statusCode ?? err?.statusCode;
+  return (
+    code === "account_invalid" ||
+    status === 404 ||
+    status === 403 ||
+    /does not have access to account/i.test(msg) ||
+    /application access may have been revoked/i.test(msg) ||
+    /no such account/i.test(msg)
+  );
 }
 
 // Public Payment Link slug for the CBP website bundle. Used to auto-discover
@@ -1401,10 +1423,10 @@ export const appRouter = router({
         try {
           await stripe.accounts.retrieve(accountId);
         } catch (err: any) {
-          if (err?.code === "account_invalid" || err?.statusCode === 404 || /No such account/i.test(err?.message ?? "")) {
-            console.warn(`[Stripe Connect] Stale account ${accountId} for user ${ctx.user.id} — clearing and recreating.`);
+          if (isStripeAccountInaccessible(err)) {
+            console.warn(`[Stripe Connect] Stale/inaccessible account ${accountId} for user ${ctx.user.id} — clearing and recreating.`);
             accountId = null;
-            await upsertUserSubscription({ userId: ctx.user.id, stripeConnectAccountId: null, stripeConnectStatus: "not_connected" });
+            await setStripeConnectAccount(ctx.user.id, null, "not_connected");
           } else {
             throw err;
           }
@@ -1420,7 +1442,7 @@ export const appRouter = router({
           metadata: { leaselyUserId: String(ctx.user.id) },
         });
         accountId = account.id;
-        await upsertUserSubscription({ userId: ctx.user.id, stripeConnectAccountId: accountId, stripeConnectStatus: "pending" });
+        await setStripeConnectAccount(ctx.user.id, accountId, "pending");
       }
 
       const link = await stripe.accountLinks.create({
@@ -1443,16 +1465,25 @@ export const appRouter = router({
       try {
         const account = await stripe.accounts.retrieve(sub.stripeConnectAccountId);
         const isActive = account.charges_enabled && account.payouts_enabled;
-        if (isActive && sub.stripeConnectStatus !== "active") {
-          await upsertUserSubscription({ userId: ctx.user.id, stripeConnectStatus: "active" });
+        const nextStatus = isActive ? "active" as const : "pending" as const;
+        if (sub.stripeConnectStatus !== nextStatus) {
+          await setStripeConnectAccount(ctx.user.id, sub.stripeConnectAccountId, nextStatus);
         }
         return {
-          status: isActive ? "active" as const : "pending" as const,
+          status: nextStatus,
           accountId: sub.stripeConnectAccountId,
           chargesEnabled: account.charges_enabled,
           payoutsEnabled: account.payouts_enabled,
         };
-      } catch {
+      } catch (err: any) {
+        // Dead account (deleted, wrong platform key, or revoked access): clear it
+        // so the UI shows "not connected" and the user can reconnect cleanly.
+        if (isStripeAccountInaccessible(err)) {
+          console.warn(`[Stripe Connect] Clearing inaccessible account ${sub.stripeConnectAccountId} for user ${ctx.user.id}.`);
+          await setStripeConnectAccount(ctx.user.id, null, "not_connected");
+          return { status: "not_connected" as const, accountId: null };
+        }
+        // Transient error: keep the stored status.
         return { status: (sub.stripeConnectStatus ?? "not_connected") as "not_connected" | "pending" | "active", accountId: sub.stripeConnectAccountId };
       }
     }),
@@ -1679,6 +1710,11 @@ export const appRouter = router({
           return { success: true, payoutId: payout.id, amountCents: payout.amount, grossAmountCents: grossAmount, leaselyFee, feeRate: "$1.00 flat", arrivalDate: payout.arrival_date, status: payout.status };
         } catch (err: any) {
           if (err.code === "TRPC_ERROR" || err instanceof TRPCError) throw err;
+          // Dead account: clear it and tell the user to reconnect (never leak the raw Stripe key/acct error).
+          if (isStripeAccountInaccessible(err)) {
+            await setStripeConnectAccount(ctx.user.id, null, "not_connected");
+            throw new TRPCError({ code: "BAD_REQUEST", message: "Your bank connection is no longer valid. Please reconnect your bank account to receive payouts." });
+          }
           if (err.raw?.code === "instant_payouts_unsupported") {
             const balance = await stripe.balance.retrieve({ stripeAccount: sub.stripeConnectAccountId });
             const available = balance.available.find(b => b.currency === "usd");
@@ -1731,7 +1767,10 @@ export const appRouter = router({
           } : null,
           payoutInterval: schedule?.interval ?? "standard",
         };
-      } catch {
+      } catch (err: any) {
+        if (isStripeAccountInaccessible(err)) {
+          await setStripeConnectAccount(ctx.user.id, null, "not_connected");
+        }
         return { connected: false as const };
       }
     }),

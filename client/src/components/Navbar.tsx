@@ -144,6 +144,15 @@ export default function Navbar() {
   const isActive = (path: string) =>
     location === path || (path !== "/" && location.startsWith(path));
 
+  // Logged-in users land in their app (dashboard/browse), not the marketing site.
+  const logoHref = !isAuthenticated
+    ? "/"
+    : isLandlord
+      ? "/dashboard"
+      : isRenter
+        ? "/marketplace"
+        : "/";
+
   const NavLink = ({ href, children, className = "" }: { href: string; children: React.ReactNode; className?: string }) => (
     <Link href={href}>
       <span className={`
@@ -172,7 +181,7 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-[76px]">
 
             {/* ── Logo ── */}
-            <Link href="/" className="flex items-center shrink-0 group">
+            <Link href={logoHref} className="flex items-center shrink-0 group">
               <img
                 src={LOGO_URL}
                 alt="Leasely"

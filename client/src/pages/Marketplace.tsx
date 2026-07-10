@@ -24,6 +24,7 @@ import { PROPERTY_TYPES, BEDROOM_OPTIONS, US_STATES, formatRent } from "@/lib/ma
 
 const BRAND = "#1B2B5E";
 const ACCENT = "#4F46E5";
+const POPULAR_AREAS = ["Los Angeles", "Austin", "Miami", "Denver", "Seattle", "Atlanta"];
 
 export default function Marketplace() {
   const [location] = useLocation();
@@ -176,7 +177,7 @@ export default function Marketplace() {
         </div>
       </div>
 
-      <Button onClick={applySearch} className="w-full font-bold" style={{ background: ACCENT, color: "#3A2410" }}>
+      <Button onClick={applySearch} className="w-full font-bold text-white" style={{ background: ACCENT }}>
         Apply Filters
       </Button>
       {hasFilters && (
@@ -225,6 +226,38 @@ export default function Marketplace() {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Zillow-style search bar */}
+          <div className="mt-5 flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <Input
+                placeholder="Enter an address, neighborhood, city, or ZIP code"
+                value={citySearch}
+                onChange={e => setCitySearch(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && applySearch()}
+                className="pl-10 h-12 text-base rounded-xl border-gray-200 shadow-sm"
+              />
+            </div>
+            <Select value={selectedState} onValueChange={setSelectedState}>
+              <SelectTrigger className="h-12 w-full sm:w-40 rounded-xl border-gray-200 shadow-sm">
+                <SelectValue placeholder="All States" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All States</SelectItem>
+                {US_STATES.map(s => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              onClick={applySearch}
+              className="h-12 px-6 rounded-xl font-bold gap-2 text-white shadow-sm"
+              style={{ background: ACCENT }}
+            >
+              <Search className="h-4 w-4" /> Search
+            </Button>
           </div>
 
           {/* Active filter chips */}
@@ -339,14 +372,43 @@ export default function Marketplace() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-24 bg-white rounded-3xl border border-gray-100">
-                <Building2 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-gray-600 mb-2">No listings found</h3>
-                <p className="text-gray-400 mb-6">Try adjusting your filters or be the first to list in this area!</p>
+              <div className="text-center py-16 bg-white rounded-3xl border border-gray-100">
+                <Building2 className="h-14 w-14 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-gray-600 mb-2">
+                  No listings found{appliedCity ? ` in ${appliedCity}` : ""}
+                </h3>
+                <p className="text-gray-400 mb-6">
+                  {hasFilters
+                    ? "Try adjusting your filters or search a different area."
+                    : "Be the first to list in your area — or explore a popular market below."}
+                </p>
+
+                {!hasFilters && (
+                  <div className="mb-7">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-3">Popular areas</p>
+                    <div className="flex flex-wrap gap-2 justify-center max-w-md mx-auto">
+                      {POPULAR_AREAS.map(a => (
+                        <button
+                          key={a}
+                          onClick={() => { setCitySearch(a); setAppliedCity(a); }}
+                          className="px-3.5 py-1.5 rounded-full text-sm border border-gray-200 text-gray-600 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50/50 transition-colors"
+                        >
+                          📍 {a}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-3 justify-center">
-                  <Button variant="outline" onClick={clearFilters}>Clear Filters</Button>
+                  {hasFilters && <Button variant="outline" onClick={clearFilters}>Clear Filters</Button>}
+                  <Link href="/marketplace/map">
+                    <Button variant="outline" className="gap-2">
+                      <Map className="h-4 w-4" /> View Map
+                    </Button>
+                  </Link>
                   <Link href="/list-property">
-                    <Button style={{ background: ACCENT, color: "#3A2410" }} className="font-bold gap-2">
+                    <Button style={{ background: ACCENT }} className="font-bold gap-2 text-white">
                       <PlusCircle className="h-4 w-4" /> List Your Property
                     </Button>
                   </Link>
