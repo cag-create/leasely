@@ -77,6 +77,7 @@ const LeaseWizard         = lazy(() => import("./pages/LeaseWizard"));
 const LeasePreview        = lazy(() => import("./pages/LeasePreview"));
 const UploadOwnLease      = lazy(() => import("./pages/UploadOwnLease"));
 const ProGuide            = lazy(() => import("./pages/ProGuide"));
+const HowToUse            = lazy(() => import("./pages/HowToUse"));
 const AgentGuide          = lazy(() => import("./pages/AgentGuide"));
 
 // ── Page-level loading fallback ───────────────────────────────────────────────
@@ -192,6 +193,7 @@ function Router() {
 
         {/* In-app Pro guide */}
         <Route path="/pro-guide" component={ProGuide} />
+        <Route path="/how-to-use" component={HowToUse} />
 
         {/* Contractor / Handyman Directory */}
         <Route path="/contractors" component={ContractorDirectory} />

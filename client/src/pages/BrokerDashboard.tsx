@@ -88,7 +88,7 @@ export default function BrokerDashboard() {
         </div>
 
         {/* Content */}
-        {activeTab === "overview" && <OverviewTab profile={myProfile} profileLoading={profileLoading} />}
+        {activeTab === "overview" && <OverviewTab profile={myProfile} profileLoading={profileLoading} onRegister={() => setActiveTab("profile")} />}
         {activeTab === "leads" && <LeadsTab />}
         {activeTab === "profile" && <ProfileTab profile={myProfile} profileLoading={profileLoading} />}
         {activeTab === "sop" && <SopTab />}
@@ -99,7 +99,7 @@ export default function BrokerDashboard() {
   );
 }
 
-function OverviewTab({ profile, profileLoading }: { profile: any; profileLoading: boolean }) {
+function OverviewTab({ profile, profileLoading, onRegister }: { profile: any; profileLoading: boolean; onRegister: () => void }) {
   const utils = trpc.useUtils();
 
   const stats = [
@@ -134,7 +134,7 @@ function OverviewTab({ profile, profileLoading }: { profile: any; profileLoading
           </p>
           <Button
             className="bg-[#1B2B5E] hover:bg-[#1B2B5E]/90 gap-2 mt-2"
-            onClick={() => {}}
+            onClick={onRegister}
           >
             <Plus className="h-4 w-4" /> Get Started
           </Button>

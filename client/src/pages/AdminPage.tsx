@@ -12,10 +12,44 @@ import {
   Search, ChevronRight, Crown, CheckCircle2,
   RefreshCw, BarChart3, Zap, Globe, Star,
   Award, Clock, XCircle, MessageSquare, Bell, Loader2, FileText, BookOpen, Wrench, Sparkles,
-  Pencil, Trash2, ExternalLink, Plus,
+  Pencil, Trash2, ExternalLink, Plus, Copy, Share2, Link2 as LinkIcon,
 } from "lucide-react";
 
 type AdminTab = "overview" | "users" | "listings" | "subs" | "agents" | "contractors" | "waitlist" | "sop" | "growth" | "intelligence";
+
+/**
+ * Shareable public sign-up link an admin can copy/send to fill the directory.
+ * Points at an existing self-registration page — the invitee makes a free
+ * account and completes their profile there.
+ */
+function InviteLinkCard({ title, description, path, icon: Icon }: { title: string; description: string; path: string; icon: any }) {
+  const url = typeof window !== "undefined" ? `${window.location.origin}${path}` : path;
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(url); toast.success("Invite link copied — share it anywhere"); }
+    catch { toast.error("Couldn't copy automatically — select the link and copy it"); }
+  };
+  const share = async () => {
+    if (typeof navigator !== "undefined" && (navigator as any).share) {
+      try { await (navigator as any).share({ title, text: description, url }); } catch { /* user cancelled */ }
+    } else { copy(); }
+  };
+  return (
+    <div className="rounded-2xl border border-indigo-200/70 dark:border-indigo-500/30 bg-indigo-50/50 dark:bg-indigo-500/5 p-4 mb-5">
+      <div className="flex items-center gap-2 mb-1">
+        <Icon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+        <h3 className="font-semibold text-foreground text-sm">{title}</h3>
+        <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400"><LinkIcon className="h-3 w-3" /> Public link</span>
+      </div>
+      <p className="text-xs text-muted-foreground mb-3">{description}</p>
+      <div className="flex items-center gap-2">
+        <div className="flex-1 min-w-0 rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground font-mono truncate">{url}</div>
+        <Button size="sm" onClick={copy} className="gap-1.5 shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"><Copy className="h-3.5 w-3.5" /> Copy</Button>
+        <Button size="sm" variant="outline" onClick={share} className="gap-1.5 shrink-0 hidden sm:inline-flex"><Share2 className="h-3.5 w-3.5" /> Share</Button>
+        <a href={path} target="_blank" rel="noreferrer" className="shrink-0"><Button size="sm" variant="ghost" className="gap-1.5"><ExternalLink className="h-3.5 w-3.5" /></Button></a>
+      </div>
+    </div>
+  );
+}
 
 
 export default function AdminPage() {
@@ -761,6 +795,13 @@ function AdminAgentsList() {
   if (isLoading) return <div className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>;
 
   return (
+    <div>
+    <InviteLinkCard
+      icon={Award}
+      title="Invite an agent"
+      description="Share this link to onboard a Creme Agent. They create a free account and submit their profile — it lands here for your approval."
+      path="/broker-dashboard"
+    />
     <div className="rounded-2xl border border-border bg-card overflow-hidden">
       <div className="p-4 border-b border-border flex items-center gap-2">
         <Award className="h-4 w-4 text-muted-foreground" />
@@ -806,6 +847,7 @@ function AdminAgentsList() {
           ))}
         </div>
       )}
+    </div>
     </div>
   );
 }
@@ -1889,6 +1931,13 @@ function ContractorsAdminTab() {
 
   return (
     <div className="space-y-5">
+      <InviteLinkCard
+        icon={Wrench}
+        title="Invite a contractor"
+        description="Share this link so contractors can list themselves in the directory. They create a free account, fill out their business profile, and it lands here for your approval."
+        path="/contractors/register"
+      />
+
       {/* Stats row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
