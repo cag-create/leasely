@@ -27,7 +27,7 @@ import { trpc } from "@/lib/trpc";
 import {
   LayoutDashboard, LogOut, PanelLeft, Home, Building2,
   Briefcase, Calculator, UserCircle, HeadphonesIcon, Heart,
-  FileText, Sparkles, Shield, ChevronDown, Wrench, BookOpen, Award, Landmark, Rocket, Users
+  FileText, Sparkles, Shield, ChevronDown, Wrench, BookOpen, Award, Landmark, Rocket, Users, TrendingUp
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -63,6 +63,50 @@ const supportMenuItems = [
   { icon: Award, label: "Agent Guide", path: "/agent-guide", group: "support" },
   { icon: HeadphonesIcon, label: "Support", path: "/support", group: "support" },
 ];
+
+/**
+ * Adaptive "next best action" card for the sidebar. Shows the single most
+ * valuable step for where the user is: Free → upgrade; Pro without a connected
+ * bank → connect to get paid; Pro who hasn't claimed their free website →
+ * claim it; otherwise → refer & earn. Never empty, so the space stays useful.
+ */
+function SidebarNextStep({ isPro }: { isPro: boolean }) {
+  const [, navigate] = useLocation();
+  const { data: connect } = trpc.marketplace.getStripeConnectStatus.useQuery(undefined, {
+    enabled: isPro, staleTime: 5 * 60 * 1000, refetchOnWindowFocus: false,
+  });
+  const { data: proCode } = trpc.proCode.getMine.useQuery(undefined, {
+    enabled: isPro, staleTime: 5 * 60 * 1000, refetchOnWindowFocus: false,
+  });
+
+  let step: { title: string; desc: string; cta: string; href: string; icon: any; color: string };
+  if (!isPro) {
+    step = { title: "Unlock Pro Portal", desc: "Applications, payouts, AI screening & more", cta: "Upgrade — $25/mo", href: "/pricing", icon: Sparkles, color: "#4F46E5" };
+  } else if (connect && connect.status !== "active") {
+    step = { title: "Get paid", desc: "Connect your bank to collect rent", cta: "Connect bank", href: "/payouts", icon: Landmark, color: "#059669" };
+  } else if (proCode && (proCode as any).status !== "redeemed") {
+    step = { title: "Claim your free website", desc: "$299 site + logo, built for you", cta: "Claim now", href: "/portal-setup", icon: Sparkles, color: "#D97706" };
+  } else {
+    step = { title: "Refer & earn $50", desc: "Per landlord who signs up", cta: "Get your link", href: "/affiliate/signup", icon: TrendingUp, color: "#4F46E5" };
+  }
+
+  return (
+    <div className="mx-3 mt-3 mb-1 p-3 rounded-xl border" style={{ borderColor: `${step.color}26`, background: `${step.color}0f` }}>
+      <div className="flex items-center gap-1.5 mb-0.5">
+        <step.icon className="h-3.5 w-3.5" style={{ color: step.color }} />
+        <p className="text-xs font-semibold text-foreground">{step.title}</p>
+      </div>
+      <p className="text-[11px] text-muted-foreground mb-2">{step.desc}</p>
+      <button
+        onClick={() => navigate(step.href)}
+        className="w-full text-xs font-semibold py-1.5 px-3 rounded-lg text-white transition-opacity hover:opacity-90 flex items-center justify-center gap-1.5"
+        style={{ background: step.color }}
+      >
+        {step.cta}
+      </button>
+    </div>
+  );
+}
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 260;
@@ -310,19 +354,8 @@ function DashboardLayoutContent({
               </SidebarMenu>
             </div>
 
-            {/* Upgrade CTA for free users */}
-            {!isPro && !isCollapsed && (
-              <div className="mx-3 mt-3 mb-1 p-3 rounded-xl bg-gradient-to-br from-[#4F46E5]/8 to-[#4F46E5]/8 border border-[#4F46E5]/15">
-                <p className="text-xs font-semibold text-foreground">Unlock Pro Portal</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5 mb-2">Applications, payouts, AI screening & more</p>
-                <button
-                  onClick={() => setLocation("/pricing")}
-                  className="w-full text-xs font-semibold py-1.5 px-3 rounded-lg bg-[#4F46E5] hover:bg-[#4338CA] text-white transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <Sparkles className="h-3 w-3" /> Upgrade — $25/mo
-                </button>
-              </div>
-            )}
+            {/* Adaptive "next step" card — one high-value action per user state */}
+            {!isCollapsed && <SidebarNextStep isPro={isPro} />}
 
             {/* Brand logo pinned to the very bottom (mt-auto absorbs the space) */}
             {!isCollapsed && (
