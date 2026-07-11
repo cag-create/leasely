@@ -153,6 +153,17 @@ export default function CRM() {
     { enabled: isAuthenticated && !!selectedPropertyId, retry: false }
   );
 
+  // Accounting entries for the selected property (income/expenses). The tab used
+  // to read rent_payments, which is empty for CRM-managed tenants — their money
+  // lives in accounting_entries.
+  const { data: allAccounting = [] } = trpc.accounting.list.useQuery(
+    {},
+    { enabled: isAuthenticated, retry: false }
+  );
+  const accountingForProperty = (allAccounting as any[]).filter(e => e.crmPropertyId === selectedPropertyId);
+  const acctIncome = accountingForProperty.filter(e => e.type === "income").reduce((s, e) => s + (e.amount ?? 0), 0);
+  const acctExpenses = accountingForProperty.filter(e => e.type === "expense").reduce((s, e) => s + (e.amount ?? 0), 0);
+
   const { data: propertyNotes, refetch: refetchPropNotes } = trpc.crm.listNotes.useQuery(
     { entityType: "property", entityId: selectedPropertyId ?? 0 },
     { enabled: isAuthenticated && !!selectedPropertyId, retry: false }
@@ -525,7 +536,7 @@ export default function CRM() {
                     <TabsTrigger value="tenants">Tenants ({tenants?.length ?? 0})</TabsTrigger>
                     <TabsTrigger value="leases">Leases ({leases?.length ?? 0})</TabsTrigger>
                     <TabsTrigger value="maintenance">Maintenance ({workOrdersForProperty?.length ?? 0})</TabsTrigger>
-                    <TabsTrigger value="accounting">Accounting ({rentPaymentsForProperty?.length ?? 0})</TabsTrigger>
+                    <TabsTrigger value="accounting">Accounting ({accountingForProperty.length})</TabsTrigger>
                     <TabsTrigger value="notes">Notes ({propertyNotes?.length ?? 0})</TabsTrigger>
                   </TabsList>
 
@@ -882,53 +893,44 @@ export default function CRM() {
 
                   {/* Accounting Tab */}
                   <TabsContent value="accounting">
-                    {!selectedPropertyListingId ? (
+                    {accountingForProperty.length === 0 ? (
                       <Card className="text-center py-8">
                         <CardContent>
                           <Receipt className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                          <p className="text-sm text-gray-500">No listing linked to this property</p>
-                        </CardContent>
-                      </Card>
-                    ) : !rentPaymentsForProperty || rentPaymentsForProperty.length === 0 ? (
-                      <Card className="text-center py-8">
-                        <CardContent>
-                          <Receipt className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                          <p className="text-sm text-gray-500">No rent payments recorded yet</p>
+                          <p className="text-sm text-gray-500">No accounting entries for this property yet</p>
                         </CardContent>
                       </Card>
                     ) : (
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs text-gray-500 px-1 mb-1">
-                          <span>Period</span>
-                          <span>Amount · Status</span>
+                        <div className="grid grid-cols-3 gap-2 mb-2">
+                          <div className="p-3 bg-green-50 rounded-lg border border-green-200 text-center">
+                            <p className="text-[11px] text-green-700 font-medium">Income</p>
+                            <p className="text-sm font-bold text-green-800">${(acctIncome / 100).toLocaleString()}</p>
+                          </div>
+                          <div className="p-3 bg-red-50 rounded-lg border border-red-200 text-center">
+                            <p className="text-[11px] text-red-700 font-medium">Expenses</p>
+                            <p className="text-sm font-bold text-red-800">${(acctExpenses / 100).toLocaleString()}</p>
+                          </div>
+                          <div className="p-3 bg-gray-50 rounded-lg border text-center">
+                            <p className="text-[11px] text-gray-600 font-medium">Net</p>
+                            <p className="text-sm font-bold text-gray-900">${((acctIncome - acctExpenses) / 100).toLocaleString()}</p>
+                          </div>
                         </div>
-                        {rentPaymentsForProperty.map(p => (
-                          <Card key={p.id}>
+                        {accountingForProperty.map((e: any) => (
+                          <Card key={e.id}>
                             <CardContent className="py-3 px-4">
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <p className="text-sm font-medium text-gray-900">{p.periodMonth}</p>
-                                  <p className="text-xs text-gray-500">Due: {p.dueDate}{p.paymentMethod ? ` · ${p.paymentMethod}` : ""}</p>
-                                  {p.tenantEmail && <p className="text-xs text-gray-400">{p.tenantEmail}</p>}
+                                  <p className="text-sm font-medium text-gray-900 capitalize">{(e.category ?? "").replace(/_/g, " ")}</p>
+                                  <p className="text-xs text-gray-500">{e.date}{e.description ? ` · ${e.description}` : ""}</p>
                                 </div>
-                                <div className="text-right">
-                                  <p className="text-sm font-semibold text-gray-900">${(p.amountCents / 100).toLocaleString()}</p>
-                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                    p.status === "paid" ? "bg-green-100 text-green-700"
-                                    : p.status === "late" ? "bg-red-100 text-red-700"
-                                    : p.status === "pending" ? "bg-yellow-100 text-yellow-700"
-                                    : "bg-gray-100 text-gray-600"
-                                  }`}>{p.status}</span>
-                                </div>
+                                <p className={`text-sm font-semibold ${e.type === "income" ? "text-green-700" : "text-red-700"}`}>
+                                  {e.type === "income" ? "+" : "−"}${((e.amount ?? 0) / 100).toLocaleString()}
+                                </p>
                               </div>
                             </CardContent>
                           </Card>
                         ))}
-                        <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                          <p className="text-sm font-semibold text-green-800">
-                            Total collected: ${((rentPaymentsForProperty.filter(p => p.status === "paid").reduce((s, p) => s + (p.paidAmountCents ?? p.amountCents), 0)) / 100).toLocaleString()}
-                          </p>
-                        </div>
                       </div>
                     )}
                   </TabsContent>
