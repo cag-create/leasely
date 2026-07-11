@@ -5,12 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import Navbar from "@/components/Navbar";
-import { Star, Search, MapPin, Phone, Mail, Award, ChevronRight, Users } from "lucide-react";
+import { Star, Search, MapPin, Phone, Mail, Award, ChevronRight, Users, Upload } from "lucide-react";
 
 export default function AgentDirectory() {
   const [search, setSearch] = useState("");
 
   const { data: agents, isLoading } = trpc.cremeAgent.getApproved.useQuery();
+  const { data: me } = trpc.auth.me.useQuery(undefined, { retry: false });
+  const isAdmin = (me as any)?.role === "admin";
 
   const filtered = (agents ?? []).filter(a =>
     !search ||
@@ -34,6 +36,15 @@ export default function AgentDirectory() {
           <p className="text-blue-100 text-lg max-w-2xl mx-auto">
             The Creme Agent Network connects landlords, investors, and FSBO sellers with specialized agents. Buy, sell, invest, or novate — with agents who know your market.
           </p>
+          {isAdmin && (
+            <div className="pt-1">
+              <Link href="/import-agents">
+                <Button className="bg-white text-[#1B2B5E] hover:bg-white/90 gap-1.5">
+                  <Upload className="h-4 w-4" /> Import my agent list
+                </Button>
+              </Link>
+            </div>
+          )}
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
             {["Background-checked agents", "Available nationwide", "Investor & FSBO specialists", "No upfront cost"].map(item => (
               <span key={item} className="flex items-center gap-1.5 text-sm text-[#4F46E5] font-medium">

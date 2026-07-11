@@ -4436,6 +4436,65 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       return { userId: user.id, name: user.name ?? null, email: user.email ?? null, proCode };
     }),
 
+    /**
+     * Bulk-import Creme Agents from the admin's own list. Each row upserts a
+     * user account (shell account by email if new — they can claim it later via
+     * password reset) and an APPROVED agent profile, so they show in the
+     * directory immediately. Idempotent by email; per-row errors never abort
+     * the batch. No AI.
+     */
+    importAgents: protectedProcedure.input(z.object({
+      rows: z.array(z.object({
+        name: z.string().min(1),
+        email: z.string().email(),
+        phone: z.string().optional(),
+        licenseNumber: z.string().optional(),
+        bio: z.string().optional(),
+        specialties: z.string().optional(),   // comma/semicolon separated
+        serviceAreas: z.string().optional(),  // comma/semicolon separated
+      })).min(1).max(500),
+    })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const { users } = await import("../drizzle/schema");
+      const toJson = (s?: string) => {
+        const arr = (s ?? "").split(/[,;]/).map(x => x.trim()).filter(Boolean);
+        return arr.length ? JSON.stringify(arr) : null;
+      };
+      let created = 0, updated = 0;
+      const errors: { row: number; email: string; message: string }[] = [];
+      for (let i = 0; i < input.rows.length; i++) {
+        const r = input.rows[i];
+        const email = r.email.trim();
+        try {
+          let user = await getUserByEmail(email);
+          const isNew = !user;
+          if (!user) {
+            await db.insert(users).values({
+              openId: randomBytes(16).toString("hex"),
+              name: r.name.trim(), email, role: "user",
+              emailVerified: 1, loginMethod: "admin_import",
+            } as any);
+            user = await getUserByEmail(email);
+          }
+          if (!user) { errors.push({ row: i + 2, email, message: "Could not create account" }); continue; }
+          await upsertCremeAgent({
+            userId: user.id, status: "approved",
+            phone: r.phone?.trim() || undefined,
+            licenseNumber: r.licenseNumber?.trim() || undefined,
+            bio: r.bio?.trim() || undefined,
+            specialties: toJson(r.specialties),
+            serviceAreas: toJson(r.serviceAreas),
+          } as any);
+          if (isNew) created++; else updated++;
+        } catch (e: any) {
+          errors.push({ row: i + 2, email, message: e?.message || "Import failed" });
+        }
+      }
+      return { created, updated, total: input.rows.length, errors };
+    }),
+
     deleteUser: protectedProcedure.input(z.object({
       userId: z.number(),
     })).mutation(async ({ ctx, input }) => {
