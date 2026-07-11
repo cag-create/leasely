@@ -2970,7 +2970,26 @@ export const appRouter = router({
       // Get payment history for this tenant's listing
       const payments = tenant.listingId ? await getPaymentsByLandlord(tenant.landlordUserId) : [];
       const myPayments = payments.filter((p: any) => p.listingId === tenant.listingId);
-      return { tenant, payments: myPayments };
+
+      // Rent-ledger balance: unpaid rent periods + any accrued late fees for
+      // this tenant. Best-effort — the portal must still render if this fails.
+      let rentDueCents = 0, lateFeeCents = 0, unpaidPeriods = 0;
+      try {
+        const db = await getDb();
+        if (db && tenant.email) {
+          const { rentPayments } = await import("../drizzle/schema");
+          const { and, eq, inArray } = await import("drizzle-orm");
+          const ledger = await db.select().from(rentPayments)
+            .where(and(eq(rentPayments.tenantEmail, tenant.email), inArray(rentPayments.status, ["pending", "late", "partial"])));
+          for (const r of ledger as any[]) {
+            rentDueCents += r.amountCents ?? 0;
+            lateFeeCents += r.lateFeeCents ?? 0;
+            unpaidPeriods += 1;
+          }
+        }
+      } catch { /* balance is best-effort */ }
+
+      return { tenant, payments: myPayments, balanceCents: rentDueCents + lateFeeCents, rentDueCents, lateFeeCents, unpaidPeriods };
     }),
     /** Landlord: list all tenants they've invited */
     listTenants: protectedProcedure.query(async ({ ctx }) => {

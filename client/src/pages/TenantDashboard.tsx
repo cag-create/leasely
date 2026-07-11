@@ -348,6 +348,34 @@ export default function TenantDashboard() {
 
         {/* Payments Tab */}
         {activeTab === "payments" && (
+          <div className="space-y-4">
+          {(data?.balanceCents ?? 0) > 0 && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="flex items-start justify-between flex-wrap gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Balance due</p>
+                  <p className="text-3xl font-black text-gray-900">{formatCents(data?.balanceCents ?? 0)}</p>
+                </div>
+                {(data?.lateFeeCents ?? 0) > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold px-3 py-1">Late fee applied</span>
+                )}
+              </div>
+              <div className="mt-3 border-t border-gray-100 pt-3 space-y-1.5 text-sm">
+                <div className="flex justify-between"><span className="text-gray-500">Rent ({data?.unpaidPeriods ?? 0} period{(data?.unpaidPeriods ?? 0) === 1 ? "" : "s"})</span><span>{formatCents(data?.rentDueCents ?? 0)}</span></div>
+                {(data?.lateFeeCents ?? 0) > 0 && (
+                  <div className="flex justify-between text-amber-700"><span>Late fees</span><span>+{formatCents(data?.lateFeeCents ?? 0)}</span></div>
+                )}
+                <div className="flex justify-between font-black border-t border-dashed border-gray-200 pt-1.5"><span>Total due</span><span>{formatCents(data?.balanceCents ?? 0)}</span></div>
+              </div>
+              {tenant?.listingId && (
+                <Link href={`/pay/${tenant.listingId}`}>
+                  <Button className="w-full mt-4 font-bold gap-1.5" style={{ background: ACCENT, color: "#fff" }}>
+                    <CreditCard className="h-4 w-4" /> Pay {formatCents(data?.balanceCents ?? 0)}
+                  </Button>
+                </Link>
+              )}
+            </div>
+          )}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-gray-100 flex items-center justify-between">
               <h2 className="font-black text-gray-900 text-xl">Payment History</h2>
@@ -391,6 +419,7 @@ export default function TenantDashboard() {
                 ))}
               </div>
             )}
+          </div>
           </div>
         )}
 
