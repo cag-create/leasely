@@ -192,7 +192,7 @@ export default function AdminPage() {
         {activeTab === "contractors" && <ContractorsAdminTab />}
         {activeTab === "waitlist" && <WaitlistTab />}
         {activeTab === "sop" && <SopAdminTab />}
-        {activeTab === "growth" && <GrowthTab />}
+        {activeTab === "growth" && <GrowthTab onNavigate={setActiveTab} />}
         {activeTab === "intelligence" && <IntelligenceTab />}
       </div>
     </DashboardLayout>
@@ -1189,34 +1189,53 @@ function WaitlistTab() {
 
 // ─── Growth Tab ───────────────────────────────────────────────────────────────
 
-function GrowthTab() {
+function GrowthTab({ onNavigate }: { onNavigate: (tab: AdminTab) => void }) {
   const { data: stats, isLoading } = trpc.growth.getStats.useQuery();
 
-  const metrics = [
-    { label: "Total Users", value: stats?.totalUsers, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
-    { label: "Pro Subscribers", value: stats?.paidUsers, icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10" },
-    { label: "Active Listings", value: stats?.totalListings, icon: Building2, color: "text-[#4F46E5]", bg: "bg-[#4F46E5]/10" },
+  const metrics: Array<{ label: string; value: any; icon: any; color: string; bg: string; tab?: AdminTab }> = [
+    { label: "Total Users", value: stats?.totalUsers, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10", tab: "users" },
+    { label: "Pro Subscribers", value: stats?.paidUsers, icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10", tab: "subs" },
+    { label: "Active Listings", value: stats?.totalListings, icon: Building2, color: "text-[#4F46E5]", bg: "bg-[#4F46E5]/10", tab: "listings" },
     { label: "Applications", value: stats?.totalApplications, icon: CheckCircle2, color: "text-purple-500", bg: "bg-purple-500/10" },
-    { label: "Waitlist Entries", value: stats?.totalWaitlist, icon: Bell, color: "text-orange-500", bg: "bg-orange-500/10" },
-    { label: "Agent Leads", value: stats?.totalLeads, icon: TrendingUp, color: "text-pink-500", bg: "bg-pink-500/10" },
-    { label: "Free→Pro Rate", value: stats?.paidUsers && stats?.totalUsers ? `${((Number(stats.paidUsers) / Number(stats.totalUsers)) * 100).toFixed(1)}%` : "—", icon: TrendingUp, color: "text-green-500", bg: "bg-green-500/10" },
-    { label: "Est. MRR", value: stats?.paidUsers ? `$${(Number(stats.paidUsers) * 25).toFixed(0)}` : "—", icon: DollarSign, color: "text-green-600", bg: "bg-green-600/10" },
+    { label: "Waitlist Entries", value: stats?.totalWaitlist, icon: Bell, color: "text-orange-500", bg: "bg-orange-500/10", tab: "waitlist" },
+    { label: "Agent Leads", value: stats?.totalLeads, icon: TrendingUp, color: "text-pink-500", bg: "bg-pink-500/10", tab: "agents" },
+    { label: "Free→Pro Rate", value: stats?.paidUsers && stats?.totalUsers ? `${((Number(stats.paidUsers) / Number(stats.totalUsers)) * 100).toFixed(1)}%` : "—", icon: TrendingUp, color: "text-green-500", bg: "bg-green-500/10", tab: "metrics" },
+    { label: "Est. MRR", value: stats?.paidUsers ? `$${(Number(stats.paidUsers) * 25).toFixed(0)}` : "—", icon: DollarSign, color: "text-green-600", bg: "bg-green-600/10", tab: "metrics" },
   ];
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {metrics.map((m, i) => (
-          <div key={i} className="rounded-2xl border border-border bg-card p-5">
-            <div className={`h-10 w-10 rounded-xl ${m.bg} flex items-center justify-center mb-3`}>
-              <m.icon className={`h-5 w-5 ${m.color}`} />
+        {metrics.map((m, i) => {
+          const clickable = !!m.tab;
+          const inner = (
+            <>
+              <div className="flex items-start justify-between">
+                <div className={`h-10 w-10 rounded-xl ${m.bg} flex items-center justify-center mb-3`}>
+                  <m.icon className={`h-5 w-5 ${m.color}`} />
+                </div>
+                {clickable && <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />}
+              </div>
+              <div className="text-2xl font-bold text-foreground">
+                {isLoading ? <div className="h-7 w-20 bg-muted animate-pulse rounded" /> : (m.value ?? "—")}
+              </div>
+              <div className="text-sm text-muted-foreground mt-0.5">{m.label}</div>
+            </>
+          );
+          return clickable ? (
+            <button
+              key={i}
+              onClick={() => onNavigate(m.tab!)}
+              className="text-left rounded-2xl border border-border bg-card p-5 hover:border-primary/40 hover:shadow-md hover:bg-muted/20 transition-all group"
+            >
+              {inner}
+            </button>
+          ) : (
+            <div key={i} className="rounded-2xl border border-border bg-card p-5">
+              {inner}
             </div>
-            <div className="text-2xl font-bold text-foreground">
-              {isLoading ? <div className="h-7 w-20 bg-muted animate-pulse rounded" /> : (m.value ?? "—")}
-            </div>
-            <div className="text-sm text-muted-foreground mt-0.5">{m.label}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Conversion funnel */}
