@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 // Stripe Payment Link for CBP's website-builder package (custom website + logo + 1-yr domain + hosting).
-const CBP_WEBSITE_BUILDER_URL = "https://buy.stripe.com/00wbIUevX0t19mocl59ws09";
+const CBP_WEBSITE_BUILDER_URL = "https://buy.stripe.com/9B6dR24Vn4Jhaqsetd9ws0d";
 // CBP-hosted $37/yr domain + hosting renewal (year 2 onward). Lives on CBP's Stripe —
 // CBP owns the domain/hosting, so renewals are billed by them, not Leasely.
 const CBP_DOMAIN_RENEWAL_URL = "https://buy.stripe.com/6oU28k9bDb7F9mofxh9ws08";
