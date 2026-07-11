@@ -14,10 +14,10 @@ export const LEASELY_PRO_MONTHLY = {
   priceId: process.env.STRIPE_PRO_PRICE_ID ?? undefined,
 };
 
-/** $75.00 one-time portal setup fee (includes branded website, logo, and custom URL) */
+/** $75.00 one-time Pro setup fee (covers setup + first month; $25/mo starts next month) */
 export const LEASELY_PRO_SETUP = {
-  name: "Leasely Pro — Portal Setup Fee",
-  description: "One-time setup fee includes your branded website, custom logo placement, and your personalized leasely.net subdomain URL.",
+  name: "Leasely Pro — Setup (includes first month)",
+  description: "One-time $75 to start Pro — includes your branded website, custom logo, personalized leasely.net URL, and your first month. The $25/month subscription begins next month.",
   setupPrice: 7500, // $75.00 in cents
   // Set this to your Stripe one-time Price ID once created in the Stripe Dashboard.
   // Example: price_1XYZ789DEF456JKL
