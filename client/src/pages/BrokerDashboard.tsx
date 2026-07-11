@@ -276,12 +276,16 @@ function ProfileTab({ profile, profileLoading }: { profile: any; profileLoading:
         <div className="space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label>License Number</Label>
+              <Label>License Number <span className="text-red-500">*</span></Label>
               <Input
                 value={form.licenseNumber}
                 onChange={e => setForm(f => ({ ...f, licenseNumber: e.target.value }))}
                 placeholder="TX-123456"
+                required
               />
+              {!profile && (
+                <p className="text-xs text-muted-foreground">Required — your real estate license is verified before approval.</p>
+              )}
             </div>
             <div className="space-y-1">
               <Label>Phone</Label>
@@ -343,13 +347,17 @@ function ProfileTab({ profile, profileLoading }: { profile: any; profileLoading:
               if (profile) {
                 updateMutation.mutate(payload);
               } else {
+                if (!form.licenseNumber.trim()) {
+                  toast.error("A real estate license number is required to register.");
+                  return;
+                }
                 registerMutation.mutate({
-                  licenseNumber: form.licenseNumber || undefined,
+                  licenseNumber: form.licenseNumber.trim(),
                   ...payload,
                 });
               }
             }}
-            disabled={registerMutation.isPending || updateMutation.isPending}
+            disabled={registerMutation.isPending || updateMutation.isPending || (!profile && !form.licenseNumber.trim())}
             className="gap-2 bg-[#1B2B5E] hover:bg-[#1B2B5E]/90"
           >
             {(registerMutation.isPending || updateMutation.isPending) ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}

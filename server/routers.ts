@@ -4275,7 +4275,9 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
   cremeAgent: router({
     /** Register as a Creme Agent (creates pending record) */
     register: protectedProcedure.input(z.object({
-      licenseNumber: z.string().optional(),
+      // Required — approval unlocks unlimited free listings + leads, so a real
+      // estate license number is mandatory to register (admin verifies it).
+      licenseNumber: z.string().trim().min(3, "A valid real estate license number is required"),
       bio: z.string().optional(),
       phone: z.string().optional(),
       photoUrl: z.string().url().optional(),
