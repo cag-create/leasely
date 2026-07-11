@@ -1185,6 +1185,10 @@ export const leaseAgreements = mysqlTable("lease_agreements", {
   autopayEnabled: tinyint("autopayEnabled").default(0),
   autopayActivatedAt: timestamp("autopayActivatedAt"),
   rentDueDay: int("rentDueDay").default(1), // day-of-month 1-28
+  // Per-lease late-fee policy (landlord sets at onboarding, within state limits).
+  // lateFeeCents = flat fee applied once rent is graceDays+ past due; 0 = none.
+  lateFeeCents: int("lateFeeCents").default(0),
+  lateFeeGraceDays: int("lateFeeGraceDays").default(5),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -1207,6 +1211,10 @@ export const rentPayments = mysqlTable("rent_payments", {
   // Due date — typically the rent_due_day of periodMonth
   dueDate: varchar("dueDate", { length: 20 }).notNull(),
   amountCents: int("amountCents").notNull(),
+  // Late fee accrued on this period (0 = none). Set once by the late-fee
+  // scheduler after the lease's grace window passes; landlord can void it (→0)
+  // or mark the period paid offline.
+  lateFeeCents: int("lateFeeCents").default(0),
   status: mysqlEnum("status", ["pending", "paid", "late", "skipped", "partial"]).default("pending").notNull(),
   paidAt: timestamp("paidAt"),
   paidAmountCents: int("paidAmountCents"),

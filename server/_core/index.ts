@@ -377,6 +377,11 @@ async function startServer() {
     import("./automationSweep")
       .then(m => m.startAutomationSweepScheduler())
       .catch(err => console.warn("[automationSweep] scheduler init failed:", err));
+    // Daily late-fee accrual — applies each lease's late fee to rent periods
+    // still unpaid past that lease's grace window (once, voidable).
+    import("./lateFeeScheduler")
+      .then(m => m.startLateFeeScheduler())
+      .catch(err => console.warn("[lateFees] scheduler init failed:", err));
   });
 }
 
