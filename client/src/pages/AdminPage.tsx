@@ -15,7 +15,7 @@ import {
   Pencil, Trash2, ExternalLink, Plus, Copy, Share2, Link2 as LinkIcon,
 } from "lucide-react";
 
-type AdminTab = "overview" | "users" | "listings" | "subs" | "agents" | "contractors" | "waitlist" | "sop" | "growth" | "intelligence";
+type AdminTab = "overview" | "metrics" | "users" | "listings" | "subs" | "agents" | "contractors" | "waitlist" | "sop" | "growth" | "intelligence";
 
 /**
  * Manual safety-net to flip a user to Pro by email — for assisted/phone sales
@@ -134,6 +134,7 @@ export default function AdminPage() {
 
   const TABS: { key: AdminTab; label: string; icon: any }[] = [
     { key: "overview", label: "Overview", icon: BarChart3 },
+    { key: "metrics", label: "Business Metrics", icon: TrendingUp },
     { key: "users", label: "Users", icon: Users },
     { key: "listings", label: "Listings", icon: Building2 },
     { key: "subs", label: "Subscriptions", icon: Crown },
@@ -183,6 +184,7 @@ export default function AdminPage() {
         </div>
 
         {activeTab === "overview" && <OverviewTab onNavigate={setActiveTab} />}
+        {activeTab === "metrics" && <MetricsTab />}
         {activeTab === "users" && <UsersTab />}
         {activeTab === "listings" && <ListingsTab />}
         {activeTab === "subs" && <SubscriptionsTab />}
@@ -194,6 +196,69 @@ export default function AdminPage() {
         {activeTab === "intelligence" && <IntelligenceTab />}
       </div>
     </DashboardLayout>
+  );
+}
+
+// ─── Business Metrics Tab ────────────────────────────────────────────────────
+// The acquisition-story view: recurring MRR/ARR + verifiable on-platform GMV +
+// network size — the numbers a future buyer underwrites.
+function MetricsTab() {
+  const { data, isLoading } = trpc.admin.businessMetrics.useQuery();
+  const money = (cents?: number) => `$${Math.round((cents ?? 0) / 100).toLocaleString()}`;
+
+  if (isLoading) return <div className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>;
+
+  const rentGmvAll = data?.rentGmvAllCents ?? 0;
+  const onPlatformGmv = (data?.rentGmvAllCents ?? 0) + (data?.depositGmvAllCents ?? 0);
+
+  const hero = [
+    { label: "MRR", value: money(data?.mrrCents), sub: `${data?.paidUsers ?? 0} Pro subscribers × $25`, accent: "text-emerald-500" },
+    { label: "ARR (run-rate)", value: money(data?.arrCents), sub: "MRR × 12", accent: "text-emerald-500" },
+    { label: "On-platform GMV (all-time)", value: money(onPlatformGmv), sub: "rent + deposits processed via Stripe", accent: "text-indigo-500" },
+    { label: "Rent processed (last 30d)", value: money(data?.rentGmvLast30Cents), sub: "verifiable recurring volume", accent: "text-indigo-500" },
+  ];
+  const secondary = [
+    { label: "Total users", value: (data?.totalUsers ?? 0).toLocaleString() },
+    { label: "Pro subscribers", value: (data?.paidUsers ?? 0).toLocaleString() },
+    { label: "Free → Pro rate", value: data?.totalUsers ? `${(((data?.paidUsers ?? 0) / data.totalUsers) * 100).toFixed(1)}%` : "—" },
+    { label: "Active listings", value: (data?.activeListings ?? 0).toLocaleString() },
+    { label: "Applications", value: (data?.totalApplications ?? 0).toLocaleString() },
+    { label: "Approved agents", value: (data?.approvedAgents ?? 0).toLocaleString() },
+    { label: "Approved contractors", value: (data?.approvedContractors ?? 0).toLocaleString() },
+    { label: "Rent GMV (all-time)", value: money(rentGmvAll) },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Hero: the numbers that drive a sale multiple */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {hero.map(h => (
+          <div key={h.label} className="rounded-2xl border border-border bg-card p-5">
+            <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{h.label}</div>
+            <div className={`text-3xl font-black ${h.accent}`}>{h.value}</div>
+            <div className="text-xs text-muted-foreground mt-1">{h.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Secondary grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {secondary.map(s => (
+          <div key={s.label} className="rounded-xl border border-border bg-card p-4">
+            <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{s.label}</div>
+            <div className="text-xl font-bold text-foreground">{s.value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-2xl border border-border bg-muted/30 p-5 text-sm text-muted-foreground leading-relaxed">
+        <p className="font-semibold text-foreground mb-1">What a buyer underwrites</p>
+        Recurring <strong>MRR/ARR</strong> from Pro subscriptions and verifiable <strong>on-platform GMV</strong> (rent + deposits
+        flowing through Stripe) are the high-multiple assets. Contractor referrals are free by design, and agent
+        referral fees are billed off-platform — so they don't appear here and shouldn't be counted toward a valuation.
+        Grow subscriptions and on-platform rent volume to raise the multiple.
+      </div>
+    </div>
   );
 }
 

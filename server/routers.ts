@@ -113,7 +113,7 @@ import {
   getAreaRentRates, getAreaRentRatesByState,
   // Admin
   getAllUsers, getUserCount, getPaidUserCount, getListingCount, getApplicationCount,
-  setUserRole, getAllSubscriptions, getAllListingsAdmin, deleteUserById, getUserByEmail,
+  setUserRole, getAllSubscriptions, getAllListingsAdmin, deleteUserById, getUserByEmail, getBusinessMetrics,
   getOrCreateProCode, getProCodeByUserId, getAllProCodes, redeemProCode,
   // Creme Agents
   getCremeAgentByUserId, getCremeAgentById, getApprovedCremeAgents, getAllCremeAgents,
@@ -3906,6 +3906,21 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         getApplicationCount(),
       ]);
       return { totalUsers, paidUsers, totalListings, totalApplications };
+    }),
+
+    // Acquisition-story metrics: recurring MRR/ARR + verifiable on-platform
+    // GMV + network size — the numbers a future buyer underwrites.
+    businessMetrics: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const [totalUsers, paidUsers, totalApplications, m] = await Promise.all([
+        getUserCount(), getPaidUserCount(), getApplicationCount(), getBusinessMetrics(),
+      ]);
+      const mrrCents = paidUsers * 2500; // $25/mo per Pro subscriber
+      return {
+        totalUsers, paidUsers, totalApplications,
+        mrrCents, arrCents: mrrCents * 12,
+        ...m,
+      };
     }),
 
     getUsers: protectedProcedure.input(z.object({

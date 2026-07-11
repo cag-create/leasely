@@ -1275,6 +1275,37 @@ export async function setUserRole(userId: number, role: "user" | "admin"): Promi
   await db.update(users).set({ role }).where(eq(users.id, userId));
 }
 
+/**
+ * Acquisition-story metrics: on-platform volume + network size. GMV is the
+ * sum of PAID rows — the verifiable money that actually flowed through the
+ * platform (what a future buyer underwrites), not the manual off-platform
+ * agent referral fees.
+ */
+export async function getBusinessMetrics() {
+  const db = await getDb();
+  if (!db) return {
+    rentGmvAllCents: 0, rentGmvLast30Cents: 0, depositGmvAllCents: 0,
+    approvedAgents: 0, approvedContractors: 0, activeListings: 0,
+  };
+  const thirtyAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const [rentAll, rent30, depAll, agents, contractors, listings] = await Promise.all([
+    db.select({ s: sql<number>`coalesce(sum(${rentPayments.amountCents}),0)` }).from(rentPayments).where(eq(rentPayments.status, "paid")),
+    db.select({ s: sql<number>`coalesce(sum(${rentPayments.amountCents}),0)` }).from(rentPayments).where(and(eq(rentPayments.status, "paid"), gte(rentPayments.paidAt, thirtyAgo))),
+    db.select({ s: sql<number>`coalesce(sum(${paymentRecords.amountCents}),0)` }).from(paymentRecords).where(eq(paymentRecords.status, "paid")),
+    db.select({ n: sql<number>`count(*)` }).from(cremeAgents).where(eq(cremeAgents.status, "approved")),
+    db.select({ n: sql<number>`count(*)` }).from(contractorProfiles).where(eq(contractorProfiles.status, "approved")),
+    db.select({ n: sql<number>`count(*)` }).from(marketplaceListings).where(eq(marketplaceListings.status, "active")),
+  ]);
+  return {
+    rentGmvAllCents: Number(rentAll[0]?.s ?? 0),
+    rentGmvLast30Cents: Number(rent30[0]?.s ?? 0),
+    depositGmvAllCents: Number(depAll[0]?.s ?? 0),
+    approvedAgents: Number(agents[0]?.n ?? 0),
+    approvedContractors: Number(contractors[0]?.n ?? 0),
+    activeListings: Number(listings[0]?.n ?? 0),
+  };
+}
+
 export async function getAllSubscriptions() {
   const db = await getDb();
   if (!db) return [];
