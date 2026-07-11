@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -105,29 +105,18 @@ export default function AdminPage() {
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
 
-  if (authLoading) {
+  const isAdmin = !!user && (user as any).role === "admin";
+
+  // Non-admins never see admin content — silently bounce them to the dashboard
+  // (no "Access Denied" screen, no mention of "admin").
+  useEffect(() => {
+    if (!authLoading && !isAdmin) navigate("/dashboard");
+  }, [authLoading, isAdmin, navigate]);
+
+  if (authLoading || !isAdmin) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (!user || (user as any).role !== "admin") {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background px-4">
-        <div className="max-w-md text-center space-y-4">
-          <div className="h-16 w-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto">
-            <Shield className="h-8 w-8 text-red-500" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">Access Denied</h1>
-          <p className="text-muted-foreground">
-            This page is restricted to Leasely administrators only.
-          </p>
-          <Button onClick={() => navigate("/dashboard")} className="gap-2">
-            <ChevronRight className="h-4 w-4" /> Back to Dashboard
-          </Button>
-        </div>
       </div>
     );
   }
