@@ -438,11 +438,11 @@ function TrainingTab() {
   });
 
   const VIDEOS = [
-    { id: "training-platform-intro", title: "Platform Introduction", duration: "12 min", desc: "Overview of the Leasely platform for new agents." },
+    { id: "training-platform-intro", title: "Platform Introduction", duration: "12 min", desc: "Overview of the Keycove platform for new agents." },
     { id: "training-listing-best-practices", title: "Listing Best Practices", duration: "18 min", desc: "How to create high-converting property listings." },
     { id: "training-lead-conversion", title: "Lead Conversion Mastery", duration: "22 min", desc: "Scripts and techniques to convert inquiries to signed leases." },
     { id: "training-fair-housing", title: "Fair Housing Compliance", duration: "30 min", desc: "Federal and state fair housing laws every agent must know." },
-    { id: "training-digital-applications", title: "Digital Applications Walkthrough", duration: "15 min", desc: "Using Leasely's application portal with tenants." },
+    { id: "training-digital-applications", title: "Digital Applications Walkthrough", duration: "15 min", desc: "Using Keycove's application portal with tenants." },
     { id: "training-maintenance-dispatch", title: "Maintenance & Vendor Dispatch", duration: "10 min", desc: "How to use AI-powered work order dispatching." },
   ];
 

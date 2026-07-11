@@ -44,8 +44,8 @@ export default function AgentGuide() {
       body: (
         <div className="space-y-3 text-sm">
           <p className="text-muted-foreground leading-relaxed">
-            Leasely brings the lead. You bring the license, the closing, and the local expertise.
-            Leasely takes a referral fee on closed transactions per the agreement you signed at onboarding.
+            Keycove brings the lead. You bring the license, the closing, and the local expertise.
+            Keycove takes a referral fee on closed transactions per the agreement you signed at onboarding.
           </p>
           <div className="rounded-xl p-3 border" style={{ borderColor: ACCENT, background: `${ACCENT}12` }}>
             <p className="text-xs font-semibold" style={{ color: ACCENT }}>
@@ -139,7 +139,7 @@ export default function AgentGuide() {
         <ol className="space-y-3">
           {[
             { t: "Request", d: "A landlord / investor / FSBO seller clicks Request this agent on your profile." },
-            { t: "Notification", d: "Leasely sends you a notification + email. Lead also lands on your Agent Dashboard tab." },
+            { t: "Notification", d: "Keycove sends you a notification + email. Lead also lands on your Agent Dashboard tab." },
             { t: "4-hour window", d: "Leads that go cold for >4 hrs are auto-redistributed to another agent in the same service area." },
             { t: "First response", d: "Phone call > SMS > email. We see a 3× higher close rate on phone-first responses." },
           ].map((s, i) => (
@@ -179,14 +179,14 @@ export default function AgentGuide() {
 
           <div className="p-4 rounded-xl border border-border/50 bg-card/40">
             <div className="text-sm font-semibold mb-2">Mid-funnel</div>
-            <p className="text-xs text-muted-foreground mb-2">Use Leasely's tooling where it helps:</p>
+            <p className="text-xs text-muted-foreground mb-2">Use Keycove's tooling where it helps:</p>
             <ul className="space-y-1 text-xs text-muted-foreground">
               <li className="flex gap-2"><span style={{ color: ACCENT }}>•</span><Link href="/marketplace" className="underline">Marketplace</Link><span>for active comps</span></li>
               <li className="flex gap-2"><span style={{ color: ACCENT }}>•</span><span>Profile share-link for the lead to bookmark you</span></li>
-              <li className="flex gap-2"><span style={{ color: ACCENT }}>•</span><span>Leasely Market Intelligence for income-property pricing</span></li>
+              <li className="flex gap-2"><span style={{ color: ACCENT }}>•</span><span>Keycove Market Intelligence for income-property pricing</span></li>
             </ul>
             <div className="mt-3 p-2 rounded-lg border border-amber-500/30 bg-amber-500/5 text-xs text-amber-200/90">
-              <strong>Do not</strong> disintermediate Leasely. Closing outside the platform is grounds for removal and forfeits pipeline.
+              <strong>Do not</strong> disintermediate Keycove. Closing outside the platform is grounds for removal and forfeits pipeline.
             </div>
           </div>
 
@@ -194,8 +194,8 @@ export default function AgentGuide() {
             <div className="text-sm font-semibold mb-2">Closing</div>
             <ul className="space-y-1 text-xs text-muted-foreground">
               <li className="flex gap-2"><span style={{ color: ACCENT }}>•</span><span>File the transaction in your dashboard with closing date + sale price.</span></li>
-              <li className="flex gap-2"><span style={{ color: ACCENT }}>•</span><span>Leasely invoices the referral fee per your onboarding agreement.</span></li>
-              <li className="flex gap-2"><span style={{ color: ACCENT }}>•</span><span>30-day cooling-off: clients keep their Leasely portal access at no extra cost for 6 months.</span></li>
+              <li className="flex gap-2"><span style={{ color: ACCENT }}>•</span><span>Keycove invoices the referral fee per your onboarding agreement.</span></li>
+              <li className="flex gap-2"><span style={{ color: ACCENT }}>•</span><span>30-day cooling-off: clients keep their Keycove portal access at no extra cost for 6 months.</span></li>
             </ul>
           </div>
         </div>
@@ -205,14 +205,14 @@ export default function AgentGuide() {
       id: "compliance",
       title: "Compliance — what you must do",
       icon: Scale,
-      intro: "Your license. Your rules. Leasely doesn't replace your state disclosures.",
+      intro: "Your license. Your rules. Keycove doesn't replace your state disclosures.",
       body: (
         <div className="space-y-2 text-sm">
           {[
-            ["Agency disclosure", "MLOA / agency disclosure is on you, not Leasely."],
+            ["Agency disclosure", "MLOA / agency disclosure is on you, not Keycove."],
             ["Fair Housing", "No client filters on protected class. If a lead asks you to, document and decline."],
             ["License display", "Your license number is shown on /agents/:id. Don't remove it from co-marketing material."],
-            ["Anti-steering", "Don't steer leads to lenders / inspectors / insurance in exchange for kickbacks. Leasely's disclosed partnerships are the only allowed ones."],
+            ["Anti-steering", "Don't steer leads to lenders / inspectors / insurance in exchange for kickbacks. Keycove's disclosed partnerships are the only allowed ones."],
           ].map(([t, d]) => (
             <div key={t} className="flex gap-3 p-3 rounded-xl border border-border/50 bg-card/40">
               <Scale className="h-4 w-4 mt-0.5" style={{ color: ACCENT }} />
@@ -233,9 +233,9 @@ export default function AgentGuide() {
         <div className="space-y-2 text-sm">
           {[
             ["Close outside the platform", "Forfeit referral + removal from network."],
-            ["Trade Leasely leads with another network", "Same consequence — removal."],
+            ["Trade Keycove leads with another network", "Same consequence — removal."],
             ["Edit your license number after approval", "Admin-only. Renewals fine; jurisdiction transfers need re-verification."],
-            ["Take client payment through Leasely", "Leasely is not your brokerage's trust account. Commissions flow brokerage → you."],
+            ["Take client payment through Keycove", "Keycove is not your brokerage's trust account. Commissions flow brokerage → you."],
           ].map(([t, d]) => (
             <div key={t} className="flex gap-3 p-3 rounded-xl border border-border/50 bg-card/40">
               <ShieldOff className="h-4 w-4 mt-0.5 text-amber-500 shrink-0" />
@@ -274,7 +274,7 @@ export default function AgentGuide() {
     },
     {
       id: "escalate",
-      title: "When to escalate to Leasely",
+      title: "When to escalate to Keycove",
       icon: AlertTriangle,
       body: (
         <ul className="space-y-2 text-sm">
@@ -404,7 +404,7 @@ export default function AgentGuide() {
               Close more deals. Skip the cold outreach.
             </h1>
             <p className="text-sm md:text-base text-white/70 mt-2 max-w-xl">
-              Leasely brings the lead. You bring the license. Click any section to expand.
+              Keycove brings the lead. You bring the license. Click any section to expand.
             </p>
             <div className="flex flex-wrap gap-2 mt-4">
               {!myProfile && (

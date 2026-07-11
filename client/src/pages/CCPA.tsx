@@ -4,7 +4,7 @@ export default function CCPA() {
   return (
     <LegalLayout title="Your California Privacy Rights (CCPA / CPRA)" effectiveDate="April 25, 2026">
       <p>
-        This notice supplements our <a href="/legal/privacy" className="text-[#4F46E5] hover:underline">Privacy Policy</a> and applies to California residents under the California Consumer Privacy Act of 2018, as amended by the California Privacy Rights Act ("CCPA/CPRA"). It also describes how Leasely responds to similar rights granted by Virginia (VCDPA), Colorado (CPA), Connecticut (CTDPA), Utah (UCPA), and Texas (TDPSA), among other U.S. state privacy laws.
+        This notice supplements our <a href="/legal/privacy" className="text-[#4F46E5] hover:underline">Privacy Policy</a> and applies to California residents under the California Consumer Privacy Act of 2018, as amended by the California Privacy Rights Act ("CCPA/CPRA"). It also describes how Keycove responds to similar rights granted by Virginia (VCDPA), Colorado (CPA), Connecticut (CTDPA), Utah (UCPA), and Texas (TDPSA), among other U.S. state privacy laws.
       </p>
 
       <LegalSection title="1. Categories of Personal Information We Collect">
@@ -30,7 +30,7 @@ export default function CCPA() {
       </LegalSection>
 
       <LegalSection title='4. "Sale" and "Sharing" of Personal Information'>
-        <p><strong className="text-white">Leasely does not sell personal information for monetary consideration.</strong> Leasely does not "share" personal information for cross-context behavioral advertising as defined by the CPRA. We disclose information only to service providers and contractors under written contracts that restrict their use of the data.</p>
+        <p><strong className="text-white">Keycove does not sell personal information for monetary consideration.</strong> Keycove does not "share" personal information for cross-context behavioral advertising as defined by the CPRA. We disclose information only to service providers and contractors under written contracts that restrict their use of the data.</p>
       </LegalSection>
 
       <LegalSection title="5. Your Rights">

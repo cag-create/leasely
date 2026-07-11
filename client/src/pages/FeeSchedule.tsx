@@ -51,7 +51,7 @@ export default function FeeSchedule() {
             Simple. Transparent. <span className="text-[#4F46E5]">No surprises.</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Every fee Leasely charges — for landlords, tenants, and agents — in plain English.
+            Every fee Keycove charges — for landlords, tenants, and agents — in plain English.
             No hidden fees. No per-unit charges. No annual contracts.
           </p>
         </div>
@@ -71,7 +71,7 @@ export default function FeeSchedule() {
           <Section title="Subscription">
             <Row
               label="Monthly platform fee"
-              desc="Access to the Leasely platform for landlords."
+              desc="Access to the Keycove platform for landlords."
               free={<span className="font-semibold text-foreground">$0/mo</span>}
               pro={<span className="text-[#C8860A]">$29.00/mo</span>}
               proHighlight
@@ -94,7 +94,7 @@ export default function FeeSchedule() {
           <Section title="Listings & Marketplace">
             <Row
               label="Active listings"
-              desc="Properties published on the Leasely marketplace."
+              desc="Properties published on the Keycove marketplace."
               free="1 listing"
               pro="Unlimited"
               proHighlight
@@ -108,7 +108,7 @@ export default function FeeSchedule() {
           {/* ── Rent Collection ── */}
           <Section title="Rent Collection & Payments">
             <Row
-              label="Leasely platform fee on rent payments"
+              label="Keycove platform fee on rent payments"
               desc="Fee taken from each rent payment processed through Stripe."
               free={
                 <span className="font-semibold text-amber-600">1% per transaction</span>
@@ -127,7 +127,7 @@ export default function FeeSchedule() {
             />
             <Row
               label="Card payment processing"
-              desc="Stripe's standard card fee, charged by Stripe — not Leasely."
+              desc="Stripe's standard card fee, charged by Stripe — not Keycove."
               free="2.9% + 30¢ (Stripe)"
               pro="2.9% + 30¢ (Stripe)"
             />
@@ -187,7 +187,7 @@ export default function FeeSchedule() {
             />
             <Row
               label="Agent referral fee (paid by agent on closed deal)"
-              desc="When a Creme Agent closes a buy/sell/investment deal sourced through Leasely, a 0.75% fee on the deal value is invoiced to the agent — not the landlord."
+              desc="When a Creme Agent closes a buy/sell/investment deal sourced through Keycove, a 0.75% fee on the deal value is invoiced to the agent — not the landlord."
               free="0.75% of deal (billed to agent)"
               pro="0.75% of deal (billed to agent)"
             />
@@ -209,7 +209,7 @@ export default function FeeSchedule() {
             />
             <Row
               label="Rental application fee"
-              desc="Set by the landlord. Leasely does not add any fee on top."
+              desc="Set by the landlord. Keycove does not add any fee on top."
               free="Set by landlord"
               pro="Set by landlord"
             />
@@ -264,7 +264,7 @@ export default function FeeSchedule() {
               {
                 icon: CreditCard,
                 title: "0% on rent (Pro)",
-                body: "Every dollar your tenants pay goes to you. Leasely takes nothing on rent for Pro landlords.",
+                body: "Every dollar your tenants pay goes to you. Keycove takes nothing on rent for Pro landlords.",
               },
             ].map(({ icon: Icon, title, body }) => (
               <div key={title} className="rounded-xl bg-white/5 border border-white/8 p-4">

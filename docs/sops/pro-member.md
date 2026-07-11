@@ -1,7 +1,7 @@
-# Leasely — Pro Member SOP
+# Keycove — Pro Member SOP
 
 > Standard operating procedure for a landlord, investor, or small-portfolio
-> property manager running their business on Leasely Pro.
+> property manager running their business on Keycove Pro.
 
 This is the canonical version. The in-app version at `/pro-guide` is rendered
 from this same content.
@@ -20,7 +20,7 @@ from this same content.
 - Work-order dispatch with vendor tracking
 - Accounting (income/expense ledger + CSV export)
 - Tenant CRM
-- "Leasely Market Intelligence" — automated rent comps for any U.S. zip
+- "Keycove Market Intelligence" — automated rent comps for any U.S. zip
 
 Setup is **$75 once + $29/month**. First listing is always free, even without Pro.
 
@@ -37,8 +37,8 @@ Setup is **$75 once + $29/month**. First listing is always free, even without Pr
    provisions your subdomain, and links to the next steps. Subdomain is live
    within ~30 seconds.
 3. **`/portal-setup`** — upload your logo + brand color. Skip this and your portal
-   defaults to "Leasely navy" + a placeholder logo. (The header now shows the
-   logo mark only — no "Leasely" wordmark.)
+   defaults to "Keycove navy" + a placeholder logo. (The header now shows the
+   logo mark only — no "Keycove" wordmark.)
 4. **`/list-property`** — add your first property. The Market Intelligence widget
    suggests a rent range on step 3 based on the zip + bedroom count.
 5. **`/my-listings`** — confirm it's live. Share the public URL with prospects.
@@ -56,7 +56,7 @@ Setup is **$75 once + $29/month**. First listing is always free, even without Pr
 - `/leases` — anyone you approved Mon goes through lease send today.
 - Stat filter tabs at the top — **All Leases / Drafts / Signed / Expiring** —
   filter the list inline (active tab shows navy background + ring).
-- When you approve an application, Leasely auto-renders a state-specific draft
+- When you approve an application, Keycove auto-renders a state-specific draft
   using the applicant's data + your business profile. The draft appears under
   the **Drafts** tab with a green **Review →** button.
 - Click **Review →** on the lease card to open `/leases/draft/:id`. Fill any
@@ -213,7 +213,7 @@ adds to the dataset.
 - **Refund a rent payment that's already been paid out to your bank.** Refund
   has to go from your bank account back to the tenant — Stripe will not claw
   back a settled payout.
-- **Take payment by check / cash through Leasely.** You can record it manually
+- **Take payment by check / cash through Keycove.** You can record it manually
   in `/accounting`, but the platform itself only handles ACH + card.
 
 ## What "Pro" doesn't cover

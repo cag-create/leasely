@@ -4,7 +4,7 @@ export default function Privacy() {
   return (
     <LegalLayout title="Privacy Policy" effectiveDate="April 25, 2026">
       <p>
-        This Privacy Policy explains how Leasely, Inc. ("Leasely," "we," "us," or "our") collects, uses, shares, and protects information when you use our property management platform, marketing website, mobile experiences, and related services (collectively, the "Services").
+        This Privacy Policy explains how Keycove, Inc. ("Keycove," "we," "us," or "our") collects, uses, shares, and protects information when you use our property management platform, marketing website, mobile experiences, and related services (collectively, the "Services").
       </p>
       <p>
         By using the Services, you agree to the practices described here. If you do not agree, please do not use the Services.
@@ -14,7 +14,7 @@ export default function Privacy() {
         <p><strong className="text-white">Information you provide:</strong> account details (name, email, password), property and listing data, lease details, rental application information (name, contact info, employment, income, prior addresses, references, date of birth), payment and payout details, support communications, and identity verification documents (such as W-9 for affiliates).</p>
         <p><strong className="text-white">Information collected automatically:</strong> log data (IP address, browser/device type, referring URLs, pages viewed, timestamps), cookies and similar technologies, performance and error data, and usage analytics.</p>
         <p><strong className="text-white">Information from third parties:</strong> payment processors (Stripe), email delivery providers, file storage providers, and integrations you authorize.</p>
-        <p><strong className="text-white">Sensitive financial information:</strong> Leasely does not store full credit card or bank account numbers. All payment credentials are tokenized and held by our payment processor (Stripe).</p>
+        <p><strong className="text-white">Sensitive financial information:</strong> Keycove does not store full credit card or bank account numbers. All payment credentials are tokenized and held by our payment processor (Stripe).</p>
       </LegalSection>
 
       <LegalSection title="2. How We Use Information">
@@ -73,7 +73,7 @@ export default function Privacy() {
       </LegalSection>
 
       <LegalSection title="12. Contact">
-        <p>Leasely, Inc. — Privacy contact: <a href="mailto:support@leasely.net" className="text-[#4F46E5] hover:underline">support@leasely.net</a></p>
+        <p>Keycove, Inc. — Privacy contact: <a href="mailto:support@leasely.net" className="text-[#4F46E5] hover:underline">support@leasely.net</a></p>
       </LegalSection>
     </LegalLayout>
   );

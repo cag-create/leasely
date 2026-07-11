@@ -125,7 +125,7 @@ const PLATFORMS = [
       "Select the properties you want to export",
       "Click Actions → Export CSV",
       "Open the CSV in Excel or Google Sheets",
-      "Copy your data into the Leasely template below",
+      "Copy your data into the Keycove template below",
     ],
   },
   {
@@ -138,7 +138,7 @@ const PLATFORMS = [
       "Go to Reports → Property Reports → Unit List",
       "Set the date range and click Run Report",
       "Click Export → Download CSV",
-      "Map the columns into the Leasely template below",
+      "Map the columns into the Keycove template below",
     ],
   },
   {
@@ -151,7 +151,7 @@ const PLATFORMS = [
       "Navigate to Properties → Rentals",
       "Click the Export button (top right)",
       "Select CSV format and download",
-      "Copy your property data into the Leasely template below",
+      "Copy your property data into the Keycove template below",
     ],
   },
   {
@@ -164,7 +164,7 @@ const PLATFORMS = [
       "Go to Properties in the top navigation",
       "Click Export → CSV at the top of the property list",
       "Download the file",
-      "Copy your property data into the Leasely template below",
+      "Copy your property data into the Keycove template below",
     ],
   },
   {
@@ -393,7 +393,7 @@ export default function ImportListings() {
                       >
                         <Upload className="h-8 w-8 mx-auto mb-2 text-gray-300 group-hover:text-green-500 transition-colors" />
                         <p className="text-sm font-medium text-gray-500 group-hover:text-green-600">Click to upload CSV</p>
-                        <p className="text-xs text-gray-400 mt-1">Filled Leasely import template only</p>
+                        <p className="text-xs text-gray-400 mt-1">Filled Keycove import template only</p>
                       </button>
                     </div>
                   </div>

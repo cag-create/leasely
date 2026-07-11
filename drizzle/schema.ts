@@ -2,7 +2,7 @@ import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, tinyint,
 
 /**
  * Core user table backing auth flow.
- * role: "admin" = Leasely superadmin, "user" = regular user / property owner
+ * role: "admin" = Keycove superadmin, "user" = regular user / property owner
  */
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
@@ -128,12 +128,12 @@ export const marketplaceListings = mysqlTable("marketplace_listings", {
   //  active   — publicly visible on the marketplace / map / search
   //  inactive — hidden (paused by owner)
   //  pending  — awaiting review
-  //  private  — intentionally UNLISTED: managed inside Leasely (CRM, rent
+  //  private  — intentionally UNLISTED: managed inside Keycove (CRM, rent
   //             collection, leases) but never shown as an available rental.
   //             Used for already-occupied units the owner is not advertising.
   status: mysqlEnum("status", ["active", "inactive", "pending", "private"]).default("active").notNull(),
 
-  // Linked to a Leasely portal property (for paid subscribers)
+  // Linked to a Keycove portal property (for paid subscribers)
   portalPropertyId: int("portalPropertyId"),
 
   // Aggregate counters (denormalized for performance)
@@ -563,12 +563,12 @@ export type SupportTicket = typeof supportTickets.$inferSelect;
 export type InsertSupportTicket = typeof supportTickets.$inferInsert;
 
 /**
- * Replies on support tickets — from either the user or the Leasely support team.
+ * Replies on support tickets — from either the user or the Keycove support team.
  */
 export const supportReplies = mysqlTable("support_replies", {
   id: int("id").autoincrement().primaryKey(),
   ticketId: int("ticketId").notNull(),
-  /** "user" = customer, "support" = Leasely team */
+  /** "user" = customer, "support" = Keycove team */
   authorType: mysqlEnum("authorType", ["user", "support"]).notNull(),
   authorName: varchar("authorName", { length: 255 }),
   message: text("message").notNull(),
@@ -939,7 +939,7 @@ export type RentalApplication = typeof rentalApplications.$inferSelect;
 export type InsertRentalApplication = typeof rentalApplications.$inferInsert;
 
 /**
- * Custom application templates — landlords can upload their own PDF or use Leasely's built-in
+ * Custom application templates — landlords can upload their own PDF or use Keycove's built-in
  */
 export const customApplicationTemplates = mysqlTable("custom_application_templates", {
   id: int("id").autoincrement().primaryKey(),
@@ -1241,7 +1241,7 @@ export const rentPayments = mysqlTable("rent_payments", {
   status: mysqlEnum("status", ["pending", "paid", "late", "skipped", "partial"]).default("pending").notNull(),
   paidAt: timestamp("paidAt"),
   paidAmountCents: int("paidAmountCents"),
-  paymentMethod: varchar("paymentMethod", { length: 60 }), // "Leasely", "Zelle", "Cash App", etc.
+  paymentMethod: varchar("paymentMethod", { length: 60 }), // "Keycove", "Zelle", "Cash App", etc.
   stripeInvoiceId: varchar("stripeInvoiceId", { length: 255 }),
   stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
   notes: text("notes"),
@@ -1324,7 +1324,7 @@ export const leaseDocuments = mysqlTable("lease_documents", {
   pdfUrl: text("pdfUrl"),
   // Signed PDF (after both parties sign).
   signedPdfUrl: text("signedPdfUrl"),
-  // User explicitly checked "I understand Leasely does not provide legal advice."
+  // User explicitly checked "I understand Keycove does not provide legal advice."
   legalDisclaimerAcknowledgedAt: timestamp("legalDisclaimerAcknowledgedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -1467,7 +1467,7 @@ export type InsertSyndicationShare = typeof syndicationShares.$inferInsert;
 // ─── Handyman / Contractor Directory ─────────────────────────────────────────
 export const contractorProfiles = mysqlTable("contractor_profiles", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").unique(), // optional — linked Leasely account
+  userId: int("userId").unique(), // optional — linked Keycove account
   businessName: varchar("businessName", { length: 255 }).notNull(),
   ownerName: varchar("ownerName", { length: 255 }),
   slug: varchar("slug", { length: 120 }).unique(),
@@ -1565,7 +1565,7 @@ export type ProRedemptionCode = typeof proRedemptionCodes.$inferSelect;
  * Data sources (all free, no manual upload):
  *  • Census ACS B25064 (median gross rent) — pulled by ZCTA, ~33k rows
  *  • HUD Fair Market Rents (FMR) — pulled by county, joined via HUD zip↔county crosswalk
- *  • Leasely's own listings — computed in-app as a rolling median per zip
+ *  • Keycove's own listings — computed in-app as a rolling median per zip
  *
  * Refresh cadence: monthly check on server boot + a setInterval pass every
  * 30 days. Census/HUD only publish new data once a year, but checking
@@ -1595,7 +1595,7 @@ export const rentBenchmarks = mysqlTable("rent_benchmarks", {
   // publishes Oct for the upcoming fiscal year — track separately).
   acsDataYear: int("acsDataYear"),
   hudDataYear: int("hudDataYear"),
-  // Leasely's own marketplace median — derived from active listings in this
+  // Keycove's own marketplace median — derived from active listings in this
   // zip. Updates weekly. listingCount is the n behind the median so the UI
   // can show confidence ("based on 14 active listings"). Below ~3 listings
   // the median is statistically noisy; we still store it but flag it.

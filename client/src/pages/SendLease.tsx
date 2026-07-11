@@ -1,4 +1,4 @@
-// Send Lease entry point — Pro members pick "Upload my own" vs "Use Leasely template".
+// Send Lease entry point — Pro members pick "Upload my own" vs "Use Keycove template".
 // Phase 2 of the lease send flow. Routes to /leases/send/wizard or /leases/send/upload.
 
 import { useLocation } from "wouter";
@@ -55,7 +55,7 @@ export default function SendLease() {
               <div className="flex items-center justify-center w-14 h-14 rounded-full bg-emerald-50 mb-5">
                 <FileText className="h-7 w-7 text-emerald-600" />
               </div>
-              <h2 className="text-xl font-semibold mb-2">Use a Leasely template</h2>
+              <h2 className="text-xl font-semibold mb-2">Use a Keycove template</h2>
               <p className="text-sm text-muted-foreground mb-6">
                 State-specific lease with the required disclosures, deposit caps, and notice periods built in. Choose
                 Standard Residential or Co-Living.
@@ -67,7 +67,7 @@ export default function SendLease() {
               </ul>
               <div className="flex items-center text-xs text-muted-foreground mb-3">
                 <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
-                Leasely is not a law firm and does not provide legal advice.
+                Keycove is not a law firm and does not provide legal advice.
               </div>
               <Button className="w-full">
                 Build a lease <ChevronRight className="h-4 w-4 ml-1" />

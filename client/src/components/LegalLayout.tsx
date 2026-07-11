@@ -24,7 +24,7 @@ export default function LegalLayout({ title, effectiveDate, children }: LegalLay
         <div className="container max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/">
             <div className="flex items-center gap-3 cursor-pointer">
-              <img src={LOGO_URL} alt="Leasely" className="h-8 object-contain" />
+              <img src={LOGO_URL} alt="Keycove" className="h-8 object-contain" />
             </div>
           </Link>
           <Link href="/">
@@ -47,7 +47,7 @@ export default function LegalLayout({ title, effectiveDate, children }: LegalLay
             ))}
           </nav>
           <div className="mt-6 pt-6 border-t border-white/8 text-xs text-white/40 space-y-1">
-            <p>Leasely, Inc.</p>
+            <p>Keycove, Inc.</p>
             <p>support@leasely.net</p>
           </div>
         </aside>

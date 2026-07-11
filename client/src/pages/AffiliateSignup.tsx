@@ -126,7 +126,7 @@ export default function AffiliateSignup() {
       {/* Header */}
       <div className="border-b border-white/10 bg-white/5 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <a href="/" className="text-xl font-bold text-white">Leasely</a>
+          <a href="/" className="text-xl font-bold text-white">Keycove</a>
           {user && (
             <a href="/affiliate/dashboard" className="text-sm text-slate-400 hover:text-white transition-colors">
               My Dashboard →
@@ -147,7 +147,7 @@ export default function AffiliateSignup() {
                 Earn $50 per landlord you refer
               </h1>
               <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-                Share Leasely with property managers and landlords. When they subscribe to Pro,
+                Share Keycove with property managers and landlords. When they subscribe to Pro,
                 you earn $50 — paid directly to you after their payment clears.
               </p>
             </div>

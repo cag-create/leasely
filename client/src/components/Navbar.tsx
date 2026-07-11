@@ -184,7 +184,7 @@ export default function Navbar() {
             <Link href={logoHref} className="flex items-center shrink-0 group">
               <img
                 src={LOGO_URL}
-                alt="Leasely"
+                alt="Keycove"
                 className="h-14 md:h-16 w-auto transition-opacity group-hover:opacity-80 drop-shadow-sm"
                 onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
               />

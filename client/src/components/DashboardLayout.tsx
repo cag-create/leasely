@@ -59,7 +59,7 @@ const directoryMenuItems = [
 ];
 
 const supportMenuItems = [
-  { icon: Rocket, label: "How to use Leasely", path: "/how-to-use", group: "support" },
+  { icon: Rocket, label: "How to use Keycove", path: "/how-to-use", group: "support" },
   { icon: BookOpen, label: "Pro Guide", path: "/pro-guide", group: "support" },
   { icon: Award, label: "Agent Guide", path: "/agent-guide", group: "support" },
   { icon: HeadphonesIcon, label: "Support", path: "/support", group: "support" },
@@ -363,7 +363,7 @@ function DashboardLayoutContent({
               <div className="mt-auto flex items-center justify-center px-3 pt-4 pb-2">
                 <img
                   src={LOGO_URL}
-                  alt="Leasely"
+                  alt="Keycove"
                   className="h-10 w-auto opacity-90"
                   onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
                 />

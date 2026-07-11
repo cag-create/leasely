@@ -130,7 +130,7 @@ export default function Contractor1099() {
         </div>
 
         <p className="text-xs text-gray-400 mt-4 leading-relaxed">
-          Leasely computes totals and prepares the data — it doesn't e-file with the IRS. Export the CSV and file
+          Keycove computes totals and prepares the data — it doesn't e-file with the IRS. Export the CSV and file
           through your accountant or a service like Tax1099 / Track1099. The $600 threshold is for 1099-NEC
           (nonemployee compensation); corporations are generally exempt but the totals are still shown.
         </p>

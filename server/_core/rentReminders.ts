@@ -103,7 +103,7 @@ function gentleReminder(ctx: ReminderCtx): string {
     </p>
     <p style="color:#9ca3af;font-size:12px;margin-top:16px">If you have questions, reply directly to this email to reach your landlord.</p>
   </div>
-  <p style="text-align:center;color:#9ca3af;font-size:12px;margin-top:16px">Powered by <strong style="color:${BRAND}">Leasely</strong></p>
+  <p style="text-align:center;color:#9ca3af;font-size:12px;margin-top:16px">Powered by <strong style="color:${BRAND}">Keycove</strong></p>
 </div>`;
 }
 
@@ -130,7 +130,7 @@ function firmReminder(ctx: ReminderCtx): string {
     </p>
     <p style="color:#9ca3af;font-size:12px;margin-top:16px">Reply to this email to discuss a payment plan with your landlord.</p>
   </div>
-  <p style="text-align:center;color:#9ca3af;font-size:12px;margin-top:16px">Powered by <strong style="color:${BRAND}">Leasely</strong></p>
+  <p style="text-align:center;color:#9ca3af;font-size:12px;margin-top:16px">Powered by <strong style="color:${BRAND}">Keycove</strong></p>
 </div>`;
 }
 
@@ -159,7 +159,7 @@ function overdueNotice(ctx: ReminderCtx): string {
       Your landlord has been copied on this notice. This is an automated reminder — for a payment plan or hardship discussion, reply directly.
     </p>
   </div>
-  <p style="text-align:center;color:#9ca3af;font-size:12px;margin-top:16px">Powered by <strong style="color:${BRAND}">Leasely</strong></p>
+  <p style="text-align:center;color:#9ca3af;font-size:12px;margin-top:16px">Powered by <strong style="color:${BRAND}">Keycove</strong></p>
 </div>`;
 }
 

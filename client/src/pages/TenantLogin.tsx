@@ -63,7 +63,7 @@ export default function TenantLogin() {
       >
         <div>
           <Link href="/" className="flex items-center mb-16">
-            <img src={LOGO_URL} alt="Leasely" className="h-10 w-auto brightness-0 invert" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+            <img src={LOGO_URL} alt="Keycove" className="h-10 w-auto brightness-0 invert" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
           </Link>
           <div className="mb-8">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold mb-6" style={{ background: `${ACCENT}30`, color: ACCENT }}>
@@ -73,7 +73,7 @@ export default function TenantLogin() {
               Your home,<br />your portal.
             </h1>
             <p className="text-white/70 text-lg leading-relaxed">
-              Pay rent, view your lease, and submit maintenance requests — all in one place, provided by your landlord through Leasely.
+              Pay rent, view your lease, and submit maintenance requests — all in one place, provided by your landlord through Keycove.
             </p>
           </div>
           <div className="space-y-4">
@@ -104,7 +104,7 @@ export default function TenantLogin() {
         {/* Mobile logo */}
         <div className="lg:hidden mb-8 text-center">
           <Link href="/" className="inline-flex items-center">
-            <img src={LOGO_URL} alt="Leasely" className="h-10 w-auto" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+            <img src={LOGO_URL} alt="Keycove" className="h-10 w-auto" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
           </Link>
         </div>
 

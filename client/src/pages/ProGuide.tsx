@@ -47,7 +47,7 @@ export default function ProGuide() {
             ["Work-order dispatch", "Vendor SMS + AI scope summary"],
             ["Accounting + P&L", "CSV export for your bookkeeper"],
             ["Tenant CRM", "Profiles, lease history, notes"],
-            ["Leasely Market Intelligence", "Rent comps for any U.S. zip"],
+            ["Keycove Market Intelligence", "Rent comps for any U.S. zip"],
           ].map(([t, d]) => (
             <li key={t} className="flex gap-2.5 p-3 rounded-xl border border-border/50 bg-card/40">
               <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" style={{ color: ACCENT }} />
@@ -70,7 +70,7 @@ export default function ProGuide() {
           {[
             { path: "/onboarding", label: "Complete onboarding", desc: "Stripe Connect onboarding takes ~5 min and unlocks payouts." },
             { path: "/pro-setup", label: "Pay the $75 setup fee", desc: "Your portal subdomain is provisioned automatically within ~30 seconds." },
-            { path: "/portal-setup", label: "Brand your portal", desc: "Upload your logo + brand color. Defaults to Leasely teal if you skip." },
+            { path: "/portal-setup", label: "Brand your portal", desc: "Upload your logo + brand color. Defaults to Keycove teal if you skip." },
             { path: "/list-property", label: "Add your first property", desc: "Market Intelligence widget suggests a rent range on step 3 from zip + bedroom count." },
             { path: "/my-listings", label: "Confirm it's live", desc: "Share the public URL with prospects. Edit / unlist anytime." },
           ].map((s, i) => (
@@ -98,7 +98,7 @@ export default function ProGuide() {
       id: "cadence",
       title: "Weekly cadence (the actual job)",
       icon: Calendar,
-      intro: "What an efficient Leasely Pro week looks like. Adjust to your own workflow.",
+      intro: "What an efficient Keycove Pro week looks like. Adjust to your own workflow.",
       body: (
         <div className="space-y-3">
           {[
@@ -264,7 +264,7 @@ export default function ProGuide() {
           <div className="p-3 rounded-xl border border-border/50 bg-card/40">
             <div className="flex items-center gap-2 text-xs font-semibold mb-1"><FileSignature className="h-3.5 w-3.5" style={{ color: ACCENT }} /> Send a lease by hand (any tenant)</div>
             <p className="text-xs text-muted-foreground">
-              For someone who didn't come through an application, use <b>Send lease to sign</b> in your <Link href="/crm" className="underline">CRM</Link>. Enter the terms and either <b>attach your own lease PDF</b> or let Leasely use a standard agreement. The tenant gets a private link, signs, and their unit + portal go live instantly. Works for apartments (units) and co-living (rooms).
+              For someone who didn't come through an application, use <b>Send lease to sign</b> in your <Link href="/crm" className="underline">CRM</Link>. Enter the terms and either <b>attach your own lease PDF</b> or let Keycove use a standard agreement. The tenant gets a private link, signs, and their unit + portal go live instantly. Works for apartments (units) and co-living (rooms).
             </p>
           </div>
         </div>
@@ -304,7 +304,7 @@ export default function ProGuide() {
             ["Run a background check yourself in-app", "We integrate with ApplyConnect. You're the requester; you don't get raw consumer-report PII."],
             ["Edit a signed lease", "Generate an addendum and resend for signature."],
             ["Refund rent already paid out to your bank", "Refund has to go from your bank back to the tenant. Stripe will not claw back a settled payout."],
-            ["Take payment by check / cash through Leasely", "You can record it manually in /accounting, but the platform only handles ACH + card."],
+            ["Take payment by check / cash through Keycove", "You can record it manually in /accounting, but the platform only handles ACH + card."],
           ].map(([t, d]) => (
             <div key={t} className="flex gap-3 p-3 rounded-xl border border-border/50 bg-card/40">
               <ShieldOff className="h-4 w-4 mt-0.5 text-amber-500 shrink-0" />

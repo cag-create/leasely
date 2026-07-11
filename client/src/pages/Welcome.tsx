@@ -28,7 +28,7 @@ export default function Welcome() {
       <div className="max-w-3xl mx-auto px-4 py-12 sm:py-20">
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <img src={LOGO_URL} alt="Leasely" className="h-12 w-auto" />
+          <img src={LOGO_URL} alt="Keycove" className="h-12 w-auto" />
         </div>
 
         {/* Success hero */}
@@ -41,7 +41,7 @@ export default function Welcome() {
             PAYMENT CONFIRMED
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-[#1B2B5E] mb-3">
-            Welcome to Leasely Pro
+            Welcome to Keycove Pro
           </h1>
           <p className="text-gray-600 text-lg max-w-xl mx-auto">
             Your subscription is live. Let's get your portal set up so you can start

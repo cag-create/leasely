@@ -3,7 +3,7 @@
  * Falls back to console.log in development when BREVO_API_KEY is not set.
  */
 
-const FROM = process.env.FROM_EMAIL ?? "Leasely <noreply@leasely.net>";
+const FROM = process.env.FROM_EMAIL ?? "Keycove <noreply@leasely.net>";
 
 /** Parse "Name <email@host>" or plain "email@host" into Brevo's sender shape. */
 function parseSender(value: string): { name?: string; email: string } {
@@ -84,11 +84,11 @@ export function workOrderDispatchEmail(opts: {
   return `
 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
   <div style="background:#1B2B5E;padding:20px 24px;border-radius:10px 10px 0 0">
-    <h1 style="color:white;margin:0;font-size:20px">Work Order — Leasely</h1>
+    <h1 style="color:white;margin:0;font-size:20px">Work Order — Keycove</h1>
   </div>
   <div style="background:#f9fafb;padding:24px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px">
     <p style="margin:0 0 16px">Hi ${opts.vendorName},</p>
-    <p style="margin:0 0 16px">A new work order has been assigned to you through <strong>Leasely</strong>.</p>
+    <p style="margin:0 0 16px">A new work order has been assigned to you through <strong>Keycove</strong>.</p>
 
     <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
       <tr><td style="padding:8px 0;border-bottom:1px solid #e5e7eb;color:#6b7280;width:140px">Property</td>
@@ -116,7 +116,7 @@ export function workOrderDispatchEmail(opts: {
     </div>` : ""}
 
     <p style="margin:0 0 8px;color:#6b7280;font-size:14px">Please confirm receipt and contact the property manager to schedule the work.</p>
-    <p style="margin:0;color:#9ca3af;font-size:12px">Sent via <a href="https://leasely.net" style="color:#1B2B5E">Leasely</a></p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Sent via <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a></p>
   </div>
 </div>`;
 }
@@ -130,7 +130,7 @@ export function tenantMaintenanceConfirmEmail(opts: {
   return `
 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
   <div style="background:#1B2B5E;padding:20px 24px;border-radius:10px 10px 0 0">
-    <h1 style="color:white;margin:0;font-size:20px">Maintenance Request Received — Leasely</h1>
+    <h1 style="color:white;margin:0;font-size:20px">Maintenance Request Received — Keycove</h1>
   </div>
   <div style="background:#f9fafb;padding:24px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px">
     <p style="margin:0 0 16px">Hi ${opts.tenantName},</p>
@@ -148,7 +148,7 @@ export function tenantMaintenanceConfirmEmail(opts: {
           <td style="padding:8px 0;font-weight:600;text-transform:capitalize">${opts.priority}</td></tr>
     </table>
 
-    <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Leasely</a></p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a></p>
   </div>
 </div>`;
 }
@@ -166,7 +166,7 @@ export function landlordMaintenanceAlertEmail(opts: {
   return `
 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
   <div style="background:#1B2B5E;padding:20px 24px;border-radius:10px 10px 0 0">
-    <h1 style="color:white;margin:0;font-size:20px">New Maintenance Request — Leasely</h1>
+    <h1 style="color:white;margin:0;font-size:20px">New Maintenance Request — Keycove</h1>
   </div>
   <div style="background:#f9fafb;padding:24px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px">
     <p style="margin:0 0 16px">Hi${opts.landlordName ? ` ${opts.landlordName}` : ""},</p>
@@ -196,7 +196,7 @@ export function landlordMaintenanceAlertEmail(opts: {
       View &amp; Assign in Dashboard →
     </a>
 
-    <p style="margin:16px 0 0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Leasely</a></p>
+    <p style="margin:16px 0 0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a></p>
   </div>
 </div>`;
 }
@@ -216,7 +216,7 @@ export function leaseAgreementEmail(opts: {
   return `
 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
   <div style="background:#1B2B5E;padding:20px 24px;border-radius:10px 10px 0 0">
-    <h1 style="color:white;margin:0;font-size:20px">Your Lease Agreement is Ready — Leasely</h1>
+    <h1 style="color:white;margin:0;font-size:20px">Your Lease Agreement is Ready — Keycove</h1>
   </div>
   <div style="background:#f9fafb;padding:24px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px">
     <p style="margin:0 0 16px">Hi ${opts.tenantName},</p>
@@ -244,7 +244,7 @@ export function leaseAgreementEmail(opts: {
       <strong>How signing works:</strong> You sign first. Then you'll be sent payment links for your security deposit and first month's rent.
       Your landlord countersigns once payment clears, at which point the lease is fully executed and you'll receive move-in instructions.
     </p>
-    <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Leasely</a></p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a></p>
   </div>
 </div>`;
 }
@@ -364,7 +364,7 @@ export function leaseSignedPaymentEmail(opts: {
       Questions? Reply to this email or submit a repair request from your <a href="https://leasely.net/tenant" style="color:#E8951A;font-weight:600">tenant dashboard</a>.
     </p>
 
-    <p style="margin:16px 0 0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#E8951A">Leasely</a></p>
+    <p style="margin:16px 0 0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#E8951A">Keycove</a></p>
   </div>
 </div>`;
 }
@@ -399,12 +399,12 @@ export function vendorDispatchRequestEmail(opts: {
   return `
 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
   <div style="background:#1B2B5E;padding:20px 24px;border-radius:10px 10px 0 0">
-    <h1 style="color:white;margin:0;font-size:20px">New Job Request — Leasely</h1>
+    <h1 style="color:white;margin:0;font-size:20px">New Job Request — Keycove</h1>
   </div>
   <div style="background:#f9fafb;padding:24px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px">
     ${emergencyBanner}
     <p style="margin:0 0 16px">Hi ${opts.vendorName},</p>
-    <p style="margin:0 0 16px">A landlord on <strong>Leasely</strong> is requesting your services. Review the details and submit your available time slot and quote.</p>
+    <p style="margin:0 0 16px">A landlord on <strong>Keycove</strong> is requesting your services. Review the details and submit your available time slot and quote.</p>
     <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
       <tr><td style="padding:8px 0;border-bottom:1px solid #e5e7eb;color:#6b7280;width:120px">Property</td>
           <td style="padding:8px 0;border-bottom:1px solid #e5e7eb;font-weight:600">${opts.propertyAddress}</td></tr>
@@ -425,7 +425,7 @@ export function vendorDispatchRequestEmail(opts: {
       Submit Your Availability &amp; Quote →
     </a>
     <p style="margin:0 0 4px;color:#6b7280;font-size:13px">Choose your available date and time slot, provide a quote, and the landlord will approve and confirm.</p>
-    <p style="margin:0;color:#9ca3af;font-size:12px">Sent via <a href="https://leasely.net" style="color:#1B2B5E">Leasely</a></p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Sent via <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a></p>
   </div>
 </div>`;
 }
@@ -446,7 +446,7 @@ export function vendorQuoteReceivedEmail(opts: {
   return `
 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
   <div style="background:#1B2B5E;padding:20px 24px;border-radius:10px 10px 0 0">
-    <h1 style="color:white;margin:0;font-size:20px">Vendor Quote Received — Leasely</h1>
+    <h1 style="color:white;margin:0;font-size:20px">Vendor Quote Received — Keycove</h1>
   </div>
   <div style="background:#f9fafb;padding:24px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px">
     <p style="margin:0 0 16px">Hi ${opts.landlordName},</p>
@@ -474,7 +474,7 @@ export function vendorQuoteReceivedEmail(opts: {
         View Dashboard
       </a>
     </div>
-    <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Leasely</a></p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a></p>
   </div>
 </div>`;
 }
@@ -504,7 +504,7 @@ export function vendorJobCompleteEmail(opts: {
        style="display:block;background:#00C896;color:#062018;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;text-align:center;margin-bottom:12px">
       Pay ${opts.vendorName} — $${opts.finalAmountDollars.toLocaleString()} →
     </a>
-    <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Leasely</a></p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a></p>
   </div>
 </div>`;
 }
@@ -516,14 +516,14 @@ export function emailVerifyEmail(opts: { name: string; verifyUrl: string }) {
   </div>
   <div style="background:#f9fafb;padding:24px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px">
     <p style="margin:0 0 16px">Hi ${opts.name || "there"},</p>
-    <p style="margin:0 0 16px">Welcome to Leasely. Please verify your email address to activate full account access. This link expires in 24 hours.</p>
+    <p style="margin:0 0 16px">Welcome to Keycove. Please verify your email address to activate full account access. This link expires in 24 hours.</p>
     <a href="${opts.verifyUrl}"
        style="display:block;background:#00C896;color:#062018;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;text-align:center;margin-bottom:16px">
       Verify Email →
     </a>
     <p style="margin:0 0 8px;color:#6b7280;font-size:13px">If the button doesn't work, paste this URL into your browser:</p>
     <p style="margin:0 0 16px;color:#1B2B5E;font-size:12px;word-break:break-all">${opts.verifyUrl}</p>
-    <p style="margin:0;color:#9ca3af;font-size:12px">If you didn't sign up for Leasely, you can safely ignore this email.</p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">If you didn't sign up for Keycove, you can safely ignore this email.</p>
   </div>
 </div>`;
 }
@@ -561,7 +561,7 @@ export function newInquiryEmail(opts: {
     <div style="text-align:center;margin:24px 0 0">
       <a href="${opts.dashboardUrl}" style="background:linear-gradient(135deg,#1B2B5E,#00C896);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block">View Dashboard</a>
     </div>
-    <p style="margin:20px 0 0;color:#9ca3af;font-size:12px;text-align:center">Leasely · Property Management Made Simple</p>
+    <p style="margin:20px 0 0;color:#9ca3af;font-size:12px;text-align:center">Keycove · Property Management Made Simple</p>
   </div>
 </div>`;
 }
@@ -573,7 +573,7 @@ export function passwordResetEmail(opts: { name: string; resetUrl: string }) {
   </div>
   <div style="background:#f9fafb;padding:24px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px">
     <p style="margin:0 0 16px">Hi ${opts.name || "there"},</p>
-    <p style="margin:0 0 16px">We received a request to reset the password for your Leasely account. Click below to set a new password. This link expires in 1 hour.</p>
+    <p style="margin:0 0 16px">We received a request to reset the password for your Keycove account. Click below to set a new password. This link expires in 1 hour.</p>
     <a href="${opts.resetUrl}"
        style="display:block;background:#00C896;color:#062018;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;text-align:center;margin-bottom:16px">
       Reset Password →

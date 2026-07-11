@@ -4,7 +4,7 @@ export default function FairHousing() {
   return (
     <LegalLayout title="Fair Housing & Equal Opportunity Statement" effectiveDate="April 25, 2026">
       <p>
-        Leasely is committed to the letter and spirit of U.S. policy for the achievement of equal housing opportunity throughout the nation. We support the principles and requirements of the Federal Fair Housing Act of 1968 (as amended), the Equal Credit Opportunity Act, the Americans with Disabilities Act, and applicable state and local fair-housing laws.
+        Keycove is committed to the letter and spirit of U.S. policy for the achievement of equal housing opportunity throughout the nation. We support the principles and requirements of the Federal Fair Housing Act of 1968 (as amended), the Equal Credit Opportunity Act, the Americans with Disabilities Act, and applicable state and local fair-housing laws.
       </p>
 
       <LegalSection title="Protected Classes">
@@ -18,11 +18,11 @@ export default function FairHousing() {
           <li>Familial status (including children under 18 living with parents or legal custodians, pregnant women, or persons securing custody)</li>
           <li>Disability</li>
         </ul>
-        <p>Many state and local laws extend protection to additional categories such as age, marital status, source of income (including housing vouchers), military or veteran status, ancestry, citizenship or immigration status, and others. Landlords using Leasely must comply with all applicable federal, state, and local laws.</p>
+        <p>Many state and local laws extend protection to additional categories such as age, marital status, source of income (including housing vouchers), military or veteran status, ancestry, citizenship or immigration status, and others. Landlords using Keycove must comply with all applicable federal, state, and local laws.</p>
       </LegalSection>
 
       <LegalSection title="Landlord Responsibilities">
-        <p>Landlords, property managers, and listing agents using Leasely:</p>
+        <p>Landlords, property managers, and listing agents using Keycove:</p>
         <ul className="list-disc list-inside space-y-1.5 ml-1">
           <li>Must apply consistent, written, lawful screening criteria to every applicant.</li>
           <li>Must not include discriminatory language, preferences, or limitations in listings, advertisements, applications, or communications.</li>
@@ -36,12 +36,12 @@ export default function FairHousing() {
         <p>If you believe you have experienced housing discrimination, you may file a complaint with the U.S. Department of Housing and Urban Development (HUD) at <a href="https://www.hud.gov" target="_blank" rel="noopener noreferrer" className="text-[#4F46E5] hover:underline">www.hud.gov</a> or call 1-800-669-9777 (TTY 1-800-927-9275). You may also contact your state or local fair-housing agency. Filing a fair-housing complaint is free.</p>
       </LegalSection>
 
-      <LegalSection title="Reporting Discrimination on Leasely">
-        <p>If you believe a Leasely listing, application process, or user violates fair-housing law, please report it to <a href="mailto:support@leasely.net" className="text-[#4F46E5] hover:underline">support@leasely.net</a>. We review every report and may remove non-compliant content and suspend offending accounts.</p>
+      <LegalSection title="Reporting Discrimination on Keycove">
+        <p>If you believe a Keycove listing, application process, or user violates fair-housing law, please report it to <a href="mailto:support@leasely.net" className="text-[#4F46E5] hover:underline">support@leasely.net</a>. We review every report and may remove non-compliant content and suspend offending accounts.</p>
       </LegalSection>
 
       <LegalSection title="Equal Housing Opportunity">
-        <p className="text-white/60 text-sm">Leasely is an equal-housing-opportunity platform. We do not endorse, encourage, or condone discrimination. All housing opportunities listed on Leasely are available on an equal-opportunity basis.</p>
+        <p className="text-white/60 text-sm">Keycove is an equal-housing-opportunity platform. We do not endorse, encourage, or condone discrimination. All housing opportunities listed on Keycove are available on an equal-opportunity basis.</p>
       </LegalSection>
     </LegalLayout>
   );

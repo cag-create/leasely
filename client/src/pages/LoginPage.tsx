@@ -102,8 +102,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo — links back to marketing site */}
         <div className="flex justify-center mb-8">
-          <Link href="/" aria-label="Back to Leasely home" className="hover:opacity-80 transition-opacity">
-            <img src={LOGO_URL} alt="Leasely" className="h-10 object-contain" />
+          <Link href="/" aria-label="Back to Keycove home" className="hover:opacity-80 transition-opacity">
+            <img src={LOGO_URL} alt="Keycove" className="h-10 object-contain" />
           </Link>
         </div>
 
@@ -115,7 +115,7 @@ export default function LoginPage() {
           <p className="text-white/50 text-sm mb-6">
             {mode === "login"
               ? "Welcome back — enter your details to continue."
-              : "Set up your Leasely account in seconds."}
+              : "Set up your Keycove account in seconds."}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -182,7 +182,7 @@ export default function LoginPage() {
                   className="mt-0.5 h-4 w-4 rounded border-white/20 bg-white/5 accent-[#4F46E5]"
                 />
                 <span>
-                  I agree to the <a href="/legal/terms" target="_blank" rel="noopener" className="text-white/80 underline hover:text-white">Terms of Service</a> and <a href="/legal/privacy" target="_blank" rel="noopener" className="text-white/80 underline hover:text-white">Privacy Policy</a>, and acknowledge Leasely's <a href="/legal/fair-housing" target="_blank" rel="noopener" className="text-white/80 underline hover:text-white">Fair Housing</a> and <a href="/legal/cookies" target="_blank" rel="noopener" className="text-white/80 underline hover:text-white">Cookie</a> policies.
+                  I agree to the <a href="/legal/terms" target="_blank" rel="noopener" className="text-white/80 underline hover:text-white">Terms of Service</a> and <a href="/legal/privacy" target="_blank" rel="noopener" className="text-white/80 underline hover:text-white">Privacy Policy</a>, and acknowledge Keycove's <a href="/legal/fair-housing" target="_blank" rel="noopener" className="text-white/80 underline hover:text-white">Fair Housing</a> and <a href="/legal/cookies" target="_blank" rel="noopener" className="text-white/80 underline hover:text-white">Cookie</a> policies.
                 </span>
               </label>
             )}

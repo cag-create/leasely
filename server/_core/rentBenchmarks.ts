@@ -342,7 +342,7 @@ function parseIntOrNull(v: unknown): number | null {
   return isNaN(n) || n <= 0 ? null : n;
 }
 
-// ── Leasely's own active-listing medians (third source) ───────────────────────
+// ── Keycove's own active-listing medians (third source) ───────────────────────
 
 /**
  * Aggregate active marketplace_listings by zip, compute median monthly
@@ -350,7 +350,7 @@ function parseIntOrNull(v: unknown): number | null {
  *
  * Unlike ACS (annual government data) and HUD (annual federal data), this
  * is OUR proprietary signal — what landlords are *actually asking* on the
- * Leasely marketplace right now. Refreshed weekly because listings move
+ * Keycove marketplace right now. Refreshed weekly because listings move
  * faster than government data; daily would be overkill given how many
  * new listings get added.
  *
@@ -364,7 +364,7 @@ function parseIntOrNull(v: unknown): number | null {
  * (not mean) handles outliers gracefully (one $20k penthouse won't skew
  * a typical neighborhood).
  */
-export async function refreshLeaselyListingBenchmarks(): Promise<{ rowsUpserted: number; errors: string[] }> {
+export async function refreshKeycoveListingBenchmarks(): Promise<{ rowsUpserted: number; errors: string[] }> {
   const runId = await startRun("leasely");
   const db = await getDb();
   if (!db) {
@@ -530,7 +530,7 @@ export async function lookupBenchmarkByZip(zip: string) {
 // ── Scheduler ─────────────────────────────────────────────────────────────────
 
 const STALE_THRESHOLD_MS = 27 * 24 * 60 * 60 * 1000; // 27 days (ACS/HUD)
-// Leasely listings change daily; refresh weekly to keep our own-data
+// Keycove listings change daily; refresh weekly to keep our own-data
 // signal current without thrashing the DB.
 const LEASELY_STALE_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
 const SCHEDULER_INTERVAL_MS = 24 * 60 * 60 * 1000; // re-check every 24h
@@ -576,9 +576,9 @@ export async function refreshBenchmarksIfStale(): Promise<void> {
       console.log(`[rentBenchmarks] HUD refresh complete: ${result.rowsUpserted} rows`);
     }
     if (leaselyStale) {
-      console.log("[rentBenchmarks] Leasely own-listings stale, refreshing…");
-      const result = await refreshLeaselyListingBenchmarks();
-      console.log(`[rentBenchmarks] Leasely refresh complete: ${result.rowsUpserted} zips`);
+      console.log("[rentBenchmarks] Keycove own-listings stale, refreshing…");
+      const result = await refreshKeycoveListingBenchmarks();
+      console.log(`[rentBenchmarks] Keycove refresh complete: ${result.rowsUpserted} zips`);
     }
   } catch (e) {
     console.warn("[rentBenchmarks] refreshBenchmarksIfStale failed:", e);

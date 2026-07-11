@@ -1,4 +1,4 @@
-# Leasely — Admin SOP
+# Keycove — Admin SOP
 
 > Internal operating procedures for the platform admin team. Last updated 2026-05-27.
 
@@ -26,7 +26,7 @@ and the flow needs fixing.
   `client/src/lib/leaseTemplates/<state>.ts`, confirm clauses still match latest statute
   cite. Memory: never use third-party login services for legal content.
 - **Refund queue.** Process refund requests filed via Support within 7 business days.
-- **Trademark watch.** Re-check `Leasely.ai` (Libertella, ON) and `Leasey.AI` (Silver
+- **Trademark watch.** Re-check `Keycove.ai` (Libertella, ON) and `Leasey.AI` (Silver
   Homes, BC) for status changes. See memory: `project_leasely_trademark.md`.
 - **Affiliate payout reconciliation.** Match `affiliate_clicks` → conversions →
   Stripe payouts. Anything > 30 days unreconciled gets manually paid out and a ticket
@@ -109,7 +109,7 @@ If `rentIntelligence.runStatus` shows a recent failure:
 ## 7. Things admins MUST NOT do
 
 - Never expose "HUD" / "ACS" / "Census" as a data source name in tenant- or
-  landlord-facing UI. The product brand is "Leasely Market Intelligence". The
+  landlord-facing UI. The product brand is "Keycove Market Intelligence". The
   internal `dataSource` field can keep the provenance.
 - Never edit a tenant's signed lease after signature. Generate an addendum and
   send a new signature request.

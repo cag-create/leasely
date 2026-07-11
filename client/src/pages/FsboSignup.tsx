@@ -117,7 +117,7 @@ export default function FsboSignup() {
       <div className="bg-muted/30 border-b border-border py-6 px-4">
         <div className="max-w-3xl mx-auto grid sm:grid-cols-3 gap-4">
           {[
-            { icon: Globe, label: "Marketplace Exposure", sub: "Listed on Leasely marketplace" },
+            { icon: Globe, label: "Marketplace Exposure", sub: "Listed on Keycove marketplace" },
             { icon: TrendingUp, label: "Buyer Leads", sub: "Direct inquiries to you" },
             { icon: FileText, label: "Digital Paperwork", sub: "Manage offers online" },
           ].map(({ icon: Icon, label, sub }) => (

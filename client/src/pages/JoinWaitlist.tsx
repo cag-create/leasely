@@ -58,7 +58,7 @@ export default function JoinWaitlist() {
           </div>
           <h1 className="text-3xl font-black text-foreground">You're on the list!</h1>
           <p className="text-muted-foreground max-w-md text-lg">
-            A Leasely Pro member will reach out when a matching property becomes available in your area.
+            A Keycove Pro member will reach out when a matching property becomes available in your area.
           </p>
           <Button onClick={() => navigate("/marketplace")} className="bg-[#1B2B5E] hover:bg-[#1B2B5E]/90">
             Browse Available Listings

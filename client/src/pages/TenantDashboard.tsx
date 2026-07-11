@@ -187,8 +187,8 @@ export default function TenantDashboard() {
       <header className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={LOGO_URL} alt="Leasely" className="h-7 w-auto" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-            <span className="font-black text-lg" style={{ color: BRAND }}>Leasely</span>
+            <img src={LOGO_URL} alt="Keycove" className="h-7 w-auto" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+            <span className="font-black text-lg" style={{ color: BRAND }}>Keycove</span>
             <span className="text-gray-300">|</span>
             <span className="text-sm font-semibold text-gray-500">Tenant Portal</span>
           </div>
@@ -285,7 +285,7 @@ export default function TenantDashboard() {
                 </div>
                 <div>
                   <div className="font-black text-gray-900">Total Paid</div>
-                  <div className="text-xs text-gray-400">All time via Leasely</div>
+                  <div className="text-xs text-gray-400">All time via Keycove</div>
                 </div>
               </div>
               <div className="text-3xl font-black text-gray-900 mb-1">{formatCents(totalPaid)}</div>
@@ -325,7 +325,7 @@ export default function TenantDashboard() {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:col-span-2 lg:col-span-3">
               <div className="flex items-center gap-3 mb-4">
                 <Shield className="h-5 w-5" style={{ color: ACCENT }} />
-                <h3 className="font-black text-gray-900">Secure Payments via Leasely</h3>
+                <h3 className="font-black text-gray-900">Secure Payments via Keycove</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
@@ -701,7 +701,7 @@ export default function TenantDashboard() {
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
                   <Mail className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm text-gray-700">Contact via Leasely portal</span>
+                  <span className="text-sm text-gray-700">Contact via Keycove portal</span>
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
                   <Phone className="h-4 w-4 text-gray-400" />

@@ -122,9 +122,9 @@ export default function SignLease() {
           </a>
         ) : (
           <div style={{ padding: "14px 18px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, marginBottom: 20, fontSize: 13.5, color: "#475569", lineHeight: 1.6 }}>
-            <b style={{ color: "#0f172a" }}>Leasely standard agreement.</b> By signing, you agree to rent {fullAddr} from {d.landlordName} for {money(d.monthlyRentCents)}/month
+            <b style={{ color: "#0f172a" }}>Keycove standard agreement.</b> By signing, you agree to rent {fullAddr} from {d.landlordName} for {money(d.monthlyRentCents)}/month
             {d.leaseEndDate ? ` from ${fmtDate(d.leaseStartDate)} to ${fmtDate(d.leaseEndDate)}` : ` on a month-to-month basis starting ${fmtDate(d.leaseStartDate)}`},
-            with a {money(d.securityDepositCents)} security deposit and a {money(d.lateFeeCents)} late fee if rent is unpaid past the {d.lateFeeGraceDays}-day grace period. Rent is payable through your Leasely tenant portal.
+            with a {money(d.securityDepositCents)} security deposit and a {money(d.lateFeeCents)} late fee if rent is unpaid past the {d.lateFeeGraceDays}-day grace period. Rent is payable through your Keycove tenant portal.
           </div>
         )}
 
@@ -156,7 +156,7 @@ export default function SignLease() {
             {submit.isPending ? <><Loader2 size={17} className="animate-spin" /> Signing…</> : <><FileSignature size={17} /> Sign lease &amp; activate my portal</>}
           </button>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 12, color: "#94a3b8", fontSize: 12 }}>
-            <ShieldCheck size={13} /> Private signing link · secured by Leasely
+            <ShieldCheck size={13} /> Private signing link · secured by Keycove
           </div>
         </div>
       </div>

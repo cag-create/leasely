@@ -37,8 +37,8 @@ function ShellCard({ title, subtitle, children }: { title: string; subtitle?: st
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
-          <img src={LOGO_URL} alt="Leasely" className="h-7 w-auto" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-          <span className="font-black text-lg" style={{ color: BRAND }}>Leasely</span>
+          <img src={LOGO_URL} alt="Keycove" className="h-7 w-auto" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          <span className="font-black text-lg" style={{ color: BRAND }}>Keycove</span>
         </div>
       </header>
       <div className="max-w-lg mx-auto px-4 py-8">
@@ -54,7 +54,7 @@ function ShellCard({ title, subtitle, children }: { title: string; subtitle?: st
           </div>
           <div className="p-6 space-y-5">{children}</div>
         </div>
-        <p className="text-center text-xs text-gray-400 mt-6">Powered by <strong style={{ color: BRAND }}>Leasely</strong> — The AI-Powered Landlord OS</p>
+        <p className="text-center text-xs text-gray-400 mt-6">Powered by <strong style={{ color: BRAND }}>Keycove</strong> — The AI-Powered Landlord OS</p>
       </div>
     </div>
   );
@@ -67,7 +67,7 @@ function StatusScreen({ icon, title, body }: { icon: React.ReactNode; title: str
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">{icon}</div>
         <h2 className="text-2xl font-black text-gray-900 mb-2">{title}</h2>
         <p className="text-gray-500">{body}</p>
-        <p className="text-sm text-gray-400 mt-6">Powered by <strong style={{ color: BRAND }}>Leasely</strong></p>
+        <p className="text-sm text-gray-400 mt-6">Powered by <strong style={{ color: BRAND }}>Keycove</strong></p>
       </div>
     </div>
   );
@@ -422,7 +422,7 @@ function CompletePanel({ dispatchId, workOrder, initialQuoteCents, onDone }: {
       subtitle={workOrder?.title ?? "Upload final photos + invoice."}
     >
       <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900">
-        Upload after-photos and your invoice. The landlord reviews + approves, then payment is released to your account via Leasely.
+        Upload after-photos and your invoice. The landlord reviews + approves, then payment is released to your account via Keycove.
       </div>
 
       <div>

@@ -1377,11 +1377,11 @@ const SOP_LIST: Sop[] = [
       {
         heading: "1. Initial Response (within 2 hours)",
         items: [
-          "Acknowledge every inquiry via the channel it came in (email, text, Leasely message) within 2 hours during business hours.",
+          "Acknowledge every inquiry via the channel it came in (email, text, Keycove message) within 2 hours during business hours.",
           "Send a personalized reply using the applicant's first name — never use generic auto-responders without personalizing.",
           "Include the listing address, monthly rent, available date, and a direct link to the application.",
           "If the unit is already leased, pivot: ask if they'd like to be on the waitlist or see similar units you manage.",
-          "Log the lead in the Leasely CRM with source (Leasely, Zillow, Referral, etc.) and initial contact timestamp.",
+          "Log the lead in the Keycove CRM with source (Keycove, Zillow, Referral, etc.) and initial contact timestamp.",
         ],
       },
       {
@@ -1399,7 +1399,7 @@ const SOP_LIST: Sop[] = [
         items: [
           "Hot lead: follow up every 24 hours until application is submitted or they opt out.",
           "Warm lead: follow up on Day 1, Day 3, and Day 7 after initial contact.",
-          "Cold lead: add to the Leasely CRM drip — automated check-in at 14 days and 30 days.",
+          "Cold lead: add to the Keycove CRM drip — automated check-in at 14 days and 30 days.",
           "Never contact a lead more than once per day. All communication must be professional and FAIR Housing compliant.",
           "After 3 non-responses, mark the lead as inactive and cease outreach. Log the final status.",
         ],
@@ -1409,7 +1409,7 @@ const SOP_LIST: Sop[] = [
         items: [
           "Offer at least 3 available time slots in the next 5 business days.",
           "Confirm the showing via both email and text 24 hours before.",
-          "If you are sending a Creme Agent for the showing, brief the agent via the Leasely portal with property highlights, key selling points, and any known issues.",
+          "If you are sending a Creme Agent for the showing, brief the agent via the Keycove portal with property highlights, key selling points, and any known issues.",
           "For vacant units, ensure the unit is clean, HVAC is set to a comfortable temperature, and all lights are functional before any showing.",
           "Send a follow-up within 2 hours post-showing to gauge interest and answer questions.",
         ],
@@ -1429,7 +1429,7 @@ const SOP_LIST: Sop[] = [
           "Verify the key or lockbox code is functional. Test it yourself — do not assume.",
           "Notify current tenants (if occupied) with at least 24 hours written notice as required by state law.",
           "Pull the unit's fact sheet: sq ft, bed/bath, included utilities, appliances, parking, pet policy, lease terms.",
-          "Confirm the showing agent has access to the Leasely portal listing with all photos and details.",
+          "Confirm the showing agent has access to the Keycove portal listing with all photos and details.",
         ],
       },
       {
@@ -1459,7 +1459,7 @@ const SOP_LIST: Sop[] = [
           "Log showing outcome in CRM: Interested / Needs time / Not a fit. Note specific objections.",
           "If the prospect is interested but hesitant, offer a second look or offer to answer remaining questions.",
           "If a showing no-show occurs, send one re-engagement message. If no response in 48 hours, mark as cold.",
-          "Showing feedback should be documented and shared with the landlord via the Leasely portal notes.",
+          "Showing feedback should be documented and shared with the landlord via the Keycove portal notes.",
         ],
       },
     ],
@@ -1504,7 +1504,7 @@ const SOP_LIST: Sop[] = [
         heading: "4. Decision and Notification",
         items: [
           "Complete review within 48–72 hours of receiving a completed application with all documents.",
-          "Approve: Send the lease agreement via Leasely. Lease must be signed within 5 business days or the unit returns to market.",
+          "Approve: Send the lease agreement via Keycove. Lease must be signed within 5 business days or the unit returns to market.",
           "Conditional Approve: Notify the applicant of the condition (e.g., additional deposit) and give 48 hours to respond.",
           "Deny: Send a written adverse action notice. Do not leave applicants waiting — it creates liability and poor reviews.",
           "If multiple qualified applications arrive simultaneously, approve in the order received. Document timestamps.",
@@ -1522,9 +1522,9 @@ const SOP_LIST: Sop[] = [
         heading: "1. The Flow at a Glance",
         items: [
           "Step 1 — You create the lease and click Send. Tenant receives an emailed signing link.",
-          "Step 2 — Tenant signs first. Status flips to 'Tenant signed — your turn'. Leasely emails you a countersign prompt.",
+          "Step 2 — Tenant signs first. Status flips to 'Tenant signed — your turn'. Keycove emails you a countersign prompt.",
           "Step 3 — You countersign in the Leases tab. This is the gate — nothing moves forward until you do.",
-          "Step 4 — If deposit + first month are still owed, Leasely automatically emails the tenant a secure Stripe link (or skips this if you already logged the payment off-platform). Status: 'Awaiting payment' until cleared.",
+          "Step 4 — If deposit + first month are still owed, Keycove automatically emails the tenant a secure Stripe link (or skips this if you already logged the payment off-platform). Status: 'Awaiting payment' until cleared.",
           "Step 5 — Once funds clear (or if none were required), the lease goes ACTIVE and the tenant automatically receives move-in access instructions: lockbox code, key-pickup details, or in-person handoff — whichever you selected on the lease.",
         ],
       },
@@ -1553,8 +1553,8 @@ const SOP_LIST: Sop[] = [
           "Tenant disputes a charge after paying: Stripe handles the chargeback flow. The lease stays ACTIVE during dispute; consult counsel before terminating.",
           "Tenant pays only the deposit, not first month: lease stays in 'Awaiting payment' until both clear. Reach out and offer a payment plan only if you choose.",
           "Tenant wants to cancel after signing but before you countersign: simply don't countersign; click Delete on the lease row. No money has changed hands.",
-          "You collected deposit + first month off-platform (cash/check): mark it in the lease detail so Leasely skips the payment email and goes straight to move-in instructions.",
-          "Refunds: only refunds-via-Stripe are tracked in Leasely; off-platform refunds must be documented manually.",
+          "You collected deposit + first month off-platform (cash/check): mark it in the lease detail so Keycove skips the payment email and goes straight to move-in instructions.",
+          "Refunds: only refunds-via-Stripe are tracked in Keycove; off-platform refunds must be documented manually.",
         ],
       },
     ],
@@ -1570,7 +1570,7 @@ const SOP_LIST: Sop[] = [
         items: [
           "Confirm all cleaning, painting, and repairs are complete. The unit must be in 'broom clean' condition — ready to photograph.",
           "Conduct a professional walk-through with a checklist. Document the condition of: walls, floors, carpets, appliances, windows, doors, fixtures, HVAC filters, smoke detectors, carbon monoxide detectors.",
-          "Photograph every room from at least two angles. Photograph all appliances, fixtures, and any pre-existing damage. Use timestamped photos — store in Leasely.",
+          "Photograph every room from at least two angles. Photograph all appliances, fixtures, and any pre-existing damage. Use timestamped photos — store in Keycove.",
           "Verify all utilities are transferred or activated. Confirm tenant has set up their utility accounts if required by lease.",
           "Prepare the move-in packet: lease copy, welcome letter, utility contacts, trash pickup schedule, maintenance request instructions, emergency contact numbers.",
         ],
@@ -1578,12 +1578,12 @@ const SOP_LIST: Sop[] = [
       {
         heading: "2. Move-In Day",
         items: [
-          "CRITICAL: Move-in only proceeds AFTER the lease is ACTIVE. That requires (a) tenant signature, (b) your countersignature, and (c) any required deposit + first month's rent cleared. Do NOT release keys before all three are complete — Leasely automatically gates this and only emails move-in instructions once status flips to Active.",
+          "CRITICAL: Move-in only proceeds AFTER the lease is ACTIVE. That requires (a) tenant signature, (b) your countersignature, and (c) any required deposit + first month's rent cleared. Do NOT release keys before all three are complete — Keycove automatically gates this and only emails move-in instructions once status flips to Active.",
           "Meet the tenant at the property. Do not just mail keys — a brief in-person walkthrough is your best protection against future disputes.",
           "Walk through the entire unit with the tenant and complete the move-in condition report together. Both parties sign.",
-          "Explain the maintenance request process: how to submit via Leasely, expected response times, what constitutes an emergency.",
+          "Explain the maintenance request process: how to submit via Keycove, expected response times, what constitutes an emergency.",
           "Provide all keys, fobs, parking passes, and mailbox keys. Have the tenant sign a receipt for each item.",
-          "Funds are already collected through Leasely's checkout before this step — confirm in the Lease detail view that both 'first month' and 'deposit' show paid.",
+          "Funds are already collected through Keycove's checkout before this step — confirm in the Lease detail view that both 'first month' and 'deposit' show paid.",
         ],
       },
       {
@@ -1592,7 +1592,7 @@ const SOP_LIST: Sop[] = [
           "Conduct a routine inspection at 90 days and then annually. State law governs required notice (typically 24–48 hours written notice).",
           "Use the same condition report form used at move-in. Document changes.",
           "Address any lease violations (unapproved pets, unauthorized occupants, hoarding, smoking) in writing immediately after the inspection.",
-          "Keep records of all communication. Email or Leasely messages are preferable over text — they create a clear paper trail.",
+          "Keep records of all communication. Email or Keycove messages are preferable over text — they create a clear paper trail.",
         ],
       },
       {
@@ -1616,7 +1616,7 @@ const SOP_LIST: Sop[] = [
       {
         heading: "1. Request Intake and Triage",
         items: [
-          "All requests must be submitted through Leasely so there is a written record. Do not accept verbal-only maintenance requests.",
+          "All requests must be submitted through Keycove so there is a written record. Do not accept verbal-only maintenance requests.",
           "Triage by priority within 4 business hours of submission:",
           "EMERGENCY (respond immediately): No heat in winter, no hot water, gas leak, flooding, electrical hazard, sewage backup, broken exterior door/lock.",
           "URGENT (respond within 24 hours): Appliance outage, HVAC partial failure, roof leak, plumbing drip, pest infestation.",
@@ -1626,10 +1626,10 @@ const SOP_LIST: Sop[] = [
       {
         heading: "2. Vendor Dispatch",
         items: [
-          "For emergencies: Use the Leasely emergency dispatch to notify ALL vendors simultaneously. The first available vendor responds. Do not wait to compare quotes in an emergency.",
+          "For emergencies: Use the Keycove emergency dispatch to notify ALL vendors simultaneously. The first available vendor responds. Do not wait to compare quotes in an emergency.",
           "For non-emergencies: Use multi-bid dispatch. Send to all qualified vendors for that trade (HVAC, plumbing, electric, general). Collect quotes + availability within 24–48 hours.",
-          "Round-robin option: Enable in Leasely settings to auto-rotate dispatch order among qualified vendors for routine work, ensuring fair distribution.",
-          "Never use a vendor who is not in your Leasely vendor list — unvetted vendors create insurance and liability exposure.",
+          "Round-robin option: Enable in Keycove settings to auto-rotate dispatch order among qualified vendors for routine work, ensuring fair distribution.",
+          "Never use a vendor who is not in your Keycove vendor list — unvetted vendors create insurance and liability exposure.",
           "Send the tenant an automated update: 'We've received your request and dispatched a vendor. You'll hear from them to schedule within [timeframe].'",
         ],
       },
@@ -1637,16 +1637,16 @@ const SOP_LIST: Sop[] = [
         heading: "3. Vendor Management",
         items: [
           "Require all vendors in your network to have: current general liability insurance (min $1M), trade license if applicable, W-9 on file.",
-          "Review vendor quotes via the Leasely portal. Compare price, proposed date, and notes before approving.",
+          "Review vendor quotes via the Keycove portal. Compare price, proposed date, and notes before approving.",
           "Once approved, inform the tenant of the scheduled date. Provide the tenant 24+ hours notice of entry.",
           "Do not allow vendors to charge additional amounts beyond the approved quote without prior landlord approval.",
-          "After job completion, do a photo verification before releasing payment through Leasely's vendor pay system.",
+          "After job completion, do a photo verification before releasing payment through Keycove's vendor pay system.",
         ],
       },
       {
         heading: "4. Closing and Documentation",
         items: [
-          "Mark work orders as 'Resolved' in Leasely only after confirming the repair is complete and effective.",
+          "Mark work orders as 'Resolved' in Keycove only after confirming the repair is complete and effective.",
           "Keep all invoices, vendor communications, and completion photos in the work order record for at minimum 3 years.",
           "Track repair frequency by unit and by system (HVAC, plumbing, roof). Recurring issues indicate a capital improvement need, not a maintenance issue.",
           "For any repair costing more than $500, send the tenant a written notice of the work performed. For any repair that was caused by tenant negligence, document clearly and advise them they may be charged at move-out.",
@@ -1666,7 +1666,7 @@ const SOP_LIST: Sop[] = [
         items: [
           "Begin the renewal process 90 days before lease expiration — never wait until 30 days out.",
           "Day 90: Pull the tenant's payment history, maintenance request history, and any lease violation notes. Decide: renew, renew with conditions, or non-renew.",
-          "Day 75: Send the renewal offer via Leasely — include new rent amount, new lease term options, and deadline to respond (typically 14 days).",
+          "Day 75: Send the renewal offer via Keycove — include new rent amount, new lease term options, and deadline to respond (typically 14 days).",
           "Day 60: If no response, follow up directly by phone or email. A non-response is not a rejection — many tenants are simply busy.",
           "Day 45: Final decision required. If tenant declines or does not respond, begin marketing the unit immediately.",
         ],
@@ -1674,7 +1674,7 @@ const SOP_LIST: Sop[] = [
       {
         heading: "2. Setting the Renewal Rate",
         items: [
-          "Research current market rents for comparable units in the same zip code. Use Leasely marketplace, Zillow, and Apartments.com as benchmarks.",
+          "Research current market rents for comparable units in the same zip code. Use Keycove marketplace, Zillow, and Apartments.com as benchmarks.",
           "Typical renewal increase range: 3–8% depending on market conditions and tenant quality.",
           "Factor in vacancy cost: a 30-day vacancy at $1,500/mo = $1,500 lost + ~$500 turn cost. A quality tenant renewing at market rate is almost always more profitable than a vacancy.",
           "Offer a small incentive for long-term renewal (12+ months): free carpet cleaning, appliance upgrade, or $50 off first month.",
@@ -1981,7 +1981,7 @@ function IntelligenceTab() {
           <div>
             <h3 className="font-bold text-foreground">Platform Intelligence</h3>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Proprietary data aggregated across all landlords and tenants on Leasely. This is your network-effect moat — it gets smarter with every user.
+              Proprietary data aggregated across all landlords and tenants on Keycove. This is your network-effect moat — it gets smarter with every user.
             </p>
           </div>
         </div>
@@ -2119,7 +2119,7 @@ function IntelligenceTab() {
             </div>
             <div className="mt-4 rounded-xl bg-muted/40 border border-border p-4 text-sm text-muted-foreground">
               <span className="font-semibold text-foreground">Why this matters: </span>
-              As this database grows, Leasely can identify which tenant profiles (income ratio, employment type, application speed) correlate with on-time payment, low maintenance, and lease renewals — feeding back into the AI screening score.
+              As this database grows, Keycove can identify which tenant profiles (income ratio, employment type, application speed) correlate with on-time payment, low maintenance, and lease renewals — feeding back into the AI screening score.
             </div>
           </div>
         )}

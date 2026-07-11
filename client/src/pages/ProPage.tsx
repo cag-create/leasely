@@ -91,7 +91,7 @@ function VideoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
         <div className="flex items-center gap-3 px-6 py-4 border-b border-white/10" style={{ background: BRAND }}>
           <div className="inline-flex items-center gap-2 bg-teal-500/20 border border-teal-500/30 rounded-full px-3 py-1.5">
             <Sparkles className="w-3.5 h-3.5 text-teal-400" />
-            <span className="text-teal-300 text-xs font-semibold">Leasely Pro™ — Platform Demo</span>
+            <span className="text-teal-300 text-xs font-semibold">Keycove Pro™ — Platform Demo</span>
           </div>
           <div className="ml-auto flex gap-1.5">
             {DEMO_SLIDES.map((_, i) => (
@@ -445,7 +445,7 @@ export default function ProPage() {
             </div>
 
             <h1 className="text-5xl lg:text-7xl font-black text-white mb-5" style={{ fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.03em' }}>
-              Get fully set up on Leasely.<br /><span className="text-gradient">Just $75.</span>
+              Get fully set up on Keycove.<br /><span className="text-gradient">Just $75.</span>
             </h1>
 
             <p className="text-xl text-white/60 mb-4 max-w-2xl mx-auto leading-relaxed">
@@ -505,7 +505,7 @@ export default function ProPage() {
                 <div className="inline-flex items-center gap-1.5 text-xs text-amber-700/80 mb-4 pl-1">
                   <span className="font-semibold">Brand Kit by</span>
                   <a href="https://certifybusinesspro.com" target="_blank" rel="noopener" className="font-bold text-amber-700 hover:underline">Certify Business Pro</a>
-                  <span className="text-amber-600/60">— Leasely's official design partner</span>
+                  <span className="text-amber-600/60">— Keycove's official design partner</span>
                 </div>
                 <h2 className="text-3xl font-black text-gray-900 mb-3" style={{ fontFamily: 'Outfit, sans-serif' }}>
                   Your free website, logo & domain
@@ -537,7 +537,7 @@ export default function ProPage() {
                 <div className="text-4xl font-black text-amber-500 mb-1">$299</div>
                 <div className="text-sm text-gray-500 mb-4 line-through">+ $37/yr domain renewal</div>
                 <div className="text-2xl font-black text-green-600 mb-1">FREE</div>
-                <div className="text-xs text-gray-400 mb-5">with every Leasely Pro subscription</div>
+                <div className="text-xs text-gray-400 mb-5">with every Keycove Pro subscription</div>
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-5">
                   <p className="text-xs text-amber-700 font-semibold">You receive a unique one-time redemption code after signup — use it on certifybusinesspro.com</p>
                 </div>
@@ -783,13 +783,13 @@ export default function ProPage() {
                 {[...Array(5)].map((_,i) => <Star key={i} className="w-4 h-4 fill-current" style={{ color: "#4F46E5" }} />)}
               </div>
               <p className="text-white/80 text-sm leading-relaxed flex-1" style={{ fontFamily: 'Inter, sans-serif' }}>
-                &ldquo;I caught a fraudulent applicant using Leasely&apos;s AI fraud detector. It flagged a fake pay stub, a fabricated employer address, a disconnected phone number, and a virtual office address &mdash; all in seconds. That one catch alone was worth more than a year of the subscription.&rdquo;
+                &ldquo;I caught a fraudulent applicant using Keycove&apos;s AI fraud detector. It flagged a fake pay stub, a fabricated employer address, a disconnected phone number, and a virtual office address &mdash; all in seconds. That one catch alone was worth more than a year of the subscription.&rdquo;
               </p>
               <div className="mt-5 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0" style={{ background: "linear-gradient(135deg, #1B2B5E, #4F46E5)", color: "white" }}>C</div>
                 <div>
                   <div className="font-bold text-white text-sm">Chad</div>
-                  <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Property Manager &amp; Leasely Founder</div>
+                  <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Property Manager &amp; Keycove Founder</div>
                 </div>
                 <div className="ml-auto">
                   <Shield className="w-4 h-4" style={{ color: "#6366F1" }} />
@@ -808,7 +808,7 @@ export default function ProPage() {
                 <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0" style={{ background: "linear-gradient(135deg, #1B2B5E, #4F46E5)", color: "white" }}>C</div>
                 <div>
                   <div className="font-bold text-white text-sm">Chad</div>
-                  <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Property Manager &amp; Leasely Founder</div>
+                  <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Property Manager &amp; Keycove Founder</div>
                 </div>
                 <div className="ml-auto">
                   <Globe className="w-4 h-4" style={{ color: TEAL }} />
@@ -827,7 +827,7 @@ export default function ProPage() {
                 <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0" style={{ background: "linear-gradient(135deg, #1B2B5E, #4F46E5)", color: "white" }}>C</div>
                 <div>
                   <div className="font-bold text-white text-sm">Chad</div>
-                  <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Property Manager &amp; Leasely Founder</div>
+                  <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Property Manager &amp; Keycove Founder</div>
                 </div>
                 <div className="ml-auto">
                   <Zap className="w-4 h-4" style={{ color: "#4F46E5" }} />
@@ -851,7 +851,7 @@ export default function ProPage() {
             <div className="p-8">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <div className="text-white/60 text-sm font-medium mb-1">Leasely Pro™</div>
+                  <div className="text-white/60 text-sm font-medium mb-1">Keycove Pro™</div>
                   <div className="flex items-baseline gap-2">
                     <span className="text-5xl font-black text-white" style={{ fontFamily:'Outfit,sans-serif' }}>$29.00</span>
                     <span className="text-white/40">/month</span>
@@ -911,7 +911,7 @@ export default function ProPage() {
             Ready to Build Your<br /><span className="text-gradient">Rental Empire?</span>
           </h2>
           <p className="text-white/50 text-xl max-w-xl mx-auto mb-10">
-            Be among the first Pro landlords to run their rental business under their own brand with Leasely.
+            Be among the first Pro landlords to run their rental business under their own brand with Keycove.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href={isAuthenticated ? "/pricing" : `${getLoginUrl()}?next=/pricing`}>

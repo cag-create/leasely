@@ -369,7 +369,7 @@ export default function IStay() {
         <div className="max-w-4xl mx-auto text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <span className="text-4xl font-black tracking-tight">iStay™</span>
-            <Badge className="bg-white/20 text-white border-white/30 text-xs">by Leasely</Badge>
+            <Badge className="bg-white/20 text-white border-white/30 text-xs">by Keycove</Badge>
           </div>
           <p className="text-xl text-white/90 mb-8">Find your perfect short-term stay — homes, apartments, and unique spaces</p>
 

@@ -62,7 +62,7 @@ export default function MyListings() {
             <h1 className="text-2xl sm:text-3xl font-black text-gray-900" style={{ fontFamily: "'Outfit', sans-serif" }}>
               My Listings
             </h1>
-            <p className="text-sm text-gray-500 mt-1">Manage every property you've listed on Leasely.</p>
+            <p className="text-sm text-gray-500 mt-1">Manage every property you've listed on Keycove.</p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <Link href="/import-listings" className="flex-1 sm:flex-initial">
@@ -205,7 +205,7 @@ function ListingRow({
                 ? { background: `${ACCENT}20`, color: "#0a6b4f", border: `1px solid ${ACCENT}40` }
                 : { background: "#9ca3af20", color: "#4b5563", border: "1px solid #9ca3af40" }
             }
-            title={isPrivate ? "Managed in Leasely — not shown on the marketplace" : undefined}
+            title={isPrivate ? "Managed in Keycove — not shown on the marketplace" : undefined}
           >
             {isPrivate ? "Private" : isActive ? "Active" : "Inactive"}
           </Badge>

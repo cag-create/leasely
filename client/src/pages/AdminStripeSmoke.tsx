@@ -14,7 +14,7 @@ import { CheckCircle2, ExternalLink, Loader2, Shield, Zap } from "lucide-react";
  * Admin-only Stripe Connect smoke test.
  *
  * Fires a small ($1) test PaymentIntent against a chosen Connect account via
- * the same Destination Charges pattern Leasely uses for real rent payments.
+ * the same Destination Charges pattern Keycove uses for real rent payments.
  * Use this to validate live-mode plumbing without waiting on a real tenant
  * payment.
  */

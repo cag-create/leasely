@@ -25,7 +25,7 @@ const FAQ_CATEGORIES = [
     color: "text-blue-600",
     bg: "bg-blue-50",
     questions: [
-      { q: "How do I list my property on Leasely?", a: "Click 'List Property' in the navigation bar. You'll be guided through a 5-step wizard to add your property details, photos, pricing, and contact info. Your first listing is completely free." },
+      { q: "How do I list my property on Keycove?", a: "Click 'List Property' in the navigation bar. You'll be guided through a 5-step wizard to add your property details, photos, pricing, and contact info. Your first listing is completely free." },
       { q: "What types of properties can I list?", a: "You can list apartments, houses, condos, townhouses, co-living spaces, and more. Co-living listings allow you to rent individual rooms within a shared property." },
       { q: "How do I edit or remove my listing?", a: "Go to your Dashboard and find the listing you want to manage. You can edit details, deactivate (temporarily hide), or permanently delete any listing." },
       { q: "Can renters browse without an account?", a: "Yes! The marketplace, map view, and all property listings are fully public. No account or payment is ever required just to browse." },

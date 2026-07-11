@@ -197,7 +197,7 @@ export default function ContractorRegister() {
             Free Contractor Listing
           </div>
           <h1 className="text-3xl font-black text-foreground mb-3">
-            List Your Business on Leasely
+            List Your Business on Keycove
           </h1>
           <p className="text-muted-foreground">
             Get discovered by property managers and landlords across the country.
@@ -495,7 +495,7 @@ export default function ContractorRegister() {
 
             {!isAuthenticated && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                <strong>Sign in required:</strong> You need a Leasely account to submit your profile. You'll be redirected to sign in.
+                <strong>Sign in required:</strong> You need a Keycove account to submit your profile. You'll be redirected to sign in.
               </div>
             )}
 

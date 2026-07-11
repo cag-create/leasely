@@ -211,7 +211,7 @@ function LeaseEditForm({ lease, onClose }: { lease: any; onClose: () => void }) 
           </div>
           <div>
             <Label>Accepted Payment Methods</Label>
-            <Input placeholder="e.g. Leasely tenant portal, ACH / direct deposit, Check, Money order" value={form.paymentMethods} onChange={e => setForm(f => ({ ...f, paymentMethods: e.target.value }))} />
+            <Input placeholder="e.g. Keycove tenant portal, ACH / direct deposit, Check, Money order" value={form.paymentMethods} onChange={e => setForm(f => ({ ...f, paymentMethods: e.target.value }))} />
           </div>
         </div>
       </div>
@@ -560,7 +560,7 @@ export default function Leases() {
     onError: (e) => toast.error(e.message),
   });
 
-  // Off-platform payment fallback. Leasely-rails (Stripe) is the default —
+  // Off-platform payment fallback. Keycove-rails (Stripe) is the default —
   // this is here only so a landlord who took Zelle/Venmo/check/cash can keep
   // the lease moving without manual DB surgery.
   const confirmPaymentMutation = (trpc as any).leases.confirmPaymentReceived.useMutation({
@@ -574,7 +574,7 @@ export default function Leases() {
     },
     onError: (e: any) => toast.error(e.message),
   });
-  const [payMethod, setPayMethod] = useState<string>("Leasely");
+  const [payMethod, setPayMethod] = useState<string>("Keycove");
 
   const duplicateMutation = (trpc as any).leases.duplicate.useMutation({
     onSuccess: (data: any) => {
@@ -784,7 +784,7 @@ export default function Leases() {
                     </h3>
                     <p className="text-xs text-emerald-800/80 mt-1">
                       Check the boxes below if you already took these payments via Zelle, Venmo, check, or cash.
-                      Leasely will skip the Stripe payment link after you countersign and email the tenant their
+                      Keycove will skip the Stripe payment link after you countersign and email the tenant their
                       move-in instructions immediately. Amounts auto-post to Accounting.
                     </p>
                   </div>
@@ -1428,7 +1428,7 @@ export default function Leases() {
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-amber-900">Awaiting Payment</p>
                         <p className="text-xs text-amber-800 mt-0.5">
-                          Leasely auto-collects via Stripe + emails you when payment clears. If the tenant paid you
+                          Keycove auto-collects via Stripe + emails you when payment clears. If the tenant paid you
                           directly via Zelle, Venmo, Cash App, ACH, check, money order, or cash, confirm receipt below
                           to unlock countersignature.
                         </p>
@@ -1449,7 +1449,7 @@ export default function Leases() {
                           value={payMethod}
                           onChange={(e) => setPayMethod(e.target.value)}
                         >
-                          <option value="Leasely">Leasely platform</option>
+                          <option value="Keycove">Keycove platform</option>
                           <option value="ACH / direct deposit">ACH / direct deposit</option>
                           <option value="Zelle">Zelle</option>
                           <option value="Venmo">Venmo</option>
@@ -1689,7 +1689,7 @@ export default function Leases() {
                     Tenant <strong>{countersignFor.tenantName}</strong> has signed. Type your full legal name below to countersign.
                     {(countersignFor.firstMonthPaid ?? 0) === 1 && (((countersignFor.securityDeposit ?? 0) === 0) || (countersignFor.depositPaid ?? 0) === 1)
                       ? <> Payment is already on file — after you sign, the tenant will receive their <strong>move-in / key-pickup instructions</strong>.</>
-                      : <> After you sign, Leasely will email the tenant a <strong>payment link</strong> for first month&apos;s rent{((countersignFor.securityDeposit ?? 0) > 0) ? " + security deposit" : ""}.</>
+                      : <> After you sign, Keycove will email the tenant a <strong>payment link</strong> for first month&apos;s rent{((countersignFor.securityDeposit ?? 0) > 0) ? " + security deposit" : ""}.</>
                     }
                   </p>
                 </div>
@@ -1761,7 +1761,7 @@ function currentPeriod(): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`;
 }
 
-const PAYMENT_METHODS = ["Leasely", "ACH / direct deposit", "Zelle", "Venmo", "Cash App", "Check", "Money order", "Cash"];
+const PAYMENT_METHODS = ["Keycove", "ACH / direct deposit", "Zelle", "Venmo", "Cash App", "Check", "Money order", "Cash"];
 
 function RentLedgerPanel({ lease }: { lease: any }) {
   const utils = trpc.useContext();

@@ -162,7 +162,7 @@ export default function PublicApplication() {
           <p className="text-white/40 text-sm">The landlord will review your application and contact you at <span className="text-white/60">{form.applicantEmail}</span>.</p>
           <div className="mt-8 p-4 rounded-2xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
             <p className="text-white/40 text-xs">Powered by</p>
-            <p className="text-white font-black text-lg" style={{ fontFamily: 'Outfit, sans-serif' }}>Leasely™</p>
+            <p className="text-white font-black text-lg" style={{ fontFamily: 'Outfit, sans-serif' }}>Keycove™</p>
           </div>
         </div>
       </div>
@@ -437,7 +437,7 @@ export default function PublicApplication() {
 
         {/* Powered by */}
         <div className="text-center mt-8">
-          <p className="text-white/20 text-xs">Powered by <span className="text-white/40 font-bold">Leasely™</span></p>
+          <p className="text-white/20 text-xs">Powered by <span className="text-white/40 font-bold">Keycove™</span></p>
         </div>
       </div>
 

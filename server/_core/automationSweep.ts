@@ -2,7 +2,7 @@
  * Automation health sweep.
  *
  * Runs every 6 hours (and ~2 min after boot). For each stage of the core
- * Leasely flow it verifies the LIVE machinery + dependencies that actually
+ * Keycove flow it verifies the LIVE machinery + dependencies that actually
  * break in production — it does NOT create real applications, leases,
  * deposits, work orders, or checkouts (that would flood prod with junk and
  * fire real Stripe charges). Instead it checks that every dependency each
@@ -10,12 +10,12 @@
  *
  *   Application   → DB reachable, rental_applications + listings queryable
  *   Lease/Deposit → Stripe key valid, Pro + setup price IDs active,
- *                   Leasely webhook enabled
+ *                   Keycove webhook enabled
  *   Work orders   → work_orders + contractor directory queryable
  *   Pro checkout  → Stripe Connect platform valid (catches stale/wrong-key
  *                   accounts), price IDs (above)
  *   CBP signup    → CBP key valid, bundle link ACTIVE with promo codes ON,
- *                   CBP→Leasely webhook enabled, CBP secrets set
+ *                   CBP→Keycove webhook enabled, CBP secrets set
  *   Site          → public pages return 200
  *   Notifications → Brevo email key present
  *
@@ -85,7 +85,7 @@ export async function runAutomationSweep(): Promise<{ checks: SweepCheck[]; ok: 
       }
       return `pro=$${((pro.unit_amount ?? 0) / 100).toFixed(0)}/mo ${setup}`;
     }),
-    run("Lease/Deposit", "Leasely Stripe webhook enabled", async () => {
+    run("Lease/Deposit", "Keycove Stripe webhook enabled", async () => {
       const s = getStripe();
       if (!s) throw new Error("no Stripe key");
       const eps = await s.webhookEndpoints.list({ limit: 30 });
@@ -127,12 +127,12 @@ export async function runAutomationSweep(): Promise<{ checks: SweepCheck[]; ok: 
       if (!found.allow_promotion_codes) throw new Error("promo codes DISABLED — Pro members would be charged full price");
       return found.url;
     }),
-    run("CBP", "CBP→Leasely webhook + secrets", async () => {
+    run("CBP", "CBP→Keycove webhook + secrets", async () => {
       const cbp = getCbpStripe();
       if (!cbp) throw new Error("no CBP key");
       const eps = await cbp.webhookEndpoints.list({ limit: 30 });
       const ep = eps.data.find(e => e.url.includes("/api/cbp/stripe/webhook"));
-      if (!ep) throw new Error("no CBP→Leasely webhook endpoint");
+      if (!ep) throw new Error("no CBP→Keycove webhook endpoint");
       if (ep.status !== "enabled") throw new Error(`webhook status=${ep.status}`);
       if (!process.env.CBP_STRIPE_WEBHOOK_SECRET) throw new Error("CBP_STRIPE_WEBHOOK_SECRET unset");
       if (!process.env.CBP_API_SECRET) throw new Error("CBP_API_SECRET unset");
@@ -173,10 +173,10 @@ async function emailFailures(failures: SweepCheck[]): Promise<void> {
     </tr>`).join("");
   await sendEmail({
     to: adminEmailTarget(),
-    subject: `⚠️ Leasely automation sweep: ${failures.length} check(s) failing`,
+    subject: `⚠️ Keycove automation sweep: ${failures.length} check(s) failing`,
     html: `<div style="font-family:sans-serif;max-width:640px;margin:0 auto;padding:24px">
       <h2 style="color:#b91c1c">${failures.length} automation check(s) failing</h2>
-      <p>The 6-hourly Leasely automation sweep found problems that will break part of the tenant→lease→deposit→work-order→Pro→CBP flow. Details:</p>
+      <p>The 6-hourly Keycove automation sweep found problems that will break part of the tenant→lease→deposit→work-order→Pro→CBP flow. Details:</p>
       <table style="width:100%;border-collapse:collapse;font-size:14px;border:1px solid #eee;border-radius:8px">
         <tr style="background:#f9fafb"><th style="text-align:left;padding:8px 12px">Stage</th><th style="text-align:left;padding:8px 12px">Check</th><th style="text-align:left;padding:8px 12px">Problem</th></tr>
         ${rows}

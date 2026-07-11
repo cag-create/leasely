@@ -109,13 +109,13 @@ const howItWorks = [
 // real ones the moment beta users send them in.
 const TESTIMONIALS = [
   {
-    quote: "I run six rentals across two states. Before Leasely I was juggling Avail, a separate background-check site, and a Google Sheet for payments. Now the application, screening, lease, and rent collection all sit in one tab. The AI screening flagged a 'consulting firm' employer at a UPS Store address the same day I forwarded the application — I never would've checked the address myself.",
+    quote: "I run six rentals across two states. Before Keycove I was juggling Avail, a separate background-check site, and a Google Sheet for payments. Now the application, screening, lease, and rent collection all sit in one tab. The AI screening flagged a 'consulting firm' employer at a UPS Store address the same day I forwarded the application — I never would've checked the address myself.",
     name: "Marcus T.",
     role: "Landlord · 6 units",
     location: "Charlotte, NC",
   },
   {
-    quote: "I'm a small-portfolio landlord — three doors. The flat $29/month is the whole pitch for me. AppFolio quoted me a $400/mo minimum and Buildium wanted per-unit fees on top. Leasely doesn't care if I have 3 units or 30.",
+    quote: "I'm a small-portfolio landlord — three doors. The flat $29/month is the whole pitch for me. AppFolio quoted me a $400/mo minimum and Buildium wanted per-unit fees on top. Keycove doesn't care if I have 3 units or 30.",
     name: "Priya R.",
     role: "Self-managing landlord",
     location: "Austin, TX",
@@ -174,7 +174,7 @@ export default function Home() {
               <div>
                 <Link href="/list-property" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#4F46E5]/25 bg-[#4F46E5]/8 text-[#4F46E5] text-xs font-semibold mb-6 hover:bg-[#4F46E5]/15 transition-colors">
                   <Sparkles className="h-3.5 w-3.5" />
-                  New: Leasely Market Intelligence — try it on any listing
+                  New: Keycove Market Intelligence — try it on any listing
                   <ChevronRight className="h-3 w-3" />
                 </Link>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight">
@@ -370,7 +370,7 @@ export default function Home() {
             <AnimatedStat value={0} prefix="$" label="First Listing" sublabel="Always free" />
           </div>
           <p className="text-center text-xs text-white/35 mt-8 max-w-2xl mx-auto">
-            Leasely launched in 2026 — these are product specs, not user counts. We don't fake adoption numbers.
+            Keycove launched in 2026 — these are product specs, not user counts. We don't fake adoption numbers.
           </p>
         </div>
       </section>
@@ -574,7 +574,7 @@ export default function Home() {
               <span className="text-gradient">actually doing the work.</span>
             </h2>
             <p className="text-muted-foreground text-base max-w-xl mx-auto">
-              Every feature in Leasely traces back to a real pain point a small-portfolio landlord told us about.
+              Every feature in Keycove traces back to a real pain point a small-portfolio landlord told us about.
             </p>
           </div>
 
@@ -660,7 +660,7 @@ export default function Home() {
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Your entire portfolio,<br />one platform.</h2>
               <p className="text-white/60 mb-8 leading-relaxed">
-                From a single rental to a 200-unit complex — Leasely Pro gives you every tool you need to run a professional operation.
+                From a single rental to a 200-unit complex — Keycove Pro gives you every tool you need to run a professional operation.
               </p>
               <div className="space-y-3 mb-8">
                 {[
@@ -943,8 +943,8 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
-                <img src={LOGO_URL} alt="Leasely" className="h-6 w-auto" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                <span className="font-black text-white text-base">Leasely</span>
+                <img src={LOGO_URL} alt="Keycove" className="h-6 w-auto" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                <span className="font-black text-white text-base">Keycove</span>
               </div>
               <p className="text-white/40 text-xs leading-relaxed">
                 The complete property management platform for modern landlords.
@@ -1015,7 +1015,7 @@ export default function Home() {
             </div>
 
             <div>
-              <p className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-3">Earn with Leasely</p>
+              <p className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-3">Earn with Keycove</p>
               <div className="space-y-2">
                 {[
                   { label: "Affiliate Program", href: "/affiliate/signup" },
@@ -1049,7 +1049,7 @@ export default function Home() {
 
           <div className="border-t border-white/8 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-white/30 text-xs">
-              © {new Date().getFullYear()} Leasely. All rights reserved.
+              © {new Date().getFullYear()} Keycove. All rights reserved.
             </p>
             <div className="flex items-center gap-4 flex-wrap">
               {[

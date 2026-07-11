@@ -66,7 +66,7 @@ export default function Payouts() {
           <h1 className="text-2xl font-bold" style={{ color: BRAND }}>Payouts &amp; Banking</h1>
           <p className="text-sm text-gray-500 mt-1">
             Connect your bank to collect rent directly. Powered by Stripe Connect — your bank
-            details are stored securely at Stripe, never on Leasely.
+            details are stored securely at Stripe, never on Keycove.
           </p>
         </div>
 

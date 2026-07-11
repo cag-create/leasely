@@ -32,7 +32,7 @@ function photoNudgeHtml(name: string, title: string, listingId: number): string 
   </div>
   <div style="background:#f9fafb;padding:24px 28px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px">
     <p style="margin:0 0 14px;color:#111827">Hi ${name},</p>
-    <p style="margin:0 0 14px;color:#374151">Your listing <strong>"${title}"</strong> is live on Leasely — but it has <strong>no photos yet</strong>.</p>
+    <p style="margin:0 0 14px;color:#374151">Your listing <strong>"${title}"</strong> is live on Keycove — but it has <strong>no photos yet</strong>.</p>
     <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 16px;margin:0 0 20px">
       <p style="margin:0;color:#92400e;font-size:14px">
         📊 Listings with photos get <strong>5–10× more views</strong> than photo-free ones. Most renters skip blank listings entirely.
@@ -43,7 +43,7 @@ function photoNudgeHtml(name: string, title: string, listingId: number): string 
        style="display:block;background:#4F46E5;color:white;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;text-align:center;margin-bottom:16px">
       Upload Photos Now →
     </a>
-    <p style="margin:0;color:#9ca3af;font-size:12px">Sent by <a href="https://leasely.net" style="color:#1B2B5E">Leasely</a> · <a href="${process.env.APP_URL ?? "https://leasely.net"}/unsubscribe" style="color:#9ca3af">Unsubscribe</a></p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Sent by <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a> · <a href="${process.env.APP_URL ?? "https://leasely.net"}/unsubscribe" style="color:#9ca3af">Unsubscribe</a></p>
   </div>
 </div>`;
 }
@@ -61,7 +61,7 @@ function upgradeNudgeHtml(name: string, title: string): string {
     <p style="margin:0 0 14px;color:#374151">Your listing <strong>"${title}"</strong> still has no photos and is getting passed over by renters who are actively searching right now.</p>
 
     <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:18px;margin:0 0 20px">
-      <p style="margin:0 0 12px;font-weight:700;color:#111827">Pro landlords on Leasely also get:</p>
+      <p style="margin:0 0 12px;font-weight:700;color:#111827">Pro landlords on Keycove also get:</p>
       <ul style="margin:0;padding-left:20px;color:#374151;font-size:14px;line-height:1.8">
         <li><strong>AI tenant screening</strong> — credit, background, income in 60 seconds</li>
         <li><strong>State-specific e-sign leases</strong> — legally binding, sent & signed in the app</li>
@@ -81,7 +81,7 @@ function upgradeNudgeHtml(name: string, title: string): string {
         Add Photos
       </a>
     </div>
-    <p style="margin:0;color:#9ca3af;font-size:12px">Sent by <a href="https://leasely.net" style="color:#1B2B5E">Leasely</a> · <a href="${process.env.APP_URL ?? "https://leasely.net"}/unsubscribe" style="color:#9ca3af">Unsubscribe</a></p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Sent by <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a> · <a href="${process.env.APP_URL ?? "https://leasely.net"}/unsubscribe" style="color:#9ca3af">Unsubscribe</a></p>
   </div>
 </div>`;
 }

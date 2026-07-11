@@ -51,7 +51,7 @@ export default function PortalPage({ subdomainOverride }: { subdomainOverride?: 
             The portal <strong>{subdomain}</strong> doesn't exist or hasn't been set up yet.
           </p>
           <Link href="/">
-            <Button>Browse Leasely Marketplace</Button>
+            <Button>Browse Keycove Marketplace</Button>
           </Link>
         </div>
       </div>
@@ -105,7 +105,7 @@ export default function PortalPage({ subdomainOverride }: { subdomainOverride?: 
               <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                 <Badge className="bg-white/20 text-white border-white/30 font-semibold">
                   <Shield className="h-3.5 w-3.5 mr-1.5" />
-                  Verified on Leasely
+                  Verified on Keycove
                 </Badge>
                 <Badge className="bg-white/20 text-white border-white/30 font-semibold">
                   <Home className="h-3.5 w-3.5 mr-1.5" />
@@ -192,7 +192,7 @@ export default function PortalPage({ subdomainOverride }: { subdomainOverride?: 
           </div>
           <Link href="/marketplace">
             <Button variant="outline" className="gap-2 text-sm">
-              Browse All on Leasely <ExternalLink className="h-3.5 w-3.5" />
+              Browse All on Keycove <ExternalLink className="h-3.5 w-3.5" />
             </Button>
           </Link>
         </div>
@@ -223,7 +223,7 @@ export default function PortalPage({ subdomainOverride }: { subdomainOverride?: 
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <span>Powered by</span>
               <Link href="/" className="font-bold text-gray-700 hover:text-blue-600 transition-colors">
-                Leasely
+                Keycove
               </Link>
               <span>·</span>
               <Link href="/marketplace" className="hover:text-gray-600 transition-colors">

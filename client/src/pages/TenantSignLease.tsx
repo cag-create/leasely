@@ -117,7 +117,7 @@ export default function TenantSignLease() {
               <Home className="w-4 h-4" /> Go to My Tenant Portal
             </Button>
           </div>
-          <p className="text-sm text-gray-400">Powered by <strong style={{ color: BRAND }}>Leasely</strong></p>
+          <p className="text-sm text-gray-400">Powered by <strong style={{ color: BRAND }}>Keycove</strong></p>
         </div>
         <JourneyFooter currentStep={2} />
       </div>
@@ -129,8 +129,8 @@ export default function TenantSignLease() {
       {/* Header */}
       <header className="bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
-          <img src={LOGO_URL} alt="Leasely" className="h-7 w-auto" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-          <span className="font-black text-lg" style={{ color: BRAND }}>Leasely</span>
+          <img src={LOGO_URL} alt="Keycove" className="h-7 w-auto" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          <span className="font-black text-lg" style={{ color: BRAND }}>Keycove</span>
           <span className="text-gray-300">|</span>
           <span className="text-sm text-gray-500">Lease Agreement</span>
         </div>
@@ -231,12 +231,12 @@ export default function TenantSignLease() {
 
             <div className="flex items-center gap-2 text-xs text-gray-400">
               <Shield className="w-3.5 h-3.5" />
-              <span>Secured and encrypted by Leasely. Your information is never shared.</span>
+              <span>Secured and encrypted by Keycove. Your information is never shared.</span>
             </div>
           </div>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-6 pb-24">Powered by <strong style={{ color: BRAND }}>Leasely</strong> — The AI-Powered Landlord OS</p>
+        <p className="text-center text-xs text-gray-400 mt-6 pb-24">Powered by <strong style={{ color: BRAND }}>Keycove</strong> — The AI-Powered Landlord OS</p>
       </div>
       <JourneyFooter currentStep={1} />
     </div>

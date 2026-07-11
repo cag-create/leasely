@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { CheckCircle2, XCircle, Minus, ArrowRight, Zap } from "lucide-react";
 
-const COMPETITORS = ["Leasely", "Buildium", "Avail", "TurboTenant", "Zillow Rental", "Apartments.com"];
+const COMPETITORS = ["Keycove", "Buildium", "Avail", "TurboTenant", "Zillow Rental", "Apartments.com"];
 
 const FEATURES = [
   {
@@ -72,16 +72,16 @@ const FEATURES = [
 
 type CellValue = boolean | string;
 
-function Cell({ value, isLeasely }: { value: CellValue; isLeasely: boolean }) {
+function Cell({ value, isKeycove }: { value: CellValue; isKeycove: boolean }) {
   if (typeof value === "boolean") {
     return value ? (
-      <CheckCircle2 className={`h-5 w-5 mx-auto ${isLeasely ? "text-[#4F46E5]" : "text-muted-foreground"}`} />
+      <CheckCircle2 className={`h-5 w-5 mx-auto ${isKeycove ? "text-[#4F46E5]" : "text-muted-foreground"}`} />
     ) : (
       <XCircle className="h-5 w-5 mx-auto text-muted/40" />
     );
   }
   return (
-    <span className={`text-sm font-medium ${isLeasely ? "text-[#4F46E5]" : "text-muted-foreground"}`}>
+    <span className={`text-sm font-medium ${isKeycove ? "text-[#4F46E5]" : "text-muted-foreground"}`}>
       {value}
     </span>
   );
@@ -98,9 +98,9 @@ export default function Compare() {
           <Badge className="bg-[#4F46E5]/20 text-[#4F46E5] border-[#4F46E5]/30 text-xs">
             Platform Comparison
           </Badge>
-          <h1 className="text-3xl font-black">Why Leasely?</h1>
+          <h1 className="text-3xl font-black">Why Keycove?</h1>
           <p className="text-blue-100 text-lg">
-            See how Leasely stacks up against Buildium, Avail, TurboTenant & more — feature by feature, price by price.
+            See how Keycove stacks up against Buildium, Avail, TurboTenant & more — feature by feature, price by price.
           </p>
         </div>
       </div>
@@ -146,7 +146,7 @@ export default function Compare() {
                         <td className="px-6 py-3 text-sm text-foreground">{row.label}</td>
                         {row.values.map((val, i) => (
                           <td key={i} className={`px-4 py-3 text-center ${i === 0 ? "bg-[#1B2B5E]/5" : ""}`}>
-                            <Cell value={val} isLeasely={i === 0} />
+                            <Cell value={val} isKeycove={i === 0} />
                           </td>
                         ))}
                       </tr>
@@ -161,14 +161,14 @@ export default function Compare() {
           <div className="px-6 py-4 bg-muted/20 border-t border-border">
             <p className="text-xs text-muted-foreground">
               * Buildium starts at $55/mo (Essential, up to 20 units) and scales to $375+/mo. Avail charges $9/unit/mo on their paid plan. TurboTenant is $8.25+/mo per property. Zillow &amp; Apartments.com charge listing/lead fees. None include AI fraud screening as a built-in feature.
-              <strong className="text-foreground"> Leasely Pro is $29/mo flat — unlimited listings, AI screening included, no per-unit fees, no per-transaction fees, no vendor invoice markups. We don't nickel-and-dime.</strong>
+              <strong className="text-foreground"> Keycove Pro is $29/mo flat — unlimited listings, AI screening included, no per-unit fees, no per-transaction fees, no vendor invoice markups. We don't nickel-and-dime.</strong>
             </p>
           </div>
         </div>
 
         {/* CTA */}
         <div className="mt-10 rounded-2xl bg-[#1B2B5E] text-white p-8 text-center space-y-4">
-          <h2 className="text-2xl font-black">Ready to switch to Leasely?</h2>
+          <h2 className="text-2xl font-black">Ready to switch to Keycove?</h2>
           <p className="text-blue-100">
             Unlimited listings + AI screening + instant payouts — all for $29/mo flat. No per-unit fees. No per-transaction fees. No vendor invoice markups. We don't nickel-and-dime.
           </p>

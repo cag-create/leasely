@@ -1,4 +1,4 @@
-# Leasely — Creme Agent SOP
+# Keycove — Creme Agent SOP
 
 > Standard operating procedure for licensed real-estate agents in the Creme
 > Agent Network. Last updated 2026-05-22.
@@ -16,10 +16,10 @@ A curated directory of licensed agents who specialize in landlord-side deals:
 - FSBO-to-listed conversions
 - Novation deals
 - Multi-unit + complex sales
-- Lease-up partnerships with landlords on Leasely
+- Lease-up partnerships with landlords on Keycove
 
-Leasely brings the lead. You bring the license, the closing, and the local
-expertise. Leasely takes a referral fee on closed transactions per the agreement
+Keycove brings the lead. You bring the license, the closing, and the local
+expertise. Keycove takes a referral fee on closed transactions per the agreement
 you signed at onboarding.
 
 ---
@@ -60,7 +60,7 @@ These are the patterns we see on the top 10% of profiles:
 
 1. A landlord / investor / FSBO seller clicks **Request this agent** on your
    profile.
-2. Leasely sends you a notification + email. Lead also lands on the
+2. Keycove sends you a notification + email. Lead also lands on the
    **Agent Dashboard** tab.
 3. **You have 4 business hours to respond.** Leads that go cold for >4 hrs
    are auto-redistributed to another agent in the same service area.
@@ -77,39 +77,39 @@ These are the patterns we see on the top 10% of profiles:
   poaching is grounds for removal from the network.)
 
 ### Mid-funnel
-- Use Leasely's tooling where it helps:
+- Use Keycove's tooling where it helps:
   - `/marketplace` for active comps
   - `/agents/<your-id>` → share-link for the lead to bookmark you
-  - Rent comps (Leasely Market Intelligence) for income property pricing
-- **Do not** disintermediate Leasely. If the lead asks "can we just close
+  - Rent comps (Keycove Market Intelligence) for income property pricing
+- **Do not** disintermediate Keycove. If the lead asks "can we just close
   outside the platform" — the answer is no. Closing outside is grounds for
   removal and you forfeit pipeline.
 
 ### Closing
 - File the transaction in your dashboard with closing date + sale price.
-- Leasely invoices the referral fee per your onboarding agreement.
-- 30-day cooling-off: clients you close keep their Leasely portal access at
+- Keycove invoices the referral fee per your onboarding agreement.
+- 30-day cooling-off: clients you close keep their Keycove portal access at
   no extra cost for 6 months (a soft retention perk).
 
 ## Compliance — what you must do
 
-- **MLOA / agency disclosure** is on you, not Leasely. The platform doesn't
+- **MLOA / agency disclosure** is on you, not Keycove. The platform doesn't
   replace your state-required disclosures.
 - **Fair Housing.** No client filters on protected class. If a lead asks you
   to filter on a protected class, document it and decline.
 - **License display.** Your license number is shown on `/agents/:id` in the
   jurisdiction footer. Don't remove it from any co-marketing material.
 - **Anti-steering.** Don't steer leads to specific lenders, inspectors, or
-  insurance carriers in exchange for kickbacks. Leasely's Steadily / Lemonade
+  insurance carriers in exchange for kickbacks. Keycove's Steadily / Lemonade
   partnerships are disclosed in-app; opaque referrals are not allowed.
 
 ## Things you cannot do (and why)
 
 - **Close outside the platform** — see "Working a lead". Forfeit + removal.
-- **Trade Leasely leads with another network** — same.
+- **Trade Keycove leads with another network** — same.
 - **Edit your license number after approval** — admin only. Renewals are
   fine; transferring jurisdictions requires re-verification.
-- **Take payment from the client through Leasely** — Leasely is not your
+- **Take payment from the client through Keycove** — Keycove is not your
   brokerage's trust account. All commissions flow your brokerage → you.
 
 ## Performance scoring
@@ -125,7 +125,7 @@ Agents under target for 2 consecutive quarters move to "probation" — leads
 still flow but at lower priority. 3 consecutive quarters under target is
 removal from the network.
 
-## When to escalate to Leasely
+## When to escalate to Keycove
 
 - Suspected fraud / identity issue on a lead
 - Earnest-money escrow dispute

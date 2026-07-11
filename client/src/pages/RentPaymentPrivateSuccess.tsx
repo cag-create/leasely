@@ -24,7 +24,7 @@ export default function RentPaymentPrivateSuccess() {
         </div>
 
         <div className="flex items-center justify-center gap-2 text-xs text-gray-400 mt-6">
-          <Home className="h-3.5 w-3.5" /> Powered by Leasely
+          <Home className="h-3.5 w-3.5" /> Powered by Keycove
         </div>
       </div>
     </div>

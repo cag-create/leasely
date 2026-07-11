@@ -192,7 +192,7 @@ async function startServer() {
   // CORS-enabled so external custom domains (atlanta-rentals.com, etc.) can submit.
   // Looks up the landlord by their portalSubdomain or customDomain, emails them
   // the lead, and creates an inquiry tied to their first active listing so it
-  // flows into Leasely's existing inquiry inbox.
+  // flows into Keycove's existing inquiry inbox.
   const leadLimiter = rateLimit({ windowMs: 60 * 1000, max: 5 });
   app.post("/api/portal-leads", leadLimiter, async (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -235,7 +235,7 @@ async function startServer() {
         const { sendEmail } = await import("./email");
         sendEmail({
           to: owner.email,
-          subject: `[Leasely] New lead from your branded site — ${name}`,
+          subject: `[Keycove] New lead from your branded site — ${name}`,
           html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
             <h2 style="color:#1B2B5E">New Lead from ${customDomain ?? `${subdomain}.leasely.net`}</h2>
             <p><strong>${name}</strong> just submitted a contact form on your branded site:</p>
@@ -244,7 +244,7 @@ async function startServer() {
               ${phone ? `<li><strong>Phone:</strong> ${phone}</li>` : ""}
             </ul>
             <p style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px">${message}</p>
-            <p style="color:#9ca3af;font-size:12px;margin-top:16px">Reply directly to this email to contact the lead. Lead also saved in your Leasely inquiry inbox.</p>
+            <p style="color:#9ca3af;font-size:12px;margin-top:16px">Reply directly to this email to contact the lead. Lead also saved in your Keycove inquiry inbox.</p>
           </div>`,
           replyTo: email,
         }).catch(() => {});

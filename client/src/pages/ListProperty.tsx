@@ -256,7 +256,7 @@ export default function ListProperty() {
           <div className="bg-white rounded-3xl p-10 shadow-sm border">
             <Lock className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h2 className="text-2xl font-black text-gray-900 mb-3">Sign In to List Your Property</h2>
-            <p className="text-gray-500 mb-6">Create a free account to list your first property on the Leasely marketplace.</p>
+            <p className="text-gray-500 mb-6">Create a free account to list your first property on the Keycove marketplace.</p>
             <a href={getLoginUrl()}>
               <Button size="lg" className="w-full font-bold" style={{ background: ACCENT, color: "#3A2410" }}>
                 Sign In / Create Account

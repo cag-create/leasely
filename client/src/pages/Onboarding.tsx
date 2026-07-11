@@ -17,7 +17,7 @@ export default function Onboarding() {
 
   const setAccountTypeMutation = trpc.marketplace.setAccountType.useMutation({
     onSuccess: () => {
-      toast.success("Welcome to Leasely!");
+      toast.success("Welcome to Keycove!");
       if (selected === "renter") {
         navigate("/marketplace");
       } else {
@@ -50,7 +50,7 @@ export default function Onboarding() {
     >
       {/* Logo */}
       <div className="mb-10 text-center">
-        <div className="text-white font-black text-3xl mb-2">Leasely</div>
+        <div className="text-white font-black text-3xl mb-2">Keycove</div>
         <p className="text-white/60 text-sm">Let's personalize your experience</p>
       </div>
 
@@ -60,7 +60,7 @@ export default function Onboarding() {
           Welcome{user?.name ? `, ${user.name.split(" ")[0]}` : ""}! 👋
         </h1>
         <p className="text-gray-500 text-center mb-8">
-          Tell us how you plan to use Leasely so we can set up the right experience for you.
+          Tell us how you plan to use Keycove so we can set up the right experience for you.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">

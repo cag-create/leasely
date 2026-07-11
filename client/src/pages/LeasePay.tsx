@@ -105,8 +105,8 @@ export default function LeasePay() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 w-full max-w-md">
           <div className="flex items-center gap-2 mb-3">
-            <img src={LOGO_URL} alt="Leasely" className="h-7" />
-            <span className="font-black" style={{ color: BRAND }}>Leasely</span>
+            <img src={LOGO_URL} alt="Keycove" className="h-7" />
+            <span className="font-black" style={{ color: BRAND }}>Keycove</span>
           </div>
           <h1 className="text-xl font-bold text-gray-900 mb-1">Confirm your email</h1>
           <p className="text-sm text-gray-500 mb-4">Enter the email on your lease to load your payment summary.</p>
@@ -167,8 +167,8 @@ export default function LeasePay() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-100">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
-          <img src={LOGO_URL} alt="Leasely" className="h-7" />
-          <span className="font-black" style={{ color: BRAND }}>Leasely</span>
+          <img src={LOGO_URL} alt="Keycove" className="h-7" />
+          <span className="font-black" style={{ color: BRAND }}>Keycove</span>
           <span className="text-gray-300">|</span>
           <span className="text-sm text-gray-500">Move-in payments</span>
         </div>
@@ -236,13 +236,13 @@ export default function LeasePay() {
 
             <div className="flex items-center gap-2 text-xs text-gray-400 pt-1">
               <Lock className="w-3.5 h-3.5" />
-              <span>Payments secured by Stripe. Leasely never sees your card details.</span>
+              <span>Payments secured by Stripe. Keycove never sees your card details.</span>
             </div>
           </div>
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6 pb-24">
-          Powered by <strong style={{ color: BRAND }}>Leasely</strong> — The AI-Powered Landlord OS ·{" "}
+          Powered by <strong style={{ color: BRAND }}>Keycove</strong> — The AI-Powered Landlord OS ·{" "}
           <Link href="/legal/terms"><a className="underline">Terms</a></Link> ·{" "}
           <Link href="/legal/privacy"><a className="underline">Privacy</a></Link>
         </p>

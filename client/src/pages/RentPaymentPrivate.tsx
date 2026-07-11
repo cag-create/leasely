@@ -93,7 +93,7 @@ export default function RentPaymentPrivate() {
       <header className="bg-white border-b shadow-sm">
         <div className="container mx-auto px-4 max-w-5xl py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 font-black text-gray-800">
-            <Home className="h-5 w-5" style={{ color: ACCENT }} /> Leasely
+            <Home className="h-5 w-5" style={{ color: ACCENT }} /> Keycove
           </div>
           <div className="flex items-center gap-2">
             <Lock className="h-4 w-4 text-green-600" />

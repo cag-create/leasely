@@ -570,7 +570,7 @@ export async function getPortalBySubdomain(subdomain: string) {
 /**
  * Look up a paid portal by its custom domain (e.g. atlanta-rentals.com).
  * Used by /api/portal-leads so external CBP-built landing pages can submit
- * contact-form leads back into the Leasely inquiry inbox.
+ * contact-form leads back into the Keycove inquiry inbox.
  */
 export async function getPortalByCustomDomain(customDomain: string) {
   const db = await getDb();

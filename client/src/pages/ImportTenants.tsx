@@ -422,7 +422,7 @@ export default function ImportTenants() {
                       >
                         <Upload className="h-8 w-8 mx-auto mb-2 text-gray-300 group-hover:text-amber-500 transition-colors" />
                         <p className="text-sm font-medium text-gray-500 group-hover:text-amber-600">Click to upload CSV</p>
-                        <p className="text-xs text-gray-400 mt-1">{platform.name} export or filled Leasely template</p>
+                        <p className="text-xs text-gray-400 mt-1">{platform.name} export or filled Keycove template</p>
                       </button>
                     </div>
                   </div>

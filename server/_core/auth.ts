@@ -92,7 +92,7 @@ export function registerAuthRoutes(app: Express) {
       const verifyUrl = `${appUrl()}/verify-email?token=${verifyToken}`;
       sendEmail({
         to: normalizedEmail,
-        subject: "Verify your Leasely email",
+        subject: "Verify your Keycove email",
         html: emailVerifyEmail({ name: user.name || normalizedEmail.split("@")[0], verifyUrl }),
       }).catch(err => console.warn("[Auth] Verification email send failed:", err));
 
@@ -201,7 +201,7 @@ export function registerAuthRoutes(app: Express) {
         const resetUrl = `${appUrl()}/reset-password?token=${token}`;
         sendEmail({
           to: normalizedEmail,
-          subject: "Reset your Leasely password",
+          subject: "Reset your Keycove password",
           html: passwordResetEmail({ name: user.name || normalizedEmail.split("@")[0], resetUrl }),
         }).catch(err => console.warn("[Auth] Reset email send failed:", err));
       }
@@ -277,7 +277,7 @@ export function registerAuthRoutes(app: Express) {
         const verifyUrl = `${appUrl()}/verify-email?token=${token}`;
         sendEmail({
           to: normalizedEmail,
-          subject: "Verify your Leasely email",
+          subject: "Verify your Keycove email",
           html: emailVerifyEmail({ name: user.name || normalizedEmail.split("@")[0], verifyUrl }),
         }).catch(err => console.warn("[Auth] Resend verification failed:", err));
       }

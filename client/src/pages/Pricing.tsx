@@ -84,11 +84,11 @@ const COMPARISON_ROWS = [
 const FAQ_ITEMS = [
   {
     q: "Is the free listing really free — no credit card?",
-    a: "Yes. Your first property listing on the Leasely marketplace is completely free. No credit card required, no time limit. You get map placement, views & saves stats, and contact form inquiries."
+    a: "Yes. Your first property listing on the Keycove marketplace is completely free. No credit card required, no time limit. You get map placement, views & saves stats, and contact form inquiries."
   },
   {
     q: "What does 'waived ACH fees' mean for my tenants?",
-    a: "Normally, ACH bank transfers carry a processing fee (typically 0.8%, capped at $5). With a Pro subscription, Leasely covers that fee on your behalf — so your tenants pay rent through the portal at absolutely no charge. You receive the full rent amount."
+    a: "Normally, ACH bank transfers carry a processing fee (typically 0.8%, capped at $5). With a Pro subscription, Keycove covers that fee on your behalf — so your tenants pay rent through the portal at absolutely no charge. You receive the full rent amount."
   },
   {
     q: "What is AI fraud applicant detection?",
@@ -111,7 +111,7 @@ const FAQ_ITEMS = [
     a: "The CRM lets you organize all your properties, units, tenants, leases, and notes in one place. Track lease start/end dates, monthly rent, security deposits, tenant contact info, and add notes to any record. It's designed to replace spreadsheets and give you a clean, searchable database of your entire portfolio."
   },
   {
-    q: "Can I use Leasely if I have a property manager handling my units?",
+    q: "Can I use Keycove if I have a property manager handling my units?",
     a: "Yes — and it's included in Pro at no extra charge. You can invite your property manager to your account and give them granular permissions: they can view work orders, manage maintenance, approve applications, or handle leases — whatever you authorize. You stay in control, they get the access they need. No separate tier, no extra fee."
   },
   {
@@ -120,11 +120,11 @@ const FAQ_ITEMS = [
   },
   {
     q: "Do you take a cut of vendor invoices or charge per work order?",
-    a: "No. Unlike Buildium and Yardi — which charge per-transaction fees or mark up vendor invoices — Leasely takes zero from your work orders. Your contractor invoices you $1,000, your contractor gets paid $1,000, we don't touch it. We don't nickel-and-dime. The $29/mo covers unlimited work orders, unlimited vendor dispatch, and unlimited Stripe Connect payouts."
+    a: "No. Unlike Buildium and Yardi — which charge per-transaction fees or mark up vendor invoices — Keycove takes zero from your work orders. Your contractor invoices you $1,000, your contractor gets paid $1,000, we don't touch it. We don't nickel-and-dime. The $29/mo covers unlimited work orders, unlimited vendor dispatch, and unlimited Stripe Connect payouts."
   },
   {
     q: "What's actually recurring vs. one-time?",
-    a: "Leasely: $75 one-time setup + $29/mo recurring (cancel anytime). The CBP brand kit ($299 value — free with Pro) is one-time; only the domain + hosting renewal at $37/yr is recurring after year 1, and you can transfer your domain to your own registrar to avoid it. Optional CBP add-ons like EIN filing (~$79 one-time — or apply free yourself at irs.gov), LLC formation, and trademark filing are billed directly by CBP at their listed prices — Leasely takes no markup and no kickback on any of it."
+    a: "Keycove: $75 one-time setup + $29/mo recurring (cancel anytime). The CBP brand kit ($299 value — free with Pro) is one-time; only the domain + hosting renewal at $37/yr is recurring after year 1, and you can transfer your domain to your own registrar to avoid it. Optional CBP add-ons like EIN filing (~$79 one-time — or apply free yourself at irs.gov), LLC formation, and trademark filing are billed directly by CBP at their listed prices — Keycove takes no markup and no kickback on any of it."
   },
 ];
 
@@ -436,7 +436,7 @@ export default function Pricing() {
       <section className="py-16 px-4">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-2xl font-black text-gray-900 text-center mb-2">Frequently Asked Questions</h2>
-          <p className="text-gray-500 text-center text-sm mb-10">Everything you need to know about Leasely pricing.</p>
+          <p className="text-gray-500 text-center text-sm mb-10">Everything you need to know about Keycove pricing.</p>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             {FAQ_ITEMS.map(item => (
               <FAQItem key={item.q} q={item.q} a={item.a} />

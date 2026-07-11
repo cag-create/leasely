@@ -43,7 +43,7 @@ const FIELD_HINTS: Record<string, string> = {
   utilities: "e.g. Tenant pays all utilities",
   pets_allowed: "e.g. No pets allowed",
   parking: "e.g. 1 assigned parking space",
-  payment_methods: "e.g. Leasely tenant portal, ACH / direct deposit, Check, Money order",
+  payment_methods: "e.g. Keycove tenant portal, ACH / direct deposit, Check, Money order",
 };
 
 // Fields that always appear in the edit panel with their current value
@@ -495,7 +495,7 @@ export default function LeasePreview() {
               <div className="text-sm">
                 <p className="font-semibold mb-1">Required acknowledgement before sending</p>
                 <p className="text-muted-foreground">
-                  Leasely is not a law firm and does not provide legal advice. The templates and any warnings are
+                  Keycove is not a law firm and does not provide legal advice. The templates and any warnings are
                   general informational tools, not a substitute for review by a licensed attorney in the state where the
                   property is located. State law (including required disclosures, deposit caps, late fee limits, and
                   eviction procedure) controls — any lease term inconsistent with state law is unenforceable.
@@ -510,7 +510,7 @@ export default function LeasePreview() {
                 className="mt-0.5"
               />
               <span className="text-sm">
-                I understand Leasely does not provide legal advice, and I am responsible for ensuring this lease
+                I understand Keycove does not provide legal advice, and I am responsible for ensuring this lease
                 complies with the law of the state where the property is located.
               </span>
             </label>

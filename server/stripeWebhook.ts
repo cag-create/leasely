@@ -133,8 +133,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       : null;
 
   // Fallback: match by the email used at checkout. Covers raw Stripe Payment
-  // Links that don't carry a Leasely user id — anyone who pays with the same
-  // email as their Leasely account is upgraded automatically, no manual step.
+  // Links that don't carry a Keycove user id — anyone who pays with the same
+  // email as their Keycove account is upgraded automatically, no manual step.
   if (!userId) {
     const email = session.customer_details?.email ?? session.customer_email ?? null;
     if (email) {
@@ -147,7 +147,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   if (!userId) {
-    console.error("[Webhook] checkout.session.completed: could not resolve a Leasely user (no user_id, client_reference_id, or matching account email)");
+    console.error("[Webhook] checkout.session.completed: could not resolve a Keycove user (no user_id, client_reference_id, or matching account email)");
     return;
   }
 
@@ -198,7 +198,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
             <li>Year 1 domain &amp; hosting included</li>
             <li>DNS + SSL + uptime monitoring</li>
           </ul>
-          <p style="color:#6b7280;font-size:13px">A <strong>$299 value</strong> ($37/yr domain renewal after year 1), yours at no extra charge as a Leasely Pro member.</p>`
+          <p style="color:#6b7280;font-size:13px">A <strong>$299 value</strong> ($37/yr domain renewal after year 1), yours at no extra charge as a Keycove Pro member.</p>`
         : "";
 
       // Primary welcome email — includes the brand kit code and the explicit
@@ -210,13 +210,13 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         html: `
           <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#111827">
             <div style="background:#0F1F4B;border-radius:16px;padding:32px;text-align:center;margin-bottom:24px">
-              <img src="https://d2xsxph8kpxj0f.cloudfront.net/112528410/Ucb4CaDiJcuyDWNAe95Wyq/leasely-logo-corrected_6f0929ef.png" alt="Leasely" height="40" style="margin-bottom:16px" />
-              <h1 style="margin:0;font-size:26px;font-weight:900;color:#fff">Welcome to Leasely Pro!</h1>
+              <img src="https://d2xsxph8kpxj0f.cloudfront.net/112528410/Ucb4CaDiJcuyDWNAe95Wyq/leasely-logo-corrected_6f0929ef.png" alt="Keycove" height="40" style="margin-bottom:16px" />
+              <h1 style="margin:0;font-size:26px;font-weight:900;color:#fff">Welcome to Keycove Pro!</h1>
               <p style="margin:8px 0 0;color:rgba(255,255,255,0.6);font-size:15px">Your landlord operating system is ready.</p>
             </div>
 
             <p>Hi ${user.name ?? "there"},</p>
-            <p>You're now a <strong>Leasely Pro</strong> member. Here's everything that's unlocked and ready to go:</p>
+            <p>You're now a <strong>Keycove Pro</strong> member. Here's everything that's unlocked and ready to go:</p>
 
             <ul style="color:#374151;line-height:2">
               <li>✅ <strong>Branded tenant portal</strong> — set your subdomain at /portal-setup</li>
@@ -237,7 +237,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
             <p style="color:#6b7280;font-size:13px;text-align:center">Questions? Reply to this email or visit <a href="${APP_URL}/support" style="color:#E8951A">leasely.net/support</a></p>
 
             <div style="border-top:1px solid #e5e7eb;margin-top:32px;padding-top:16px;text-align:center">
-              <p style="margin:0;font-size:12px;color:#9ca3af">Leasely · Your Landlord OS · <a href="${APP_URL}" style="color:#E8951A">leasely.net</a></p>
+              <p style="margin:0;font-size:12px;color:#9ca3af">Keycove · Your Landlord OS · <a href="${APP_URL}" style="color:#E8951A">leasely.net</a></p>
             </div>
           </div>`,
       });
@@ -457,7 +457,7 @@ async function handleLeaseAutopayActivated(leaseId: number, session: Stripe.Chec
         status: "paid",
         paidAt: new Date(),
         paidAmountCents: lease.monthlyRent,
-        paymentMethod: "Leasely",
+        paymentMethod: "Keycove",
       });
     }
   } catch (err) {
@@ -534,7 +534,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
         status: "paid",
         paidAt,
         paidAmountCents: amountPaid,
-        paymentMethod: "Leasely",
+        paymentMethod: "Keycove",
         stripeInvoiceId: invoice.id,
         stripePaymentIntentId: paymentIntentId ?? undefined,
       });
@@ -549,7 +549,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
         status: "paid",
         paidAt,
         paidAmountCents: amountPaid,
-        paymentMethod: "Leasely",
+        paymentMethod: "Keycove",
         stripeInvoiceId: invoice.id,
         stripePaymentIntentId: paymentIntentId ?? undefined,
       });

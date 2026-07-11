@@ -15,7 +15,7 @@ import {
 // Stripe Payment Link for CBP's website-builder package (custom website + logo + 1-yr domain + hosting).
 const CBP_WEBSITE_BUILDER_URL = "https://buy.stripe.com/00w9AM5Zrb7FfKM0Cn9ws0g";
 // CBP-hosted $37/yr domain + hosting renewal (year 2 onward). Lives on CBP's Stripe —
-// CBP owns the domain/hosting, so renewals are billed by them, not Leasely.
+// CBP owns the domain/hosting, so renewals are billed by them, not Keycove.
 const CBP_DOMAIN_RENEWAL_URL = "https://buy.stripe.com/6oU28k9bDb7F9mofxh9ws08";
 const STEPS = ["Brand Setup", "Brand Brief", "Claim Free Package", "Go Live"];
 
@@ -164,7 +164,7 @@ export default function PortalSetup() {
     // Mint (or fetch existing) per-user 100%-off promo code restricted to
     // CBP's website-bundle product. Idempotent server-side, so re-clicking
     // returns the same code. The $299 list price drops to $0 at checkout —
-    // the website is already paid for by Leasely's $75 setup fee.
+    // the website is already paid for by Keycove's $75 setup fee.
     let promoCode: string | null = null;
     try {
       const result = await issueCoupon.mutateAsync();
@@ -188,7 +188,7 @@ export default function PortalSetup() {
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-full px-4 py-2 mb-4">
             <Crown className="h-4 w-4 text-amber-400" />
-            <span className="text-amber-300 text-sm font-semibold">Leasely Pro Activated</span>
+            <span className="text-amber-300 text-sm font-semibold">Keycove Pro Activated</span>
           </div>
           <h1 className="text-3xl font-black text-white mb-2">Let's set up your portal</h1>
           <p className="text-white/50">4 quick steps · takes about 3 minutes</p>
@@ -254,7 +254,7 @@ export default function PortalSetup() {
                   >
                     <Globe className="h-4 w-4 shrink-0" />
                     <div className="text-left">
-                      <div>Leasely subdomain</div>
+                      <div>Keycove subdomain</div>
                       <div className={`text-xs ${domainMode === "leasely" ? "text-[#4F46E5]/70" : "text-white/30"}`}>leasely.net/portal/yourname · free</div>
                     </div>
                   </button>
@@ -341,7 +341,7 @@ export default function PortalSetup() {
           </div>
         )}
 
-        {/* Step 1: Brand Brief — captured by Leasely, used by CBP design team */}
+        {/* Step 1: Brand Brief — captured by Keycove, used by CBP design team */}
         {step === 1 && (
           <div className="bg-[#111] border border-white/10 rounded-2xl p-8 space-y-6">
             <div className="flex items-center gap-3 mb-2">
@@ -358,7 +358,7 @@ export default function PortalSetup() {
             <div className="flex items-center gap-2 rounded-xl bg-amber-500/5 border border-amber-500/20 px-4 py-2.5">
               <Award className="h-4 w-4 text-amber-400 shrink-0" />
               <p className="text-xs text-amber-300/90">
-                <span className="font-semibold">Brand Kit by Certify Business Pro</span> — partnered with Leasely to deliver your free Pro design package
+                <span className="font-semibold">Brand Kit by Certify Business Pro</span> — partnered with Keycove to deliver your free Pro design package
               </p>
             </div>
 
@@ -585,7 +585,7 @@ export default function PortalSetup() {
 
               {(user as any)?.role !== "admin" && (
                 <p className="text-xs text-white/40 pt-1 border-t border-white/5">
-                  Leasely charges <span className="text-white/60 font-semibold">$75 one-time setup + $29/mo</span>. Everything else above is between you and CBP — no markups, no kickbacks.
+                  Keycove charges <span className="text-white/60 font-semibold">$75 one-time setup + $29/mo</span>. Everything else above is between you and CBP — no markups, no kickbacks.
                 </p>
               )}
             </div>
@@ -624,7 +624,7 @@ export default function PortalSetup() {
                 <>Redeem at Certify Business Pro <ExternalLink className="ml-2 h-4 w-4" /></>
               )}
             </Button>
-            <p className="text-xs text-white/30 text-center">Opens Stripe checkout · website-bundle perk auto-applied (100% off via your Leasely Pro setup)</p>
+            <p className="text-xs text-white/30 text-center">Opens Stripe checkout · website-bundle perk auto-applied (100% off via your Keycove Pro setup)</p>
 
             <Button
               variant="ghost"

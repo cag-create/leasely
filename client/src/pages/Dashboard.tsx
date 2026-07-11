@@ -435,7 +435,7 @@ export default function Dashboard() {
                 <Sparkles className="h-6 w-6" style={{ color: ACCENT }} />
               </div>
               <div>
-                <h3 className="text-white font-black text-lg">Unlock the Full Leasely Platform</h3>
+                <h3 className="text-white font-black text-lg">Unlock the Full Keycove Platform</h3>
                 <p className="text-white/70 text-sm mt-1">
                   Upgrade to Pro for unlimited listings, AI fraud applicant detection, background checks, and your branded portal.
                 </p>
@@ -1216,7 +1216,7 @@ function ProOnboardingChecklist() {
       {/* CBP partnership attribution */}
       <div className="mt-4 pt-3 border-t border-indigo-100/60 flex items-center gap-1.5 text-xs text-gray-400">
         <Sparkles className="h-3 w-3 text-amber-500" />
-        <span>Brand kit by <a href="https://certifybusinesspro.com" target="_blank" rel="noopener" className="font-semibold text-amber-600 hover:underline">Certify Business Pro</a> — Leasely partner</span>
+        <span>Brand kit by <a href="https://certifybusinesspro.com" target="_blank" rel="noopener" className="font-semibold text-amber-600 hover:underline">Certify Business Pro</a> — Keycove partner</span>
       </div>
     </div>
   );

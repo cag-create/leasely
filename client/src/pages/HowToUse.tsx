@@ -18,7 +18,7 @@ type Step = {
 };
 
 /**
- * "How to use Leasely" — the plain-language setup walkthrough for new users.
+ * "How to use Keycove" — the plain-language setup walkthrough for new users.
  * Ordered the way a landlord actually onboards: go Pro → get paid → add
  * properties → brand → screen → lease → collect → maintain. Each step links
  * straight to the page that does the thing.
@@ -28,7 +28,7 @@ const STEPS: Step[] = [
     n: 1,
     icon: Rocket,
     title: "Get set up on Pro",
-    body: "A one-time $75 setup + $29/month turns Leasely into your full landlord operating system — and includes a free professional website, custom logo, and Year 1 domain built by Certify Business Pro.",
+    body: "A one-time $75 setup + $29/month turns Keycove into your full landlord operating system — and includes a free professional website, custom logo, and Year 1 domain built by Certify Business Pro.",
     points: [
       "Unlimited listings on the marketplace",
       "Branded tenant portal at yourname.leasely.net",
@@ -40,7 +40,7 @@ const STEPS: Step[] = [
     n: 2,
     icon: Landmark,
     title: "Connect your bank (get paid)",
-    body: "Add your bank once and rent from every tenant deposits straight to you. Your bank details are stored securely at Stripe — never on Leasely. This is per-account: you only ever connect your own bank.",
+    body: "Add your bank once and rent from every tenant deposits straight to you. Your bank details are stored securely at Stripe — never on Keycove. This is per-account: you only ever connect your own bank.",
     points: [
       "Tenants pay free by ACH",
       "Instant payout to a debit card for a $1 flat fee, or free in 1–2 business days",
@@ -76,7 +76,7 @@ const STEPS: Step[] = [
     n: 5,
     icon: FileText,
     title: "Take applications & screen",
-    body: "Share your listing's public application link. Applicants apply online and Leasely's AI screening gives you a risk score with any flagged anomalies so you can decide with confidence.",
+    body: "Share your listing's public application link. Applicants apply online and Keycove's AI screening gives you a risk score with any flagged anomalies so you can decide with confidence.",
     points: [
       "Custom application templates per state",
       "AI risk score + flagged items",
@@ -132,17 +132,17 @@ export default function HowToUse() {
             <Sparkles className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
             <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Getting started</span>
           </div>
-          <h1 className="text-3xl font-black text-foreground tracking-tight">How to use Leasely</h1>
+          <h1 className="text-3xl font-black text-foreground tracking-tight">How to use Keycove</h1>
           <p className="text-muted-foreground mt-2 leading-relaxed">
             Everything you need to go from signing up to collecting rent — in order. Each step links straight to where you do it.
           </p>
         </div>
 
-        {/* What Leasely is */}
+        {/* What Keycove is */}
         <div className="mb-8 rounded-2xl border border-border bg-card p-5 sm:p-6">
-          <h2 className="font-bold text-foreground mb-2">What Leasely is</h2>
+          <h2 className="font-bold text-foreground mb-2">What Keycove is</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Leasely is an all‑in‑one operating system for rentals — list properties, screen applicants with AI,
+            Keycove is an all‑in‑one operating system for rentals — list properties, screen applicants with AI,
             e‑sign state‑specific leases, collect rent, and run maintenance in one place — plus a public marketplace
             where renters find and apply to your listings. It serves three roles:
           </p>
@@ -212,7 +212,7 @@ export default function HowToUse() {
             <div className="flex-1 min-w-0">
               <h2 className="font-bold text-foreground">Are you a real estate agent? Join the Creme Agent Network</h2>
               <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-                Leasely brings the lead — you bring the license and close the deal. Build a profile that shows up in the
+                Keycove brings the lead — you bring the license and close the deal. Build a profile that shows up in the
                 agent directory, receive buyer/seller/FSBO leads with notifications, and earn a referral fee on every
                 closed transaction. It's a separate track from the landlord tools above.
               </p>
@@ -221,7 +221,7 @@ export default function HowToUse() {
                   "Register your license + specialties, then get approved",
                   "Approved agents get unlimited free marketplace listings — no Pro needed",
                   "Leads land on your Agent Dashboard with an email + notification",
-                  "Work the lead; Leasely invoices the referral fee on close",
+                  "Work the lead; Keycove invoices the referral fee on close",
                 ].map((p) => (
                   <li key={p} className="flex items-start gap-2 text-sm text-foreground/80">
                     <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />

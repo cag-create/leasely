@@ -12,14 +12,14 @@ interface RentSuggestionWidgetProps {
 }
 
 /**
- * "Leasely Market Intelligence" — surfaces a suggested rent range for the
+ * "Keycove Market Intelligence" — surfaces a suggested rent range for the
  * given zip + bedroom count using the automated rent benchmarks. Pulls
  * from the rentIntelligence.getBenchmark tRPC query, which is backed by
  * Census ACS + HUD FMR data refreshed monthly in the background.
  *
  * Branding rule (per project memory): never show "HUD" / "ACS" / "Census"
  * as the source name in user-facing copy. Always presents as a single
- * Leasely-branded data product.
+ * Keycove-branded data product.
  */
 export default function RentSuggestionWidget({
   zip,
@@ -116,7 +116,7 @@ export default function RentSuggestionWidget({
             <Sparkles className="h-4 w-4 text-[#3A2410]" />
           </div>
           <div>
-            <div className="text-xs font-bold text-gray-900">Leasely Market Intelligence</div>
+            <div className="text-xs font-bold text-gray-900">Keycove Market Intelligence</div>
             <div className="text-[10px] text-gray-500">Suggested rent for {bedrooms || "?"}BR in {cleanZip}</div>
           </div>
         </div>

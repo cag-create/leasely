@@ -63,7 +63,7 @@ export default function AffiliateDashboard() {
           <CardContent className="pt-8 pb-8 text-center">
             <DollarSign className="w-12 h-12 text-teal-400 mx-auto mb-4" />
             <h2 className="text-xl font-bold mb-2">Join the Affiliate Program</h2>
-            <p className="text-slate-400 mb-6">Earn $50 for every landlord you refer to Leasely Pro.</p>
+            <p className="text-slate-400 mb-6">Earn $50 for every landlord you refer to Keycove Pro.</p>
             <Button
               onClick={() => navigate("/affiliate/signup")}
               className="bg-teal-500 hover:bg-teal-400 text-white"
@@ -100,7 +100,7 @@ export default function AffiliateDashboard() {
       {/* Header */}
       <div className="border-b border-white/10 bg-white/5 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <a href="/" className="text-xl font-bold text-white">Leasely</a>
+          <a href="/" className="text-xl font-bold text-white">Keycove</a>
           <div className="flex items-center gap-4">
             {statusBadge}
             <a href="/dashboard" className="text-sm text-slate-400 hover:text-white transition-colors">
@@ -359,7 +359,7 @@ export default function AffiliateDashboard() {
 
         {/* Tax note */}
         <p className="mt-6 text-xs text-slate-600 text-center">
-          Earnings of $600 or more in a calendar year require a 1099-NEC. Leasely will issue this by January 31 of the following year.
+          Earnings of $600 or more in a calendar year require a 1099-NEC. Keycove will issue this by January 31 of the following year.
           Questions? Contact support@leasely.net
         </p>
       </div>

@@ -1,7 +1,7 @@
 /**
  * CBP Stripe Webhook Handler
  *
- * CBP runs its own Stripe account (separate from Leasely's). When a Leasely
+ * CBP runs its own Stripe account (separate from Keycove's). When a Keycove
  * Pro user redeems their bundled website via CBP's Payment Link, CBP's
  * Stripe fires `checkout.session.completed` to /api/cbp/stripe/webhook. We
  * use that as the durable signal to mark the user's Pro code redeemed —
@@ -12,7 +12,7 @@
  * Identification path: the promo code we mint is `LEASELY-USER<id>` and
  * also carries `metadata.leaselyUserId`. The Checkout Session includes the
  * applied discount; we retrieve the promotion_code from CBP's Stripe to
- * read that metadata and resolve back to the Leasely user.
+ * read that metadata and resolve back to the Keycove user.
  */
 import type { Express, Request, Response } from "express";
 import Stripe from "stripe";
@@ -86,7 +86,7 @@ export function registerCbpStripeWebhook(app: Express) {
 }
 
 async function handleCbpCheckoutCompleted(cbp: Stripe, session: Stripe.Checkout.Session) {
-  // Resolve the Leasely user from the applied promotion code's metadata.
+  // Resolve the Keycove user from the applied promotion code's metadata.
   // The Checkout Session puts the applied discount in `total_details.breakdown.discounts`
   // OR `session.discounts` depending on Stripe API version — try both.
   let promotionCodeId: string | null = null;
@@ -127,7 +127,7 @@ async function handleCbpCheckoutCompleted(cbp: Stripe, session: Stripe.Checkout.
   }
 
   if (!leaselyUserId) {
-    console.warn(`[CBP Webhook] checkout.session.completed: could not resolve Leasely user (session=${session.id})`);
+    console.warn(`[CBP Webhook] checkout.session.completed: could not resolve Keycove user (session=${session.id})`);
     return;
   }
 

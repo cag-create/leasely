@@ -301,7 +301,7 @@ function ReceivedApplications({
       landlordCompany: me?.brandName ?? "",
       // Default to the rails most landlords actually accept. Pros can toggle
       // off anything they don't use (e.g. drop Cash App or cash) per lease.
-      paymentMethods: ["Leasely tenant portal", "ACH / direct deposit", "Check", "Money order"],
+      paymentMethods: ["Keycove tenant portal", "ACH / direct deposit", "Check", "Money order"],
       paymentMethodsNotes: "",
     });
   };
@@ -965,7 +965,7 @@ function ReceivedApplications({
               <Label className="text-xs font-semibold">Accepted rent payment methods</Label>
               <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 rounded-md border border-input bg-background p-3">
                 {[
-                  "Leasely tenant portal",
+                  "Keycove tenant portal",
                   "ACH / direct deposit",
                   "Zelle",
                   "Venmo",
@@ -1157,7 +1157,7 @@ function AIScreeningPanel({ app }: { app: any }) {
       )}
 
       <p className="text-[11px] text-muted-foreground italic">
-        Score and issues are informational only. Leasely is not a consumer reporting agency. Run a TransUnion-backed
+        Score and issues are informational only. Keycove is not a consumer reporting agency. Run a TransUnion-backed
         background check via ApplyConnect before relying on this for an adverse action decision.
       </p>
     </div>
@@ -1382,7 +1382,7 @@ function AiScreeningLlmView({ llm, screenedAt }: { llm: any; screenedAt?: string
       )}
 
       <p className="text-[11px] text-muted-foreground italic">
-        AI screening is informational. Leasely is not a consumer reporting agency. Run a TransUnion-backed background
+        AI screening is informational. Keycove is not a consumer reporting agency. Run a TransUnion-backed background
         check via ApplyConnect before relying on this for any adverse action decision. Fair-housing protected
         categories must never influence the decision.
       </p>

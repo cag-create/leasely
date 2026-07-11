@@ -84,11 +84,11 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
                 <Sparkles className="h-3 w-3" />
                 Pro Feature
               </div>
-              <h1 className="text-2xl font-bold text-foreground">Upgrade to Leasely Pro</h1>
+              <h1 className="text-2xl font-bold text-foreground">Upgrade to Keycove Pro</h1>
               <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
                 {featureName === "this feature"
-                  ? "This feature is available exclusively to Leasely Pro subscribers."
-                  : `${featureName} is available exclusively to Leasely Pro subscribers.`}{" "}
+                  ? "This feature is available exclusively to Keycove Pro subscribers."
+                  : `${featureName} is available exclusively to Keycove Pro subscribers.`}{" "}
                 Unlock your full property management portal for $75 one-time setup + $29/month.
               </p>
             </div>
@@ -121,7 +121,7 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
                 className="mt-0.5 w-4 h-4 rounded border-border accent-indigo-600 cursor-pointer flex-shrink-0"
               />
               <span className="text-xs text-muted-foreground leading-relaxed">
-                I understand: the <strong className="text-foreground">$75 setup fee is non-refundable once design work begins</strong> (work starts immediately after payment, with delivery in 24–48 hours). The $29/mo Pro subscription is cancellable anytime — no contracts, no pro-rated refunds. I keep my website, logo, and domain regardless of subscription status. I agree to Leasely's{" "}
+                I understand: the <strong className="text-foreground">$75 setup fee is non-refundable once design work begins</strong> (work starts immediately after payment, with delivery in 24–48 hours). The $29/mo Pro subscription is cancellable anytime — no contracts, no pro-rated refunds. I keep my website, logo, and domain regardless of subscription status. I agree to Keycove's{" "}
                 <Link href="/terms" className="text-indigo-600 hover:underline" target="_blank">Terms of Service</Link>{" "}and{" "}
                 <Link href="/privacy" className="text-indigo-600 hover:underline" target="_blank">Privacy Policy</Link>.
               </span>

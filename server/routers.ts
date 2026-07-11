@@ -199,9 +199,9 @@ function getStripe() {
   return new Stripe(key, { apiVersion: "2025-01-27.acacia" as any });
 }
 
-// CBP's Stripe account (separate from Leasely's). Used to mint the per-user
+// CBP's Stripe account (separate from Keycove's). Used to mint the per-user
 // 100%-off promotion code that redeems CBP's website-bundle Payment Link as
-// the bundled perk paid for by Leasely's $75 setup fee.
+// the bundled perk paid for by Keycove's $75 setup fee.
 function getCbpStripe() {
   const key = process.env.CBP_STRIPE_SECRET_KEY;
   if (!key) return null;
@@ -272,7 +272,7 @@ async function getOrCreateCbpWebsiteBundleCoupon(cbp: Stripe): Promise<string | 
     percent_off: 100,
     duration: "once",
     applies_to: { products: [productId] },
-    name: "Leasely Pro — bundled website",
+    name: "Keycove Pro — bundled website",
     metadata: { leaselyCbpWebsiteBundle: "true" },
   });
   _cbpWebsiteBundleCouponId = coupon.id;
@@ -786,7 +786,7 @@ export const appRouter = router({
     /**
      * Mint (or return existing) per-user 100%-off promotion code that
      * redeems CBP's website-bundle Payment Link as the bundled perk paid
-     * for by Leasely's $75 setup fee. Idempotent: re-clicking Redeem
+     * for by Keycove's $75 setup fee. Idempotent: re-clicking Redeem
      * returns the same code so we don't pile up unused promo codes.
      */
     issueCbpWebsiteCoupon: protectedProcedure.mutation(async ({ ctx }) => {
@@ -1557,7 +1557,7 @@ export const appRouter = router({
 
         const amountCents = Math.round(input.amountDollars * 100);
         const desc = input.description ?? `Rent payment — ${listing.title}`;
-        // Pro landlords: 0% platform fee. Free tier: 1% Leasely platform fee.
+        // Pro landlords: 0% platform fee. Free tier: 1% Keycove platform fee.
         const isProLandlord = sub.tier === "paid";
         const platformFeeCents = isProLandlord ? 0 : Math.round(amountCents * 0.01);
 
@@ -1665,7 +1665,7 @@ export const appRouter = router({
         const property = await getCrmPropertyById(tenant.crmPropertyId, tenant.userId);
         const amountCents = Math.round(input.amountDollars * 100);
         const desc = input.description ?? `Rent payment — ${property?.address ?? "your rental"}`;
-        // Pro landlords: 0% platform fee. Free tier: 1% Leasely platform fee.
+        // Pro landlords: 0% platform fee. Free tier: 1% Keycove platform fee.
         const isProLandlord = sub.tier === "paid";
         const platformFeeCents = isProLandlord ? 0 : Math.round(amountCents * 0.01);
 
@@ -1736,7 +1736,7 @@ export const appRouter = router({
         if (!sub.stripeConnectAccountId) throw new TRPCError({ code: "BAD_REQUEST", message: "Stripe Connect not set up. Please connect your bank account first." });
         const stripe = getStripe();
         if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured" });
-        // Pro instant payout fee: $1.00 flat (Leasely fee — Pro subscriber benefit)
+        // Pro instant payout fee: $1.00 flat (Keycove fee — Pro subscriber benefit)
         const INSTANT_PAYOUT_FLAT_FEE = 100; // $1.00 in cents
         try {
           const balance = await stripe.balance.retrieve({ stripeAccount: sub.stripeConnectAccountId });
@@ -1744,7 +1744,7 @@ export const appRouter = router({
           if (!available || available.amount < 200) throw new TRPCError({ code: "BAD_REQUEST", message: "No available balance to pay out" });
           const grossAmount = input.amountCents ?? available.amount;
           if (grossAmount > available.amount) throw new TRPCError({ code: "BAD_REQUEST", message: "Requested amount exceeds available balance" });
-          // Deduct $1.00 flat Leasely instant payout fee (Pro subscriber benefit)
+          // Deduct $1.00 flat Keycove instant payout fee (Pro subscriber benefit)
           const leaselyFee = INSTANT_PAYOUT_FLAT_FEE;
           const netPayoutAmount = grossAmount - leaselyFee;
           if (netPayoutAmount < 100) throw new TRPCError({ code: "BAD_REQUEST", message: "Amount too small after $1.00 instant payout fee" });
@@ -1786,7 +1786,7 @@ export const appRouter = router({
 
     /**
      * Masked details of the bank account the landlord connected via Stripe
-     * Express onboarding. Bank numbers live at Stripe (never in Leasely's DB);
+     * Express onboarding. Bank numbers live at Stripe (never in Keycove's DB);
      * this returns only display-safe fields (bank name + last4) so the landlord
      * can confirm which account their rent is deposited into.
      */
@@ -2139,15 +2139,15 @@ export const appRouter = router({
 
         sendEmail({
           to: landlordForOutreach.email,
-          subject: `[Leasely] ${foundCount > 0 ? `${foundCount} Local ${input.trade}s Found` : "Vendor Outreach Drafted"} — ${input.city}, ${input.state}`,
+          subject: `[Keycove] ${foundCount > 0 ? `${foundCount} Local ${input.trade}s Found` : "Vendor Outreach Drafted"} — ${input.city}, ${input.state}`,
           html: `<div style="font-family:sans-serif;max-width:640px;margin:0 auto;padding:24px">
             <h2 style="color:#1B2B5E">Vendor Research Complete</h2>
-            <p>Leasely searched for a <strong>${input.trade}</strong> near <strong>${input.city}, ${input.state}</strong>.</p>
+            <p>Keycove searched for a <strong>${input.trade}</strong> near <strong>${input.city}, ${input.state}</strong>.</p>
             ${vendorRows}
             <h3 style="color:#1B2B5E;margin-top:24px">AI-Drafted Outreach Email</h3>
             <p style="color:#6b7280;font-size:13px">Copy and send this to any of the vendors above:</p>
             <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;white-space:pre-wrap;font-size:14px">${outreachEmail}</div>
-            <p style="color:#9ca3af;font-size:11px;margin-top:16px">Powered by Leasely · Google Places</p>
+            <p style="color:#9ca3af;font-size:11px;margin-top:16px">Powered by Keycove · Google Places</p>
           </div>`,
         }).catch(() => {});
       }
@@ -2155,7 +2155,7 @@ export const appRouter = router({
       return { outreachEmail, vendors: foundVendors };
     }),
 
-    // ── Tenant submits a maintenance request (no Leasely login needed) ────────
+    // ── Tenant submits a maintenance request (no Keycove login needed) ────────
     submitTenant: publicProcedure.input(z.object({
       tenantToken: z.string().min(1),
       title: z.string().min(1),
@@ -2424,7 +2424,7 @@ export const appRouter = router({
 
     // ── Vendor: upload a photo or invoice file (public, gated by dispatchId) ─
     // The dispatch URL is the only auth surface for the contractor — they
-    // don't have a Leasely account. We require a valid dispatchId so random
+    // don't have a Keycove account. We require a valid dispatchId so random
     // strangers can't burn through Cloudinary storage.
     vendorUpload: publicProcedure
       .input(z.object({
@@ -2491,7 +2491,7 @@ export const appRouter = router({
       }),
 
     // ── Vendor responds with availability + quote ─────────────────────────────
-    // Public — vendor doesn't need a Leasely account
+    // Public — vendor doesn't need a Keycove account
     vendorRespond: publicProcedure.input(z.object({
       dispatchId: z.number(),
       action: z.enum(["accept", "decline"]),
@@ -3182,7 +3182,7 @@ export const appRouter = router({
         moveInDate: p.start, monthlyRent: p.rent, securityDeposit: p.deposit, status: "active" as any,
       } as any);
       const hasEnd = !!(p.end && p.end.trim());
-      const signedNote = `Signed by ${input.signatureName} on ${new Date().toISOString().split("T")[0]}.` + (p.docUrl ? ` Lease document: ${p.docUrl}` : " Structured Leasely agreement.");
+      const signedNote = `Signed by ${input.signatureName} on ${new Date().toISOString().split("T")[0]}.` + (p.docUrl ? ` Lease document: ${p.docUrl}` : " Structured Keycove agreement.");
       await createCrmLease({
         userId: p.lid, crmPropertyId: propertyId, crmTenantId: tenantId,
         startDate: p.start, endDate: hasEnd ? p.end : p.start,
@@ -3256,7 +3256,7 @@ export const appRouter = router({
     }),
 
     /**
-     * Email the tenant their secure rent link from admin@leasely.net (Leasely-
+     * Email the tenant their secure rent link from admin@leasely.net (Keycove-
      * sent, not a mailto draft). They can pay this month and set up autopay on
      * that page so rent auto-drafts monthly.
      */
@@ -3276,7 +3276,7 @@ export const appRouter = router({
       const first = tenant.firstName || "there";
       const html = `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
         <h2 style="color:#1B2B5E">Pay your rent online</h2>
-        <p>Hi ${first}, ${brand} invites you to pay rent securely through Leasely.</p>
+        <p>Hi ${first}, ${brand} invites you to pay rent securely through Keycove.</p>
         <p style="margin:20px 0"><a href="${url}" style="background:#4F46E5;color:#fff;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:10px;display:inline-block">Pay rent &amp; set up autopay →</a></p>
         <p style="color:#6b7280;font-size:13px">On that page you can pay this month by bank (free) or card, and turn on <strong>autopay</strong> so rent drafts automatically each month — no more reminders.</p>
         <p style="color:#9ca3af;font-size:12px">Link is private to you. If you didn't expect this, ignore it.</p>
@@ -3718,7 +3718,7 @@ export const appRouter = router({
         landlordCompany: z.string().optional(),
         // Accepted rent-payment rails. Surfaced as checkboxes on the modal so
         // the lease document explicitly discloses what the landlord accepts
-        // (Leasely portal, ACH, Zelle, Venmo, Cash App, check, money order,
+        // (Keycove portal, ACH, Zelle, Venmo, Cash App, check, money order,
         // cash). paymentMethodsNotes is free-text for portal URLs or carve-outs.
         paymentMethods: z.array(z.string()).optional(),
         paymentMethodsNotes: z.string().optional(),
@@ -3754,9 +3754,9 @@ export const appRouter = router({
                 </a>
               </p>
               <p style="color:#6b7280;font-size:13px;margin-top:20px">
-                Leasely does not make rental decisions — those are made by the property owner / landlord. If you have questions about the specific reason, please contact them directly.
+                Keycove does not make rental decisions — those are made by the property owner / landlord. If you have questions about the specific reason, please contact them directly.
               </p>
-              <p style="color:#9ca3af;font-size:12px;margin-top:16px">Powered by Leasely</p>
+              <p style="color:#9ca3af;font-size:12px;margin-top:16px">Powered by Keycove</p>
             </div>`,
           }).catch(() => {});
         }
@@ -3809,7 +3809,7 @@ export const appRouter = router({
           // cover what most landlords actually accept; the landlord can edit
           // to drop or add rails per-lease.
           const selectedMethods = input.leaseDetails?.paymentMethods?.filter(Boolean) ?? [
-            "Leasely tenant portal",
+            "Keycove tenant portal",
             "ACH / direct deposit",
             "Check",
             "Money order",
@@ -3960,7 +3960,7 @@ export const appRouter = router({
                     View Lease →
                   </a>
                 </p>
-                <p style="color:#9ca3af;font-size:12px;margin-top:16px">Powered by Leasely</p>
+                <p style="color:#9ca3af;font-size:12px;margin-top:16px">Powered by Keycove</p>
               </div>`,
             }).catch(() => {});
           }
@@ -4278,7 +4278,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
     }),
   }),
 
-  // ─── Admin (Leasely superadmin only) ───────────────────────────────────────
+  // ─── Admin (Keycove superadmin only) ───────────────────────────────────────
   admin: router({
     /**
      * Smoke test: fire a $1 PaymentIntent against a Connect account using
@@ -4310,7 +4310,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
           confirm: true,
           application_fee_amount: input.platformFeeCents > 0 ? input.platformFeeCents : undefined,
           transfer_data: { destination: input.connectAccountId },
-          description: `Leasely smoke test — admin ${ctx.user.id}`,
+          description: `Keycove smoke test — admin ${ctx.user.id}`,
           metadata: {
             leaselySmokeTest: "true",
             firedBy: String(ctx.user.id),
@@ -4399,7 +4399,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
     })).mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
       const user = await getUserByEmail(input.email.trim());
-      if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "No Leasely account with that email. Ask them to sign up first, then grant Pro." });
+      if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "No Keycove account with that email. Ask them to sign up first, then grant Pro." });
       await upsertUserSubscription({ userId: user.id, tier: "paid", status: "active" });
       let proCode: string | null = null;
       try { proCode = (await getOrCreateProCode(user.id)).code; } catch { /* non-fatal */ }
@@ -4645,7 +4645,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         try {
           await sendEmail({
             to: adminEmail,
-            subject: `[Leasely] New affiliate W-9 — ${input.legalName}`,
+            subject: `[Keycove] New affiliate W-9 — ${input.legalName}`,
             html: w9SummaryHtml,
           });
         } catch (err) {
@@ -4658,7 +4658,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         const refLink = `https://leasely.net/?ref=${aff.referralCode}`;
         const affiliateHtml = `
           <h2 style="font-family:system-ui">You're in — your affiliate account is active 🎉</h2>
-          <p>Thanks for completing your W-9, ${input.legalName.split(" ")[0]}. Your affiliate account is now active and you can start earning <strong>$50 per landlord</strong> you refer to Leasely Pro.</p>
+          <p>Thanks for completing your W-9, ${input.legalName.split(" ")[0]}. Your affiliate account is now active and you can start earning <strong>$50 per landlord</strong> you refer to Keycove Pro.</p>
           <p><strong>Your referral link:</strong><br/>
           <a href="${refLink}" style="color:#00A87C">${refLink}</a></p>
           <p><strong>Your referral code:</strong> <code>${aff.referralCode}</code></p>
@@ -4674,7 +4674,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         try {
           await sendEmail({
             to: ctx.user.email,
-            subject: "Welcome to the Leasely Affiliate Program — your link is ready",
+            subject: "Welcome to the Keycove Affiliate Program — your link is ready",
             html: affiliateHtml,
           });
         } catch (err) {
@@ -5541,7 +5541,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
             <h2 style="color:#1B2B5E">Tenant Has Signed — Your Countersignature Is Needed</h2>
             <p><strong>${lease.tenantName}</strong> just signed the lease for <strong>${lease.propertyAddress}</strong>.</p>
             <p style="background:#eff6ff;border-left:4px solid #1B2B5E;padding:12px 14px;border-radius:6px">
-              <strong>Next step — your countersignature:</strong> Once you countersign, Leasely will automatically email the tenant a payment link for first month&apos;s rent${lease.securityDeposit ? " + security deposit" : ""}.
+              <strong>Next step — your countersignature:</strong> Once you countersign, Keycove will automatically email the tenant a payment link for first month&apos;s rent${lease.securityDeposit ? " + security deposit" : ""}.
               If you&apos;ve already collected payment off-platform, log it first and the tenant will instead receive their move-in / key-pickup instructions.
             </p>
             <p style="margin-top:16px"><a href="${APP_URL}/leases" style="background:#1B2B5E;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:700">Open Leases &amp; Countersign</a></p>
@@ -5912,7 +5912,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
      * Subscription billing on rentDueDay each month.
      *
      * The tenant goes through this once at signing. Pro accounts collect
-     * Leasely's platform fee on each charge.
+     * Keycove's platform fee on each charge.
      */
     createAutopaySetup: publicProcedure.input(z.object({
       leaseId: z.number(),
@@ -6495,7 +6495,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
      * recurring rent autopay AND collects the security deposit + first
      * month's rent on the first invoice.
      *
-     * Leasely is recurring-only — there are no one-time tenant payments.
+     * Keycove is recurring-only — there are no one-time tenant payments.
      * The Subscription bills monthly rent on the rent_due_day each cycle.
      * The webhook records each `invoice.paid` event into rent_payments.
      *
@@ -6529,7 +6529,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         const depositCents = lease.securityDeposit ?? 0;
         if (monthlyRentCents <= 0) throw new TRPCError({ code: "BAD_REQUEST", message: "Monthly rent must be set on the lease." });
 
-        // Pro landlords: 0% platform fee. Free tier: 1% Leasely platform fee.
+        // Pro landlords: 0% platform fee. Free tier: 1% Keycove platform fee.
         const isProLandlord = sub.tier === "paid";
         const applicationFeePercent = isProLandlord ? 0 : 1;
 
@@ -6717,7 +6717,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       const sub = await getUserSubscription(ctx.user.id);
       if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
 
-      // Check if manager has a Leasely account
+      // Check if manager has a Keycove account
       const managerUser = await (async () => {
         const db = await getDb();
         if (!db) return undefined;
@@ -6728,7 +6728,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       })();
 
       if (!managerUser) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "No Leasely account found for that email. The property manager must sign up first." });
+        throw new TRPCError({ code: "NOT_FOUND", message: "No Keycove account found for that email. The property manager must sign up first." });
       }
 
       const id = await createPropertyManagerAccess({
@@ -6752,10 +6752,10 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
       sendEmail({
         to: input.inviteEmail,
-        subject: `You've been added as a Property Manager on Leasely`,
+        subject: `You've been added as a Property Manager on Keycove`,
         html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
           <h2 style="color:#1B2B5E">Property Manager Access Granted</h2>
-          <p><strong>${landlord?.name ?? "A landlord"}</strong> has given you property manager access on Leasely.</p>
+          <p><strong>${landlord?.name ?? "A landlord"}</strong> has given you property manager access on Keycove.</p>
           <p>You can now view and manage their properties based on the permissions assigned.</p>
           <p style="margin-top:16px"><a href="${APP_URL}/manage" style="background:#1B2B5E;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none">View Portal</a></p>
         </div>`,
@@ -6909,7 +6909,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
   // markers ("Imported from prior system") so they immediately appear on the
   // Leases page and Accounting can credit ongoing rent. A tenant portal
   // account is auto-provisioned per row so the tenant can sign in and start
-  // paying through Leasely on the next cycle.
+  // paying through Keycove on the next cycle.
   // ────────────────────────────────────────────────────────────────────────────
   import: router({
     bulkLeases: protectedProcedure
@@ -6959,7 +6959,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
             out.leaseIds.push(leaseId);
 
             // Auto-provision (or reuse) tenant portal account so they can
-            // pay rent through Leasely going forward.
+            // pay rent through Keycove going forward.
             try {
               const existing = await getTenantByEmail(r.tenantEmail.toLowerCase());
               if (!existing) {

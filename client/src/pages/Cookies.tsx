@@ -4,7 +4,7 @@ export default function Cookies() {
   return (
     <LegalLayout title="Cookie Policy" effectiveDate="April 25, 2026">
       <p>
-        This Cookie Policy explains how Leasely, Inc. uses cookies and similar tracking technologies on our website and platform. It supplements our <a href="/legal/privacy" className="text-[#4F46E5] hover:underline">Privacy Policy</a>.
+        This Cookie Policy explains how Keycove, Inc. uses cookies and similar tracking technologies on our website and platform. It supplements our <a href="/legal/privacy" className="text-[#4F46E5] hover:underline">Privacy Policy</a>.
       </p>
 
       <LegalSection title="What Are Cookies?">
@@ -15,7 +15,7 @@ export default function Cookies() {
         <p><strong className="text-white">Strictly necessary cookies</strong> — required for the Services to function (authentication session cookie, CSRF protection, load balancing). These cannot be disabled and do not require consent.</p>
         <p><strong className="text-white">Functional cookies</strong> — remember preferences such as theme (dark/light mode), saved listings, and onboarding state.</p>
         <p><strong className="text-white">Analytics cookies</strong> — help us understand how the Services are used so we can improve performance and reliability. Aggregated and pseudonymous.</p>
-        <p><strong className="text-white">Marketing / advertising cookies</strong> — Leasely does not currently use third-party advertising cookies for cross-context behavioral advertising. If this changes, we will update this Policy and obtain consent where required.</p>
+        <p><strong className="text-white">Marketing / advertising cookies</strong> — Keycove does not currently use third-party advertising cookies for cross-context behavioral advertising. If this changes, we will update this Policy and obtain consent where required.</p>
       </LegalSection>
 
       <LegalSection title="Specific Cookies & Storage">
@@ -35,7 +35,7 @@ export default function Cookies() {
       </LegalSection>
 
       <LegalSection title="Do Not Track">
-        <p>Because there is no industry-standard interpretation of Do Not Track signals, Leasely does not currently respond to DNT signals. We do honor the Global Privacy Control signal as described above.</p>
+        <p>Because there is no industry-standard interpretation of Do Not Track signals, Keycove does not currently respond to DNT signals. We do honor the Global Privacy Control signal as described above.</p>
       </LegalSection>
 
       <LegalSection title="Updates">
