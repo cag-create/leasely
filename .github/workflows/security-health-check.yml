@@ -18,7 +18,7 @@ jobs:
       - name: Probe /api/health/security
         run: |
           set -e
-          URL="${SECURITY_HEALTH_URL:-https://leasely.net/api/health/security}"
+          URL="${SECURITY_HEALTH_URL:-https://keycove.net/api/health/security}"
           echo "Hitting $URL"
           # Capture body and status separately
           BODY=$(mktemp)

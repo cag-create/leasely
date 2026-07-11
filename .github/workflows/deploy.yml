@@ -48,8 +48,8 @@ jobs:
           STATUS=0
           while [ $SECONDS -lt $DEADLINE ]; do
             ATTEMPT=$((ATTEMPT + 1))
-            BODY=$(curl -s --max-time 10 https://leasely.net/api/health 2>/dev/null || echo "")
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://leasely.net/api/health || echo "000")
+            BODY=$(curl -s --max-time 10 https://keycove.net/api/health 2>/dev/null || echo "")
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://keycove.net/api/health || echo "000")
             LIVE_SHA=$(echo "$BODY" | grep -o '"commit":"[^"]*"' | head -1 | cut -d'"' -f4)
             echo "Attempt $ATTEMPT (t=${SECONDS}s): HTTP $STATUS, live commit=${LIVE_SHA:-(missing)}"
             if [ "$STATUS" = "200" ] && [ -n "$LIVE_SHA" ] && [ "$LIVE_SHA" = "$EXPECTED_SHA" ]; then
@@ -66,7 +66,7 @@ jobs:
 
       - name: Verify security config
         run: |
-          RESULT=$(curl -s https://leasely.net/api/health/security)
+          RESULT=$(curl -s https://keycove.net/api/health/security)
           echo "$RESULT" | python3 -m json.tool 2>/dev/null || echo "$RESULT"
           STATUS=$(echo "$RESULT" | grep -o '"status":"[^"]*"' | head -1)
           echo "Security status: $STATUS"
