@@ -14,9 +14,10 @@ export default function AgentDirectory() {
   const { data: me } = trpc.auth.me.useQuery(undefined, { retry: false });
   const isAdmin = (me as any)?.role === "admin";
 
+  // Area-only search — match the service area (city/state), not the agent's name,
+  // so searching a city doesn't surface people who happen to share that name.
   const filtered = (agents ?? []).filter(a =>
     !search ||
-    a.name?.toLowerCase().includes(search.toLowerCase()) ||
     (a.serviceAreas as string[])?.some(area =>
       area.toLowerCase().includes(search.toLowerCase())
     )
@@ -56,7 +57,7 @@ export default function AgentDirectory() {
           <div className="relative max-w-lg mx-auto mt-6">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Search by name or area..."
+              placeholder="Search by city or state..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="pl-10 h-12 bg-white text-gray-900 border-0 rounded-xl text-base"

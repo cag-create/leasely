@@ -1496,7 +1496,9 @@ export async function getApprovedCremeAgents(opts?: { search?: string; limit?: n
   if (!db) return [];
   const conds: any[] = [eq(cremeAgents.status, "approved")];
   const s = opts?.search?.trim();
-  if (s) conds.push(or(like(users.name, `%${s}%`), like(cremeAgents.serviceAreas, `%${s}%`)));
+  // Area-only search: match the service area (city/state), NOT the agent's name —
+  // otherwise a city like "Charlotte" also surfaces people *named* Charlotte.
+  if (s) conds.push(like(cremeAgents.serviceAreas, `%${s}%`));
   const rows = await db.select({
     id: cremeAgents.id, userId: cremeAgents.userId, licenseNumber: cremeAgents.licenseNumber,
     bio: cremeAgents.bio, phone: cremeAgents.phone, specialties: cremeAgents.specialties,
