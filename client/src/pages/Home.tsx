@@ -17,6 +17,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
 import { LOGO_URL } from "@/lib/brand";
+import Navbar from "@/components/Navbar";
 
 // Scroll reveal — adds `.animate-fade-in-up` when the section enters the viewport.
 // Used by `reveal-on-scroll` wrappers so blocks slide+fade up on entry.
@@ -156,11 +157,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navbar />
 
       {/* ═══════════════════════════════════════════════════════
           HERO
           ═══════════════════════════════════════════════════════ */}
-      <section className="hero-bg min-h-[92vh] flex items-center relative overflow-hidden">
+      <section className="hero-bg flex items-center relative overflow-hidden">
         <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] rounded-full bg-[#4F46E5]/8 blur-[120px] pointer-events-none" />
         <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] rounded-full bg-[#4F46E5]/10 blur-[100px] pointer-events-none" />
 
