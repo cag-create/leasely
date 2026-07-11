@@ -290,7 +290,7 @@ function App() {
           <Toaster position="top-right" />
           {portalSub ? (
             <Suspense fallback={<PageLoader />}>
-              <PortalPage subdomainOverride={portalSub} />
+              <PortalPage {...({ subdomainOverride: portalSub } as any)} />
             </Suspense>
           ) : (
             <Router />
