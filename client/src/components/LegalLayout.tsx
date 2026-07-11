@@ -47,8 +47,8 @@ export default function LegalLayout({ title, effectiveDate, children }: LegalLay
             ))}
           </nav>
           <div className="mt-6 pt-6 border-t border-white/8 text-xs text-white/40 space-y-1">
-            <p>Keycove, Inc.</p>
-            <p>support@leasely.net</p>
+            <p>Keycove — operated by Leasely LLC</p>
+            <p>support@keycove.net</p>
           </div>
         </aside>
 
@@ -61,7 +61,7 @@ export default function LegalLayout({ title, effectiveDate, children }: LegalLay
           </div>
           <div className="mt-12 pt-6 border-t border-white/8 text-xs text-white/40">
             <p>This document is provided for informational purposes and does not constitute legal advice. Consult a qualified attorney for guidance specific to your situation.</p>
-            <p className="mt-2">Questions: <a href="mailto:support@leasely.net" className="text-[#4F46E5] hover:underline">support@leasely.net</a></p>
+            <p className="mt-2">Questions: <a href="mailto:support@keycove.net" className="text-[#4F46E5] hover:underline">support@keycove.net</a></p>
           </div>
         </main>
       </div>

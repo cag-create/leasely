@@ -289,7 +289,7 @@ export default function Support() {
                   </div>
                   <div>
                     <div className="font-bold text-sm text-gray-900">Email Support</div>
-                    <div className="text-xs text-gray-500 mt-0.5">support@leasely.net</div>
+                    <div className="text-xs text-gray-500 mt-0.5">support@keycove.net</div>
                   </div>
                 </div>
                 {isPro && (

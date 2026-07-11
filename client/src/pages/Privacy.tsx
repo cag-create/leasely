@@ -4,7 +4,7 @@ export default function Privacy() {
   return (
     <LegalLayout title="Privacy Policy" effectiveDate="April 25, 2026">
       <p>
-        This Privacy Policy explains how Keycove, Inc. ("Keycove," "we," "us," or "our") collects, uses, shares, and protects information when you use our property management platform, marketing website, mobile experiences, and related services (collectively, the "Services").
+        This Privacy Policy explains how Leasely LLC (dba Keycove) ("Keycove," "we," "us," or "our") collects, uses, shares, and protects information when you use our property management platform, marketing website, mobile experiences, and related services (collectively, the "Services").
       </p>
       <p>
         By using the Services, you agree to the practices described here. If you do not agree, please do not use the Services.
@@ -53,7 +53,7 @@ export default function Privacy() {
       </LegalSection>
 
       <LegalSection title="7. Your Rights">
-        <p>Depending on your location, you may have the right to access, correct, port, or delete your personal information, restrict or object to certain processing, and withdraw consent. California residents have additional rights described in our <a href="/legal/ccpa" className="text-[#4F46E5] hover:underline">CCPA Notice</a>. EEA / UK residents have rights under GDPR and UK GDPR. To exercise rights, email <a href="mailto:support@leasely.net" className="text-[#4F46E5] hover:underline">support@leasely.net</a>.</p>
+        <p>Depending on your location, you may have the right to access, correct, port, or delete your personal information, restrict or object to certain processing, and withdraw consent. California residents have additional rights described in our <a href="/legal/ccpa" className="text-[#4F46E5] hover:underline">CCPA Notice</a>. EEA / UK residents have rights under GDPR and UK GDPR. To exercise rights, email <a href="mailto:support@keycove.net" className="text-[#4F46E5] hover:underline">support@keycove.net</a>.</p>
       </LegalSection>
 
       <LegalSection title="8. Children's Privacy">
@@ -73,7 +73,7 @@ export default function Privacy() {
       </LegalSection>
 
       <LegalSection title="12. Contact">
-        <p>Keycove, Inc. — Privacy contact: <a href="mailto:support@leasely.net" className="text-[#4F46E5] hover:underline">support@leasely.net</a></p>
+        <p>Leasely LLC (dba Keycove) — Privacy contact: <a href="mailto:support@keycove.net" className="text-[#4F46E5] hover:underline">support@keycove.net</a></p>
       </LegalSection>
     </LegalLayout>
   );

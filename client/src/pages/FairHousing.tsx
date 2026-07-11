@@ -37,7 +37,7 @@ export default function FairHousing() {
       </LegalSection>
 
       <LegalSection title="Reporting Discrimination on Keycove">
-        <p>If you believe a Keycove listing, application process, or user violates fair-housing law, please report it to <a href="mailto:support@leasely.net" className="text-[#4F46E5] hover:underline">support@leasely.net</a>. We review every report and may remove non-compliant content and suspend offending accounts.</p>
+        <p>If you believe a Keycove listing, application process, or user violates fair-housing law, please report it to <a href="mailto:support@keycove.net" className="text-[#4F46E5] hover:underline">support@keycove.net</a>. We review every report and may remove non-compliant content and suspend offending accounts.</p>
       </LegalSection>
 
       <LegalSection title="Equal Housing Opportunity">

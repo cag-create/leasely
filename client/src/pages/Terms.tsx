@@ -4,7 +4,7 @@ export default function Terms() {
   return (
     <LegalLayout title="Terms of Service" effectiveDate="April 25, 2026">
       <p>
-        These Terms of Service ("Terms") govern your access to and use of the Keycove platform, marketing site, and related services (the "Services") provided by Keycove, Inc. ("Keycove," "we," "us"). By creating an account, listing a property, submitting an application, signing a lease, or otherwise using the Services, you agree to these Terms.
+        These Terms of Service ("Terms") govern your access to and use of the Keycove platform, marketing site, and related services (the "Services") provided by Leasely LLC (dba Keycove) ("Keycove," "we," "us"). By creating an account, listing a property, submitting an application, signing a lease, or otherwise using the Services, you agree to these Terms.
       </p>
       <p>If you are using the Services on behalf of a business or other entity, you represent that you have authority to bind that entity to these Terms.</p>
 
@@ -13,7 +13,7 @@ export default function Terms() {
       </LegalSection>
 
       <LegalSection title="2. Accounts">
-        <p>You are responsible for maintaining the confidentiality of your account credentials and for all activity under your account. Notify us immediately of any unauthorized access at <a href="mailto:support@leasely.net" className="text-[#4F46E5] hover:underline">support@leasely.net</a>. Sharing accounts is prohibited.</p>
+        <p>You are responsible for maintaining the confidentiality of your account credentials and for all activity under your account. Notify us immediately of any unauthorized access at <a href="mailto:support@keycove.net" className="text-[#4F46E5] hover:underline">support@keycove.net</a>. Sharing accounts is prohibited.</p>
       </LegalSection>
 
       <LegalSection title="3. Subscription, Setup Fee, and Payments">
@@ -63,7 +63,7 @@ export default function Terms() {
       </LegalSection>
 
       <LegalSection title="13. Dispute Resolution; Arbitration; Class Waiver">
-        <p>Most concerns can be resolved by emailing <a href="mailto:support@leasely.net" className="text-[#4F46E5] hover:underline">support@leasely.net</a>. Any dispute arising out of or relating to these Terms or the Services shall be resolved by binding individual arbitration administered by the American Arbitration Association under its Consumer Arbitration Rules, in the state where Keycove maintains its principal place of business, except that either party may bring claims in small-claims court. <strong className="text-white uppercase tracking-wide">You and Keycove waive the right to participate in a class action or class arbitration.</strong> You may opt out of arbitration within 30 days of accepting these Terms by emailing the support address with the subject "Arbitration Opt-Out."</p>
+        <p>Most concerns can be resolved by emailing <a href="mailto:support@keycove.net" className="text-[#4F46E5] hover:underline">support@keycove.net</a>. Any dispute arising out of or relating to these Terms or the Services shall be resolved by binding individual arbitration administered by the American Arbitration Association under its Consumer Arbitration Rules, in the state where Keycove maintains its principal place of business, except that either party may bring claims in small-claims court. <strong className="text-white uppercase tracking-wide">You and Keycove waive the right to participate in a class action or class arbitration.</strong> You may opt out of arbitration within 30 days of accepting these Terms by emailing the support address with the subject "Arbitration Opt-Out."</p>
       </LegalSection>
 
       <LegalSection title="14. Governing Law">
@@ -75,7 +75,7 @@ export default function Terms() {
       </LegalSection>
 
       <LegalSection title="16. Contact">
-        <p>Keycove, Inc. — <a href="mailto:support@leasely.net" className="text-[#4F46E5] hover:underline">support@leasely.net</a></p>
+        <p>Leasely LLC (dba Keycove) — <a href="mailto:support@keycove.net" className="text-[#4F46E5] hover:underline">support@keycove.net</a></p>
       </LegalSection>
     </LegalLayout>
   );

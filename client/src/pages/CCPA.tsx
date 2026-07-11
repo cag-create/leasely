@@ -48,7 +48,7 @@ export default function CCPA() {
       </LegalSection>
 
       <LegalSection title="6. How to Exercise Your Rights">
-        <p>Email <a href="mailto:support@leasely.net" className="text-[#4F46E5] hover:underline">support@leasely.net</a> with the subject "Privacy Rights Request" and include the right(s) you wish to exercise, the email associated with your account, and your state of residence. We will verify your identity (typically by confirming control of the registered email and/or matching account details) before responding. We will respond within 45 days, with one 45-day extension where reasonably necessary.</p>
+        <p>Email <a href="mailto:support@keycove.net" className="text-[#4F46E5] hover:underline">support@keycove.net</a> with the subject "Privacy Rights Request" and include the right(s) you wish to exercise, the email associated with your account, and your state of residence. We will verify your identity (typically by confirming control of the registered email and/or matching account details) before responding. We will respond within 45 days, with one 45-day extension where reasonably necessary.</p>
         <p>You may also send a <strong className="text-white">Global Privacy Control (GPC)</strong> signal from your browser; we will treat a valid GPC signal as a request to opt out of any sale or sharing.</p>
       </LegalSection>
 
@@ -61,7 +61,7 @@ export default function CCPA() {
       </LegalSection>
 
       <LegalSection title="9. Contact">
-        <p>For privacy questions or to submit a rights request: <a href="mailto:support@leasely.net" className="text-[#4F46E5] hover:underline">support@leasely.net</a></p>
+        <p>For privacy questions or to submit a rights request: <a href="mailto:support@keycove.net" className="text-[#4F46E5] hover:underline">support@keycove.net</a></p>
       </LegalSection>
     </LegalLayout>
   );

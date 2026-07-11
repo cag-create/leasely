@@ -86,7 +86,7 @@ export default function AgentDirectory() {
                 <p className="text-lg font-semibold text-foreground">Background-checked agents · Available nationwide</p>
                 <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
                   Our agent network is actively growing. Check back soon or{" "}
-                  <a href="mailto:support@leasely.net" className="text-[#4F46E5] underline">contact us</a>{" "}
+                  <a href="mailto:support@keycove.net" className="text-[#4F46E5] underline">contact us</a>{" "}
                   to connect with a specialist in your area.
                 </p>
               </>

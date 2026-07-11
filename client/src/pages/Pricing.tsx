@@ -522,7 +522,7 @@ export default function Pricing() {
       {/* Footer note */}
       <div className="py-8 px-4 text-center bg-background border-t border-border">
         <p className="text-muted-foreground text-sm">
-          Questions? Email us at <a href="mailto:support@leasely.net" className="text-muted-foreground hover:underline font-medium">support@leasely.net</a>
+          Questions? Email us at <a href="mailto:support@keycove.net" className="text-muted-foreground hover:underline font-medium">support@keycove.net</a>
           {" · "}
           <Link href="/support" className="text-muted-foreground hover:underline font-medium">Support Center</Link>
           {" · "}

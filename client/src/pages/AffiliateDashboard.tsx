@@ -360,7 +360,7 @@ export default function AffiliateDashboard() {
         {/* Tax note */}
         <p className="mt-6 text-xs text-slate-600 text-center">
           Earnings of $600 or more in a calendar year require a 1099-NEC. Keycove will issue this by January 31 of the following year.
-          Questions? Contact support@leasely.net
+          Questions? Contact support@keycove.net
         </p>
       </div>
     </div>
