@@ -224,7 +224,7 @@ export default function AffiliateDashboard() {
                 </div>
                 <div className="bg-white/5 rounded-lg p-3 text-center">
                   <div className="text-xs text-slate-400 mb-1">1099-NEC Threshold</div>
-                  <div className="font-bold text-white text-lg">$600/year</div>
+                  <div className="font-bold text-white text-lg">$2,000/year</div>
                 </div>
               </div>
             </CardContent>
@@ -359,7 +359,7 @@ export default function AffiliateDashboard() {
 
         {/* Tax note */}
         <p className="mt-6 text-xs text-slate-600 text-center">
-          Earnings of $600 or more in a calendar year require a 1099-NEC. Keycove will issue this by January 31 of the following year.
+          Earnings of $2,000 or more in a calendar year require a 1099-NEC (the IRS threshold rose from $600 to $2,000 for 2026+). Keycove will issue this by January 31 of the following year.
           Questions? Contact support@keycove.net
         </p>
       </div>

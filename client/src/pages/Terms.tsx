@@ -24,7 +24,7 @@ export default function Terms() {
       </LegalSection>
 
       <LegalSection title="4. Affiliate Program">
-        <p>Approved affiliates earn a one-time $50.00 bonus per landlord who signs up using their unique affiliate code and pays their first full month plus the setup fee. Bonuses are not recurring. Payouts require a valid W-9 on file. Earnings of $600 or more per calendar year may be reported on IRS Form 1099-NEC. Keycove may suspend or terminate affiliate accounts for fraud, self-referral, spam, or violation of these Terms.</p>
+        <p>Approved affiliates earn a one-time $50.00 bonus per landlord who signs up using their unique affiliate code and pays their first full month plus the setup fee. Bonuses are not recurring. Payouts require a valid W-9 on file. Earnings of $2,000 or more per calendar year may be reported on IRS Form 1099-NEC. Keycove may suspend or terminate affiliate accounts for fraud, self-referral, spam, or violation of these Terms.</p>
       </LegalSection>
 
       <LegalSection title="5. Listings, Applications, and Leases">

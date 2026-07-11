@@ -24,7 +24,7 @@ export default function Privacy() {
           <li>Process payments, payouts, and affiliate commissions</li>
           <li>Send transactional emails (lease delivery, payment receipts, work-order updates, security alerts)</li>
           <li>Detect, prevent, and respond to fraud, abuse, and security incidents</li>
-          <li>Comply with legal obligations, including tax reporting (e.g., 1099-NEC for affiliates earning $600+/year)</li>
+          <li>Comply with legal obligations, including tax reporting (e.g., 1099-NEC for affiliates earning $2,000+/year)</li>
           <li>Respond to support requests</li>
           <li>With your consent, send product updates and marketing communications (you can opt out at any time)</li>
         </ul>

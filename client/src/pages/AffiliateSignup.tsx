@@ -203,7 +203,7 @@ export default function AffiliateSignup() {
                   </div>
                   <div>
                     <div className="text-3xl font-bold text-teal-400 mb-1">1099-NEC</div>
-                    <div className="text-sm text-slate-400">Issued if you earn $600+/year</div>
+                    <div className="text-sm text-slate-400">Issued if you earn $2,000+/year</div>
                   </div>
                 </div>
               </CardContent>

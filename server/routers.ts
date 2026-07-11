@@ -1935,14 +1935,17 @@ export const appRouter = router({
 
     /**
      * Year-end 1099-NEC summary. For each vendor, sums expense entries tagged
-     * to them for the tax year, flags those paid $600+ (1099 required), and
-     * reports whether a W-9 is on file. Drives the Contractor 1099 Center.
+     * to them for the tax year, flags those over the IRS threshold (1099
+     * required), and reports whether a W-9 is on file. Drives the Contractor
+     * 1099 Center. The One Big Beautiful Bill Act raised the 1099-NEC/MISC
+     * threshold from $600 to $2,000 for payments made in 2026 and later.
      */
     tax1099Summary: protectedProcedure.input(z.object({
       year: z.number().int().min(2020).max(2100),
     })).query(async ({ ctx, input }) => {
       const sub = await getUserSubscription(ctx.user.id);
       if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      const thresholdCents = input.year >= 2026 ? 200000 : 60000; // OBBBA: $600→$2,000 for 2026+
       const db = await getDb();
       if (!db) return [];
       const { and, eq, like, sql } = await import("drizzle-orm");
@@ -1966,7 +1969,8 @@ export const appRouter = router({
           w9Address: v.w9Address, w9City: v.w9City, w9State: v.w9State, w9Zip: v.w9Zip,
           hasW9: !!v.w9CertifiedAt,
           totalPaidCents,
-          requires1099: totalPaidCents >= 60000, // $600 IRS threshold
+          requires1099: totalPaidCents >= thresholdCents,
+          thresholdCents,
         });
       }
       out.sort((a, b) => (Number(b.requires1099) - Number(a.requires1099)) || (b.totalPaidCents - a.totalPaidCents));
@@ -4819,7 +4823,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
             </a>
           </p>
           <p style="color:#6b7280;font-size:12px;margin-top:24px">
-            We'll issue a 1099-NEC at year-end if you earn $600 or more. Your full TIN is encrypted; only the last 4 (${tinLast4}) is shown in our admin panel.
+            We'll issue a 1099-NEC at year-end if you earn $2,000 or more (the IRS threshold for 2026+). Your full TIN is encrypted; only the last 4 (${tinLast4}) is shown in our admin panel.
           </p>
         `;
         try {

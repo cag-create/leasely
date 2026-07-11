@@ -29,6 +29,9 @@ export default function Contractor1099() {
   const [w9For, setW9For] = useState<any | null>(null);
   const [payFor, setPayFor] = useState<any | null>(null);
 
+  // OBBBA raised the 1099-NEC/MISC threshold from $600 to $2,000 for 2026+.
+  const thresholdLabel = "$" + (year >= 2026 ? 2000 : 600).toLocaleString();
+
   const stats = useMemo(() => {
     const required = rows.filter(r => r.requires1099);
     return {
@@ -41,7 +44,7 @@ export default function Contractor1099() {
 
   function exportCsv() {
     const required = rows.filter(r => r.requires1099);
-    if (!required.length) { toast.error("No contractors crossed the $600 threshold for " + year + "."); return; }
+    if (!required.length) { toast.error("No contractors crossed the " + thresholdLabel + " threshold for " + year + "."); return; }
     const headers = ["Legal name", "Business name", "Tax classification", "TIN type", "TIN last 4", "Address", "City", "State", "ZIP", "Total paid " + year, "W-9 on file"];
     const lines = required.map(r => [
       r.legalName || r.name, r.businessName || "", CLASS_LABELS[r.taxClassification || ""] || "",
@@ -66,7 +69,7 @@ export default function Contractor1099() {
               <FileText className="w-8 h-8" style={{ color: ACCENT }} /> Contractor 1099s
             </h1>
             <p className="text-gray-500 mt-1 max-w-2xl">
-              Anyone you pay <b>$600+</b> in a year needs a 1099-NEC. Collect their W-9, track what you paid,
+              Anyone you pay <b>{thresholdLabel}+</b> in a year needs a 1099-NEC. Collect their W-9, track what you paid,
               and export a filing-ready summary for your accountant or an e-file service.
             </p>
           </div>
@@ -116,7 +119,7 @@ export default function Contractor1099() {
                     <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-50 px-2 py-1 rounded-full"><ShieldAlert className="w-3.5 h-3.5" /> W-9 needed</span>
                   )
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Under $600</span>
+                  <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Under {thresholdLabel}</span>
                 )}
               </div>
               <div className="flex justify-end gap-1.5">
@@ -131,8 +134,8 @@ export default function Contractor1099() {
 
         <p className="text-xs text-gray-400 mt-4 leading-relaxed">
           Keycove computes totals and prepares the data — it doesn't e-file with the IRS. Export the CSV and file
-          through your accountant or a service like Tax1099 / Track1099. The $600 threshold is for 1099-NEC
-          (nonemployee compensation); corporations are generally exempt but the totals are still shown.
+          through your accountant or a service like Tax1099 / Track1099. The {thresholdLabel} threshold is for 1099-NEC
+          (nonemployee compensation, raised from $600 to $2,000 for 2026+); corporations are generally exempt but the totals are still shown.
         </p>
       </div>
 
