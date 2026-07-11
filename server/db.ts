@@ -1235,16 +1235,22 @@ export async function getAreaRentRatesByState(state: string) {
 }
 
 // ─── Admin helpers ────────────────────────────────────────────────────────────
+// Directory agents get a shell users row (creme_agents.userId is required), but
+// they are NOT customer accounts — exclude anyone with an agent profile, plus any
+// bulk-imported shell (loginMethod='admin_import') whose agent row may not have
+// landed yet, so they only show in the Agents tab, never the admin Users tab.
+const notAnAgent = sql`(users.loginMethod IS NULL OR users.loginMethod <> 'admin_import') AND NOT EXISTS (SELECT 1 FROM creme_agents ca WHERE ca.userId = ${users.id})`;
+
 export async function getAllUsers(limit = 100, offset = 0) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(users).limit(limit).offset(offset).orderBy(desc(users.createdAt));
+  return db.select().from(users).where(notAnAgent).limit(limit).offset(offset).orderBy(desc(users.createdAt));
 }
 
 export async function getUserCount(): Promise<number> {
   const db = await getDb();
   if (!db) return 0;
-  const rows = await db.select({ count: sql<number>`count(*)` }).from(users);
+  const rows = await db.select({ count: sql<number>`count(*)` }).from(users).where(notAnAgent);
   return Number(rows[0]?.count ?? 0);
 }
 
