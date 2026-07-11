@@ -108,8 +108,11 @@ async function startServer() {
       const unique = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}-${safeName}.${ext}`;
       const filePath = path.join(UPLOAD_DIR, unique);
       fs.writeFileSync(filePath, Buffer.from(match[2], "base64"));
-      const APP_URL = process.env.APP_URL ?? process.env.VITE_APP_URL ?? "";
-      return res.json({ url: `${APP_URL}/uploads/${unique}` });
+      // Relative URL — domain-independent so uploads never break if the site's
+      // domain changes (a leasely.net → keycove.net move dead-linked every
+      // previously-stored absolute photo URL). The browser resolves it against
+      // whatever host the app is served from.
+      return res.json({ url: `/uploads/${unique}` });
     } catch (err) {
       console.error("[Upload]", err);
       return res.status(500).json({ error: "Upload failed" });
