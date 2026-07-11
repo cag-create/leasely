@@ -209,10 +209,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         subject: "Your Certify Business Pro brand kit code 🎨",
         html: `
           <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#111827">
-            <div style="background:#0F1F4B;border-radius:16px;padding:32px;text-align:center;margin-bottom:24px">
-              <img src="https://d2xsxph8kpxj0f.cloudfront.net/112528410/Ucb4CaDiJcuyDWNAe95Wyq/leasely-logo-corrected_6f0929ef.png" alt="Keycove" height="40" style="margin-bottom:16px" />
-              <h1 style="margin:0;font-size:26px;font-weight:900;color:#fff">Welcome to Keycove Pro!</h1>
-              <p style="margin:8px 0 0;color:rgba(255,255,255,0.6);font-size:15px">Your landlord operating system is ready.</p>
+            <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:32px;text-align:center;margin-bottom:24px">
+              <img src="${process.env.VITE_APP_URL ?? "https://leasely.net"}/keycove-logo.png" alt="Keycove" height="44" style="margin-bottom:12px" />
+              <h1 style="margin:0;font-size:26px;font-weight:900;color:#0F1F4B">Welcome to Keycove Pro!</h1>
+              <p style="margin:8px 0 0;color:#6b7280;font-size:15px">Your landlord operating system is ready.</p>
             </div>
 
             <p>Hi ${user.name ?? "there"},</p>

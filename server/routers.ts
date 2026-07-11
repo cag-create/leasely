@@ -1748,11 +1748,35 @@ export const appRouter = router({
           const leaselyFee = INSTANT_PAYOUT_FLAT_FEE;
           const netPayoutAmount = grossAmount - leaselyFee;
           if (netPayoutAmount < 100) throw new TRPCError({ code: "BAD_REQUEST", message: "Amount too small after $1.00 instant payout fee" });
+
+          // Collect the $1 fee as real Keycove revenue: transfer it from the
+          // landlord's connected account to the Keycove platform account BEFORE
+          // paying out the rest. Non-blocking — if the transfer fails we still
+          // pay the landlord (the $1 just stays in their balance that time) and
+          // log it, so a fee hiccup never holds up someone's money.
+          let feeCollected = false;
+          const platformAccountId = process.env.STRIPE_PLATFORM_ACCOUNT_ID;
+          if (platformAccountId) {
+            try {
+              await stripe.transfers.create({
+                amount: leaselyFee,
+                currency: "usd",
+                destination: platformAccountId,
+                description: `Keycove instant payout fee — user ${ctx.user.id}`,
+              }, { stripeAccount: sub.stripeConnectAccountId });
+              feeCollected = true;
+            } catch (feeErr: any) {
+              console.warn("[instantPayout] $1 Keycove fee transfer failed (paying out anyway):", feeErr?.message ?? feeErr);
+            }
+          } else {
+            console.warn("[instantPayout] STRIPE_PLATFORM_ACCOUNT_ID unset — $1 fee not collected");
+          }
+
           const payout = await stripe.payouts.create({
             amount: netPayoutAmount, currency: "usd", method: "instant",
-            statement_descriptor: "LEASELY PAYOUT",
+            statement_descriptor: "KEYCOVE PAYOUT",
           }, { stripeAccount: sub.stripeConnectAccountId });
-          return { success: true, payoutId: payout.id, amountCents: payout.amount, grossAmountCents: grossAmount, leaselyFee, feeRate: "$1.00 flat", arrivalDate: payout.arrival_date, status: payout.status };
+          return { success: true, payoutId: payout.id, amountCents: payout.amount, grossAmountCents: grossAmount, leaselyFee, feeCollected, feeRate: "$1.00 flat", arrivalDate: payout.arrival_date, status: payout.status };
         } catch (err: any) {
           if (err.code === "TRPC_ERROR" || err instanceof TRPCError) throw err;
           // Dead account: clear it and tell the user to reconnect (never leak the raw Stripe key/acct error).
