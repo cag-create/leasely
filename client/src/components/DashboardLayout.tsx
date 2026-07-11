@@ -33,6 +33,7 @@ import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
+import { LOGO_URL } from "@/lib/brand";
 
 const coreMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", group: "main" },
@@ -302,8 +303,8 @@ function DashboardLayoutContent({
               {directoryMenuItems.map(item => <NavItem key={item.path} item={item} />)}
             </SidebarMenu>
 
-            {/* Support — pinned to the bottom; mt-auto absorbs the empty space above */}
-            <div className="mt-auto">
+            {/* Support — sits right under Directory (no big gap) */}
+            <div className="mt-1">
               <SidebarMenu className="px-2 gap-0.5">
                 {supportMenuItems.map(item => <NavItem key={item.path} item={item} />)}
               </SidebarMenu>
@@ -320,6 +321,18 @@ function DashboardLayoutContent({
                 >
                   <Sparkles className="h-3 w-3" /> Upgrade — $25/mo
                 </button>
+              </div>
+            )}
+
+            {/* Brand logo pinned to the very bottom (mt-auto absorbs the space) */}
+            {!isCollapsed && (
+              <div className="mt-auto flex items-center justify-center px-3 pt-4 pb-2">
+                <img
+                  src={LOGO_URL}
+                  alt="Leasely"
+                  className="h-10 w-auto opacity-90"
+                  onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
               </div>
             )}
           </SidebarContent>
