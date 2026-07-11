@@ -1121,7 +1121,13 @@ export const appRouter = router({
         set("bedrooms", data.bedrooms);
         set("bathrooms", data.bathrooms);
         set("squareFeet", data.squareFeet);
-        set("propertyType", data.propertyType);
+        // propertyType is a strict enum in MySQL — an empty/invalid string (e.g.
+        // the edit form submitted a blank select) fails the whole UPDATE. Only
+        // write it when it's a valid value; otherwise leave the existing type.
+        const VALID_LISTING_TYPES = ["apartment", "house", "condo", "townhouse", "co_living", "studio", "room", "other"];
+        if (typeof data.propertyType === "string" && VALID_LISTING_TYPES.includes(data.propertyType)) {
+          updateData.propertyType = data.propertyType;
+        }
         // Admins can edit any listing; owners can only edit their own.
         const isAdmin = ctx.user.role === "admin";
         await updateListing(id, ctx.user.id, updateData as any, { isAdmin });
