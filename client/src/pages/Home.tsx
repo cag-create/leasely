@@ -814,7 +814,7 @@ export default function Home() {
                 {[
                   "Everything in Free",
                   "Unlimited property listings",
-                  "Branded portal (yourname.leasely.net)",
+                  "Branded portal (leasely.net/portal/yourname)",
                   "AI fraud applicant detection",
                   "Digital rental applications",
                   "Background checks (ApplyConnect, TransUnion-backed)",
@@ -858,7 +858,7 @@ export default function Home() {
                 { cat: "Marketplace", label: "Map pin placement", free: true, pro: true },
                 { cat: "Marketplace", label: "Views & saves stats", free: true, pro: true },
                 { cat: "Marketplace", label: "Contact form inquiries", free: true, pro: true },
-                { cat: "Portal", label: "Branded portal (yourname.leasely.net)", free: false, pro: true },
+                { cat: "Portal", label: "Branded portal (leasely.net/portal/yourname)", free: false, pro: true },
                 { cat: "Portal", label: "Custom logo & colors", free: false, pro: true },
                 { cat: "Portal", label: "QR code per listing", free: false, pro: true },
                 { cat: "Screening", label: "AI fraud applicant detection", free: false, pro: true },

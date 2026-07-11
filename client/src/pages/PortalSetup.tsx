@@ -255,7 +255,7 @@ export default function PortalSetup() {
                     <Globe className="h-4 w-4 shrink-0" />
                     <div className="text-left">
                       <div>Leasely subdomain</div>
-                      <div className={`text-xs ${domainMode === "leasely" ? "text-[#4F46E5]/70" : "text-white/30"}`}>yourname.leasely.net · free</div>
+                      <div className={`text-xs ${domainMode === "leasely" ? "text-[#4F46E5]/70" : "text-white/30"}`}>leasely.net/portal/yourname · free</div>
                     </div>
                   </button>
                   <button
@@ -288,7 +288,7 @@ export default function PortalSetup() {
                     </div>
                     {cleanSubdomain && (
                       <p className="text-xs text-[#4F46E5] mt-1.5">
-                        Your portal: <span className="font-mono">{cleanSubdomain}.leasely.net</span>
+                        Your portal: <span className="font-mono">leasely.net/portal/{cleanSubdomain}</span>
                       </p>
                     )}
                   </>
@@ -561,7 +561,7 @@ export default function PortalSetup() {
                 <p className="text-xs font-bold text-amber-400 mb-1.5">Recurring (year 2 onward)</p>
                 <ul className="text-sm text-white/70 space-y-1 pl-4 list-disc marker:text-amber-400/50">
                   {domainMode === "leasely" ? (
-                    <li>Your <span className="text-white font-semibold">{cleanSubdomain || "yourname"}.leasely.net</span> subdomain — <span className="text-white font-semibold">free forever</span>. No renewals.</li>
+                    <li>Your <span className="text-white font-semibold">leasely.net/portal/{cleanSubdomain || "yourname"}</span> branded portal — <span className="text-white font-semibold">free forever</span>. No renewals.</li>
                   ) : customDomain ? (
                     <li>Domain renewal — <span className="text-white font-semibold">paid to your own registrar</span> (you brought <span className="text-white/80 font-mono text-xs">{customDomain}</span>). Hosting via CBP — <a href={CBP_DOMAIN_RENEWAL_URL} target="_blank" rel="noopener" className="text-amber-300 underline hover:text-amber-200 font-semibold">$37/yr</a>.</li>
                   ) : (
@@ -686,7 +686,7 @@ export default function PortalSetup() {
                 <Button
                   variant="outline"
                   className="w-full border-white/10 text-white/70 hover:text-white hover:bg-white/5"
-                  onClick={() => window.open(`https://${(user as any).portalSubdomain}.leasely.net`, "_blank")}
+                  onClick={() => window.open(`${window.location.origin}/portal/${(user as any).portalSubdomain}`, "_blank")}
                 >
                   <Globe className="mr-2 h-4 w-4" />
                   View My Portal
