@@ -131,6 +131,7 @@ function OverviewTab({ profile, profileLoading, onRegister }: { profile: any; pr
           <h3 className="font-bold text-foreground text-lg">Register as a Creme Agent</h3>
           <p className="text-muted-foreground text-sm max-w-md mx-auto">
             Join the Creme Agent Network to receive leads, build your profile, and earn referral fees from deals you close.
+            Once approved, you also get <strong className="text-foreground">unlimited free marketplace listings</strong> — no Pro subscription needed.
           </p>
           <Button
             className="bg-[#1B2B5E] hover:bg-[#1B2B5E]/90 gap-2 mt-2"

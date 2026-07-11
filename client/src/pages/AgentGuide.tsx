@@ -47,6 +47,11 @@ export default function AgentGuide() {
             Leasely brings the lead. You bring the license, the closing, and the local expertise.
             Leasely takes a referral fee on closed transactions per the agreement you signed at onboarding.
           </p>
+          <div className="rounded-xl p-3 border" style={{ borderColor: ACCENT, background: `${ACCENT}12` }}>
+            <p className="text-xs font-semibold" style={{ color: ACCENT }}>
+              ★ Approved Creme Agents get UNLIMITED free marketplace listings — post every property you represent at no cost (no Pro subscription required).
+            </p>
+          </div>
           <div className="grid sm:grid-cols-2 gap-2">
             {[
               "Investor acquisitions (buy / sell income property)",

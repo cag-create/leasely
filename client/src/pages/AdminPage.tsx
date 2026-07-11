@@ -936,7 +936,20 @@ function AdminAgentsList() {
                   <span className="font-semibold text-foreground text-sm">{a.userName || "—"}</span>
                   <Badge className={`text-xs border-0 ${STATUS_BADGE[a.status] ?? ""}`}>{a.status}</Badge>
                 </div>
-                <div className="text-xs text-muted-foreground">{a.userEmail} {a.licenseNumber && `· License #${a.licenseNumber}`}</div>
+                <div className="text-xs text-muted-foreground">
+                  {a.userEmail}
+                  {a.licenseNumber ? (
+                    <> · License #{a.licenseNumber}{" "}
+                      <a
+                        href={`https://www.google.com/search?q=${encodeURIComponent(`${a.licenseNumber} real estate license verification`)}`}
+                        target="_blank" rel="noreferrer"
+                        className="text-[#4F46E5] hover:underline font-medium"
+                      >Verify ↗</a>
+                    </>
+                  ) : (
+                    <span className="text-amber-600 font-medium"> · ⚠ no license # provided</span>
+                  )}
+                </div>
                 {a.serviceAreas && (
                   <div className="text-xs text-muted-foreground mt-0.5">
                     Areas: {(a.serviceAreas as string[]).join(", ")}

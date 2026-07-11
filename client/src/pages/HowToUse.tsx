@@ -219,6 +219,7 @@ export default function HowToUse() {
               <ul className="mt-3 space-y-1.5">
                 {[
                   "Register your license + specialties, then get approved",
+                  "Approved agents get unlimited free marketplace listings — no Pro needed",
                   "Leads land on your Agent Dashboard with an email + notification",
                   "Work the lead; Leasely invoices the referral fee on close",
                 ].map((p) => (
