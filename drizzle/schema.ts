@@ -448,6 +448,11 @@ export const crmLeases = mysqlTable("crm_leases", {
   endDate: varchar("endDate", { length: 20 }).notNull(),
   monthlyRent: int("monthlyRent").notNull(), // in cents
   securityDeposit: int("securityDeposit"), // in cents
+  // Late-fee policy (landlord-set, adjustable). lateFeeCents = flat fee applied
+  // once a month's rent is unrecorded past the grace window; 0 = none.
+  // lateFeeGraceDays = days after the lease's rent-due day before the fee applies.
+  lateFeeCents: int("lateFeeCents").default(0),
+  lateFeeGraceDays: int("lateFeeGraceDays").default(5),
   leaseType: mysqlEnum("leaseType", ["month_to_month", "fixed_term", "week_to_week"]).default("fixed_term"),
   status: mysqlEnum("status", ["active", "expired", "terminated", "renewed"]).default("active"),
   renewalReminderSent: tinyint("renewalReminderSent").default(0),
