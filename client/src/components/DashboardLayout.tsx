@@ -33,7 +33,6 @@ import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
-import { LOGO_URL } from "@/lib/brand";
 
 const coreMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", group: "main" },
@@ -303,19 +302,7 @@ function DashboardLayoutContent({
               {directoryMenuItems.map(item => <NavItem key={item.path} item={item} />)}
             </SidebarMenu>
 
-            {/* Brand logo — centered in the empty space between Directory and Support */}
-            {!isCollapsed && (
-              <div className="flex-1 flex items-center justify-center px-3 min-h-0">
-                <img
-                  src={LOGO_URL}
-                  alt="Leasely"
-                  className="h-20 w-auto rounded-lg bg-white p-2 shadow-sm"
-                  onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-                />
-              </div>
-            )}
-
-            {/* Support */}
+            {/* Support — pinned to the bottom; mt-auto absorbs the empty space above */}
             <div className="mt-auto">
               <SidebarMenu className="px-2 gap-0.5">
                 {supportMenuItems.map(item => <NavItem key={item.path} item={item} />)}
