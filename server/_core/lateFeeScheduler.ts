@@ -12,7 +12,7 @@
  */
 import { and, eq, gt, inArray, like } from "drizzle-orm";
 import { getDb } from "../db";
-import { rentPayments, leaseAgreements, crmLeases, accountingEntries } from "../../drizzle/schema";
+import { rentPayments, leaseAgreements, crmLeases, crmTenants, accountingEntries } from "../../drizzle/schema";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SCHEDULER_INTERVAL_MS = DAY_MS;
@@ -21,12 +21,28 @@ export async function runLateFeeSweep(): Promise<{ charged: number; errors: numb
   const db = await getDb();
   if (!db) return { charged: 0, errors: 0 };
 
+  // Single source of truth for late fees: a lease that is ALSO mirrored in the
+  // CRM (crm_leases) is owned by the CRM sweep (runCrmLateFeeSweep). Skip those
+  // here so a tenant who lives in both systems (e.g. a marketplace-signed lease
+  // that synced into the CRM) never gets charged a late fee twice. Keyed by
+  // landlordUserId|tenantEmail (case-insensitive).
+  const mirrored = new Set<string>();
+  const crmRows = await db.select({ userId: crmTenants.userId, email: crmTenants.email })
+    .from(crmLeases)
+    .innerJoin(crmTenants, eq(crmLeases.crmTenantId, crmTenants.id))
+    .where(eq(crmLeases.status, "active"));
+  for (const c of crmRows) {
+    if (c.email) mirrored.add(`${c.userId}|${c.email.toLowerCase()}`);
+  }
+
   // Unpaid periods with no late fee yet, on leases that actually have a policy.
   const rows = await db.select({
     id: rentPayments.id,
     dueDate: rentPayments.dueDate,
     feeCents: leaseAgreements.lateFeeCents,
     graceDays: leaseAgreements.lateFeeGraceDays,
+    landlordUserId: leaseAgreements.landlordUserId,
+    tenantEmail: leaseAgreements.tenantEmail,
   })
     .from(rentPayments)
     .innerJoin(leaseAgreements, eq(rentPayments.leaseAgreementId, leaseAgreements.id))
@@ -37,10 +53,12 @@ export async function runLateFeeSweep(): Promise<{ charged: number; errors: numb
     ));
 
   const now = Date.now();
-  let charged = 0, errors = 0;
+  let charged = 0, errors = 0, skippedMirror = 0;
 
   for (const r of rows) {
     try {
+      // Owned by the CRM sweep — don't double-charge a tenant in both systems.
+      if (r.tenantEmail && mirrored.has(`${r.landlordUserId}|${r.tenantEmail.toLowerCase()}`)) { skippedMirror++; continue; }
       const due = new Date(r.dueDate).getTime();
       if (isNaN(due)) continue;
       const graceMs = (r.graceDays ?? 5) * DAY_MS;
@@ -53,6 +71,7 @@ export async function runLateFeeSweep(): Promise<{ charged: number; errors: numb
       errors++;
     }
   }
+  if (skippedMirror) console.log(`[lateFees] ledger sweep skipped ${skippedMirror} CRM-mirrored payment(s) — owned by CRM sweep`);
   return { charged, errors };
 }
 
