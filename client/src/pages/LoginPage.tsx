@@ -55,11 +55,20 @@ export default function LoginPage() {
       if (mode === "login" && data?.emailVerified === false) {
         try { sessionStorage.setItem("leasely_show_verify_banner", "1"); } catch {}
       }
-      // Admins and users who already chose an account type go straight to dashboard.
-      // New users who haven't picked renter/landlord yet go to onboarding.
-      if (data?.role === "admin" || data?.accountType) {
+      // Honor a ?next= redirect so Pro-intent signups land on checkout instead
+      // of the dashboard. Only allow same-origin relative paths (must start with
+      // a single "/") to avoid open-redirects.
+      const nextParam = new URLSearchParams(window.location.search).get("next");
+      const safeNext = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")
+        ? nextParam
+        : null;
+      if (safeNext) {
+        navigate(safeNext);
+      } else if (data?.role === "admin" || data?.accountType) {
+        // Admins and users who already chose an account type go straight to dashboard.
         navigate("/dashboard");
       } else {
+        // New users who haven't picked renter/landlord yet go to onboarding.
         navigate("/onboarding");
       }
     } catch {

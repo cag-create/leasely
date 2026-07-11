@@ -460,7 +460,7 @@ export default function ProPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
-              <a href={isAuthenticated ? "/dashboard" : getLoginUrl()}>
+              <a href={isAuthenticated ? "/pricing" : `${getLoginUrl()}?next=/pricing`}>
                 <Button size="lg" className="btn-teal font-black px-10 py-4 text-base gap-2">
                   <Sparkles className="w-5 h-5" /> Get fully set up — $75 + $25/mo
                 </Button>
@@ -541,7 +541,7 @@ export default function ProPage() {
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-5">
                   <p className="text-xs text-amber-700 font-semibold">You receive a unique one-time redemption code after signup — use it on certifybusinesspro.com</p>
                 </div>
-                <a href={isAuthenticated ? "/dashboard" : getLoginUrl()}>
+                <a href={isAuthenticated ? "/pricing" : `${getLoginUrl()}?next=/pricing`}>
                   <Button className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold">
                     Claim Mine — $75 Setup
                   </Button>
@@ -692,7 +692,7 @@ export default function ProPage() {
                 ))}
               </div>
               <div className="flex gap-3">
-                <a href={isAuthenticated ? "/dashboard" : getLoginUrl()}>
+                <a href={isAuthenticated ? "/pricing" : `${getLoginUrl()}?next=/pricing`}>
                   <Button size="lg" className="font-bold gap-2" style={{ background: BRAND, color: "white" }}>
                     Get This Feature <ArrowRight className="w-4 h-4" />
                   </Button>
@@ -880,7 +880,7 @@ export default function ProPage() {
                   </div>
                 ))}
               </div>
-              <a href={isAuthenticated ? "/dashboard" : getLoginUrl()} className="block">
+              <a href={isAuthenticated ? "/pricing" : `${getLoginUrl()}?next=/pricing`} className="block">
                 <Button size="lg" className="w-full btn-teal font-black text-base py-4 gap-2">
                   <Sparkles className="w-5 h-5" /> Start Pro — $75 setup + $25/mo
                 </Button>
@@ -914,7 +914,7 @@ export default function ProPage() {
             Be among the first Pro landlords to run their rental business under their own brand with Leasely.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href={isAuthenticated ? "/dashboard" : getLoginUrl()}>
+            <a href={isAuthenticated ? "/pricing" : `${getLoginUrl()}?next=/pricing`}>
               <Button size="lg" className="btn-teal font-black px-12 py-4 text-base gap-2">
                 <Sparkles className="w-5 h-5" /> Start Pro Today
               </Button>

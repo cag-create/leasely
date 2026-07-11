@@ -265,7 +265,7 @@ export default function Pricing() {
               <p className="text-white/60 text-sm mt-1">Everything you need to run a professional rental business.</p>
             </div>
             {!isAuthenticated ? (
-              <a href={getLoginUrl()}>
+              <a href={`${getLoginUrl()}?next=/pricing`}>
                 <Button className="w-full font-bold mb-6 gap-2" style={{ background: ACCENT, color: "#3A2410" }}>
                   <Sparkles className="h-4 w-4" /> Get Started — Sign In First
                 </Button>
