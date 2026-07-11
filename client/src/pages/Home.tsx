@@ -201,6 +201,27 @@ export default function Home() {
                 ))}
               </div>
 
+              {/* Search — find rentals by city / address */}
+              <div className="flex flex-col sm:flex-row gap-2 max-w-xl">
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                  <input
+                    placeholder="Search a city, neighborhood, or address…"
+                    value={searchCity}
+                    onChange={e => setSearchCity(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && handleMarketplaceSearch()}
+                    className="w-full pl-12 pr-4 h-14 rounded-2xl bg-white text-gray-900 text-base placeholder:text-gray-400 border-0 shadow-xl focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  />
+                </div>
+                <Button
+                  size="lg"
+                  onClick={handleMarketplaceSearch}
+                  className="h-14 px-8 rounded-2xl font-bold text-base gap-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white shadow-xl"
+                >
+                  <Search className="h-5 w-5" /> Search
+                </Button>
+              </div>
+
               <div className="flex flex-col sm:flex-row gap-3">
                 <a href={getLoginUrl()}>
                   <Button size="lg" className="btn-teal text-base px-8 h-12 w-full sm:w-auto gap-2">
@@ -210,8 +231,8 @@ export default function Home() {
                 </a>
                 <Link href="/marketplace">
                   <Button size="lg" variant="outline" className="text-base px-8 h-12 w-full sm:w-auto gap-2 border-white/20 text-white hover:bg-white/8 bg-transparent">
-                    <Search className="h-4 w-4" />
-                    Browse Rentals
+                    <Map className="h-4 w-4" />
+                    Browse all rentals
                   </Button>
                 </Link>
               </div>
@@ -475,6 +496,25 @@ export default function Home() {
               </Link>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          AFFILIATE BANNER — light & inviting, moved up
+          ═══════════════════════════════════════════════════════ */}
+      <section className="py-10 bg-white">
+        <div className="container">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 rounded-3xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 px-8 py-7">
+            <div className="text-center md:text-left">
+              <p className="text-gray-900 font-black text-xl">Refer landlords. Earn $50 per signup.</p>
+              <p className="text-gray-500 text-sm mt-1 max-w-2xl">Earn a $50 one-time bonus for every landlord who signs up with your code and pays their first month + setup fee. No cap, no expiry.</p>
+            </div>
+            <Link href="/affiliate/signup" className="shrink-0">
+              <Button className="bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold gap-2 whitespace-nowrap h-11 px-6 shadow-sm">
+                <TrendingUp className="h-4 w-4" /> Join Affiliate Program
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -886,27 +926,6 @@ export default function Home() {
                 <Button size="lg" variant="outline" className="text-base px-10 h-12 gap-2 w-full sm:w-auto border-white/20 text-white hover:bg-white/8 bg-transparent">
                   <Play className="h-4 w-4" />
                   See How It Works
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          AFFILIATE BANNER
-          ═══════════════════════════════════════════════════════ */}
-      <section className="bg-[#0A1628] border-t border-white/8 py-10">
-        <div className="container">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 rounded-2xl bg-gradient-to-r from-[#4F46E5]/10 to-[#4F46E5]/10 border border-[#4F46E5]/20 px-8 py-6">
-            <div className="text-center md:text-left">
-              <p className="text-white font-bold text-lg">Refer landlords. Earn $50 one-time per signup.</p>
-              <p className="text-white/50 text-sm mt-1">Join the Leasely affiliate program — earn a $50 one-time bonus for every landlord who signs up using your affiliate code and pays their first full month plus setup fee. No cap. No expiry.</p>
-            </div>
-            <div className="flex gap-3 shrink-0">
-              <Link href="/affiliate/signup">
-                <Button className="bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold gap-2 whitespace-nowrap">
-                  <TrendingUp className="h-4 w-4" /> Join Affiliate Program
                 </Button>
               </Link>
             </div>
