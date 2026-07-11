@@ -72,6 +72,38 @@ function verifyCrmRentToken(token: string): { ct: number } | null {
     return null;
   }
 }
+
+// Signed fillable-lease invite. The landlord defines the terms; the token
+// carries them (plus the landlord's userId) so no invite table is needed. The
+// tenant opens /lease/:token, fills the structured blanks (their legal name,
+// phone, emergency contact) and confirms — on submit we create the crm
+// property/tenant/lease and the portal goes live. No AI, no tokens.
+type LeaseInvitePayload = {
+  lid: number;               // landlord userId
+  address: string; unit?: string; city?: string; state?: string; zip?: string;
+  email: string;             // tenant email the invite was sent to
+  rent: number;              // cents
+  deposit?: number;          // cents
+  start: string; end?: string;
+  lateFee?: number; grace?: number;
+};
+function signLeaseInvite(p: LeaseInvitePayload): string {
+  const payload = Buffer.from(JSON.stringify(p)).toString("base64url");
+  const sig = createHmac("sha256", tenantTokenSecret()).update(`lease:${payload}`).digest("base64url");
+  return `${payload}.${sig}`;
+}
+function verifyLeaseInvite(token: string): LeaseInvitePayload | null {
+  const [payload, sig] = (token || "").split(".");
+  if (!payload || !sig) return null;
+  const expected = createHmac("sha256", tenantTokenSecret()).update(`lease:${payload}`).digest("base64url");
+  const a = Buffer.from(sig), b = Buffer.from(expected);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+  try {
+    const d = JSON.parse(Buffer.from(payload, "base64url").toString()) as LeaseInvitePayload;
+    if (typeof d.lid !== "number" || !d.address || !d.rent) return null;
+    return d;
+  } catch { return null; }
+}
 import { storagePut } from "./storage";
 import { affiliates, w9Submissions, affiliateReferrals, affiliatePayouts, marketplaceListings, rentalApplications, leaseAgreements, users } from "../drizzle/schema";
 import { eq, sql, and, desc } from "drizzle-orm";
@@ -2884,7 +2916,8 @@ export const appRouter = router({
     bulkImport: protectedProcedure.input(z.object({
       rows: z.array(z.object({
         building: z.string().optional(),      // building/complex name, for grouping
-        unit: z.string().optional(),          // unit number/label
+        unit: z.string().optional(),          // unit/room number or letter (4B, 12A, Room 3…)
+        propertyType: z.string().optional(),  // apartment | co_living | single_family | …
         address: z.string().min(1),
         city: z.string().optional(),
         state: z.string().optional(),
@@ -2912,8 +2945,14 @@ export const appRouter = router({
         const r = input.rows[i];
         const unitLabel = r.unit ? String(r.unit).trim() : "";
         try {
-          // Full unit address so each crm_property is a distinct, self-contained unit.
-          const fullAddress = unitLabel ? `${r.address.trim()} #${unitLabel}` : r.address.trim();
+          // Co-living rents one property by the room; everything else by the unit.
+          const rawType = (r.propertyType || "apartment").toLowerCase().replace(/[-\s]/g, "_");
+          const isRoom = rawType === "co_living" || rawType === "coliving" || rawType === "room" || rawType === "room_rental";
+          const VALID_TYPES = ["single_family", "multi_family", "apartment", "condo", "townhouse", "co_living", "commercial", "other"];
+          const propertyType = isRoom ? "co_living" : (VALID_TYPES.includes(rawType) ? rawType : "apartment");
+          // Full address so each crm_property is a distinct, self-contained line.
+          const base = r.address.trim();
+          const fullAddress = unitLabel ? (isRoom ? `${base} · Rm ${unitLabel}` : `${base} #${unitLabel}`) : base;
           const buildingName = (r.building || r.address).trim();
           buildings.add(buildingName);
 
@@ -2923,9 +2962,9 @@ export const appRouter = router({
             city: r.city || undefined,
             state: r.state || undefined,
             zip: r.zip || undefined,
-            propertyType: "apartment" as any,
+            propertyType: propertyType as any,
             totalUnits: 1,
-            notes: r.building ? `Building: ${buildingName}` : undefined,
+            notes: r.building ? `${isRoom ? "Co-living" : "Building"}: ${buildingName}` : undefined,
           } as any);
 
           const tenantId = await createCrmTenant({

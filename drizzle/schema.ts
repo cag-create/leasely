@@ -391,7 +391,7 @@ export const crmProperties = mysqlTable("crm_properties", {
   state: varchar("state", { length: 50 }),
   zip: varchar("zip", { length: 20 }),
   propertyType: mysqlEnum("propertyType", [
-    "single_family", "multi_family", "apartment", "condo", "townhouse", "commercial", "other"
+    "single_family", "multi_family", "apartment", "condo", "townhouse", "co_living", "commercial", "other"
   ]).default("single_family"),
   totalUnits: int("totalUnits").default(1),
   purchasePrice: int("purchasePrice"), // in cents

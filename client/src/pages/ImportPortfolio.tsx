@@ -6,22 +6,39 @@ import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import {
   Upload, FileText, Download, CheckCircle2, ArrowRight, ArrowLeft,
-  Building2, X, AlertTriangle, Loader2, Home, Sparkles,
+  Building2, AlertTriangle, Loader2, Home, Sparkles, DoorOpen,
 } from "lucide-react";
 
 const ACCENT = "#4F46E5";
+
+// Mirrors the "list your property" type picker. Co-living rents one property by
+// the room; everything else rents by the unit. The choice drives the label
+// (Room 3 vs #4B) and each unit's property type in the portal.
+const PROPERTY_TYPES = [
+  { value: "apartment", label: "Apartment building", icon: "🏢", unit: "unit" },
+  { value: "co_living", label: "Co-living / rooms", icon: "🚪", unit: "room" },
+  { value: "single_family", label: "Single-family", icon: "🏠", unit: "unit" },
+  { value: "condo", label: "Condo", icon: "🏙️", unit: "unit" },
+  { value: "townhouse", label: "Townhouse", icon: "🏘️", unit: "unit" },
+  { value: "multi_family", label: "Multi-family", icon: "🏢", unit: "unit" },
+] as const;
+const isRoomType = (t?: string) => (t || "").toLowerCase().replace(/[-\s]/g, "_").startsWith("co_living") || t === "room";
+const unitLabel = (t: string | undefined, unit?: string) => {
+  if (!unit) return "—";
+  return isRoomType(t) ? `Room ${unit}` : `#${unit}`;
+};
 
 // ── CSV template ────────────────────────────────────────────────────────────
 // One row per occupied unit. This is a migration file — the PM already has
 // these renters and leases in place; we just carry them over verbatim.
 const CSV_HEADERS = [
-  "building", "unit", "address", "city", "state", "zip",
+  "building", "unit", "type", "address", "city", "state", "zip",
   "tenant_first_name", "tenant_last_name", "tenant_email", "tenant_phone",
   "monthly_rent", "security_deposit", "lease_start", "lease_end",
   "late_fee", "grace_days",
 ];
 const CSV_EXAMPLE = [
-  "Maple Court", "4B", "812 Maple Ave", "Charlotte", "NC", "28203",
+  "Maple Court", "4B", "apartment", "812 Maple Ave", "Charlotte", "NC", "28203",
   "Jasmine", "Reed", "jasmine.reed@example.com", "704-555-0142",
   "1450", "1450", "2025-06-01", "2026-05-31", "50", "5",
 ];
@@ -85,7 +102,7 @@ function normDate(s: string): string {
 }
 
 type Parsed = {
-  building?: string; unit?: string; address: string; city?: string; state?: string; zip?: string;
+  building?: string; unit?: string; propertyType: string; address: string; city?: string; state?: string; zip?: string;
   firstName: string; lastName?: string; email?: string; phone?: string;
   monthlyRentCents: number; securityDepositCents?: number;
   leaseStartDate: string; leaseEndDate?: string;
@@ -93,7 +110,9 @@ type Parsed = {
   _errors: string[];
 };
 
-function normalize(row: Record<string, string>): Parsed {
+function normalize(row: Record<string, string>, fallbackType: string): Parsed {
+  const rowType = pick(row, ["type", "property_type", "propertytype", "unit_type"]);
+  const propertyType = rowType ? rowType.toLowerCase().replace(/[-\s]/g, "_") : fallbackType;
   // tenant name can arrive as one "Last, First" / "First Last" field
   let first = pick(row, ["tenant_first_name", "first_name", "firstname"]);
   let last = pick(row, ["tenant_last_name", "last_name", "lastname"]);
@@ -105,7 +124,8 @@ function normalize(row: Record<string, string>): Parsed {
   const address = pick(row, ["address", "street", "property_address", "address_line_1", "address1"]);
   const p: Parsed = {
     building: pick(row, ["building", "property", "property_name", "community", "complex"]) || undefined,
-    unit: pick(row, ["unit", "unit_number", "unit_id", "apt", "apartment", "unit_label"]) || undefined,
+    unit: pick(row, ["unit", "unit_number", "unit_id", "apt", "apartment", "unit_label", "room", "room_number"]) || undefined,
+    propertyType,
     address,
     city: pick(row, ["city"]) || undefined,
     state: pick(row, ["state", "st"]) || undefined,
@@ -134,6 +154,7 @@ const money = (c?: number) => c == null ? "—" : `$${(c / 100).toLocaleString(u
 export default function ImportPortfolio() {
   const [, navigate] = useLocation();
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [propertyType, setPropertyType] = useState<string>("apartment");
   const [raw, setRaw] = useState("");
   const [rows, setRows] = useState<Parsed[]>([]);
   const [result, setResult] = useState<{ imported: number; buildings: number; total: number; errors: { row: number; unit: string; message: string }[] } | null>(null);
@@ -141,11 +162,11 @@ export default function ImportPortfolio() {
   const importMutation = trpc.crm.bulkImport.useMutation();
 
   const doParse = useCallback((text: string) => {
-    const parsed = parseCSV(text).map(normalize);
+    const parsed = parseCSV(text).map(r => normalize(r, propertyType));
     if (!parsed.length) { toast.error("No rows found — check your file has a header row + at least one unit."); return; }
     setRows(parsed);
     setStep(2);
-  }, []);
+  }, [propertyType]);
 
   const onFile = useCallback((f: File) => {
     const reader = new FileReader();
@@ -166,7 +187,7 @@ export default function ImportPortfolio() {
     try {
       const res = await importMutation.mutateAsync({
         rows: valid.map(r => ({
-          building: r.building, unit: r.unit, address: r.address, city: r.city, state: r.state, zip: r.zip,
+          building: r.building, unit: r.unit, propertyType: r.propertyType, address: r.address, city: r.city, state: r.state, zip: r.zip,
           firstName: r.firstName, lastName: r.lastName, email: r.email, phone: r.phone,
           monthlyRentCents: r.monthlyRentCents, securityDepositCents: r.securityDepositCents,
           leaseStartDate: r.leaseStartDate, leaseEndDate: r.leaseEndDate,
@@ -221,6 +242,27 @@ export default function ImportPortfolio() {
         {/* Step 1 — upload/paste */}
         {step === 1 && (
           <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, padding: 28 }}>
+            <div style={{ marginBottom: 22 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 10 }}>What are you importing?</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {PROPERTY_TYPES.map(pt => {
+                  const on = propertyType === pt.value;
+                  return (
+                    <button key={pt.value} type="button" onClick={() => setPropertyType(pt.value)}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 14px", borderRadius: 999, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                        background: on ? ACCENT : "#fff", color: on ? "#fff" : "#475569", border: `1px solid ${on ? ACCENT : "#e2e8f0"}`,
+                        boxShadow: on ? "0 4px 12px -4px rgba(79,70,229,.5)" : "none" }}>
+                      <span>{pt.icon}</span> {pt.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ fontSize: 12.5, color: "#94a3b8", marginTop: 8 }}>
+                {isRoomType(propertyType)
+                  ? "Co-living: one property rented by the room — each renter comes in as Room 1, Room 2… with its own lease."
+                  : "Each renter comes in as its own unit (numbers or letters, e.g. 4B, 12A). A CSV “type” column overrides this per row."}
+              </div>
+            </div>
             <div
               onDragOver={e => e.preventDefault()}
               onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) onFile(f); }}
@@ -270,14 +312,16 @@ export default function ImportPortfolio() {
             <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, overflow: "hidden" }}>
               {buildings.map(([name, units]) => (
                 <div key={name}>
+                  {(() => { const room = isRoomType(units[0]?.propertyType); return (
                   <div style={{ padding: "12px 18px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", fontWeight: 700, fontSize: 13, color: "#0f172a", display: "flex", alignItems: "center", gap: 8 }}>
-                    <Building2 size={15} color={ACCENT} /> {name}
-                    <span style={{ color: "#94a3b8", fontWeight: 500 }}>· {units.length} unit{units.length !== 1 ? "s" : ""}</span>
+                    {room ? <DoorOpen size={15} color="#0e7490" /> : <Building2 size={15} color={ACCENT} />} {name}
+                    <span style={{ color: "#94a3b8", fontWeight: 500 }}>· {units.length} {room ? "room" : "unit"}{units.length !== 1 ? "s" : ""}</span>
                   </div>
+                  ); })()}
                   {units.map((r, i) => (
-                    <div key={i} style={{ display: "grid", gridTemplateColumns: "60px 1fr 1fr 110px 130px", gap: 10, padding: "11px 18px", borderBottom: "1px solid #f1f5f9", fontSize: 13, alignItems: "center",
+                    <div key={i} style={{ display: "grid", gridTemplateColumns: "80px 1fr 1fr 110px 130px", gap: 10, padding: "11px 18px", borderBottom: "1px solid #f1f5f9", fontSize: 13, alignItems: "center",
                       opacity: r._errors.length ? 0.6 : 1 }}>
-                      <span style={{ fontWeight: 700, color: "#334155" }}>{r.unit ? `#${r.unit}` : "—"}</span>
+                      <span style={{ fontWeight: 700, color: isRoomType(r.propertyType) ? "#0e7490" : "#334155" }}>{unitLabel(r.propertyType, r.unit)}</span>
                       <span style={{ color: "#0f172a" }}>{r.firstName} {r.lastName}{r.email && <span style={{ display: "block", color: "#94a3b8", fontSize: 11 }}>{r.email}</span>}</span>
                       <span style={{ color: "#64748b", fontSize: 12 }}>{r.address}</span>
                       <span style={{ fontWeight: 700, color: "#0f172a" }}>{money(r.monthlyRentCents)}<span style={{ color: "#94a3b8", fontWeight: 500 }}>/mo</span></span>
