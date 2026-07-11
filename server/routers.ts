@@ -1873,6 +1873,75 @@ export const appRouter = router({
         await deleteVendor(input.id, ctx.user.id);
         return { success: true };
       }),
+
+    /** Store a contractor's W-9 so the landlord can issue them a 1099-NEC. */
+    saveW9: protectedProcedure.input(z.object({
+      id: z.number(),
+      legalName: z.string().min(1),
+      businessName: z.string().optional(),
+      taxClassification: z.enum(["individual","sole_proprietor","c_corp","s_corp","partnership","trust","llc","other"]),
+      tinType: z.enum(["ssn","ein"]),
+      tin: z.string().min(4),          // full SSN/EIN (digits) — stored encoded, only last 4 displayed
+      w9Address: z.string().min(1),
+      w9City: z.string().min(1),
+      w9State: z.string().length(2),
+      w9Zip: z.string().min(3),
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      const tinClean = input.tin.replace(/\D/g, "");
+      await updateVendor(input.id, ctx.user.id, {
+        legalName: input.legalName,
+        businessName: input.businessName || null,
+        taxClassification: input.taxClassification,
+        tinType: input.tinType,
+        tinLast4: tinClean.slice(-4),
+        tinEncrypted: Buffer.from(tinClean).toString("base64"),
+        w9Address: input.w9Address, w9City: input.w9City, w9State: input.w9State, w9Zip: input.w9Zip,
+        w9CertifiedAt: new Date(),
+      } as any);
+      return { success: true };
+    }),
+
+    /**
+     * Year-end 1099-NEC summary. For each vendor, sums expense entries tagged
+     * to them for the tax year, flags those paid $600+ (1099 required), and
+     * reports whether a W-9 is on file. Drives the Contractor 1099 Center.
+     */
+    tax1099Summary: protectedProcedure.input(z.object({
+      year: z.number().int().min(2020).max(2100),
+    })).query(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) return [];
+      const { and, eq, like, sql } = await import("drizzle-orm");
+      const { accountingEntries } = await import("../drizzle/schema");
+      const vendorList = await getVendors(ctx.user.id);
+      const out = [];
+      for (const v of vendorList as any[]) {
+        const [row] = await db.select({ total: sql<number>`coalesce(sum(${accountingEntries.amount}),0)` })
+          .from(accountingEntries)
+          .where(and(
+            eq(accountingEntries.userId, ctx.user.id),
+            eq(accountingEntries.type, "expense"),
+            eq(accountingEntries.vendorId, v.id),
+            like(accountingEntries.date, `${input.year}-%`),
+          ));
+        const totalPaidCents = Number((row as any)?.total ?? 0);
+        out.push({
+          vendorId: v.id, name: v.name, email: v.email, trade: v.trade,
+          legalName: v.legalName, businessName: v.businessName,
+          taxClassification: v.taxClassification, tinType: v.tinType, tinLast4: v.tinLast4,
+          w9Address: v.w9Address, w9City: v.w9City, w9State: v.w9State, w9Zip: v.w9Zip,
+          hasW9: !!v.w9CertifiedAt,
+          totalPaidCents,
+          requires1099: totalPaidCents >= 60000, // $600 IRS threshold
+        });
+      }
+      out.sort((a, b) => (Number(b.requires1099) - Number(a.requires1099)) || (b.totalPaidCents - a.totalPaidCents));
+      return out;
+    }),
   }),
 
   // ── WORK ORDERS ──────────────────────────────────────────────────────────
@@ -2768,6 +2837,7 @@ export const appRouter = router({
       propertyAddress: z.string().optional(),
       crmPropertyId: z.number().optional(),
       listingId: z.number().optional(),
+      vendorId: z.number().optional(), // attribute an expense to a contractor for 1099 totals
     })).mutation(async ({ ctx, input }) => {
       const sub = await getUserSubscription(ctx.user.id);
       if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });

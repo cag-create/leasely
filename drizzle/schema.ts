@@ -248,6 +248,22 @@ export const vendors = mysqlTable("vendors", {
   serviceAreas: text("serviceAreas"), // JSON array of cities/states
   notes: text("notes"),
   isActive: tinyint("isActive").default(1),
+  // ── W-9 / 1099-NEC tax info (collected so the landlord can issue year-end
+  //    1099s to contractors paid $600+). tinEncrypted holds the full TIN;
+  //    tinLast4 is for display. w9CertifiedAt set when the W-9 is on file.
+  legalName: varchar("legalName", { length: 255 }),
+  businessName: varchar("businessName", { length: 255 }),
+  taxClassification: mysqlEnum("taxClassification", [
+    "individual", "sole_proprietor", "c_corp", "s_corp", "partnership", "trust", "llc", "other"
+  ]),
+  tinType: mysqlEnum("tinType", ["ssn", "ein"]),
+  tinLast4: varchar("tinLast4", { length: 4 }),
+  tinEncrypted: text("tinEncrypted"),
+  w9Address: text("w9Address"),
+  w9City: varchar("w9City", { length: 100 }),
+  w9State: varchar("w9State", { length: 2 }),
+  w9Zip: varchar("w9Zip", { length: 10 }),
+  w9CertifiedAt: timestamp("w9CertifiedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -352,6 +368,8 @@ export const accountingEntries = mysqlTable("accounting_entries", {
   crmPropertyId: int("crmPropertyId"),
   listingId: int("listingId"),
   propertyAddress: text("propertyAddress"), // denormalized
+  // Optional contractor/vendor this expense was paid to — drives 1099-NEC totals.
+  vendorId: int("vendorId"),
 
   type: mysqlEnum("type", ["income", "expense"]).notNull(),
   // IRS Schedule E categories

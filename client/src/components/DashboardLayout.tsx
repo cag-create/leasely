@@ -48,6 +48,7 @@ const proMenuItems = [
   { icon: FileText, label: "Lease Agreements", path: "/leases", group: "pro" },
   { icon: Calculator, label: "Accounting", path: "/accounting", group: "pro" },
   { icon: Landmark, label: "Payouts", path: "/payouts", group: "pro" },
+  { icon: FileText, label: "Contractor 1099s", path: "/contractor-1099", group: "pro" },
   { icon: UserCircle, label: "Tenants / CRM", path: "/crm", group: "pro" },
 ];
 
