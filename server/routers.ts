@@ -197,7 +197,7 @@ function isStripeAccountInaccessible(err: any): boolean {
 
 // Public Payment Link slug for the CBP website bundle. Used to auto-discover
 // the underlying product so the coupon can be restricted to it.
-const CBP_WEBSITE_BUNDLE_SLUG = "9B6dR24Vn4Jhaqsetd9ws0d";
+const CBP_WEBSITE_BUNDLE_SLUG = "00w9AM5Zrb7FfKM0Cn9ws0g";
 
 // Cached after first lookup — Stripe IDs don't change, no need to re-query.
 let _cbpWebsiteBundleProductId: string | null = null;
