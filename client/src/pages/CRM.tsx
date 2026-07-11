@@ -16,7 +16,7 @@ import Navbar from "@/components/Navbar";
 import {
   Building2, Users, FileText, Plus, Pencil, Trash2,
   Phone, Mail, MapPin, Calendar, DollarSign, AlertCircle,
-  ChevronRight, StickyNote, Home, CheckCircle2, Wrench, Receipt
+  ChevronRight, StickyNote, Home, CheckCircle2, Wrench, Receipt, Upload
 } from "lucide-react";
 
 function getDaysUntilExpiry(endDate: string): number {
@@ -356,6 +356,10 @@ export default function CRM() {
           <div className="col-span-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-gray-800">Properties</h2>
+              <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" className="gap-1" onClick={() => navigate("/import-portfolio")} title="Bulk-import your buildings, renters & existing leases from AppFolio, Buildium, RentRedi, Yardi or a spreadsheet">
+                <Upload className="w-3.5 h-3.5" /> Import
+              </Button>
               <Dialog open={addPropertyOpen} onOpenChange={(open) => {
                 if (open) setPropertyForm({ address: "", city: "", state: "", zip: "", propertyType: "single_family", totalUnits: 1, purchasePrice: "", currentValue: "", yearBuilt: "", squareFeet: "", notes: "" });
                 setAddPropertyOpen(open);
@@ -437,6 +441,7 @@ export default function CRM() {
                   </div>
                 </DialogContent>
               </Dialog>
+              </div>
             </div>
 
             {!properties || properties.length === 0 ? (

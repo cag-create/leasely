@@ -2868,6 +2868,106 @@ export const appRouter = router({
       const id = await createCrmLease({ ...input, userId: ctx.user.id });
       return { id };
     }),
+
+    /**
+     * Bulk migration import — the "switch off your old software" path.
+     *
+     * A property manager pastes/uploads one row per occupied unit (their
+     * existing renters + leases already in place). Each row lands as a
+     * self-contained crm_property (address incl. unit) + crm_tenant +
+     * active crm_lease, so the portal, rent schedule, auto late fees,
+     * accounting, and tenant portal all work per-unit with zero further
+     * setup. Handles 1–200 units in a single call. Per-row errors are
+     * collected (never abort the whole batch) so a bad row can't sink a
+     * 200-unit import. No AI, no tokens — pure structured parse.
+     */
+    bulkImport: protectedProcedure.input(z.object({
+      rows: z.array(z.object({
+        building: z.string().optional(),      // building/complex name, for grouping
+        unit: z.string().optional(),          // unit number/label
+        address: z.string().min(1),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        zip: z.string().optional(),
+        firstName: z.string().min(1),
+        lastName: z.string().optional(),
+        email: z.string().optional(),
+        phone: z.string().optional(),
+        monthlyRentCents: z.number().int().nonnegative(),
+        securityDepositCents: z.number().int().nonnegative().optional(),
+        leaseStartDate: z.string(),           // YYYY-MM-DD
+        leaseEndDate: z.string().optional(),  // empty => month-to-month
+        lateFeeCents: z.number().int().nonnegative().optional(),
+        lateFeeGraceDays: z.number().int().min(0).max(31).optional(),
+      })).min(1).max(500),
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN", message: "Bulk import requires a Pro subscription." });
+
+      let imported = 0;
+      const buildings = new Set<string>();
+      const errors: { row: number; unit: string; message: string }[] = [];
+
+      for (let i = 0; i < input.rows.length; i++) {
+        const r = input.rows[i];
+        const unitLabel = r.unit ? String(r.unit).trim() : "";
+        try {
+          // Full unit address so each crm_property is a distinct, self-contained unit.
+          const fullAddress = unitLabel ? `${r.address.trim()} #${unitLabel}` : r.address.trim();
+          const buildingName = (r.building || r.address).trim();
+          buildings.add(buildingName);
+
+          const propertyId = await createCrmProperty({
+            userId: ctx.user.id,
+            address: fullAddress,
+            city: r.city || undefined,
+            state: r.state || undefined,
+            zip: r.zip || undefined,
+            propertyType: "apartment" as any,
+            totalUnits: 1,
+            notes: r.building ? `Building: ${buildingName}` : undefined,
+          } as any);
+
+          const tenantId = await createCrmTenant({
+            userId: ctx.user.id,
+            crmPropertyId: propertyId,
+            firstName: r.firstName.trim(),
+            lastName: (r.lastName || "").trim(),
+            email: r.email?.trim() || undefined,
+            phone: r.phone?.trim() || undefined,
+            moveInDate: r.leaseStartDate,
+            monthlyRent: r.monthlyRentCents,
+            securityDeposit: r.securityDepositCents,
+            status: "active" as any,
+          } as any);
+
+          const hasEnd = !!(r.leaseEndDate && r.leaseEndDate.trim());
+          await createCrmLease({
+            userId: ctx.user.id,
+            crmPropertyId: propertyId,
+            crmTenantId: tenantId,
+            startDate: r.leaseStartDate,
+            endDate: hasEnd ? r.leaseEndDate!.trim() : r.leaseStartDate,
+            monthlyRent: r.monthlyRentCents,
+            securityDeposit: r.securityDepositCents,
+            lateFeeCents: r.lateFeeCents ?? 5000,
+            lateFeeGraceDays: r.lateFeeGraceDays ?? 5,
+            leaseType: (hasEnd ? "fixed_term" : "month_to_month") as any,
+            status: "active" as any,
+          } as any);
+
+          imported++;
+        } catch (e: any) {
+          errors.push({ row: i + 2, unit: unitLabel || r.address, message: e?.message || "Import failed" });
+        }
+      }
+
+      if (imported > 0) {
+        await notifyOwner({ title: "Portfolio Imported", content: `${ctx.user.name} imported ${imported} unit(s) across ${buildings.size} building(s).` });
+      }
+      return { imported, buildings: buildings.size, total: input.rows.length, errors };
+    }),
+
     updateLease: protectedProcedure.input(z.object({
       id: z.number(),
       status: z.string().optional(),
