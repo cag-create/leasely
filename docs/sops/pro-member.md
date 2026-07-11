@@ -15,7 +15,8 @@ from this same content.
 - Stripe Connect instant payouts
 - AI-assisted applicant screening
 - State-specific lease templates with e-signature
-- Apartment complex / multi-unit management
+- Bulk migration import — move a whole portfolio + existing leases in one upload
+- Apartment complex / multi-unit management, plus co-living (rent by the room)
 - Work-order dispatch with vendor tracking
 - Accounting (income/expense ledger + CSV export)
 - Tenant CRM
@@ -100,18 +101,48 @@ Setup is **$75 once + $25/month**. First listing is always free, even without Pr
   separate listing with its own price + photos + applicants.
 - One-and-done amenities (pool, gym) live on the complex; per-unit amenities
   (sq ft, balcony, in-unit laundry) live on the unit.
+- **Co-living** — one property rented by the room. Set the property type to
+  Co-living and renters come in as Room 1, Room 2… Each room bills, tracks, and
+  late-fees on its own. Fastest way to load an occupied building is the bulk
+  import below.
 
-## Importing listings from another platform
+## Migrate off your old software (bulk import)
 
-`/import-listings` accepts CSV exports from:
-- Zillow Rental Manager
-- AppFolio
-- Buildium
-- Rentec Direct
-- Apartments.com
+The "switch off your current platform" path. Bring buildings, renters, and
+their **existing leases** live in one upload — no AI, no re-keying.
 
-Download a template if your platform isn't listed — the columns map by header
-name, not position.
+**Where:** `/import-portfolio` (also the **Import** button next to *Add
+Property* in the CRM).
+
+**SOP — 4 steps:**
+1. **Pick the property type** — apartment, co-living, single-family, condo,
+   townhouse or multi-family. This decides whether renters come in as *units*
+   (4B, 12A) or *rooms* (Room 1, Room 2).
+2. **Drop the CSV** (or paste rows). One row per occupied unit. Export a
+   resident / rent-roll CSV from your current software; columns auto-map to
+   AppFolio, Buildium, RentRedi, Yardi, Rent Manager, and plain spreadsheets.
+   "Download template" if you're building the file by hand.
+3. **Review** — rows group by building. Check the rent-roll total and
+   unit/room labels; fix any row flagged red (missing rent, name, or lease
+   start). Bad rows are skipped, never block the good ones. Handles 1–200+
+   units per file.
+4. **Import** — "Your portal is live." Each renter lands with its own rent
+   schedule, auto late fees, accounting ledger, and tenant portal login. Invite
+   them to pay online from the CRM.
+
+**CSV columns** (map by header, order doesn't matter):
+`building, unit, type, address, city, state, zip, tenant_first_name,
+tenant_last_name, tenant_email, tenant_phone, monthly_rent, security_deposit,
+lease_start, lease_end, late_fee, grace_days`
+
+- Leave `lease_end` blank → month-to-month.
+- Omit `late_fee` → defaults to $50 after a 5-day grace, editable per lease.
+- Add a `type` column to override the property-type picker per row (mixed files).
+
+**Just importing marketplace listings** (vacant units to advertise, not
+occupied ones)? Use `/import-listings` instead — same header-mapping. Pre-built
+mappings for Zillow Rental Manager, AppFolio, Buildium, Rentec Direct,
+Apartments.com; anything else maps by header name, not position.
 
 ## Troubleshooting
 

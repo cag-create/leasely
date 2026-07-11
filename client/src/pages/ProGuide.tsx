@@ -4,7 +4,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import {
   BookOpen, Rocket, Calendar, DollarSign, Building2, FileDown,
   AlertTriangle, ShieldOff, CheckCircle2, ChevronRight, Sparkles,
-  ArrowRight, Search,
+  ArrowRight, Search, DoorOpen, Upload,
 } from "lucide-react";
 
 const ACCENT = "#4F46E5";
@@ -42,7 +42,8 @@ export default function ProGuide() {
             ["Stripe instant payouts", "Next business day, automatic"],
             ["AI applicant screening", "Risk score + flagged anomalies"],
             ["State-specific leases", "E-sign + first-month + deposit collection"],
-            ["Apartment complexes", "Multi-unit with per-unit pricing"],
+            ["Bulk migration import", "Move a whole portfolio + leases in one upload"],
+            ["Apartments & co-living", "Rent by the unit (4B) or by the room (Room 1)"],
             ["Work-order dispatch", "Vendor SMS + AI scope summary"],
             ["Accounting + P&L", "CSV export for your bookkeeper"],
             ["Tenant CRM", "Profiles, lease history, notes"],
@@ -164,6 +165,12 @@ export default function ProGuide() {
           <p className="text-muted-foreground">
             Open <Link href="/complexes" className="underline">/complexes</Link>, create the building, then add units. Each unit is its own listing with its own price, photos, and applicants.
           </p>
+          <div className="p-3 rounded-xl border border-border/50 bg-card/40 flex gap-2.5">
+            <DoorOpen className="h-4 w-4 shrink-0 mt-0.5" style={{ color: ACCENT }} />
+            <div className="text-xs text-muted-foreground">
+              <b className="text-foreground">Co-living?</b> One property rented by the room — set the type to <b>Co-living</b> and renters come in as Room 1, Room 2… Fastest way to load an occupied building is the <Link href="/import-portfolio" className="underline">bulk import</Link> (see the Migrate section).
+            </div>
+          </div>
           <div className="grid sm:grid-cols-2 gap-3">
             <div className="p-3 rounded-xl border border-border/50 bg-card/40">
               <div className="text-xs font-semibold mb-1">Lives on the complex</div>
@@ -178,26 +185,56 @@ export default function ProGuide() {
       ),
     },
     {
-      id: "import",
-      title: "Importing from another platform",
-      icon: FileDown,
-      intro: "CSV imports work out of the box for the main competitors.",
+      id: "migrate",
+      title: "Migrate off your old software (bulk import)",
+      icon: Upload,
+      intro: "Bring a whole portfolio — buildings, renters, and their existing leases — live in one upload. No AI, no re-keying.",
       body: (
-        <>
-          <p className="text-sm text-muted-foreground mb-3">
-            Open <Link href="/import-listings" className="underline">/import-listings</Link>. Pre-built mappings for:
+        <div className="space-y-4 text-sm">
+          <p className="text-muted-foreground">
+            Open <Link href="/import-portfolio" className="underline">/import-portfolio</Link> (also the <b>Import</b> button next to <i>Add Property</i> in your CRM). Export a resident / rent-roll CSV from your current software and drop it in — one row per occupied unit. Columns auto-map to AppFolio, Buildium, RentRedi, Yardi, Rent Manager and plain spreadsheets. Every renter and their in-place lease goes live instantly, each with its own rent schedule, auto late fees, accounting ledger, and tenant portal login.
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {["Zillow Rental Manager", "AppFolio", "Buildium", "Rentec Direct", "Apartments.com"].map(n => (
-              <div key={n} className="px-3 py-2 rounded-lg border border-border/50 bg-card/40 text-xs font-medium">
-                {n}
-              </div>
-            ))}
+
+          <div className="p-3 rounded-xl border border-border/50 bg-card/40">
+            <div className="text-xs font-semibold mb-2">SOP — the 4 steps</div>
+            <ol className="space-y-1.5 text-xs text-muted-foreground">
+              {[
+                ["Pick the property type", "Apartment, co-living, single-family, condo, townhouse or multi-family. This drives whether renters come in as units or rooms."],
+                ["Drop the CSV (or paste rows)", "Hit “Download template” first if you're building the file by hand."],
+                ["Review", "Rows group by building. Check the rent roll total, unit/room labels, and fix any row flagged red (missing rent, name, or lease start). Bad rows are skipped, never block the good ones."],
+                ["Import", "“Your portal is live.” Invite every renter to pay online from the CRM."],
+              ].map(([t, d], i) => (
+                <li key={t} className="flex gap-2">
+                  <span className="font-black shrink-0" style={{ color: ACCENT }}>{i + 1}.</span>
+                  <span><b className="text-foreground">{t}</b> — {d}</span>
+                </li>
+              ))}
+            </ol>
           </div>
-          <p className="text-xs text-muted-foreground mt-3">
-            Not listed? The importer maps by column header (not position) — most exports just work.
+
+          <div>
+            <div className="text-xs font-semibold mb-2">CSV columns (map by header, order doesn't matter)</div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {["building", "unit / room", "type", "address", "city / state / zip", "tenant_first_name", "tenant_last_name", "tenant_email", "monthly_rent", "security_deposit", "lease_start", "lease_end", "late_fee", "grace_days"].map(n => (
+                <code key={n} className="px-2 py-1.5 rounded-lg border border-border/50 bg-muted text-[11px]">{n}</code>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Leave <code className="text-[11px] px-1 rounded bg-muted">lease_end</code> blank for month-to-month. Omit <code className="text-[11px] px-1 rounded bg-muted">late_fee</code> and it defaults to $50 after a 5-day grace — editable per lease afterward.
+            </p>
+          </div>
+
+          <div className="p-3 rounded-xl border border-border/50 bg-card/40">
+            <div className="flex items-center gap-2 text-xs font-semibold mb-1"><DoorOpen className="h-3.5 w-3.5" style={{ color: ACCENT }} /> Co-living / rooms</div>
+            <p className="text-xs text-muted-foreground">
+              Pick <b>Co-living</b> and each renter comes in as <b>Room 1, Room 2…</b> under one property — every room bills, tracks, and late-fees on its own. Apartments stay unit-labeled (<b>4B, 12A</b> — numbers or letters). Mixing types in one file? Add a <code className="text-[11px] px-1 rounded bg-muted">type</code> column to override the picker per row.
+            </p>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Just moving marketplace <i>listings</i> (not occupied units)? Use <Link href="/import-listings" className="underline">/import-listings</Link> instead — same header-mapping, aimed at vacant units you want to advertise.
           </p>
-        </>
+        </div>
       ),
     },
     {
