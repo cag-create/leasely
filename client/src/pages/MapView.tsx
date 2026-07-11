@@ -40,6 +40,14 @@ export default function MapViewPage() {
 
   const { data: listings = [] } = trpc.marketplace.getMapListings.useQuery();
 
+  // Legend acts as a filter — click "Rental" / "Co-Living" to show only that type.
+  const [typeFilter, setTypeFilter] = useState<"all" | "rental" | "coliving">("all");
+  const filteredListings = listings.filter(l =>
+    typeFilter === "all" ? true
+      : typeFilter === "coliving" ? (l as any).isCoLiving === 1
+        : (l as any).isCoLiving !== 1
+  );
+
   const handleMapReady = useCallback((map: google.maps.Map) => {
     setMapInstance(map);
     map.setCenter({ lat: 37.0902, lng: -95.7129 });
@@ -47,16 +55,17 @@ export default function MapViewPage() {
   }, []);
 
   useEffect(() => {
-    if (!mapInstance || listings.length === 0) return;
+    if (!mapInstance) return;
 
-    // Clear existing markers
+    // Clear existing markers (also on filter change)
     markersRef.current.forEach(m => m.setMap(null));
     markersRef.current = [];
+    if (filteredListings.length === 0) return;
 
     const bounds = new google.maps.LatLngBounds();
     let hasValidCoords = false;
 
-    listings.forEach(listing => {
+    filteredListings.forEach(listing => {
       if (!listing.latitude || !listing.longitude) return;
 
       hasValidCoords = true;
@@ -138,10 +147,10 @@ export default function MapViewPage() {
       markersRef.current.push(regularMarker);
     });
 
-    if (hasValidCoords && listings.length > 0 && listings.length < 50) {
+    if (hasValidCoords && filteredListings.length > 0 && filteredListings.length < 50) {
       mapInstance.fitBounds(bounds, { top: 80, right: 80, bottom: 80, left: 80 });
     }
-  }, [mapInstance, listings]);
+  }, [mapInstance, listings, typeFilter]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,17 +185,26 @@ export default function MapViewPage() {
           </Button>
         </form>
 
-        <div className="flex items-center gap-3 text-sm text-gray-500">
-          <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded-full" style={{ background: BRAND }} />
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <button
+            onClick={() => setTypeFilter(f => f === "rental" ? "all" : "rental")}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-colors ${typeFilter === "rental" ? "border-gray-300 bg-gray-100 text-gray-900 font-semibold" : "border-transparent hover:bg-gray-100"}`}
+          >
+            <div className="w-3.5 h-3.5 rounded-full" style={{ background: BRAND }} />
             <span>Rental</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded-full bg-purple-600" />
+          </button>
+          <button
+            onClick={() => setTypeFilter(f => f === "coliving" ? "all" : "coliving")}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-colors ${typeFilter === "coliving" ? "border-purple-300 bg-purple-50 text-purple-800 font-semibold" : "border-transparent hover:bg-gray-100"}`}
+          >
+            <div className="w-3.5 h-3.5 rounded-full bg-purple-600" />
             <span>Co-Living</span>
-          </div>
+          </button>
+          {typeFilter !== "all" && (
+            <button onClick={() => setTypeFilter("all")} className="text-xs text-indigo-600 hover:underline">Clear</button>
+          )}
           <span className="text-gray-300">|</span>
-          <span className="font-medium text-gray-700">{listings.length} listings</span>
+          <span className="font-medium text-gray-700">{filteredListings.length} listings</span>
         </div>
 
         <Link href="/marketplace">
