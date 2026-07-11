@@ -475,6 +475,11 @@ export default function ProPage() {
               </Button>
             </div>
 
+            {/* Billing clarity — not a free trial */}
+            <p className="text-white/70 text-sm font-medium mb-6">
+              Everything unlocks today — your first <strong className="text-white">$25/mo</strong> starts in 30 days.
+            </p>
+
             {/* Trust strip */}
             <div className="flex flex-wrap items-center justify-center gap-5 text-white/40 text-sm">
               <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span className="text-white/60 font-medium">24–48 hour delivery</span></div>

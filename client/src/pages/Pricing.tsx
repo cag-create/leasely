@@ -261,7 +261,8 @@ export default function Pricing() {
               <div className="flex items-center gap-1.5 mt-1">
                 <span className="text-white/70 text-sm font-semibold">+ $75 one-time setup fee</span>
               </div>
-              <p className="text-white/60 text-sm mt-2">Everything you need to run a professional rental business.</p>
+              <p className="text-emerald-300/90 text-sm font-semibold mt-2">Everything unlocks today — your first $25/mo starts in 30 days.</p>
+              <p className="text-white/60 text-sm mt-1">Everything you need to run a professional rental business.</p>
             </div>
             {!isAuthenticated ? (
               <a href={getLoginUrl()}>
