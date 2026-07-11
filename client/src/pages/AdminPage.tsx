@@ -15,7 +15,7 @@ import {
   Pencil, Trash2, ExternalLink, Plus, Copy, Share2, Link2 as LinkIcon,
 } from "lucide-react";
 
-type AdminTab = "overview" | "metrics" | "users" | "listings" | "subs" | "agents" | "contractors" | "waitlist" | "sop" | "growth" | "intelligence";
+type AdminTab = "overview" | "metrics" | "users" | "listings" | "subs" | "agents" | "contractors" | "affiliates" | "waitlist" | "sop" | "growth" | "intelligence";
 
 /**
  * Manual safety-net to flip a user to Pro by email — for assisted/phone sales
@@ -129,6 +129,7 @@ export default function AdminPage() {
     { key: "subs", label: "Subscriptions", icon: Crown },
     { key: "agents", label: "Creme Agents", icon: Award },
     { key: "contractors", label: "Contractors", icon: Wrench },
+    { key: "affiliates", label: "Affiliates", icon: DollarSign },
     { key: "waitlist", label: "Waitlist", icon: Bell },
     { key: "sop", label: "SOP Library", icon: FileText },
     { key: "growth", label: "Growth", icon: TrendingUp },
@@ -174,6 +175,7 @@ export default function AdminPage() {
 
         {activeTab === "overview" && <OverviewTab onNavigate={setActiveTab} />}
         {activeTab === "metrics" && <MetricsTab />}
+        {activeTab === "affiliates" && <AffiliatesTab />}
         {activeTab === "users" && <UsersTab />}
         {activeTab === "listings" && <ListingsTab />}
         {activeTab === "subs" && <SubscriptionsTab />}
@@ -185,6 +187,101 @@ export default function AdminPage() {
         {activeTab === "intelligence" && <IntelligenceTab />}
       </div>
     </DashboardLayout>
+  );
+}
+
+// ─── Affiliates Tab ──────────────────────────────────────────────────────────
+// All referrals + W-9s + mark-paid. Server procedures: admin.getAllAffiliates,
+// getAllReferrals, getAllW9s, markAffiliatePaid.
+function AffiliatesTab() {
+  const utils = trpc.useUtils();
+  const { data: affiliates, isLoading } = trpc.admin.getAllAffiliates.useQuery();
+  const { data: referrals } = trpc.admin.getAllReferrals.useQuery();
+  const { data: w9s } = trpc.admin.getAllW9s.useQuery();
+  const markPaid = trpc.admin.markAffiliatePaid.useMutation({
+    onSuccess: () => { toast.success("Marked paid"); utils.admin.getAllAffiliates.invalidate(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const money = (c?: number) => `$${((c ?? 0) / 100).toLocaleString()}`;
+
+  if (isLoading) return <div className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>;
+
+  const w9ByAffiliate: Record<number, any> = {};
+  (w9s ?? []).forEach((w: any) => { w9ByAffiliate[w.affiliateId] = w; });
+
+  return (
+    <div className="space-y-6">
+      {/* Affiliates */}
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="p-4 border-b border-border flex items-center gap-2">
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground">Affiliates</h3>
+          <Badge variant="secondary" className="text-xs ml-auto">{(affiliates ?? []).length}</Badge>
+        </div>
+        {!(affiliates ?? []).length ? (
+          <div className="p-10 text-center text-muted-foreground text-sm">No affiliates yet.</div>
+        ) : (
+          <div className="divide-y divide-border">
+            {(affiliates as any[]).map((a) => {
+              const owed = Math.max(0, (a.totalEarned ?? 0) - (a.totalPaid ?? 0));
+              const w9 = w9ByAffiliate[a.id];
+              return (
+                <div key={a.id} className="px-5 py-4 flex items-center gap-4 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-foreground text-sm">{a.name || a.email || `#${a.userId}`}</span>
+                      <Badge variant="secondary" className="text-xs">{a.status}</Badge>
+                      <code className="text-xs text-muted-foreground">{a.referralCode}</code>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      Earned {money(a.totalEarned)} · Paid {money(a.totalPaid)} · <span className={owed > 0 ? "text-amber-600 font-semibold" : ""}>Owed {money(owed)}</span>
+                      {w9 ? ` · W-9 ✓ (${w9.taxClassification}, TIN ••${w9.tinLast4})` : " · ⚠ no W-9"}
+                    </div>
+                  </div>
+                  {owed > 0 && (
+                    <Button
+                      size="sm"
+                      className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white shrink-0"
+                      disabled={markPaid.isPending}
+                      onClick={() => {
+                        if (window.confirm(`Mark ${money(owed)} paid to ${a.name || a.email}?`)) {
+                          markPaid.mutate({ affiliateId: a.id, amountCents: owed, method: "check" });
+                        }
+                      }}
+                    >
+                      <CheckCircle2 className="h-3 w-3 mr-1" /> Mark {money(owed)} paid
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Referrals */}
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="p-4 border-b border-border flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground">All Referrals</h3>
+          <Badge variant="secondary" className="text-xs ml-auto">{(referrals ?? []).length}</Badge>
+        </div>
+        {!(referrals ?? []).length ? (
+          <div className="p-10 text-center text-muted-foreground text-sm">No referrals yet.</div>
+        ) : (
+          <div className="divide-y divide-border">
+            {(referrals as any[]).map((r) => (
+              <div key={r.id} className="px-5 py-3 flex items-center gap-4 text-sm">
+                <code className="text-xs text-muted-foreground w-28 shrink-0">{r.referralCode}</code>
+                <span className="flex-1 min-w-0 truncate text-foreground">{r.referredName || r.referredEmail || "—"}</span>
+                <Badge variant="secondary" className="text-xs capitalize">{r.status}</Badge>
+                <span className="text-xs text-muted-foreground w-16 text-right">{money(r.earningAmountCents)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
