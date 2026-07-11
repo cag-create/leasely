@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import Navbar from "@/components/Navbar";
+import DashboardLayout from "@/components/DashboardLayout";
 import {
   DollarSign, Plus, TrendingUp, TrendingDown, Download,
   FileText, Trash2, Building2
@@ -254,8 +254,7 @@ export default function Accounting() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
+      <DashboardLayout>
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <DollarSign className="w-12 h-12 text-gray-300 mx-auto mb-4" />
@@ -263,7 +262,7 @@ export default function Accounting() {
             <Button onClick={() => navigate("/")}>Go Home</Button>
           </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
@@ -271,8 +270,7 @@ export default function Accounting() {
   const expenseEntries = filteredEntries.filter(e => e.type === "expense");
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
+    <DashboardLayout>
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -598,6 +596,6 @@ export default function Accounting() {
           ))}
         </Tabs>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

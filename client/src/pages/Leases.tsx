@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import Navbar from "@/components/Navbar";
+import DashboardLayout from "@/components/DashboardLayout";
 import {
   FileText, Plus, CheckCircle2, Clock, Send, AlertTriangle,
   Home, DollarSign, Calendar, Key, ChevronRight, Users, Pencil, Trash2, Upload
@@ -601,8 +601,7 @@ export default function Leases() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
+      <DashboardLayout>
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
@@ -610,7 +609,7 @@ export default function Leases() {
             <Button onClick={() => navigate("/")}>Go Home</Button>
           </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
@@ -625,8 +624,7 @@ export default function Leases() {
     : leases;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
+    <DashboardLayout>
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -1739,7 +1737,7 @@ export default function Leases() {
           </Dialog>
         )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
 
