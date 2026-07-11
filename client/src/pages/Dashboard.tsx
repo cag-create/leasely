@@ -8,6 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import Navbar from "@/components/Navbar";
+import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
 import {
   LayoutDashboard, PlusCircle, Eye, Bookmark, MessageSquare,
@@ -377,8 +378,7 @@ export default function Dashboard() {
   const totalSaves = myListings.reduce((sum, l) => sum + (l.saveCount ?? 0), 0);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
+    <DashboardLayout>
 
       <div className="container mx-auto px-4 max-w-6xl py-8">
         {/* Header */}
@@ -1126,7 +1126,7 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-    </div>
+    </DashboardLayout>
   );
 }
 

@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import Navbar from "@/components/Navbar";
+import DashboardLayout from "@/components/DashboardLayout";
 import PropertyCard from "@/components/PropertyCard";
 import { Heart, Lock, Building2, ArrowRight } from "lucide-react";
 
@@ -37,9 +38,7 @@ export default function SavedListings() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-
+    <DashboardLayout>
       <div className="container mx-auto px-4 max-w-6xl py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -90,6 +89,6 @@ export default function SavedListings() {
           </div>
         )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
