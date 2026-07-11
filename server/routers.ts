@@ -2926,6 +2926,37 @@ export const appRouter = router({
       const token = signCrmRentToken(tenant.id);
       return { token, url: `${APP_URL}/pay/rent/${token}`, bankReady };
     }),
+
+    /**
+     * Email the tenant their secure rent link from admin@leasely.net (Leasely-
+     * sent, not a mailto draft). They can pay this month and set up autopay on
+     * that page so rent auto-drafts monthly.
+     */
+    emailRentInvite: protectedProcedure.input(z.object({
+      crmTenantId: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      const tenant = await getCrmTenantById(input.crmTenantId);
+      if (!tenant || tenant.userId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+      if (!tenant.email) throw new TRPCError({ code: "BAD_REQUEST", message: "This tenant has no email on file." });
+      const bankReady = !!sub.stripeConnectAccountId && sub.stripeConnectStatus === "active";
+      if (!bankReady) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Connect your bank account first (Payouts) so rent routes to you." });
+      const token = signCrmRentToken(tenant.id);
+      const url = `${APP_URL}/pay/rent/${token}`;
+      const brand = (sub as any).brandName || ctx.user.name || "your landlord";
+      const first = tenant.firstName || "there";
+      const html = `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
+        <h2 style="color:#1B2B5E">Pay your rent online</h2>
+        <p>Hi ${first}, ${brand} invites you to pay rent securely through Leasely.</p>
+        <p style="margin:20px 0"><a href="${url}" style="background:#4F46E5;color:#fff;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:10px;display:inline-block">Pay rent &amp; set up autopay →</a></p>
+        <p style="color:#6b7280;font-size:13px">On that page you can pay this month by bank (free) or card, and turn on <strong>autopay</strong> so rent drafts automatically each month — no more reminders.</p>
+        <p style="color:#9ca3af;font-size:12px">Link is private to you. If you didn't expect this, ignore it.</p>
+      </div>`;
+      const sent = await sendEmail({ to: tenant.email, subject: `Pay your rent online — ${brand}`, html });
+      if (!sent) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Email couldn't be sent — check email configuration." });
+      return { success: true, email: tenant.email };
+    }),
   }),
   // ─── Tenant Portal Router ────────────────────────────────────────────────────
   tenant: router({

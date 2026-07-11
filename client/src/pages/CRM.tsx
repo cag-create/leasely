@@ -156,20 +156,13 @@ export default function CRM() {
     }
   };
 
-  const emailPaymentLink = async (t: { id: number; firstName: string; email?: string | null }) => {
-    if (!t.email) return;
-    if (!bankReady) {
-      toast.error("Connect your bank account (Settings → Payments) before sending payment links.");
-      return;
-    }
-    try {
-      const url = await getRentLink(t.id);
-      const subject = encodeURIComponent("Rent payment link");
-      const body = encodeURIComponent(`Hi ${t.firstName},\n\nYou can pay your rent securely here:\n${url}\n\nThank you.`);
-      window.location.href = `mailto:${t.email}?subject=${subject}&body=${body}`;
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not generate payment link.");
-    }
+  const emailInviteMut = trpc.crm.emailRentInvite.useMutation({
+    onSuccess: (r) => toast.success(`Payment + autopay invite emailed to ${r.email}`),
+    onError: (e) => toast.error(e.message),
+  });
+  const emailPaymentLink = (t: { id: number; firstName: string; email?: string | null }) => {
+    if (!t.email) { toast.error("This tenant has no email on file."); return; }
+    emailInviteMut.mutate({ crmTenantId: t.id });
   };
 
   const createPropertyMutation = trpc.crm.createProperty.useMutation({
