@@ -143,10 +143,10 @@ export default function PropertyCard({ listing, view = "grid", isSaved = false, 
         <div className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex cursor-pointer"
           style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}>
           {/* Image */}
-          <div className="relative w-56 sm:w-72 shrink-0 overflow-hidden">
+          <div className="relative w-56 sm:w-72 shrink-0 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
             <img
               src={photo}
-              alt={imgAlt}
+              alt="" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/5 group-hover:opacity-0 transition-opacity" />
@@ -236,10 +236,10 @@ export default function PropertyCard({ listing, view = "grid", isSaved = false, 
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04)"; }}
       >
         {/* Image */}
-        <div className="relative h-52 overflow-hidden">
+        <div className="relative h-52 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
           <img
             src={photo}
-            alt={imgAlt}
+            alt="" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
             className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700"
             style={{ transform: "scale(1)" }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "scale(1.06)"; }}
