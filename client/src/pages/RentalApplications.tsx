@@ -543,6 +543,19 @@ function ReceivedApplications({
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm(`Delete ${app.applicantName || "this application"}? This can't be undone.`)) {
+                          deleteMutation.mutate({ id: app.id });
+                        }
+                      }}
+                      disabled={deleteMutation.isPending}
+                      title="Delete application"
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                     {isColiving && (
                       <Badge className="bg-purple-500/10 text-purple-600 border-0 text-xs">Member App</Badge>
                     )}

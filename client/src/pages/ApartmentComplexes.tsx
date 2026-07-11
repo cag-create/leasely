@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import DashboardLayout from "@/components/DashboardLayout";
 import {
   Building2, Plus, Home, ChevronRight, Trash2, Upload,
 } from "lucide-react";
@@ -531,7 +532,8 @@ export default function ApartmentComplexes() {
   }
 
   return (
-    <div className="space-y-6">
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -563,6 +565,7 @@ export default function ApartmentComplexes() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
