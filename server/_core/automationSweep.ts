@@ -92,6 +92,10 @@ export async function runAutomationSweep(): Promise<{ checks: SweepCheck[]; ok: 
       const ep = eps.data.find(e => e.url.includes("/api/stripe/webhook"));
       if (!ep) throw new Error("no keycove.net/api/stripe/webhook endpoint");
       if (ep.status !== "enabled") throw new Error(`webhook status=${ep.status}`);
+      // Guard: a stale webhook host (e.g. after a domain move) means Stripe
+      // events silently never reach the app. Fail loudly if it drifts.
+      const want = new URL(APP_URL).host;
+      if (new URL(ep.url).host !== want) throw new Error(`webhook host ${new URL(ep.url).host} ≠ app host ${want} — Stripe events won't be delivered`);
       return ep.url;
     }),
 
@@ -134,6 +138,8 @@ export async function runAutomationSweep(): Promise<{ checks: SweepCheck[]; ok: 
       const ep = eps.data.find(e => e.url.includes("/api/cbp/stripe/webhook"));
       if (!ep) throw new Error("no CBP→Keycove webhook endpoint");
       if (ep.status !== "enabled") throw new Error(`webhook status=${ep.status}`);
+      const wantHost = new URL(APP_URL).host;
+      if (new URL(ep.url).host !== wantHost) throw new Error(`CBP webhook host ${new URL(ep.url).host} ≠ app host ${wantHost} — CBP events won't be delivered`);
       if (!process.env.CBP_STRIPE_WEBHOOK_SECRET) throw new Error("CBP_STRIPE_WEBHOOK_SECRET unset");
       if (!process.env.CBP_API_SECRET) throw new Error("CBP_API_SECRET unset");
       return ep.url;
