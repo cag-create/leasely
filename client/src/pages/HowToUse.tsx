@@ -3,6 +3,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import {
   Rocket, Landmark, Home, Palette, FileText, DollarSign,
   Wrench, UserCircle, Headphones, ArrowRight, CheckCircle2, Sparkles,
+  Search, Award,
 } from "lucide-react";
 
 const ACCENT = "#4F46E5";
@@ -137,6 +138,31 @@ export default function HowToUse() {
           </p>
         </div>
 
+        {/* What Leasely is */}
+        <div className="mb-8 rounded-2xl border border-border bg-card p-5 sm:p-6">
+          <h2 className="font-bold text-foreground mb-2">What Leasely is</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Leasely is an all‑in‑one operating system for rentals — list properties, screen applicants with AI,
+            e‑sign state‑specific leases, collect rent, and run maintenance in one place — plus a public marketplace
+            where renters find and apply to your listings. It serves three roles:
+          </p>
+          <div className="grid sm:grid-cols-3 gap-3 mt-4">
+            <div className="rounded-xl border border-border p-4">
+              <div className="flex items-center gap-2 mb-1"><Home className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /><span className="font-semibold text-sm text-foreground">Landlords</span></div>
+              <p className="text-xs text-muted-foreground leading-relaxed">List, screen, lease, collect rent, and dispatch maintenance. Go Pro for the full toolkit plus a free branded website.</p>
+            </div>
+            <div className="rounded-xl border border-border p-4">
+              <div className="flex items-center gap-2 mb-1"><Search className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /><span className="font-semibold text-sm text-foreground">Renters</span></div>
+              <p className="text-xs text-muted-foreground leading-relaxed">Browse the marketplace, apply online in minutes, e‑sign the lease, and pay rent from a tenant portal.</p>
+            </div>
+            <div className="rounded-xl border border-border p-4">
+              <div className="flex items-center gap-2 mb-1"><Award className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /><span className="font-semibold text-sm text-foreground">Creme Agents</span></div>
+              <p className="text-xs text-muted-foreground leading-relaxed">Licensed agents join the network to receive leads and earn referral fees on closed deals.</p>
+              <Link href="/agent-guide"><span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">Agent guide →</span></Link>
+            </div>
+          </div>
+        </div>
+
         {/* Steps */}
         <div className="space-y-4">
           {STEPS.map((s) => (
@@ -177,8 +203,49 @@ export default function HowToUse() {
           ))}
         </div>
 
+        {/* Creme Agents */}
+        <div className="mt-8 rounded-2xl border border-indigo-200/70 dark:border-indigo-500/30 bg-indigo-50/50 dark:bg-indigo-500/5 p-5 sm:p-6">
+          <div className="flex items-start gap-4">
+            <div className="h-10 w-10 rounded-xl flex items-center justify-center text-white shrink-0" style={{ background: ACCENT }}>
+              <Award className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-bold text-foreground">Are you a real estate agent? Join the Creme Agent Network</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                Leasely brings the lead — you bring the license and close the deal. Build a profile that shows up in the
+                agent directory, receive buyer/seller/FSBO leads with notifications, and earn a referral fee on every
+                closed transaction. It's a separate track from the landlord tools above.
+              </p>
+              <ul className="mt-3 space-y-1.5">
+                {[
+                  "Register your license + specialties, then get approved",
+                  "Leads land on your Agent Dashboard with an email + notification",
+                  "Work the lead; Leasely invoices the referral fee on close",
+                ].map((p) => (
+                  <li key={p} className="flex items-start gap-2 text-sm text-foreground/80">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <span>{p}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex flex-wrap gap-3 mt-4">
+                <Link href="/broker-dashboard">
+                  <button className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors" style={{ background: ACCENT }}>
+                    <Award className="h-4 w-4" /> Become a Creme Agent
+                  </button>
+                </Link>
+                <Link href="/agent-guide">
+                  <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted transition-colors">
+                    <FileText className="h-4 w-4" /> Read the Creme Agent Guide
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Footer help */}
-        <div className="mt-8 rounded-2xl border border-border bg-muted/30 p-6 text-center">
+        <div className="mt-6 rounded-2xl border border-border bg-muted/30 p-6 text-center">
           <UserCircle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
           <h3 className="font-bold text-foreground">Still have questions?</h3>
           <p className="text-sm text-muted-foreground mt-1 mb-4">
