@@ -206,8 +206,9 @@ export default function Navbar() {
                 </>
               )}
 
-              <NavLink href="/pro" className="text-[#4F46E5] hover:text-[#4338CA]">
-                <span className="flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5" />Pro</span>
+              {/* Already-Pro users go straight to their tools; everyone else sees the upgrade page. */}
+              <NavLink href={isPro ? "/crm" : "/pro"} className="text-[#4F46E5] hover:text-[#4338CA]">
+                <span className="flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5" />{isPro ? "Pro Tools" : "Pro"}</span>
               </NavLink>
               <NavLink href="/contractors"><span className="flex items-center gap-1.5"><Wrench className="h-3.5 w-3.5" />Contractors</span></NavLink>
               <NavLink href="/pricing">Pricing</NavLink>
