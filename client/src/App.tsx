@@ -263,13 +263,38 @@ function Router() {
   );
 }
 
+// Subdomains under leasely.net that are NOT tenant portals.
+const RESERVED_SUBDOMAINS = ["www", "app", "api", "portal", "admin", "mail", "staging", "dev", "leasely"];
+
+/**
+ * When the app is loaded from a real portal subdomain (e.g. sunrise.leasely.net),
+ * return that subdomain so we render the tenant portal directly — no path needed.
+ * Requires wildcard DNS (*.leasely.net) + wildcard SSL to be configured at the
+ * host; until then only leasely.net/portal/<name> is reachable.
+ */
+function getPortalSubdomain(): string | null {
+  if (typeof window === "undefined") return null;
+  const host = window.location.hostname;
+  if (!host.endsWith(".leasely.net")) return null;
+  const label = host.slice(0, host.length - ".leasely.net".length);
+  if (!label || label.includes(".") || RESERVED_SUBDOMAINS.includes(label)) return null;
+  return label;
+}
+
 function App() {
+  const portalSub = getPortalSubdomain();
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster position="top-right" />
-          <Router />
+          {portalSub ? (
+            <Suspense fallback={<PageLoader />}>
+              <PortalPage subdomainOverride={portalSub} />
+            </Suspense>
+          ) : (
+            <Router />
+          )}
           <CookieBanner />
         </TooltipProvider>
       </ThemeProvider>

@@ -19,8 +19,11 @@ function hexToRgb(hex: string) {
     : "27, 43, 94";
 }
 
-export default function PortalPage() {
-  const { subdomain } = useParams<{ subdomain: string }>();
+export default function PortalPage({ subdomainOverride }: { subdomainOverride?: string } = {}) {
+  const params = useParams<{ subdomain: string }>();
+  // When reached via a real subdomain (sunrise.leasely.net) App passes it as a
+  // prop; via the /portal/:subdomain path it comes from the route params.
+  const subdomain = subdomainOverride ?? params.subdomain;
 
   const { data: portal, isLoading, error } = trpc.marketplace.getPortalBySubdomain.useQuery(
     { subdomain: subdomain ?? "" },
