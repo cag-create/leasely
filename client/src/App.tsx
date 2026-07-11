@@ -10,75 +10,103 @@ import { lazy, Suspense } from "react";
 // ── Eager loads (tiny, always needed) ─────────────────────────────────────────
 import NotFound from "@/pages/NotFound";
 
+/**
+ * Lazy import that survives deploys. When a code-split chunk's hashed filename
+ * changes after a redeploy, a browser holding the old index.html requests a
+ * chunk that no longer exists — the server returns index.html (text/html),
+ * the dynamic import throws "'text/html' is not a valid JavaScript MIME type",
+ * and Suspense/lazy crashes the page. Here we reload ONCE (guarded by a
+ * sessionStorage flag to avoid loops) so the browser fetches the fresh
+ * index.html + chunk map instead of showing an error screen.
+ */
+function lazyWithRetry(factory: () => Promise<{ default: any }>) {
+  return lazy(async () => {
+    try {
+      const mod = await factory();
+      try { sessionStorage.removeItem("chunk-reload"); } catch {}
+      return mod;
+    } catch (err) {
+      try {
+        if (!sessionStorage.getItem("chunk-reload")) {
+          sessionStorage.setItem("chunk-reload", "1");
+          window.location.reload();
+          return await new Promise<{ default: any }>(() => {}); // suspend; page is reloading
+        }
+      } catch {}
+      throw err;
+    }
+  });
+}
+
 // ── Lazy loads (route-level code splitting) ───────────────────────────────────
-const Home                = lazy(() => import("./pages/Home"));
-const Marketplace         = lazy(() => import("./pages/Marketplace"));
-const MapViewPage         = lazy(() => import("./pages/MapView"));
-const ListProperty        = lazy(() => import("./pages/ListProperty"));
-const ListingDetail       = lazy(() => import("./pages/ListingDetail"));
-const Dashboard           = lazy(() => import("./pages/Dashboard"));
-const SavedListings       = lazy(() => import("./pages/SavedListings"));
-const Onboarding          = lazy(() => import("./pages/Onboarding"));
-const PortalPage          = lazy(() => import("./pages/PortalPage"));
-const RentPayment         = lazy(() => import("./pages/RentPayment"));
-const RentPaymentSuccess  = lazy(() => import("./pages/RentPaymentSuccess"));
-const RentPaymentPrivate        = lazy(() => import("./pages/RentPaymentPrivate"));
-const RentPaymentPrivateSuccess = lazy(() => import("./pages/RentPaymentPrivateSuccess"));
-const WorkOrders          = lazy(() => import("./pages/WorkOrders"));
-const Accounting          = lazy(() => import("./pages/Accounting"));
-const CRM                 = lazy(() => import("./pages/CRM"));
-const TenantLogin         = lazy(() => import("./pages/TenantLogin"));
-const TenantDashboard     = lazy(() => import("./pages/TenantDashboard"));
-const Support             = lazy(() => import("./pages/Support"));
-const Pricing             = lazy(() => import("./pages/Pricing"));
-const ProPage             = lazy(() => import("./pages/ProPage"));
-const ApartmentComplexes  = lazy(() => import("./pages/ApartmentComplexes"));
-const AdminPage           = lazy(() => import("./pages/AdminPage"));
-const AdminStripeSmoke    = lazy(() => import("./pages/AdminStripeSmoke"));
-const AdminLeaseTemplates = lazy(() => import("./pages/AdminLeaseTemplates"));
-const RentalApplications  = lazy(() => import("./pages/RentalApplications"));
-const PublicApplication   = lazy(() => import("./pages/PublicApplication"));
-const ProSetup            = lazy(() => import("./pages/ProSetup"));
-const Welcome             = lazy(() => import("./pages/Welcome"));
-const PortalSetup         = lazy(() => import("./pages/PortalSetup"));
-const EditListing         = lazy(() => import("./pages/EditListing"));
-const ImportListings      = lazy(() => import("./pages/ImportListings"));
-const ImportTenants       = lazy(() => import("./pages/ImportTenants"));
-const MyListings          = lazy(() => import("./pages/MyListings"));
-const AffiliateSignup     = lazy(() => import("./pages/AffiliateSignup"));
-const AffiliateDashboard  = lazy(() => import("./pages/AffiliateDashboard"));
-const LoginPage           = lazy(() => import("./pages/LoginPage"));
-const AgentDirectory      = lazy(() => import("./pages/AgentDirectory"));
-const AgentProfile        = lazy(() => import("./pages/AgentProfile"));
-const ContractorDirectory = lazy(() => import("./pages/ContractorDirectory"));
-const ContractorProfile   = lazy(() => import("./pages/ContractorProfile"));
-const ContractorRegister  = lazy(() => import("./pages/ContractorRegister"));
-const FsboSignup          = lazy(() => import("./pages/FsboSignup"));
-const JoinWaitlist        = lazy(() => import("./pages/JoinWaitlist"));
-const IStay               = lazy(() => import("./pages/IStay"));
-const Compare             = lazy(() => import("./pages/Compare"));
-const BrokerDashboard     = lazy(() => import("./pages/BrokerDashboard"));
-const FeeSchedule         = lazy(() => import("./pages/FeeSchedule"));
-const Leases              = lazy(() => import("./pages/Leases"));
-const Payouts             = lazy(() => import("./pages/Payouts"));
-const VendorRespond       = lazy(() => import("./pages/VendorRespond"));
-const TenantSignLease     = lazy(() => import("./pages/TenantSignLease"));
-const Privacy             = lazy(() => import("./pages/Privacy"));
-const Terms               = lazy(() => import("./pages/Terms"));
-const CCPA                = lazy(() => import("./pages/CCPA"));
-const FairHousing         = lazy(() => import("./pages/FairHousing"));
-const CookiePolicy        = lazy(() => import("./pages/Cookies"));
-const ForgotPassword      = lazy(() => import("./pages/ForgotPassword"));
-const ResetPassword       = lazy(() => import("./pages/ResetPassword"));
-const VerifyEmail         = lazy(() => import("./pages/VerifyEmail"));
-const LeasePay            = lazy(() => import("./pages/LeasePay"));
-const SendLease           = lazy(() => import("./pages/SendLease"));
-const LeaseWizard         = lazy(() => import("./pages/LeaseWizard"));
-const LeasePreview        = lazy(() => import("./pages/LeasePreview"));
-const UploadOwnLease      = lazy(() => import("./pages/UploadOwnLease"));
-const ProGuide            = lazy(() => import("./pages/ProGuide"));
-const HowToUse            = lazy(() => import("./pages/HowToUse"));
-const AgentGuide          = lazy(() => import("./pages/AgentGuide"));
+const Home                = lazyWithRetry(() => import("./pages/Home"));
+const Marketplace         = lazyWithRetry(() => import("./pages/Marketplace"));
+const MapViewPage         = lazyWithRetry(() => import("./pages/MapView"));
+const ListProperty        = lazyWithRetry(() => import("./pages/ListProperty"));
+const ListingDetail       = lazyWithRetry(() => import("./pages/ListingDetail"));
+const Dashboard           = lazyWithRetry(() => import("./pages/Dashboard"));
+const SavedListings       = lazyWithRetry(() => import("./pages/SavedListings"));
+const Onboarding          = lazyWithRetry(() => import("./pages/Onboarding"));
+const PortalPage          = lazyWithRetry(() => import("./pages/PortalPage"));
+const RentPayment         = lazyWithRetry(() => import("./pages/RentPayment"));
+const RentPaymentSuccess  = lazyWithRetry(() => import("./pages/RentPaymentSuccess"));
+const RentPaymentPrivate        = lazyWithRetry(() => import("./pages/RentPaymentPrivate"));
+const RentPaymentPrivateSuccess = lazyWithRetry(() => import("./pages/RentPaymentPrivateSuccess"));
+const WorkOrders          = lazyWithRetry(() => import("./pages/WorkOrders"));
+const Accounting          = lazyWithRetry(() => import("./pages/Accounting"));
+const CRM                 = lazyWithRetry(() => import("./pages/CRM"));
+const TenantLogin         = lazyWithRetry(() => import("./pages/TenantLogin"));
+const TenantDashboard     = lazyWithRetry(() => import("./pages/TenantDashboard"));
+const Support             = lazyWithRetry(() => import("./pages/Support"));
+const Pricing             = lazyWithRetry(() => import("./pages/Pricing"));
+const ProPage             = lazyWithRetry(() => import("./pages/ProPage"));
+const ApartmentComplexes  = lazyWithRetry(() => import("./pages/ApartmentComplexes"));
+const AdminPage           = lazyWithRetry(() => import("./pages/AdminPage"));
+const AdminStripeSmoke    = lazyWithRetry(() => import("./pages/AdminStripeSmoke"));
+const AdminLeaseTemplates = lazyWithRetry(() => import("./pages/AdminLeaseTemplates"));
+const RentalApplications  = lazyWithRetry(() => import("./pages/RentalApplications"));
+const PublicApplication   = lazyWithRetry(() => import("./pages/PublicApplication"));
+const ProSetup            = lazyWithRetry(() => import("./pages/ProSetup"));
+const Welcome             = lazyWithRetry(() => import("./pages/Welcome"));
+const PortalSetup         = lazyWithRetry(() => import("./pages/PortalSetup"));
+const EditListing         = lazyWithRetry(() => import("./pages/EditListing"));
+const ImportListings      = lazyWithRetry(() => import("./pages/ImportListings"));
+const ImportTenants       = lazyWithRetry(() => import("./pages/ImportTenants"));
+const MyListings          = lazyWithRetry(() => import("./pages/MyListings"));
+const AffiliateSignup     = lazyWithRetry(() => import("./pages/AffiliateSignup"));
+const AffiliateDashboard  = lazyWithRetry(() => import("./pages/AffiliateDashboard"));
+const LoginPage           = lazyWithRetry(() => import("./pages/LoginPage"));
+const AgentDirectory      = lazyWithRetry(() => import("./pages/AgentDirectory"));
+const AgentProfile        = lazyWithRetry(() => import("./pages/AgentProfile"));
+const ContractorDirectory = lazyWithRetry(() => import("./pages/ContractorDirectory"));
+const ContractorProfile   = lazyWithRetry(() => import("./pages/ContractorProfile"));
+const ContractorRegister  = lazyWithRetry(() => import("./pages/ContractorRegister"));
+const FsboSignup          = lazyWithRetry(() => import("./pages/FsboSignup"));
+const JoinWaitlist        = lazyWithRetry(() => import("./pages/JoinWaitlist"));
+const IStay               = lazyWithRetry(() => import("./pages/IStay"));
+const Compare             = lazyWithRetry(() => import("./pages/Compare"));
+const BrokerDashboard     = lazyWithRetry(() => import("./pages/BrokerDashboard"));
+const FeeSchedule         = lazyWithRetry(() => import("./pages/FeeSchedule"));
+const Leases              = lazyWithRetry(() => import("./pages/Leases"));
+const Payouts             = lazyWithRetry(() => import("./pages/Payouts"));
+const VendorRespond       = lazyWithRetry(() => import("./pages/VendorRespond"));
+const TenantSignLease     = lazyWithRetry(() => import("./pages/TenantSignLease"));
+const Privacy             = lazyWithRetry(() => import("./pages/Privacy"));
+const Terms               = lazyWithRetry(() => import("./pages/Terms"));
+const CCPA                = lazyWithRetry(() => import("./pages/CCPA"));
+const FairHousing         = lazyWithRetry(() => import("./pages/FairHousing"));
+const CookiePolicy        = lazyWithRetry(() => import("./pages/Cookies"));
+const ForgotPassword      = lazyWithRetry(() => import("./pages/ForgotPassword"));
+const ResetPassword       = lazyWithRetry(() => import("./pages/ResetPassword"));
+const VerifyEmail         = lazyWithRetry(() => import("./pages/VerifyEmail"));
+const LeasePay            = lazyWithRetry(() => import("./pages/LeasePay"));
+const SendLease           = lazyWithRetry(() => import("./pages/SendLease"));
+const LeaseWizard         = lazyWithRetry(() => import("./pages/LeaseWizard"));
+const LeasePreview        = lazyWithRetry(() => import("./pages/LeasePreview"));
+const UploadOwnLease      = lazyWithRetry(() => import("./pages/UploadOwnLease"));
+const ProGuide            = lazyWithRetry(() => import("./pages/ProGuide"));
+const HowToUse            = lazyWithRetry(() => import("./pages/HowToUse"));
+const AgentGuide          = lazyWithRetry(() => import("./pages/AgentGuide"));
 
 // ── Page-level loading fallback ───────────────────────────────────────────────
 function PageLoader() {
