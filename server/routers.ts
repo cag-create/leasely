@@ -113,7 +113,7 @@ import {
   getAreaRentRates, getAreaRentRatesByState,
   // Admin
   getAllUsers, getUserCount, getPaidUserCount, getListingCount, getApplicationCount,
-  setUserRole, getAllSubscriptions, getAllListingsAdmin, deleteUserById,
+  setUserRole, getAllSubscriptions, getAllListingsAdmin, deleteUserById, getUserByEmail,
   getOrCreateProCode, getProCodeByUserId, getAllProCodes, redeemProCode,
   // Creme Agents
   getCremeAgentByUserId, getCremeAgentById, getApprovedCremeAgents, getAllCremeAgents,
@@ -3942,6 +3942,21 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
       await setUserRole(input.userId, input.role);
       return { success: true };
+    }),
+
+    // Manual safety-net: flip a user to Pro by email. Use for assisted/phone
+    // sales or if someone paid via a raw payment link that couldn't be matched
+    // automatically. Mints their CBP brand-kit code too, same as auto-signup.
+    adminGrantPro: protectedProcedure.input(z.object({
+      email: z.string().email(),
+    })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const user = await getUserByEmail(input.email.trim());
+      if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "No Leasely account with that email. Ask them to sign up first, then grant Pro." });
+      await upsertUserSubscription({ userId: user.id, tier: "paid", status: "active" });
+      let proCode: string | null = null;
+      try { proCode = (await getOrCreateProCode(user.id)).code; } catch { /* non-fatal */ }
+      return { userId: user.id, name: user.name ?? null, email: user.email ?? null, proCode };
     }),
 
     deleteUser: protectedProcedure.input(z.object({

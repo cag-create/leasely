@@ -18,6 +18,54 @@ import {
 type AdminTab = "overview" | "users" | "listings" | "subs" | "agents" | "contractors" | "waitlist" | "sop" | "growth" | "intelligence";
 
 /**
+ * Manual safety-net to flip a user to Pro by email — for assisted/phone sales
+ * or anyone who paid via a raw payment link that couldn't be auto-matched.
+ * Normal in-app "Get Pro" signups and email-matched link payments upgrade
+ * automatically; this is the rare-case override.
+ */
+function GrantProCard() {
+  const utils = trpc.useUtils();
+  const [email, setEmail] = useState("");
+  const grant = trpc.admin.adminGrantPro.useMutation({
+    onSuccess: (r) => {
+      toast.success(`${r.name || r.email} is now Pro${r.proCode ? ` · code ${r.proCode}` : ""}`);
+      setEmail("");
+      utils.admin.getSubscriptions.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  return (
+    <div className="rounded-2xl border border-amber-200/70 dark:border-amber-500/30 bg-amber-50/50 dark:bg-amber-500/5 p-4">
+      <div className="flex items-center gap-2 mb-1">
+        <Crown className="h-4 w-4 text-amber-500" />
+        <h3 className="font-semibold text-foreground text-sm">Grant Pro manually</h3>
+      </div>
+      <p className="text-xs text-muted-foreground mb-3">
+        Flip a user to Pro by their account email. Use for assisted sales or a raw-link payment that didn't auto-match. Also mints their CBP brand-kit code.
+      </p>
+      <div className="flex items-center gap-2">
+        <Input
+          type="email"
+          placeholder="customer@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && email) grant.mutate({ email }); }}
+          className="flex-1 h-9"
+        />
+        <Button
+          size="sm"
+          onClick={() => email && grant.mutate({ email })}
+          disabled={!email || grant.isPending}
+          className="gap-1.5 shrink-0 bg-amber-500 hover:bg-amber-600 text-white"
+        >
+          {grant.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Crown className="h-3.5 w-3.5" />} Grant Pro
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Shareable public sign-up link an admin can copy/send to fill the directory.
  * Points at an existing self-registration page — the invitee makes a free
  * account and completes their profile there.
@@ -439,6 +487,7 @@ function SubscriptionsTab() {
 
   return (
     <div className="space-y-4">
+      <GrantProCard />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-2xl border border-border bg-card p-5">
           <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Active Subscribers</div>

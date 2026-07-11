@@ -6,7 +6,7 @@
 import type { Express, Request, Response } from "express";
 import Stripe from "stripe";
 import {
-  upsertUserSubscription, getUserByOpenId, getDb,
+  upsertUserSubscription, getUserByOpenId, getDb, getUserByEmail,
   getLeaseById, updateLeaseAgreement, getUserById, getOrCreateProCode,
   createRentPayment, updateRentPayment, getRentPaymentByLeasePeriod,
   createNotification,
@@ -126,14 +126,28 @@ export function registerStripeWebhook(app: Express) {
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  const userId = session.metadata?.user_id
+  let userId = session.metadata?.user_id
     ? parseInt(session.metadata.user_id)
     : session.client_reference_id
       ? parseInt(session.client_reference_id)
       : null;
 
+  // Fallback: match by the email used at checkout. Covers raw Stripe Payment
+  // Links that don't carry a Leasely user id — anyone who pays with the same
+  // email as their Leasely account is upgraded automatically, no manual step.
   if (!userId) {
-    console.error("[Webhook] checkout.session.completed: no user_id in metadata");
+    const email = session.customer_details?.email ?? session.customer_email ?? null;
+    if (email) {
+      const user = await getUserByEmail(email);
+      if (user) {
+        userId = user.id;
+        console.log(`[Webhook] Resolved user ${user.id} by email ${email} (no id on session)`);
+      }
+    }
+  }
+
+  if (!userId) {
+    console.error("[Webhook] checkout.session.completed: could not resolve a Leasely user (no user_id, client_reference_id, or matching account email)");
     return;
   }
 
