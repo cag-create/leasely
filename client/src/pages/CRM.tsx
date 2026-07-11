@@ -25,6 +25,34 @@ function getDaysUntilExpiry(endDate: string): number {
   return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+/** Late-fee policy display + inline editor on a CRM lease. */
+function LeaseLateFee({ lease, onSaved }: { lease: any; onSaved: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [amount, setAmount] = useState(String((lease.lateFeeCents ?? 0) / 100));
+  const [grace, setGrace] = useState(String(lease.lateFeeGraceDays ?? 5));
+  const update = trpc.crm.updateLease.useMutation({
+    onSuccess: () => { toast.success("Late fee updated"); setEditing(false); onSaved(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const feeCents = lease.lateFeeCents ?? 0;
+  if (!editing) {
+    return (
+      <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
+        <span>Late fee: {feeCents > 0 ? `$${(feeCents / 100).toLocaleString()} after ${lease.lateFeeGraceDays ?? 5}-day grace` : "none"}</span>
+        <button onClick={() => setEditing(true)} className="text-[#4F46E5] font-medium hover:underline">Edit</button>
+      </div>
+    );
+  }
+  return (
+    <div className="mt-2 flex items-end gap-2 flex-wrap">
+      <div><label className="text-[10px] text-gray-400 block">Late fee $</label><Input value={amount} onChange={e => setAmount(e.target.value)} className="h-8 w-20 text-sm" /></div>
+      <div><label className="text-[10px] text-gray-400 block">Grace days</label><Input value={grace} onChange={e => setGrace(e.target.value)} className="h-8 w-16 text-sm" /></div>
+      <Button size="sm" className="h-8" disabled={update.isPending} onClick={() => update.mutate({ id: lease.id, lateFeeCents: Math.round((parseFloat(amount) || 0) * 100), lateFeeGraceDays: parseInt(grace) || 5 })}>Save</Button>
+      <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditing(false)}>Cancel</Button>
+    </div>
+  );
+}
+
 export default function CRM() {
   const { isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
@@ -733,6 +761,7 @@ export default function CRM() {
                                       )}
                                     </p>
                                     <p className="text-sm text-green-700">${(l.monthlyRent / 100).toLocaleString()}/mo</p>
+                                    <LeaseLateFee lease={l} onSaved={refetchLeases} />
                                   </div>
                                 </div>
                               </CardContent>

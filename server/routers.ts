@@ -2874,6 +2874,8 @@ export const appRouter = router({
       endDate: z.string().optional(),
       monthlyRent: z.number().optional(),
       notes: z.string().optional(),
+      lateFeeCents: z.number().int().min(0).optional(),
+      lateFeeGraceDays: z.number().int().min(0).max(31).optional(),
     })).mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
       await updateCrmLease(id, ctx.user.id, data as any);
