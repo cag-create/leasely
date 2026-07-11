@@ -37,7 +37,7 @@ export default function ProGuide() {
       body: (
         <ul className="grid sm:grid-cols-2 gap-2 text-sm">
           {[
-            ["Branded portal", "yourname.leasely.net"],
+            ["Branded portal", "yourname.keycove.net"],
             ["Unlimited listings", "First one is free even without Pro"],
             ["Stripe instant payouts", "Next business day, automatic"],
             ["AI applicant screening", "Risk score + flagged anomalies"],

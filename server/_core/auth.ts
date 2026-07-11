@@ -33,7 +33,7 @@ export function verifyPassword(password: string, storedHash: string): boolean {
 }
 
 function appUrl(): string {
-  return process.env.APP_URL || "https://leasely.net";
+  return process.env.APP_URL || "https://keycove.net";
 }
 
 // ─── Express routes ────────────────────────────────────────────────────────

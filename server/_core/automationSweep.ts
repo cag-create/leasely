@@ -33,7 +33,7 @@ import {
 import { sendEmail } from "./email";
 
 const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
-const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
 
 // Keep in sync with CBP_WEBSITE_BUNDLE_SLUG in server/routers.ts — the active
 // CBP "Website + Domain Creation" payment link the Build-my-website flow opens.
@@ -90,7 +90,7 @@ export async function runAutomationSweep(): Promise<{ checks: SweepCheck[]; ok: 
       if (!s) throw new Error("no Stripe key");
       const eps = await s.webhookEndpoints.list({ limit: 30 });
       const ep = eps.data.find(e => e.url.includes("/api/stripe/webhook"));
-      if (!ep) throw new Error("no leasely.net/api/stripe/webhook endpoint");
+      if (!ep) throw new Error("no keycove.net/api/stripe/webhook endpoint");
       if (ep.status !== "enabled") throw new Error(`webhook status=${ep.status}`);
       return ep.url;
     }),

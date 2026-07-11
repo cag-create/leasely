@@ -24,7 +24,7 @@ function hasNoPhotos(photos: string | null | undefined): boolean {
 }
 
 function photoNudgeHtml(name: string, title: string, listingId: number): string {
-  const dashUrl = `${process.env.APP_URL ?? "https://leasely.net"}/my-listings`;
+  const dashUrl = `${process.env.APP_URL ?? "https://keycove.net"}/my-listings`;
   return `
 <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:580px;margin:0 auto">
   <div style="background:linear-gradient(135deg,#1B2B5E,#00C896);padding:24px 28px;border-radius:10px 10px 0 0;color:white">
@@ -43,14 +43,14 @@ function photoNudgeHtml(name: string, title: string, listingId: number): string 
        style="display:block;background:#4F46E5;color:white;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;text-align:center;margin-bottom:16px">
       Upload Photos Now →
     </a>
-    <p style="margin:0;color:#9ca3af;font-size:12px">Sent by <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a> · <a href="${process.env.APP_URL ?? "https://leasely.net"}/unsubscribe" style="color:#9ca3af">Unsubscribe</a></p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Sent by <a href="https://keycove.net" style="color:#1B2B5E">Keycove</a> · <a href="${process.env.APP_URL ?? "https://keycove.net"}/unsubscribe" style="color:#9ca3af">Unsubscribe</a></p>
   </div>
 </div>`;
 }
 
 function upgradeNudgeHtml(name: string, title: string): string {
-  const upgradeUrl = `${process.env.APP_URL ?? "https://leasely.net"}/pricing`;
-  const dashUrl = `${process.env.APP_URL ?? "https://leasely.net"}/my-listings`;
+  const upgradeUrl = `${process.env.APP_URL ?? "https://keycove.net"}/pricing`;
+  const dashUrl = `${process.env.APP_URL ?? "https://keycove.net"}/my-listings`;
   return `
 <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:580px;margin:0 auto">
   <div style="background:linear-gradient(135deg,#1B2B5E,#4F46E5);padding:24px 28px;border-radius:10px 10px 0 0;color:white">
@@ -81,7 +81,7 @@ function upgradeNudgeHtml(name: string, title: string): string {
         Add Photos
       </a>
     </div>
-    <p style="margin:0;color:#9ca3af;font-size:12px">Sent by <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a> · <a href="${process.env.APP_URL ?? "https://leasely.net"}/unsubscribe" style="color:#9ca3af">Unsubscribe</a></p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Sent by <a href="https://keycove.net" style="color:#1B2B5E">Keycove</a> · <a href="${process.env.APP_URL ?? "https://keycove.net"}/unsubscribe" style="color:#9ca3af">Unsubscribe</a></p>
   </div>
 </div>`;
 }

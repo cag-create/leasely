@@ -270,7 +270,7 @@ export const leasesRouter = router({
 
         const lease = await getLeaseById(doc.leaseAgreementId);
         if (lease) {
-          const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+          const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
           const landlord = await getUserById(lease.landlordUserId);
           const signUrl = `${APP_URL}/tenant/sign-lease/${lease.id}`;
           sendEmail({

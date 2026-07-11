@@ -279,7 +279,7 @@ async function getOrCreateCbpWebsiteBundleCoupon(cbp: Stripe): Promise<string | 
   return coupon.id;
 }
 
-const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
 
 const complexesRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
@@ -898,7 +898,7 @@ export const appRouter = router({
         // Email the listing owner
         const owner = await getUserById(listing.userId);
         if (owner?.email) {
-          const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+          const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
           sendEmail({
             to: owner.email,
             subject: `New inquiry for "${listing.title}"`,
@@ -2251,7 +2251,7 @@ export const appRouter = router({
       const vendorsWithEmail = allVendorsList.filter(v => v.email && v.isActive);
 
       if (vendorsWithEmail.length > 0) {
-        const APP_URL_AUTO = process.env.VITE_APP_URL ?? "https://leasely.net";
+        const APP_URL_AUTO = process.env.VITE_APP_URL ?? "https://keycove.net";
         const isEmergency = input.priority === "emergency";
         const sub2 = await getUserSubscription(tenant.landlordUserId);
 
@@ -2332,7 +2332,7 @@ export const appRouter = router({
 
       // Email landlord that a tenant submitted a request
       if (landlord.email) {
-        const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+        const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
         sendEmail({
           to: landlord.email,
           subject: `🔧 Maintenance Request from ${tenant.name} — ${input.priority === "emergency" ? "EMERGENCY" : input.title}`,
@@ -2401,7 +2401,7 @@ export const appRouter = router({
 
       if (vendorsWithEmail.length === 0) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No vendors with email addresses found." });
 
-      const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+      const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
       const landlord = await getUserByOpenId(ctx.user.openId);
       let dispatched = 0;
 
@@ -2549,7 +2549,7 @@ export const appRouter = router({
             const allVendors = await getVendors(dr.landlordUserId);
             const vendor = allVendors.find(v => v.id === dr.vendorId);
             if (landlord?.email && wo) {
-              const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+              const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
               sendEmail({
                 to: landlord.email,
                 subject: `✅ Vendor Responded — ${wo.title}`,
@@ -2587,7 +2587,7 @@ export const appRouter = router({
               const allVendors = await getVendors(dr.landlordUserId);
               const remaining = allVendors.filter(v => v.email && v.isActive && !alreadyTried.has(v.id));
               if (remaining.length > 0) {
-                const APP_URL_ESC = process.env.VITE_APP_URL ?? "https://leasely.net";
+                const APP_URL_ESC = process.env.VITE_APP_URL ?? "https://keycove.net";
                 let woPhotos: string[] = [];
                 try { woPhotos = wo.photos ? JSON.parse(wo.photos) : []; } catch { /* ignore */ }
                 const isEmergency = wo.priority === "emergency";
@@ -2697,7 +2697,7 @@ export const appRouter = router({
       const landlord = await getUserById(dr.landlordUserId);
       const wo = await getWorkOrderById(dr.workOrderId, dr.landlordUserId);
       if (landlord?.email && wo) {
-        const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+        const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
         sendEmail({
           to: landlord.email,
           subject: `🔍 Inspection complete — ${wo.title}`,
@@ -2734,7 +2734,7 @@ export const appRouter = router({
       const landlord = await getUserById(dr.landlordUserId);
       const wo = await getWorkOrderById(dr.workOrderId, dr.landlordUserId);
       if (landlord?.email && wo) {
-        const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+        const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
         sendEmail({
           to: landlord.email,
           subject: `✅ Work complete — review & approve ${wo.title}`,
@@ -2834,7 +2834,7 @@ export const appRouter = router({
             issueTitle: wo.title,
             propertyAddress: wo.propertyAddress ?? "",
             finalAmountDollars: input.amountCents / 100,
-            paymentUrl: `${process.env.VITE_APP_URL ?? "https://leasely.net"}/work-orders`,
+            paymentUrl: `${process.env.VITE_APP_URL ?? "https://keycove.net"}/work-orders`,
           }),
         }).catch(() => {});
       }
@@ -3280,7 +3280,7 @@ export const appRouter = router({
     }),
 
     /**
-     * Email the tenant their secure rent link from admin@leasely.net (Keycove-
+     * Email the tenant their secure rent link from admin@keycove.net (Keycove-
      * sent, not a mailto draft). They can pay this month and set up autopay on
      * that page so rent auto-drafts monthly.
      */
@@ -3760,7 +3760,7 @@ export const appRouter = router({
       if (input.status === "denied") {
         const app = await getRentalApplicationById(input.id);
         if (app?.applicantEmail) {
-          const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+          const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
           const reapplyHref = app.listingId
             ? `${APP_URL}/apply/${app.listingId}`
             : `${APP_URL}/marketplace`;
@@ -3949,7 +3949,7 @@ export const appRouter = router({
           }
 
           // Auto-send the lease to the tenant immediately on approval — no manual "Send" step.
-          const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+          const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
           const landlord = await getUserByOpenId(ctx.user.openId);
           await updateLeaseAgreement(leaseId, ctx.user.id, { status: "sent", sentAt: new Date() } as any);
           sendEmail({
@@ -4679,7 +4679,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
 
       // Affiliate confirmation
       if (ctx.user.email) {
-        const refLink = `https://leasely.net/?ref=${aff.referralCode}`;
+        const refLink = `https://keycove.net/?ref=${aff.referralCode}`;
         const affiliateHtml = `
           <h2 style="font-family:system-ui">You're in — your affiliate account is active 🎉</h2>
           <p>Thanks for completing your W-9, ${input.legalName.split(" ")[0]}. Your affiliate account is now active and you can start earning <strong>$50 per landlord</strong> you refer to Keycove Pro.</p>
@@ -4687,7 +4687,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
           <a href="${refLink}" style="color:#00A87C">${refLink}</a></p>
           <p><strong>Your referral code:</strong> <code>${aff.referralCode}</code></p>
           <p style="margin-top:16px">
-            <a href="https://leasely.net/affiliate/dashboard" style="display:inline-block;background:#00C896;color:#062018;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:700">
+            <a href="https://keycove.net/affiliate/dashboard" style="display:inline-block;background:#00C896;color:#062018;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:700">
               Open my affiliate dashboard
             </a>
           </p>
@@ -5432,7 +5432,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
 
       await updateLeaseAgreement(input.leaseId, ctx.user.id, { status: "sent", sentAt: new Date() });
 
-      const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+      const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
       const landlord = await getUserByOpenId(ctx.user.openId);
       const signUrl = `${APP_URL}/tenant/sign-lease/${input.leaseId}`;
 
@@ -5477,7 +5477,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         });
       }
 
-      const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+      const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
       const landlord = await getUserByOpenId(ctx.user.openId);
 
       // Always bump sentAt so the landlord can see when the last reminder went out.
@@ -5553,7 +5553,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         tenantSignatureIp: signerIp ?? undefined,
       } as any);
 
-      const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+      const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
 
       // Notify landlord — your turn to countersign. NO payment link sent yet.
       const landlord = await getUserById(lease.landlordUserId);
@@ -5737,7 +5737,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       await updateLeaseAgreement(lease.id, lease.landlordUserId, patch as any);
 
       if (willHaveRent && willHaveDeposit) {
-        const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+        const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
 
         if (alreadyCountersigned) {
           // Landlord already countersigned. Payment clearing means the lease
@@ -5868,7 +5868,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       //  - Landlord already countersigned → tenant gets the key-pickup email.
       //  - Not yet countersigned → landlord gets the "ready to countersign" email.
       if (willHaveRent && willHaveDeposit) {
-        const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+        const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
 
         if (alreadyCountersigned) {
           const accessMethod = lease.accessMethod ?? "key_pickup";
@@ -6213,7 +6213,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         }),
       } as any);
 
-      const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+      const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
       const leaseStartDateFormatted = lease.leaseStartDate
         ? new Date(`${lease.leaseStartDate}T12:00:00Z`).toLocaleDateString("en-US", {
             year: "numeric", month: "long", day: "numeric", timeZone: "UTC",
@@ -6773,7 +6773,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
 
       // Email the property manager
       const landlord = await getUserByOpenId(ctx.user.openId);
-      const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+      const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
       sendEmail({
         to: input.inviteEmail,
         subject: `You've been added as a Property Manager on Keycove`,

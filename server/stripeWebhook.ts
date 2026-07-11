@@ -182,7 +182,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   // Send welcome email with code
   try {
     const user = await getUserById(userId);
-    const APP_URL = process.env.APP_URL ?? process.env.VITE_APP_URL ?? "https://leasely.net";
+    const APP_URL = process.env.APP_URL ?? process.env.VITE_APP_URL ?? "https://keycove.net";
     if (user?.email) {
       const CBP_URL = `https://certifybusinesspro.com`;
       const codeHtml = proCode
@@ -210,7 +210,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         html: `
           <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#111827">
             <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:32px;text-align:center;margin-bottom:24px">
-              <img src="${process.env.VITE_APP_URL ?? "https://leasely.net"}/keycove-logo.png" alt="Keycove" height="44" style="margin-bottom:12px" />
+              <img src="${process.env.VITE_APP_URL ?? "https://keycove.net"}/keycove-logo.png" alt="Keycove" height="44" style="margin-bottom:12px" />
               <h1 style="margin:0;font-size:26px;font-weight:900;color:#0F1F4B">Welcome to Keycove Pro!</h1>
               <p style="margin:8px 0 0;color:#6b7280;font-size:15px">Your landlord operating system is ready.</p>
             </div>
@@ -234,10 +234,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
               </a>
             </div>
 
-            <p style="color:#6b7280;font-size:13px;text-align:center">Questions? Reply to this email or visit <a href="${APP_URL}/support" style="color:#E8951A">leasely.net/support</a></p>
+            <p style="color:#6b7280;font-size:13px;text-align:center">Questions? Reply to this email or visit <a href="${APP_URL}/support" style="color:#E8951A">keycove.net/support</a></p>
 
             <div style="border-top:1px solid #e5e7eb;margin-top:32px;padding-top:16px;text-align:center">
-              <p style="margin:0;font-size:12px;color:#9ca3af">Keycove · Your Landlord OS · <a href="${APP_URL}" style="color:#E8951A">leasely.net</a></p>
+              <p style="margin:0;font-size:12px;color:#9ca3af">Keycove · Your Landlord OS · <a href="${APP_URL}" style="color:#E8951A">keycove.net</a></p>
             </div>
           </div>`,
       });
@@ -360,7 +360,7 @@ async function handleLeasePaymentCompleted(leaseId: number, kind: "rent" | "depo
 
   // Notify landlord when fully paid so they can countersign
   if (willHaveRent && willHaveDeposit) {
-    const APP_URL = process.env.VITE_APP_URL ?? "https://leasely.net";
+    const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
     try {
       const landlord = await getUserById(lease.landlordUserId);
       if (landlord?.email) {
@@ -465,7 +465,7 @@ async function handleLeaseAutopayActivated(leaseId: number, session: Stripe.Chec
   }
 
   // Notify landlord to countersign
-  const APP_URL = process.env.VITE_APP_URL ?? process.env.APP_URL ?? "https://leasely.net";
+  const APP_URL = process.env.VITE_APP_URL ?? process.env.APP_URL ?? "https://keycove.net";
   try {
     const landlord = await getUserById(lease.landlordUserId);
     if (landlord?.email) {
@@ -611,7 +611,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     // Email landlord so they can follow up out-of-band
     const landlord = await getUserById(lease.landlordUserId);
     if (landlord?.email) {
-      const APP_URL = process.env.VITE_APP_URL ?? process.env.APP_URL ?? "https://leasely.net";
+      const APP_URL = process.env.VITE_APP_URL ?? process.env.APP_URL ?? "https://keycove.net";
       await sendEmail({
         to: landlord.email,
         subject: `Rent payment failed — ${lease.propertyAddress}`,

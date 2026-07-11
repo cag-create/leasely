@@ -237,7 +237,7 @@ async function startServer() {
           to: owner.email,
           subject: `[Keycove] New lead from your branded site — ${name}`,
           html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
-            <h2 style="color:#1B2B5E">New Lead from ${customDomain ?? `${subdomain}.leasely.net`}</h2>
+            <h2 style="color:#1B2B5E">New Lead from ${customDomain ?? `${subdomain}.keycove.net`}</h2>
             <p><strong>${name}</strong> just submitted a contact form on your branded site:</p>
             <ul>
               <li><strong>Email:</strong> <a href="mailto:${email}">${email}</a></li>

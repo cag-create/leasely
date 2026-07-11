@@ -748,7 +748,7 @@ export default function Dashboard() {
                     <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Subdomain</Label>
                     <div className="flex items-center mt-1.5">
                       <Input value={brandForm.portalSubdomain} onChange={e => setBrandForm(f => ({ ...f, portalSubdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") }))} placeholder="sunrise" className="rounded-r-none" />
-                      <span className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-200 rounded-r-lg text-xs text-gray-500 whitespace-nowrap">.leasely.net</span>
+                      <span className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-200 rounded-r-lg text-xs text-gray-500 whitespace-nowrap">.keycove.net</span>
                     </div>
                   </div>
                   <div>
@@ -787,7 +787,7 @@ export default function Dashboard() {
                     ))}
                   </ul>
                   <div className="mt-4 pt-4 border-t">
-                    <a href="https://www.leasely.net" target="_blank" rel="noopener noreferrer">
+                    <a href="https://www.keycove.net" target="_blank" rel="noopener noreferrer">
                       <Button variant="outline" size="sm" className="w-full gap-2">
                         <ExternalLink className="h-4 w-4" /> Open Full Portal
                       </Button>
@@ -826,7 +826,7 @@ export default function Dashboard() {
             {!isPaid && (
               <div className="space-y-3">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Locked Pro Features</p>
-                <LockedFeatureCard icon={Globe} title="Branded Portal" desc="yourname.leasely.net with your logo and colors." />
+                <LockedFeatureCard icon={Globe} title="Branded Portal" desc="yourname.keycove.net with your logo and colors." />
                 <LockedFeatureCard icon={Shield} title="AI Fraud Detection" desc="Screen every applicant for fake employers and inflated income." />
                 <LockedFeatureCard icon={FileText} title="Rental Applications" desc="Receive and manage full rental applications." />
                 <LockedFeatureCard icon={Users} title="Background Checks" desc="One-click ApplyConnect (TransUnion-backed) integration." />
@@ -885,10 +885,10 @@ export default function Dashboard() {
                   <p className="text-xs text-gray-500 mb-1">Your portal URL</p>
                   <div className="flex items-center gap-2">
                     <code className="text-sm font-mono text-gray-800 flex-1 truncate">
-                      leasely.net/portal/{portalSubdomain}
+                      keycove.net/portal/{portalSubdomain}
                     </code>
                     <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => {
-                      navigator.clipboard.writeText(`https://leasely.net/portal/${portalSubdomain}`);
+                      navigator.clipboard.writeText(`https://keycove.net/portal/${portalSubdomain}`);
                       toast.success("URL copied!");
                     }}>
                       <Copy className="h-3.5 w-3.5" />
@@ -1153,7 +1153,7 @@ function ProOnboardingChecklist() {
   const customDomain = (user as any)?.customDomain;
   const hasListings = myListings.length > 0;
   const hasConnect = stripeStatus?.status === "active";
-  // Branded portal counts as done if user has EITHER a leasely.net subdomain
+  // Branded portal counts as done if user has EITHER a keycove.net subdomain
   // OR a custom domain (the "I have my own URL" path), since both flows
   // satisfy "set up your branded portal".
   const hasBrandedPortal = !!(portalSubdomain || customDomain);

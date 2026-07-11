@@ -78,7 +78,7 @@ export default function FeeSchedule() {
             />
             <Row
               label="One-time setup fee"
-              desc="Includes your branded website, custom logo placement, and personalized leasely.net subdomain URL."
+              desc="Includes your branded website, custom logo placement, and personalized keycove.net subdomain URL."
               free={<No />}
               pro={<span className="text-[#C8860A]">$75 one-time</span>}
               proHighlight
@@ -102,7 +102,7 @@ export default function FeeSchedule() {
             <Row label="Marketplace visibility" free={<Yes />} pro={<Yes />} />
             <Row label="Map view & search placement" free={<Yes />} pro={<Yes />} />
             <Row label="Branded tenant portal" free={<No />} pro={<Yes />} proHighlight />
-            <Row label="Custom subdomain (yourname.leasely.net)" free={<No />} pro={<Yes />} proHighlight />
+            <Row label="Custom subdomain (yourname.keycove.net)" free={<No />} pro={<Yes />} proHighlight />
           </Section>
 
           {/* ── Rent Collection ── */}

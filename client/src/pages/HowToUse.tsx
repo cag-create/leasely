@@ -31,7 +31,7 @@ const STEPS: Step[] = [
     body: "A one-time $75 setup + $29/month turns Keycove into your full landlord operating system — and includes a free professional website, custom logo, and Year 1 domain built by Certify Business Pro.",
     points: [
       "Unlimited listings on the marketplace",
-      "Branded tenant portal at yourname.leasely.net",
+      "Branded tenant portal at yourname.keycove.net",
       "AI applicant screening, e-sign leases, accounting & more",
     ],
     cta: { label: "See everything in Pro", href: "/pro" },

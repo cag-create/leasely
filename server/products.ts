@@ -17,7 +17,7 @@ export const LEASELY_PRO_MONTHLY = {
 /** $75.00 one-time Pro setup fee (covers setup + first month; $29/mo starts next month) */
 export const LEASELY_PRO_SETUP = {
   name: "Keycove Pro — Setup (includes first month)",
-  description: "One-time $75 to start Pro — includes your branded website, custom logo, personalized leasely.net URL, and your first month. The $29/month subscription begins next month.",
+  description: "One-time $75 to start Pro — includes your branded website, custom logo, personalized keycove.net URL, and your first month. The $29/month subscription begins next month.",
   setupPrice: 7500, // $75.00 in cents
   // Set this to your Stripe one-time Price ID once created in the Stripe Dashboard.
   // Example: price_1XYZ789DEF456JKL

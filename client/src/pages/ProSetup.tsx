@@ -110,7 +110,7 @@ export default function ProSetup() {
           </p>
           <div className="rounded-2xl px-6 py-3 mb-6 inline-block" style={{ background: `${form.brandColor}15`, border: `1px solid ${form.brandColor}40` }}>
             <p className="font-mono font-bold" style={{ color: form.brandColor }}>
-              leasely.net/portal/{form.subdomain}
+              keycove.net/portal/{form.subdomain}
             </p>
           </div>
           <p className="text-white/40 text-sm mb-6">
@@ -267,7 +267,7 @@ export default function ProSetup() {
                 </div>
                 <div>
                   <p className="text-white font-bold text-sm">{form.businessName || "Your Business"}</p>
-                  <p className="text-white/40 text-xs">leasely.net/portal/{form.subdomain || "yourname"}</p>
+                  <p className="text-white/40 text-xs">keycove.net/portal/{form.subdomain || "yourname"}</p>
                 </div>
               </div>
               <p className="text-white/35 text-[11px] mt-3 italic">
@@ -290,7 +290,7 @@ export default function ProSetup() {
             <div className="space-y-3">
               <Label className="text-white/60 text-xs uppercase tracking-widest">Your Subdomain</Label>
               <div className="flex items-center rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)" }}>
-                <span className="text-white/40 text-sm px-4 py-3 border-r border-white/10 whitespace-nowrap">leasely.net/portal/</span>
+                <span className="text-white/40 text-sm px-4 py-3 border-r border-white/10 whitespace-nowrap">keycove.net/portal/</span>
                 <input
                   value={form.subdomain}
                   onChange={e => update("subdomain", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
@@ -304,7 +304,7 @@ export default function ProSetup() {
             {form.subdomain.length >= 2 && (
               <div className="rounded-2xl p-4" style={{ background: "rgba(79,70,229,0.08)", border: "1px solid rgba(79,70,229,0.2)" }}>
                 <p className="text-teal-400 text-sm font-semibold">Your portal will be live at:</p>
-                <p className="text-white font-mono text-sm mt-1">leasely.net/portal/<strong>{form.subdomain}</strong></p>
+                <p className="text-white font-mono text-sm mt-1">keycove.net/portal/<strong>{form.subdomain}</strong></p>
               </div>
             )}
           </div>
@@ -368,7 +368,7 @@ export default function ProSetup() {
               {[
                 ["Business Name", form.businessName || "—"],
                 ["Brand Color", form.brandColor],
-                ["Portal URL", `leasely.net/portal/${form.subdomain}`],
+                ["Portal URL", `keycove.net/portal/${form.subdomain}`],
                 ["Tagline", form.tagline || "—"],
                 ["Primary State", form.state || "—"],
                 ["Property Focus", PROPERTY_TYPES.find(p => p.id === form.propertyFocus)?.label || "—"],

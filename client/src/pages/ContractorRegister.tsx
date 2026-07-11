@@ -330,7 +330,7 @@ export default function ContractorRegister() {
             <div>
               <Label>Profile URL Slug</Label>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-sm text-muted-foreground whitespace-nowrap">leasely.net/contractors/</span>
+                <span className="text-sm text-muted-foreground whitespace-nowrap">keycove.net/contractors/</span>
                 <Input
                   value={form.slug}
                   onChange={e => setForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") }))}

@@ -3,7 +3,7 @@
  * Falls back to console.log in development when BREVO_API_KEY is not set.
  */
 
-const FROM = process.env.FROM_EMAIL ?? "Keycove <noreply@leasely.net>";
+const FROM = process.env.FROM_EMAIL ?? "Keycove <noreply@keycove.net>";
 
 /** Parse "Name <email@host>" or plain "email@host" into Brevo's sender shape. */
 function parseSender(value: string): { name?: string; email: string } {
@@ -116,7 +116,7 @@ export function workOrderDispatchEmail(opts: {
     </div>` : ""}
 
     <p style="margin:0 0 8px;color:#6b7280;font-size:14px">Please confirm receipt and contact the property manager to schedule the work.</p>
-    <p style="margin:0;color:#9ca3af;font-size:12px">Sent via <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a></p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Sent via <a href="https://keycove.net" style="color:#1B2B5E">Keycove</a></p>
   </div>
 </div>`;
 }
@@ -148,7 +148,7 @@ export function tenantMaintenanceConfirmEmail(opts: {
           <td style="padding:8px 0;font-weight:600;text-transform:capitalize">${opts.priority}</td></tr>
     </table>
 
-    <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a></p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://keycove.net" style="color:#1B2B5E">Keycove</a></p>
   </div>
 </div>`;
 }
@@ -196,7 +196,7 @@ export function landlordMaintenanceAlertEmail(opts: {
       View &amp; Assign in Dashboard →
     </a>
 
-    <p style="margin:16px 0 0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a></p>
+    <p style="margin:16px 0 0;color:#9ca3af;font-size:12px">Powered by <a href="https://keycove.net" style="color:#1B2B5E">Keycove</a></p>
   </div>
 </div>`;
 }
@@ -244,7 +244,7 @@ export function leaseAgreementEmail(opts: {
       <strong>How signing works:</strong> You sign first. Then you'll be sent payment links for your security deposit and first month's rent.
       Your landlord countersigns once payment clears, at which point the lease is fully executed and you'll receive move-in instructions.
     </p>
-    <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a></p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://keycove.net" style="color:#1B2B5E">Keycove</a></p>
   </div>
 </div>`;
 }
@@ -340,10 +340,10 @@ export function leaseSignedPaymentEmail(opts: {
       <p style="margin:0 0 6px;font-weight:800;color:#166534;font-size:14px">🔑 How you'll get your keys</p>
       <p style="margin:0 0 10px;color:#166534;font-size:14px"><strong>${methodLabel}</strong></p>
       ${hasLockboxCode
-        ? `<p style="margin:0 0 8px;color:#15803d;font-size:13px;line-height:1.5">Your lockbox code will be revealed in your <a href="https://leasely.net/tenant" style="color:#15803d;font-weight:700;text-decoration:underline">tenant dashboard</a> once payment clears.</p>`
+        ? `<p style="margin:0 0 8px;color:#15803d;font-size:13px;line-height:1.5">Your lockbox code will be revealed in your <a href="https://keycove.net/tenant" style="color:#15803d;font-weight:700;text-decoration:underline">tenant dashboard</a> once payment clears.</p>`
         : ""}
       ${gatedInstructions
-        ? `<p style="margin:0;color:#15803d;font-size:13px;line-height:1.5">Detailed access instructions will be revealed in your <a href="https://leasely.net/tenant" style="color:#15803d;font-weight:700;text-decoration:underline">tenant dashboard</a> once payment clears.</p>`
+        ? `<p style="margin:0;color:#15803d;font-size:13px;line-height:1.5">Detailed access instructions will be revealed in your <a href="https://keycove.net/tenant" style="color:#15803d;font-weight:700;text-decoration:underline">tenant dashboard</a> once payment clears.</p>`
         : ""}
       ${safeInstructions
         ? `<pre style="margin:8px 0 0;padding:10px 12px;background:#ffffff;border:1px solid #bbf7d0;border-radius:6px;font-family:'Courier New',monospace;font-size:13px;color:#166534;white-space:pre-wrap;word-break:break-word">${safeInstructions}</pre>`
@@ -361,10 +361,10 @@ export function leaseSignedPaymentEmail(opts: {
 
     <!-- Help line -->
     <p style="margin:24px 0 0;padding-top:16px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:13px;line-height:1.5">
-      Questions? Reply to this email or submit a repair request from your <a href="https://leasely.net/tenant" style="color:#E8951A;font-weight:600">tenant dashboard</a>.
+      Questions? Reply to this email or submit a repair request from your <a href="https://keycove.net/tenant" style="color:#E8951A;font-weight:600">tenant dashboard</a>.
     </p>
 
-    <p style="margin:16px 0 0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#E8951A">Keycove</a></p>
+    <p style="margin:16px 0 0;color:#9ca3af;font-size:12px">Powered by <a href="https://keycove.net" style="color:#E8951A">Keycove</a></p>
   </div>
 </div>`;
 }
@@ -425,7 +425,7 @@ export function vendorDispatchRequestEmail(opts: {
       Submit Your Availability &amp; Quote →
     </a>
     <p style="margin:0 0 4px;color:#6b7280;font-size:13px">Choose your available date and time slot, provide a quote, and the landlord will approve and confirm.</p>
-    <p style="margin:0;color:#9ca3af;font-size:12px">Sent via <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a></p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Sent via <a href="https://keycove.net" style="color:#1B2B5E">Keycove</a></p>
   </div>
 </div>`;
 }
@@ -474,7 +474,7 @@ export function vendorQuoteReceivedEmail(opts: {
         View Dashboard
       </a>
     </div>
-    <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a></p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://keycove.net" style="color:#1B2B5E">Keycove</a></p>
   </div>
 </div>`;
 }
@@ -504,7 +504,7 @@ export function vendorJobCompleteEmail(opts: {
        style="display:block;background:#00C896;color:#062018;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;text-align:center;margin-bottom:12px">
       Pay ${opts.vendorName} — $${opts.finalAmountDollars.toLocaleString()} →
     </a>
-    <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://leasely.net" style="color:#1B2B5E">Keycove</a></p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Powered by <a href="https://keycove.net" style="color:#1B2B5E">Keycove</a></p>
   </div>
 </div>`;
 }

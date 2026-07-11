@@ -21,7 +21,7 @@ function hexToRgb(hex: string) {
 
 export default function PortalPage({ subdomainOverride }: { subdomainOverride?: string } = {}) {
   const params = useParams<{ subdomain: string }>();
-  // When reached via a real subdomain (sunrise.leasely.net) App passes it as a
+  // When reached via a real subdomain (sunrise.keycove.net) App passes it as a
   // prop; via the /portal/:subdomain path it comes from the route params.
   const subdomain = subdomainOverride ?? params.subdomain;
 

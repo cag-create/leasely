@@ -37,7 +37,7 @@ const FAQ_CATEGORIES = [
     color: "text-green-600",
     bg: "bg-green-50",
     questions: [
-      { q: "What does the Pro plan cost?", a: "The Pro plan is a $75 one-time setup fee plus $29/month. The setup fee includes your branded website, custom logo placement, and your personalized leasely.net subdomain URL. It also includes unlimited listings, your own branded portal, AI tenant screening, fraud detection, rental applications, Stripe Connect payouts, waived ACH fees, and priority customer support." },
+      { q: "What does the Pro plan cost?", a: "The Pro plan is a $75 one-time setup fee plus $29/month. The setup fee includes your branded website, custom logo placement, and your personalized keycove.net subdomain URL. It also includes unlimited listings, your own branded portal, AI tenant screening, fraud detection, rental applications, Stripe Connect payouts, waived ACH fees, and priority customer support." },
       { q: "Are ACH fees really waived for Pro subscribers?", a: "Yes! Standard ACH processing costs 0.8% (capped at $5 per transaction). Pro subscribers have this fee completely waived — your tenants pay rent for free via bank transfer, and you receive 100% of the rent amount." },
       { q: "How do tenant rent payments work?", a: "Pro subscribers connect their bank account via Stripe Connect. Tenants receive a portal login and can pay rent via ACH (free) or card. Funds are deposited directly to your bank account, typically within 1-2 business days." },
       { q: "Can I cancel my Pro subscription?", a: "Yes, you can cancel anytime from your dashboard. Your Pro features remain active until the end of your billing period." },
@@ -60,7 +60,7 @@ const FAQ_CATEGORIES = [
     color: "text-orange-600",
     bg: "bg-orange-50",
     questions: [
-      { q: "What is a branded portal?", a: "Pro subscribers get their own public-facing portal page (e.g., leasely.net/portal/yourname) with their business name, logo, brand colors, and all active listings. This page can be shared on Google, social media, or printed on business cards." },
+      { q: "What is a branded portal?", a: "Pro subscribers get their own public-facing portal page (e.g., keycove.net/portal/yourname) with their business name, logo, brand colors, and all active listings. This page can be shared on Google, social media, or printed on business cards." },
       { q: "How do I set up my branded portal?", a: "After upgrading to Pro, go to your Dashboard and click 'Edit Portal Branding'. You can set your brand name, upload a logo, choose a color, and set your portal subdomain." },
       { q: "What is the QR code feature?", a: "Each of your Pro listings has a downloadable QR code that links directly to that property's detail page. Print it and place it on a yard sign, door, or flyer so prospective tenants can instantly view the listing on their phone." },
       { q: "How do I invite tenants to the tenant portal?", a: "In your Dashboard, go to the Tenants section and click 'Invite Tenant'. Enter their name, email, and lease details. They'll receive a magic-link login — no password required." },

@@ -255,7 +255,7 @@ export default function PortalSetup() {
                     <Globe className="h-4 w-4 shrink-0" />
                     <div className="text-left">
                       <div>Keycove subdomain</div>
-                      <div className={`text-xs ${domainMode === "leasely" ? "text-[#4F46E5]/70" : "text-white/30"}`}>leasely.net/portal/yourname · free</div>
+                      <div className={`text-xs ${domainMode === "leasely" ? "text-[#4F46E5]/70" : "text-white/30"}`}>keycove.net/portal/yourname · free</div>
                     </div>
                   </button>
                   <button
@@ -284,11 +284,11 @@ export default function PortalSetup() {
                         placeholder="sunrise"
                         className="bg-white/5 border-0 text-white placeholder:text-white/30 rounded-none flex-1"
                       />
-                      <span className="px-3 py-2 bg-white/5 text-white/40 text-sm font-mono border-l border-white/10">.leasely.net</span>
+                      <span className="px-3 py-2 bg-white/5 text-white/40 text-sm font-mono border-l border-white/10">.keycove.net</span>
                     </div>
                     {cleanSubdomain && (
                       <p className="text-xs text-[#4F46E5] mt-1.5">
-                        Your portal: <span className="font-mono">leasely.net/portal/{cleanSubdomain}</span>
+                        Your portal: <span className="font-mono">keycove.net/portal/{cleanSubdomain}</span>
                       </p>
                     )}
                   </>
@@ -302,7 +302,7 @@ export default function PortalSetup() {
                     />
                     <div className="mt-2 rounded-lg bg-amber-500/5 border border-amber-500/20 p-3 text-xs text-amber-300/80 space-y-1">
                       <p className="font-semibold text-amber-300">DNS setup instructions</p>
-                      <p>Point a <strong>CNAME</strong> record for your domain to <span className="font-mono">portal.leasely.net</span></p>
+                      <p>Point a <strong>CNAME</strong> record for your domain to <span className="font-mono">portal.keycove.net</span></p>
                       <p className="text-amber-300/60">Domain included free in your CBP package · $37/yr renewal · or use your own registrar</p>
                     </div>
                   </>
@@ -561,7 +561,7 @@ export default function PortalSetup() {
                 <p className="text-xs font-bold text-amber-400 mb-1.5">Recurring (year 2 onward)</p>
                 <ul className="text-sm text-white/70 space-y-1 pl-4 list-disc marker:text-amber-400/50">
                   {domainMode === "leasely" ? (
-                    <li>Your <span className="text-white font-semibold">leasely.net/portal/{cleanSubdomain || "yourname"}</span> branded portal — <span className="text-white font-semibold">free forever</span>. No renewals.</li>
+                    <li>Your <span className="text-white font-semibold">keycove.net/portal/{cleanSubdomain || "yourname"}</span> branded portal — <span className="text-white font-semibold">free forever</span>. No renewals.</li>
                   ) : customDomain ? (
                     <li>Domain renewal — <span className="text-white font-semibold">paid to your own registrar</span> (you brought <span className="text-white/80 font-mono text-xs">{customDomain}</span>). Hosting via CBP — <a href={CBP_DOMAIN_RENEWAL_URL} target="_blank" rel="noopener" className="text-amber-300 underline hover:text-amber-200 font-semibold">$37/yr</a>.</li>
                   ) : (

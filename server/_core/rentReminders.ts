@@ -96,7 +96,7 @@ function gentleReminder(ctx: ReminderCtx): string {
     </table>
     <p style="margin:0 0 16px">If you've already paid (Zelle, check, etc.), please reply so your landlord can mark it received. If not, sign in to your tenant portal to pay online.</p>
     <p style="text-align:center;margin:24px 0">
-      <a href="${process.env.APP_URL ?? "https://leasely.net"}/tenant-portal/signin"
+      <a href="${process.env.APP_URL ?? "https://keycove.net"}/tenant-portal/signin"
          style="background:${ACCENT};color:white;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;display:inline-block">
         Open Tenant Portal
       </a>
@@ -123,7 +123,7 @@ function firmReminder(ctx: ReminderCtx): string {
     </table>
     <p style="margin:0 0 16px">Please pay as soon as possible to avoid further late fees. If you've already paid off-platform, reply to this email so your landlord can mark it received.</p>
     <p style="text-align:center;margin:24px 0">
-      <a href="${process.env.APP_URL ?? "https://leasely.net"}/tenant-portal/signin"
+      <a href="${process.env.APP_URL ?? "https://keycove.net"}/tenant-portal/signin"
          style="background:${ACCENT};color:white;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;display:inline-block">
         Pay Rent Now
       </a>
@@ -150,7 +150,7 @@ function overdueNotice(ctx: ReminderCtx): string {
     </table>
     <p style="margin:0 0 16px"><strong>To avoid further action</strong>, please pay or contact your landlord directly to arrange payment.</p>
     <p style="text-align:center;margin:24px 0">
-      <a href="${process.env.APP_URL ?? "https://leasely.net"}/tenant-portal/signin"
+      <a href="${process.env.APP_URL ?? "https://keycove.net"}/tenant-portal/signin"
          style="background:${ACCENT};color:white;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;display:inline-block">
         Pay Outstanding Balance
       </a>

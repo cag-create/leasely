@@ -44,7 +44,7 @@ function AnimatedCounter({ end, suffix = "", prefix = "" }: { end: number; suffi
 const DEMO_SLIDES = [
   {
     title: "Your Branded Portal",
-    desc: "Your logo, your colors, your listings — at yourname.leasely.net",
+    desc: "Your logo, your colors, your listings — at yourname.keycove.net",
     badge: "Branded Portal",
     color: TEAL,
     icon: Globe,
@@ -175,10 +175,10 @@ const FEATURES = [
     color: TEAL,
     badge: "Branded Portal",
     title: "Your Own Real Estate Website",
-    subtitle: "yourname.leasely.net",
+    subtitle: "yourname.keycove.net",
     desc: "Get a fully branded portal that looks like a $10,000 custom website — in minutes. Your logo, your colors, your tagline. Share it on Google, Instagram, business cards, or anywhere you market your properties.",
     bullets: [
-      "Custom subdomain (yourname.leasely.net)",
+      "Custom subdomain (yourname.keycove.net)",
       "Upload your logo and set brand colors",
       "All your listings displayed beautifully",
       "Tenants apply directly through your portal",
@@ -188,7 +188,7 @@ const FEATURES = [
       <div className="rounded-2xl overflow-hidden shadow-xl" style={{ background: "linear-gradient(135deg, #0F1F4B 0%, #1B2B5E 100%)" }}>
         <div className="flex items-center gap-2 px-4 py-3 bg-black/20 border-b border-white/10">
           <div className="flex gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-400/70"/><div className="w-2.5 h-2.5 rounded-full bg-yellow-400/70"/><div className="w-2.5 h-2.5 rounded-full bg-green-400/70"/></div>
-          <div className="flex-1 mx-3 bg-white/10 rounded-full px-3 py-1 text-xs text-white/50 font-mono">sunrise.leasely.net</div>
+          <div className="flex-1 mx-3 bg-white/10 rounded-full px-3 py-1 text-xs text-white/50 font-mono">sunrise.keycove.net</div>
         </div>
         <div className="p-5">
           <div className="flex items-center gap-3 mb-4">
@@ -389,7 +389,7 @@ const FEATURES = [
     subtitle: "Portfolio QR + Listing QR",
     desc: "Every Pro subscriber gets two types of QR codes. Your Portfolio QR links to your branded portal showing all your listings — perfect for business cards, yard signs, and social media. Your Listing QR links directly to the application form for a specific unit — scan it on the door and apply on the spot.",
     bullets: [
-      "Portfolio QR → yourname.leasely.net (all listings)",
+      "Portfolio QR → yourname.keycove.net (all listings)",
       "Listing QR → /apply/:id (direct application form)",
       "Printable for for-rent signs, doors, and flyers",
       "Tenants scan and apply from their phone in minutes",
