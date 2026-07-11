@@ -4,7 +4,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import {
   BookOpen, Rocket, Calendar, DollarSign, Building2, FileDown,
   AlertTriangle, ShieldOff, CheckCircle2, ChevronRight, Sparkles,
-  ArrowRight, Search, DoorOpen, Upload,
+  ArrowRight, Search, DoorOpen, Upload, FileSignature, Link2,
 } from "lucide-react";
 
 const ACCENT = "#4F46E5";
@@ -234,6 +234,39 @@ export default function ProGuide() {
           <p className="text-xs text-muted-foreground">
             Just moving marketplace <i>listings</i> (not occupied units)? Use <Link href="/import-listings" className="underline">/import-listings</Link> instead — same header-mapping, aimed at vacant units you want to advertise.
           </p>
+        </div>
+      ),
+    },
+    {
+      id: "leasing",
+      title: "Get a tenant → signed → paying",
+      icon: FileSignature,
+      intro: "How a prospect becomes a paying tenant with a live portal — on-site or off.",
+      body: (
+        <div className="space-y-4 text-sm">
+          <div className="p-3 rounded-xl border border-border/50 bg-card/40">
+            <div className="text-xs font-semibold mb-2">Where prospects come from</div>
+            <ul className="space-y-2 text-xs text-muted-foreground">
+              <li className="flex gap-2"><span style={{ color: ACCENT }}>•</span>
+                <span><b className="text-foreground">On the marketplace</b> — a renter opens your listing and hits <b>Contact Landlord</b> (you get emailed) or <b>Apply</b> at <code className="text-[11px] px-1 rounded bg-muted">/apply/&lt;listing&gt;</code>.</span></li>
+              <li className="flex gap-2"><Link2 className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: ACCENT }} />
+                <span><b className="text-foreground">Off-site</b> — on <Link href="/my-listings" className="underline">My Listings</Link>, click the link icon to <b>copy the apply link</b> and text or email it yourself. They apply with no account.</span></li>
+            </ul>
+          </div>
+
+          <div className="p-3 rounded-xl border border-border/50 bg-card/40">
+            <div className="text-xs font-semibold mb-2">Approve → lease fires automatically</div>
+            <p className="text-xs text-muted-foreground">
+              Approve an applicant on <Link href="/applications" className="underline">/applications</Link> and the lease is <b>sent to sign automatically</b> — no manual step. When they sign, their <b>tenant portal and your CRM portfolio both go live</b> (rent schedule, auto late fees, accounting) and you're prompted to countersign.
+            </p>
+          </div>
+
+          <div className="p-3 rounded-xl border border-border/50 bg-card/40">
+            <div className="flex items-center gap-2 text-xs font-semibold mb-1"><FileSignature className="h-3.5 w-3.5" style={{ color: ACCENT }} /> Send a lease by hand (any tenant)</div>
+            <p className="text-xs text-muted-foreground">
+              For someone who didn't come through an application, use <b>Send lease to sign</b> in your <Link href="/crm" className="underline">CRM</Link>. Enter the terms and either <b>attach your own lease PDF</b> or let Leasely use a standard agreement. The tenant gets a private link, signs, and their unit + portal go live instantly. Works for apartments (units) and co-living (rooms).
+            </p>
+          </div>
         </div>
       ),
     },

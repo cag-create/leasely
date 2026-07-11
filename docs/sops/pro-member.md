@@ -144,6 +144,29 @@ occupied ones)? Use `/import-listings` instead — same header-mapping. Pre-buil
 mappings for Zillow Rental Manager, AppFolio, Buildium, Rentec Direct,
 Apartments.com; anything else maps by header name, not position.
 
+## Get a tenant → signed → paying
+
+How a prospect becomes a paying tenant with a live portal.
+
+**Where prospects come from:**
+- **On the marketplace** — a renter opens your listing and hits *Contact
+  Landlord* (emails you) or *Apply* at `/apply/<listingId>`.
+- **Off-site** — on `/my-listings`, click the link icon to **copy the apply
+  link** and text/email it yourself. They apply with no account.
+
+**Approve → lease fires automatically:**
+- Approve an applicant on `/applications` and the lease is **sent to sign
+  automatically** — no manual step.
+- When they sign, their **tenant portal and your CRM portfolio both go live**
+  (rent schedule, auto late fees, accounting), and you're prompted to
+  countersign.
+
+**Send a lease by hand (any tenant):**
+- For someone who didn't apply, use **Send lease to sign** in `/crm`. Enter the
+  terms and either **attach your own lease PDF** or use a standard agreement.
+- The tenant gets a private `/sign/<token>` link, signs, and their unit +
+  portal go live instantly. Works for apartment units and co-living rooms.
+
 ## Troubleshooting
 
 **"AI screening is stuck on screening…"** — wait 90 seconds. If still stuck,

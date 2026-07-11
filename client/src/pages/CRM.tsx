@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import SendLeaseToSignDialog from "@/components/SendLeaseToSignDialog";
 import {
   Building2, Users, FileText, Plus, Pencil, Trash2,
   Phone, Mail, MapPin, Calendar, DollarSign, AlertCircle,
@@ -294,6 +295,7 @@ export default function CRM() {
             </h1>
             <p className="text-gray-500 mt-1">Your full portfolio — properties, tenants, leases, and notes</p>
           </div>
+          <SendLeaseToSignDialog />
         </div>
 
         {/* Expiry Alerts */}

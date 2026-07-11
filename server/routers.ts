@@ -5557,6 +5557,54 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         console.warn("[leases.sign] tenant portal auto-provision failed:", err);
       }
 
+      // Sync the signed lease into the landlord's CRM portfolio (crm_property +
+      // crm_tenant + active crm_lease) so it shows up in /crm with a rent
+      // schedule, auto late fees, and accounting — unifying the marketplace
+      // sign path with the CRM/portal path. Idempotent: skips if this landlord
+      // already has a CRM tenant with this email. Never blocks signing.
+      try {
+        const db = await getDb();
+        if (db) {
+          const { and, eq } = await import("drizzle-orm");
+          const { crmTenants } = await import("../drizzle/schema");
+          const [existing] = lease.tenantEmail
+            ? await db.select({ id: crmTenants.id }).from(crmTenants)
+                .where(and(eq(crmTenants.userId, lease.landlordUserId), eq(crmTenants.email, lease.tenantEmail))).limit(1)
+            : [undefined as any];
+          if (!existing) {
+            const [firstName, ...rest] = (lease.tenantName || "Tenant").trim().split(/\s+/);
+            const propertyId = await createCrmProperty({
+              userId: lease.landlordUserId,
+              address: lease.propertyAddress || "Address TBD",
+              state: lease.state || undefined,
+              propertyType: "apartment" as any,
+              totalUnits: 1,
+            } as any);
+            const crmTenantId = await createCrmTenant({
+              userId: lease.landlordUserId, crmPropertyId: propertyId,
+              firstName: firstName || "Tenant", lastName: rest.join(" "),
+              email: lease.tenantEmail || undefined, phone: lease.tenantPhone ?? undefined,
+              moveInDate: lease.leaseStartDate ?? undefined,
+              monthlyRent: lease.monthlyRent, securityDeposit: lease.securityDeposit ?? undefined,
+              status: "active" as any,
+            } as any);
+            const hasEnd = !!(lease.leaseEndDate && String(lease.leaseEndDate).trim());
+            await createCrmLease({
+              userId: lease.landlordUserId, crmPropertyId: propertyId, crmTenantId,
+              startDate: lease.leaseStartDate ?? new Date().toISOString().slice(0, 10),
+              endDate: hasEnd ? lease.leaseEndDate! : (lease.leaseStartDate ?? new Date().toISOString().slice(0, 10)),
+              monthlyRent: lease.monthlyRent, securityDeposit: lease.securityDeposit ?? undefined,
+              lateFeeCents: (lease as any).lateFeeCents ?? 5000, lateFeeGraceDays: (lease as any).lateFeeGraceDays ?? 5,
+              leaseType: (hasEnd ? "fixed_term" : "month_to_month") as any,
+              status: "active" as any,
+              notes: `Signed via marketplace application. Lease #${lease.id}.`,
+            } as any);
+          }
+        }
+      } catch (err) {
+        console.warn("[leases.sign] CRM portfolio sync failed:", err);
+      }
+
       return { success: true };
     }),
 
