@@ -80,12 +80,15 @@ function verifyCrmRentToken(token: string): { ct: number } | null {
 // property/tenant/lease and the portal goes live. No AI, no tokens.
 type LeaseInvitePayload = {
   lid: number;               // landlord userId
-  address: string; unit?: string; city?: string; state?: string; zip?: string;
+  lname?: string;            // landlord/brand display name (for the tenant page)
+  name?: string;             // tenant name (landlord-prefilled)
+  address: string; unit?: string; ptype?: string; city?: string; state?: string; zip?: string;
   email: string;             // tenant email the invite was sent to
   rent: number;              // cents
   deposit?: number;          // cents
   start: string; end?: string;
   lateFee?: number; grace?: number;
+  docUrl?: string;           // landlord's stored/uploaded lease PDF to sign (optional)
 };
 function signLeaseInvite(p: LeaseInvitePayload): string {
   const payload = Buffer.from(JSON.stringify(p)).toString("base64url");
@@ -3005,6 +3008,122 @@ export const appRouter = router({
         await notifyOwner({ title: "Portfolio Imported", content: `${ctx.user.name} imported ${imported} unit(s) across ${buildings.size} building(s).` });
       }
       return { imported, buildings: buildings.size, total: input.rows.length, errors };
+    }),
+
+    /**
+     * Send an accepted tenant the lease to sign. The lease is either the
+     * landlord's own stored/uploaded PDF (docUrl) or, if none, a free
+     * structured agreement the tenant fills + signs (no AI). All terms ride
+     * in a signed token — no invite table. Tenant opens /sign/:token, reviews,
+     * types their signature, and on submit the crm property/tenant/lease go
+     * active and the portal is live.
+     */
+    sendLeaseToSign: protectedProcedure.input(z.object({
+      tenantName: z.string().min(1),
+      tenantEmail: z.string().email(),
+      propertyType: z.string().optional(),
+      address: z.string().min(1),
+      unit: z.string().optional(),
+      city: z.string().optional(),
+      state: z.string().optional(),
+      zip: z.string().optional(),
+      monthlyRentCents: z.number().int().positive(),
+      securityDepositCents: z.number().int().nonnegative().optional(),
+      leaseStartDate: z.string(),
+      leaseEndDate: z.string().optional(),
+      lateFeeCents: z.number().int().nonnegative().optional(),
+      lateFeeGraceDays: z.number().int().min(0).max(31).optional(),
+      documentUrl: z.string().optional(),   // landlord's stored/uploaded lease
+    })).mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN", message: "Sending leases requires a Pro subscription." });
+      const brand = (sub as any).brandName || ctx.user.name || "your landlord";
+      const token = signLeaseInvite({
+        lid: ctx.user.id, lname: brand, name: input.tenantName,
+        address: input.address, unit: input.unit, ptype: input.propertyType,
+        city: input.city, state: input.state, zip: input.zip,
+        email: input.tenantEmail, rent: input.monthlyRentCents, deposit: input.securityDepositCents,
+        start: input.leaseStartDate, end: input.leaseEndDate,
+        lateFee: input.lateFeeCents, grace: input.lateFeeGraceDays,
+        docUrl: input.documentUrl,
+      });
+      const url = `${APP_URL}/sign/${token}`;
+      const first = input.tenantName.split(/\s+/)[0] || "there";
+      const html = `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
+        <h2 style="color:#1B2B5E">Your lease is ready to sign</h2>
+        <p>Hi ${first}, ${brand} has sent you a lease for <strong>${input.address}${input.unit ? ` #${input.unit}` : ""}</strong> to review and sign.</p>
+        <p style="margin:20px 0"><a href="${url}" style="background:#4F46E5;color:#fff;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:10px;display:inline-block">Review &amp; sign your lease →</a></p>
+        <p style="color:#6b7280;font-size:13px">You'll see the full terms, sign with your name, and get instant access to your tenant portal to pay rent online.</p>
+        <p style="color:#9ca3af;font-size:12px">This link is private to you. If you didn't expect this, ignore it.</p>
+      </div>`;
+      const sent = await sendEmail({ to: input.tenantEmail, subject: `Sign your lease — ${brand}`, html });
+      if (!sent) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Email couldn't be sent — check email configuration." });
+      return { success: true, email: input.tenantEmail, signUrl: url };
+    }),
+
+    /** Public: load a lease invite for the tenant's /sign/:token page. */
+    getLeaseInvite: publicProcedure.input(z.object({ token: z.string() }))
+      .query(async ({ input }) => {
+        const p = verifyLeaseInvite(input.token);
+        if (!p) throw new TRPCError({ code: "NOT_FOUND", message: "This signing link is invalid or expired." });
+        return {
+          landlordName: p.lname || "Your landlord",
+          tenantName: p.name || "",
+          tenantEmail: p.email,
+          propertyType: p.ptype || "apartment",
+          address: p.address, unit: p.unit || "", city: p.city || "", state: p.state || "", zip: p.zip || "",
+          monthlyRentCents: p.rent, securityDepositCents: p.deposit ?? 0,
+          leaseStartDate: p.start, leaseEndDate: p.end || "",
+          lateFeeCents: p.lateFee ?? 5000, lateFeeGraceDays: p.grace ?? 5,
+          documentUrl: p.docUrl || "",
+        };
+      }),
+
+    /**
+     * Public: tenant signs. Creates the crm property + tenant + active lease
+     * under the landlord and records the typed signature, so the portal goes
+     * live immediately. Idempotent-ish: re-submitting the same token creates a
+     * new lease (the landlord can void a dupe) — acceptable for a one-time link.
+     */
+    submitSignedLease: publicProcedure.input(z.object({
+      token: z.string(),
+      signatureName: z.string().min(2),
+      phone: z.string().optional(),
+      agreed: z.literal(true),
+    })).mutation(async ({ input }) => {
+      const p = verifyLeaseInvite(input.token);
+      if (!p) throw new TRPCError({ code: "NOT_FOUND", message: "This signing link is invalid or expired." });
+
+      const rawType = (p.ptype || "apartment").toLowerCase().replace(/[-\s]/g, "_");
+      const isRoom = rawType === "co_living" || rawType === "coliving" || rawType === "room";
+      const VALID = ["single_family", "multi_family", "apartment", "condo", "townhouse", "co_living", "commercial", "other"];
+      const propertyType = isRoom ? "co_living" : (VALID.includes(rawType) ? rawType : "apartment");
+      const unitLabel = p.unit ? String(p.unit).trim() : "";
+      const fullAddress = unitLabel ? (isRoom ? `${p.address.trim()} · Rm ${unitLabel}` : `${p.address.trim()} #${unitLabel}`) : p.address.trim();
+      const [firstName, ...rest] = (p.name || input.signatureName).trim().split(/\s+/);
+
+      const propertyId = await createCrmProperty({
+        userId: p.lid, address: fullAddress, city: p.city || undefined, state: p.state || undefined,
+        zip: p.zip || undefined, propertyType: propertyType as any, totalUnits: 1,
+      } as any);
+      const tenantId = await createCrmTenant({
+        userId: p.lid, crmPropertyId: propertyId, firstName: firstName || "Tenant",
+        lastName: rest.join(" "), email: p.email, phone: input.phone || undefined,
+        moveInDate: p.start, monthlyRent: p.rent, securityDeposit: p.deposit, status: "active" as any,
+      } as any);
+      const hasEnd = !!(p.end && p.end.trim());
+      const signedNote = `Signed by ${input.signatureName} on ${new Date().toISOString().split("T")[0]}.` + (p.docUrl ? ` Lease document: ${p.docUrl}` : " Structured Leasely agreement.");
+      await createCrmLease({
+        userId: p.lid, crmPropertyId: propertyId, crmTenantId: tenantId,
+        startDate: p.start, endDate: hasEnd ? p.end : p.start,
+        monthlyRent: p.rent, securityDeposit: p.deposit,
+        lateFeeCents: p.lateFee ?? 5000, lateFeeGraceDays: p.grace ?? 5,
+        leaseType: (hasEnd ? "fixed_term" : "month_to_month") as any,
+        status: "active" as any, documentUrl: p.docUrl || undefined, notes: signedNote,
+      } as any);
+
+      await notifyOwner({ title: "Lease Signed", content: `${input.signatureName} signed the lease for ${fullAddress}. Their portal is live.` });
+      return { success: true };
     }),
 
     updateLease: protectedProcedure.input(z.object({
