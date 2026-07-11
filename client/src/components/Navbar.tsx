@@ -178,14 +178,14 @@ export default function Navbar() {
         }
       `}>
         <div className="container">
-          <div className="flex items-center justify-between h-[76px]">
+          <div className="flex items-center justify-between h-[88px]">
 
             {/* ── Logo ── */}
             <Link href={logoHref} className="flex items-center shrink-0 group">
               <img
                 src={LOGO_URL}
                 alt="Keycove"
-                className="h-14 md:h-16 w-auto transition-opacity group-hover:opacity-80 drop-shadow-sm"
+                className="h-16 md:h-20 w-auto transition-opacity group-hover:opacity-80 drop-shadow-sm"
                 onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
               />
             </Link>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
-import { LOGO_URL } from "@/lib/brand";
+import { LOGO_WHITE_URL } from "@/lib/brand";
 
 export default function LoginPage() {
   const [, navigate] = useLocation();
@@ -103,7 +103,7 @@ export default function LoginPage() {
         {/* Logo — links back to marketing site */}
         <div className="flex justify-center mb-8">
           <Link href="/" aria-label="Back to Keycove home" className="hover:opacity-80 transition-opacity">
-            <img src={LOGO_URL} alt="Keycove" className="h-10 object-contain" />
+            <img src={LOGO_WHITE_URL} alt="Keycove" className="h-16 object-contain" />
           </Link>
         </div>
 
