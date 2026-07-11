@@ -2957,6 +2957,48 @@ export const appRouter = router({
       if (!sent) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Email couldn't be sent — check email configuration." });
       return { success: true, email: tenant.email };
     }),
+
+    /**
+     * Month-by-month rent schedule for a property's active lease — most recent
+     * first. Each month is "paid" if a rent income entry exists for it, else
+     * "owed"; carries any accrued late fee. Drives the CRM rent list.
+     */
+    rentSchedule: protectedProcedure.input(z.object({
+      crmPropertyId: z.number(),
+    })).query(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) return [];
+      const { crmLeases, accountingEntries } = await import("../drizzle/schema");
+      const { and, eq } = await import("drizzle-orm");
+      const [lease] = await db.select().from(crmLeases)
+        .where(and(eq(crmLeases.userId, ctx.user.id), eq(crmLeases.crmPropertyId, input.crmPropertyId), eq(crmLeases.status, "active")))
+        .limit(1);
+      if (!lease) return [];
+      const entries = await db.select().from(accountingEntries)
+        .where(and(eq(accountingEntries.userId, ctx.user.id), eq(accountingEntries.crmPropertyId, input.crmPropertyId)));
+      const rentMonths = new Set<string>();
+      const lateByMonth: Record<string, number> = {};
+      for (const e of entries as any[]) {
+        const ym = String(e.date ?? "").slice(0, 7);
+        if (e.category === "rent") rentMonths.add(ym);
+        else if (e.category === "late_fee") lateByMonth[ym] = (lateByMonth[ym] ?? 0) + (e.amount ?? 0);
+      }
+      const start = new Date(lease.startDate);
+      const now = new Date();
+      const rows: { month: string; amountCents: number; lateFeeCents: number; paid: boolean }[] = [];
+      if (!isNaN(start.getTime())) {
+        let cur = new Date(start.getFullYear(), start.getMonth(), 1);
+        const endMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        while (cur <= endMonth) {
+          const ym = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}`;
+          rows.push({ month: ym, amountCents: lease.monthlyRent, lateFeeCents: lateByMonth[ym] ?? 0, paid: rentMonths.has(ym) });
+          cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
+        }
+      }
+      return rows.reverse();
+    }),
   }),
   // ─── Tenant Portal Router ────────────────────────────────────────────────────
   tenant: router({

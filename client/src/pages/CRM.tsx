@@ -25,6 +25,51 @@ function getDaysUntilExpiry(endDate: string): number {
   return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+/** Descending rent schedule (Pro side): each month Paid or Owed, with a
+ * one-click "record offline payment" on owed months. */
+function RentScheduleCard({ propertyId, propertyAddress, rows }: { propertyId: number; propertyAddress: string; rows: any[] }) {
+  const utils = trpc.useUtils();
+  const recordPaid = trpc.accounting.create.useMutation({
+    onSuccess: () => { toast.success("Payment recorded"); utils.crm.rentSchedule.invalidate(); },
+    onError: (e) => toast.error(e.message),
+  });
+  if (!rows.length) return null;
+  const collected = rows.filter(r => r.paid).reduce((s, r) => s + r.amountCents, 0);
+  const owed = rows.filter(r => !r.paid).reduce((s, r) => s + r.amountCents + (r.lateFeeCents || 0), 0);
+  const monthLabel = (ym: string) => { const [y, m] = ym.split("-"); return new Date(+y, +m - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" }); };
+  return (
+    <Card className="mt-3">
+      <CardContent className="p-0">
+        <div className="flex items-center justify-between p-4 border-b border-gray-100">
+          <span className="font-semibold text-sm text-gray-900">Rent schedule</span>
+          <span className="text-xs text-gray-500">Collected ${(collected / 100).toLocaleString()} · Owed <span className={owed > 0 ? "text-amber-600 font-semibold" : ""}>${(owed / 100).toLocaleString()}</span></span>
+        </div>
+        <div className="divide-y divide-gray-100">
+          {rows.map((r: any) => (
+            <div key={r.month} className="flex items-center justify-between px-4 py-3">
+              <div className="font-medium text-sm text-gray-900">{monthLabel(r.month)}</div>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <div className="text-sm font-semibold text-gray-900">${(r.amountCents / 100).toLocaleString()}</div>
+                  {r.lateFeeCents > 0 && <div className="text-[11px] text-amber-600 font-medium">+ ${(r.lateFeeCents / 100).toLocaleString()} late</div>}
+                </div>
+                {r.paid ? (
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-green-50 text-green-700 whitespace-nowrap">Paid</span>
+                ) : (
+                  <Button size="sm" className="h-7 text-xs whitespace-nowrap" disabled={recordPaid.isPending}
+                    onClick={() => recordPaid.mutate({ type: "income", category: "rent", amount: r.amountCents, date: `${r.month}-01`, crmPropertyId: propertyId, propertyAddress })}>
+                    Mark paid
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 /** Late-fee policy display + inline editor on a CRM lease. */
 function LeaseLateFee({ lease, onSaved }: { lease: any; onSaved: () => void }) {
   const [editing, setEditing] = useState(false);
@@ -100,6 +145,11 @@ export default function CRM() {
   const { data: leases, refetch: refetchLeases } = trpc.crm.listLeases.useQuery(
     { propertyId: selectedPropertyId ?? undefined },
     { enabled: isAuthenticated, retry: false }
+  );
+
+  const { data: rentSchedule = [] } = trpc.crm.rentSchedule.useQuery(
+    { crmPropertyId: selectedPropertyId ?? 0 },
+    { enabled: isAuthenticated && !!selectedPropertyId, retry: false }
   );
 
   const { data: propertyNotes, refetch: refetchPropNotes } = trpc.crm.listNotes.useQuery(
@@ -762,6 +812,13 @@ export default function CRM() {
                           );
                         })}
                       </div>
+                    )}
+                    {selectedProperty && (
+                      <RentScheduleCard
+                        propertyId={selectedProperty.id}
+                        propertyAddress={`${selectedProperty.address}, ${selectedProperty.city}, ${selectedProperty.state} ${selectedProperty.zip ?? ""}`.trim()}
+                        rows={rentSchedule}
+                      />
                     )}
                   </TabsContent>
 
