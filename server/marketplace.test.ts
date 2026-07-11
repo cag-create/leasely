@@ -16,6 +16,7 @@ vi.mock("./db", () => ({
   deleteListing: vi.fn().mockResolvedValue(undefined),
   incrementViewCount: vi.fn().mockResolvedValue(undefined),
   countUserListings: vi.fn().mockResolvedValue(0),
+  getCremeAgentByUserId: vi.fn().mockResolvedValue(null),
   saveListing: vi.fn().mockResolvedValue(undefined),
   unsaveListing: vi.fn().mockResolvedValue(undefined),
   getSavedListings: vi.fn().mockResolvedValue([]),
