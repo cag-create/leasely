@@ -96,7 +96,7 @@ const proFeatures = [
 const howItWorks = [
   { step: "01", title: "Sign Up Free", desc: "Create your account in seconds. No credit card required. Your first listing is always free.", icon: HomeIcon },
   { step: "02", title: "List Your Property", desc: "Add your property with photos, pricing, and amenities. It goes live on the marketplace instantly.", icon: Globe },
-  { step: "03", title: "Upgrade to Pro", desc: "Pay a $75 setup fee + $25/month and your branded portal is built automatically — no waiting, no calls.", icon: Sparkles },
+  { step: "03", title: "Upgrade to Pro", desc: "Pay a $75 setup fee + $29/month and your branded portal is built automatically — no waiting, no calls.", icon: Sparkles },
   { step: "04", title: "Manage Everything", desc: "Applications, rent payments, work orders, accounting — all in one place from day one.", icon: BarChart3 },
 ];
 
@@ -104,7 +104,7 @@ const howItWorks = [
 // quotes — they're written to read naturally for a brand-new product. Every
 // claim references a feature that's actually shipped today: AI screening
 // flags (employer realism, virtual-office address, income vs. rent ratio),
-// $25 flat pricing, branded portal subdomain, tenant rent collection via
+// $29 flat pricing, branded portal subdomain, tenant rent collection via
 // Stripe Connect, work orders, per-property P&L in Accounting. Swap to
 // real ones the moment beta users send them in.
 const TESTIMONIALS = [
@@ -115,7 +115,7 @@ const TESTIMONIALS = [
     location: "Charlotte, NC",
   },
   {
-    quote: "I'm a small-portfolio landlord — three doors. The flat $25/month is the whole pitch for me. AppFolio quoted me a $400/mo minimum and Buildium wanted per-unit fees on top. Leasely doesn't care if I have 3 units or 30.",
+    quote: "I'm a small-portfolio landlord — three doors. The flat $29/month is the whole pitch for me. AppFolio quoted me a $400/mo minimum and Buildium wanted per-unit fees on top. Leasely doesn't care if I have 3 units or 30.",
     name: "Priya R.",
     role: "Self-managing landlord",
     location: "Austin, TX",
@@ -185,7 +185,7 @@ export default function Home() {
               </div>
 
               <p className="text-lg md:text-xl text-white/65 leading-relaxed max-w-lg">
-                List, screen, sign, collect, and dispatch — every step of the lease lifecycle on a single screen. <span className="text-white font-semibold">$25/month flat.</span> No per-unit fees. No per-transaction fees. No vendor invoice markups. <span className="text-[#4F46E5] font-semibold">We don't nickel-and-dime.</span>
+                List, screen, sign, collect, and dispatch — every step of the lease lifecycle on a single screen. <span className="text-white font-semibold">$29/month flat.</span> No per-unit fees. No per-transaction fees. No vendor invoice markups. <span className="text-[#4F46E5] font-semibold">We don't nickel-and-dime.</span>
               </p>
 
               {/* Competitive strip */}
@@ -259,7 +259,7 @@ export default function Home() {
                   "Background checks (ApplyConnect, TransUnion-backed)",
                   "QR codes for sign riders",
                   "$299 branded website (free)",
-                  "First listing free, $25/mo",
+                  "First listing free, $29/mo",
                 ].map(item => (
                   <span key={item} className="flex items-center gap-1.5">
                     <CheckCircle2 className="h-3.5 w-3.5 text-[#4F46E5] shrink-0" />
@@ -804,7 +804,7 @@ export default function Home() {
               <div className="mb-6">
                 <p className="text-sm font-black uppercase tracking-widest mb-2" style={{ color: "#4F46E5" }}>Pro</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-black text-white">$25</span>
+                  <span className="text-5xl font-black text-white">$29</span>
                   <span className="text-white/50 text-sm">/ month</span>
                 </div>
                 <p className="text-white/60 text-sm font-semibold mt-1">+ $75 one-time setup fee</p>
@@ -833,10 +833,10 @@ export default function Home() {
               </div>
               <Link href="/pricing">
                 <Button size="lg" className="w-full font-bold gap-2" style={{ background: "#4F46E5", color: "#3A2410" }}>
-                  <Sparkles className="h-4 w-4" /> Get Pro — $75 setup + $25/mo
+                  <Sparkles className="h-4 w-4" /> Get Pro — $75 setup + $29/mo
                 </Button>
               </Link>
-              <p className="text-white/30 text-xs text-center mt-3">$75 one-time setup · $25/mo thereafter · Cancel anytime</p>
+              <p className="text-white/30 text-xs text-center mt-3">$75 one-time setup · $29/mo thereafter · Cancel anytime</p>
             </div>
           </div>
 

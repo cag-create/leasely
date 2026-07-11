@@ -33,7 +33,7 @@ export default function ProGuide() {
       id: "welcome",
       title: "What Pro gets you",
       icon: Sparkles,
-      intro: "Your $75 setup + $25/month unlocks everything below.",
+      intro: "Your $75 setup + $29/month unlocks everything below.",
       body: (
         <ul className="grid sm:grid-cols-2 gap-2 text-sm">
           {[

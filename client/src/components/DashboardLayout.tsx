@@ -82,7 +82,7 @@ function SidebarNextStep({ isPro }: { isPro: boolean }) {
 
   let step: { title: string; desc: string; cta: string; href: string; icon: any; color: string };
   if (!isPro) {
-    step = { title: "Unlock Pro Portal", desc: "Applications, payouts, AI screening & more", cta: "Upgrade — $25/mo", href: "/pricing", icon: Sparkles, color: "#4F46E5" };
+    step = { title: "Unlock Pro Portal", desc: "Applications, payouts, AI screening & more", cta: "Upgrade — $29/mo", href: "/pricing", icon: Sparkles, color: "#4F46E5" };
   } else if (connect && connect.status !== "active") {
     step = { title: "Get paid", desc: "Connect your bank to collect rent", cta: "Connect bank", href: "/payouts", icon: Landmark, color: "#059669" };
   } else if (proCode && (proCode as any).status !== "redeemed") {

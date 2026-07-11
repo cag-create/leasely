@@ -61,7 +61,7 @@ const FEATURES = [
     category: "Pricing & Value",
     items: [
       { label: "Free Tier Available", values: [true, false, true, true, true, true] },
-      { label: "Pro Price / month", values: ["$25/mo flat", "$55–$375+/mo", "$9/unit/mo", "$8.25+/mo", "Listing fees", "Listing fees"] },
+      { label: "Pro Price / month", values: ["$29/mo flat", "$55–$375+/mo", "$9/unit/mo", "$8.25+/mo", "Listing fees", "Listing fees"] },
       { label: "Per-Unit Fees", values: ["None ✓", "Yes (scales)", "Yes", "Yes", "Varies", "Varies"] },
       { label: "Per-Transaction Fees on Work Orders", values: ["None ✓", "Yes", "Yes", "Varies", "N/A", "N/A"] },
       { label: "Markup on Vendor Invoices", values: ["None ✓", "Yes", "Yes", "Varies", "N/A", "N/A"] },
@@ -161,7 +161,7 @@ export default function Compare() {
           <div className="px-6 py-4 bg-muted/20 border-t border-border">
             <p className="text-xs text-muted-foreground">
               * Buildium starts at $55/mo (Essential, up to 20 units) and scales to $375+/mo. Avail charges $9/unit/mo on their paid plan. TurboTenant is $8.25+/mo per property. Zillow &amp; Apartments.com charge listing/lead fees. None include AI fraud screening as a built-in feature.
-              <strong className="text-foreground"> Leasely Pro is $25/mo flat — unlimited listings, AI screening included, no per-unit fees, no per-transaction fees, no vendor invoice markups. We don't nickel-and-dime.</strong>
+              <strong className="text-foreground"> Leasely Pro is $29/mo flat — unlimited listings, AI screening included, no per-unit fees, no per-transaction fees, no vendor invoice markups. We don't nickel-and-dime.</strong>
             </p>
           </div>
         </div>
@@ -170,7 +170,7 @@ export default function Compare() {
         <div className="mt-10 rounded-2xl bg-[#1B2B5E] text-white p-8 text-center space-y-4">
           <h2 className="text-2xl font-black">Ready to switch to Leasely?</h2>
           <p className="text-blue-100">
-            Unlimited listings + AI screening + instant payouts — all for $25/mo flat. No per-unit fees. No per-transaction fees. No vendor invoice markups. We don't nickel-and-dime.
+            Unlimited listings + AI screening + instant payouts — all for $29/mo flat. No per-unit fees. No per-transaction fees. No vendor invoice markups. We don't nickel-and-dime.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/pricing">

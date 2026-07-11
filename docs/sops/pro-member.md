@@ -22,7 +22,7 @@ from this same content.
 - Tenant CRM
 - "Leasely Market Intelligence" — automated rent comps for any U.S. zip
 
-Setup is **$75 once + $25/month**. First listing is always free, even without Pro.
+Setup is **$75 once + $29/month**. First listing is always free, even without Pro.
 
 ---
 

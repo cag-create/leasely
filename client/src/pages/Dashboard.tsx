@@ -450,7 +450,7 @@ export default function Dashboard() {
               className="shrink-0 font-bold px-6"
               style={{ background: ACCENT, color: "#3A2410" }}
             >
-              {upgradeMutation.isPending ? "Upgrading..." : "Upgrade to Pro — $25/mo"}
+              {upgradeMutation.isPending ? "Upgrading..." : "Upgrade to Pro — $29/mo"}
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </div>
@@ -718,7 +718,7 @@ export default function Dashboard() {
                       style={{ background: ACCENT, color: "#3A2410" }}
                       className="font-bold"
                     >
-                      Upgrade — $25/mo
+                      Upgrade — $29/mo
                     </Button>
                   </div>
                 )}
@@ -817,7 +817,7 @@ export default function Dashboard() {
                   <Button className="w-full font-bold" style={{ background: ACCENT, color: "#3A2410" }} onClick={() => upgradeMutation.mutate()} disabled={upgradeMutation.isPending}>
                     {upgradeMutation.isPending ? "Upgrading..." : "Upgrade to Pro"}
                   </Button>
-                  <p className="text-xs text-gray-400 text-center mt-2">$25/month · Cancel anytime</p>
+                  <p className="text-xs text-gray-400 text-center mt-2">$29/month · Cancel anytime</p>
                 </div>
               )}
             </div>

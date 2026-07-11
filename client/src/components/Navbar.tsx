@@ -331,7 +331,7 @@ export default function Navbar() {
                           {!isPro && (
                             <DropdownMenuItem asChild>
                               <Link href="/pricing" className="flex items-center gap-2.5 cursor-pointer text-sm font-semibold text-[#4338CA]">
-                                <Sparkles className="h-4 w-4" /> Upgrade to Pro — $25/mo
+                                <Sparkles className="h-4 w-4" /> Upgrade to Pro — $29/mo
                               </Link>
                             </DropdownMenuItem>
                           )}

@@ -61,7 +61,7 @@ export default function FeeSchedule() {
           <div />
           <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-right md:text-center">Free Tier</div>
           <div className="text-xs font-bold uppercase tracking-widest text-[#C8860A] text-right md:text-center flex items-center justify-end md:justify-center gap-1">
-            <Sparkles className="h-3 w-3" /> Pro — $25/mo
+            <Sparkles className="h-3 w-3" /> Pro — $29/mo
           </div>
         </div>
 
@@ -73,7 +73,7 @@ export default function FeeSchedule() {
               label="Monthly platform fee"
               desc="Access to the Leasely platform for landlords."
               free={<span className="font-semibold text-foreground">$0/mo</span>}
-              pro={<span className="text-[#C8860A]">$25.00/mo</span>}
+              pro={<span className="text-[#C8860A]">$29.00/mo</span>}
               proHighlight
             />
             <Row
@@ -253,7 +253,7 @@ export default function FeeSchedule() {
             {[
               {
                 icon: DollarSign,
-                title: "$25/mo flat",
+                title: "$29/mo flat",
                 body: "One price covers everything. No per-unit fees, no per-application fees, no surprises.",
               },
               {
@@ -279,7 +279,7 @@ export default function FeeSchedule() {
           <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
             <a href={getLoginUrl()}>
               <Button className="bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold gap-2 px-8">
-                <Sparkles className="h-4 w-4" /> Start Pro — $75 setup + $25/mo
+                <Sparkles className="h-4 w-4" /> Start Pro — $75 setup + $29/mo
               </Button>
             </a>
             <Link href="/pricing">
@@ -288,7 +288,7 @@ export default function FeeSchedule() {
               </Button>
             </Link>
           </div>
-          <p className="text-white/30 text-xs">$75 one-time setup (website, logo & URL) · $25/mo thereafter · Cancel anytime · No contracts</p>
+          <p className="text-white/30 text-xs">$75 one-time setup (website, logo & URL) · $29/mo thereafter · Cancel anytime · No contracts</p>
         </div>
 
       </div>

@@ -287,7 +287,7 @@ export default function ListProperty() {
             </div>
             <div className="bg-gray-50 rounded-2xl p-5 mb-6">
               <div className="flex items-baseline gap-2 mb-3">
-                <span className="text-3xl font-black text-gray-900">$25.00</span>
+                <span className="text-3xl font-black text-gray-900">$29.00</span>
                 <span className="text-gray-400">/month</span>
               </div>
               <ul className="space-y-2 text-sm text-gray-600">

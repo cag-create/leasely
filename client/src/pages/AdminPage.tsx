@@ -298,7 +298,7 @@ function MetricsTab() {
   const onPlatformGmv = (data?.rentGmvAllCents ?? 0) + (data?.depositGmvAllCents ?? 0);
 
   const hero = [
-    { label: "MRR", value: money(data?.mrrCents), sub: `${data?.paidUsers ?? 0} Pro subscribers × $25`, accent: "text-emerald-500" },
+    { label: "MRR", value: money(data?.mrrCents), sub: `${data?.paidUsers ?? 0} Pro subscribers × $29`, accent: "text-emerald-500" },
     { label: "ARR (run-rate)", value: money(data?.arrCents), sub: "MRR × 12", accent: "text-emerald-500" },
     { label: "On-platform GMV (all-time)", value: money(onPlatformGmv), sub: "rent + deposits processed via Stripe", accent: "text-indigo-500" },
     { label: "Rent processed (last 30d)", value: money(data?.rentGmvLast30Cents), sub: "verifiable recurring volume", accent: "text-indigo-500" },
