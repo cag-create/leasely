@@ -61,6 +61,20 @@ async function startServer() {
   // Configure body parser — 10mb for normal requests, larger handled by specific routes
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ limit: "10mb", extended: true }));
+  // On-demand automation health sweep (same checks as the 6-hourly job).
+  // Gated by ?key=SWEEP_SECRET; 404 when SWEEP_SECRET is unset so it can't
+  // leak config. Returns 200 when all checks pass, 503 when any fail.
+  app.get("/api/health/automations", async (req, res) => {
+    const secret = process.env.SWEEP_SECRET;
+    if (!secret || req.query.key !== secret) { res.status(404).end(); return; }
+    try {
+      const { runAutomationSweep } = await import("./automationSweep");
+      const result = await runAutomationSweep();
+      res.status(result.ok ? 200 : 503).json(result);
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message ?? String(e) });
+    }
+  });
   // Email/password auth routes (rate-limited)
   app.use("/api/auth/login", authLimiter);
   app.use("/api/auth/register", authLimiter);
@@ -357,6 +371,12 @@ async function startServer() {
     import("./listingDrip")
       .then(m => m.startListingDripScheduler())
       .catch(err => console.warn("[listingDrip] scheduler init failed:", err));
+    // Every-6h non-destructive health sweep of the whole automation chain
+    // (application → lease → deposit → work order → contractor → Pro → CBP).
+    // Emails the admin when any dependency breaks.
+    import("./automationSweep")
+      .then(m => m.startAutomationSweepScheduler())
+      .catch(err => console.warn("[automationSweep] scheduler init failed:", err));
   });
 }
 
