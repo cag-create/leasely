@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Plus, Upload, Pencil, Trash2, ExternalLink, Eye, Bookmark,
-  Search, Home as HomeIcon, MapPin, Bed, Bath, Square, Camera,
+  Search, Home as HomeIcon, MapPin, Bed, Bath, Square, Camera, Link2,
 } from "lucide-react";
 import { formatRent, getListingImage, parsePhotos, PROPERTY_TYPE_LABELS } from "@/lib/marketplace";
 
@@ -254,6 +254,17 @@ function ListingRow({
           </div>
 
           <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => {
+                const url = `${window.location.origin}/apply/${listing.id}`;
+                navigator.clipboard.writeText(url);
+                toast.success("Apply link copied — text or email it to a prospect.");
+              }}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              title="Copy apply link — send to an off-site prospect via email or SMS"
+            >
+              <Link2 className="h-3.5 w-3.5 text-gray-500" />
+            </button>
             <a
               href={`/listing/${listing.id}`}
               target="_blank"
