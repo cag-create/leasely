@@ -10,7 +10,7 @@ import { Star, Search, MapPin, Phone, Mail, Award, ChevronRight, Users, Upload }
 export default function AgentDirectory() {
   const [search, setSearch] = useState("");
 
-  const { data: agents, isLoading } = trpc.cremeAgent.getApproved.useQuery();
+  const { data: agents, isLoading } = trpc.cremeAgent.getApproved.useQuery({ search: search.trim() || undefined });
   const { data: me } = trpc.auth.me.useQuery(undefined, { retry: false });
   const isAdmin = (me as any)?.role === "admin";
 

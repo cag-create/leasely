@@ -4888,8 +4888,8 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
     }),
 
     /** Get all approved agents for public directory */
-    getApproved: publicProcedure.query(async () => {
-      const agents = await getApprovedCremeAgents();
+    getApproved: publicProcedure.input(z.object({ search: z.string().optional() }).optional()).query(async ({ input }) => {
+      const agents = await getApprovedCremeAgents({ search: input?.search, limit: 60 });
       return agents.map(a => ({
         ...a,
         specialties: a.specialties ? JSON.parse(a.specialties) : [],

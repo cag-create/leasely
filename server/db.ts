@@ -1485,9 +1485,12 @@ export async function getCremeAgentById(id: number): Promise<(CremeAgent & { nam
   return rows[0] as any;
 }
 
-export async function getApprovedCremeAgents(): Promise<(CremeAgent & { name: string | null; email: string | null })[]> {
+export async function getApprovedCremeAgents(opts?: { search?: string; limit?: number }): Promise<(CremeAgent & { name: string | null; email: string | null })[]> {
   const db = await getDb();
   if (!db) return [];
+  const conds: any[] = [eq(cremeAgents.status, "approved")];
+  const s = opts?.search?.trim();
+  if (s) conds.push(or(like(users.name, `%${s}%`), like(cremeAgents.serviceAreas, `%${s}%`)));
   const rows = await db.select({
     id: cremeAgents.id, userId: cremeAgents.userId, licenseNumber: cremeAgents.licenseNumber,
     bio: cremeAgents.bio, phone: cremeAgents.phone, specialties: cremeAgents.specialties,
@@ -1497,7 +1500,7 @@ export async function getApprovedCremeAgents(): Promise<(CremeAgent & { name: st
     createdAt: cremeAgents.createdAt, updatedAt: cremeAgents.updatedAt,
     name: users.name, email: users.email,
   }).from(cremeAgents).leftJoin(users, eq(cremeAgents.userId, users.id))
-    .where(eq(cremeAgents.status, "approved")).orderBy(desc(cremeAgents.dealCount));
+    .where(and(...conds)).orderBy(desc(cremeAgents.dealCount)).limit(Math.min(opts?.limit ?? 60, 200));
   return rows as any;
 }
 
