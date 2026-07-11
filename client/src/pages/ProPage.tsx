@@ -43,7 +43,6 @@ function AnimatedCounter({ end, suffix = "", prefix = "" }: { end: number; suffi
 // ─── Video Modal ─────────────────────────────────────────────────────────────
 const DEMO_SLIDES = [
   {
-    img: "https://d2xsxph8kpxj0f.cloudfront.net/310519663390163111/S5UggZBPGCwJdMVCfLUHdT/leasely-demo-frame1-cogDrxpLydhFCTVemmEsHg.webp",
     title: "Your Branded Portal",
     desc: "Your logo, your colors, your listings — at yourname.leasely.net",
     badge: "Branded Portal",
@@ -51,7 +50,6 @@ const DEMO_SLIDES = [
     icon: Globe,
   },
   {
-    img: "https://d2xsxph8kpxj0f.cloudfront.net/310519663390163111/S5UggZBPGCwJdMVCfLUHdT/leasely-demo-frame2-McfqYkDJaNasTYftdzWGwi.webp",
     title: "AI Fraud Detection",
     desc: "Every applicant screened automatically — fake employers and inflated income flagged instantly",
     badge: "AI Screening",
@@ -59,7 +57,6 @@ const DEMO_SLIDES = [
     icon: Shield,
   },
   {
-    img: "https://d2xsxph8kpxj0f.cloudfront.net/310519663390163111/S5UggZBPGCwJdMVCfLUHdT/leasely-demo-frame3-F8jDVHaByKDuNvob4s6wrM.webp",
     title: "Tax-Ready Accounting",
     desc: "IRS Schedule E categories built in. Export CSV at tax time — no spreadsheet chaos",
     badge: "Accounting",
@@ -103,13 +100,45 @@ function VideoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
         </div>
         {/* Screenshot */}
         <div className="relative">
-          <img
-            key={slide}
-            src={current.img}
-            alt={current.title}
-            className="w-full object-cover"
-            style={{ maxHeight: '60vh', objectPosition: 'top' }}
-          />
+          {/* On-brand mockup (replaces old product screenshots) — a browser
+              frame themed to the current feature, so no external imagery. */}
+          <div key={slide} className="w-full flex items-center justify-center px-6 py-10" style={{ minHeight: 380, maxHeight: '60vh', background: 'linear-gradient(135deg,#0F1F4B 0%,#1B2B5E 100%)' }}>
+            <div className="w-full max-w-2xl rounded-xl overflow-hidden shadow-2xl bg-white">
+              <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 border-b border-gray-200">
+                <div className="flex gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-400" /><span className="w-2.5 h-2.5 rounded-full bg-yellow-400" /><span className="w-2.5 h-2.5 rounded-full bg-green-400" /></div>
+                <div className="flex-1 mx-2 bg-white rounded px-2 py-1 text-[11px] text-gray-400 font-mono border border-gray-200">app.keycove.net</div>
+              </div>
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${current.color}1a`, color: current.color }}>
+                    <CurrentIcon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="font-black text-gray-900 leading-tight" style={{ fontFamily: 'Outfit, sans-serif' }}>{current.title}</div>
+                    <div className="text-xs text-gray-400">{current.badge}</div>
+                  </div>
+                  <div className="ml-auto text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: `${current.color}14`, color: current.color }}>Keycove Pro</div>
+                </div>
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  {[0,1,2].map(i => (
+                    <div key={i} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                      <div className="h-2 w-10 rounded-full bg-gray-200 mb-2" />
+                      <div className="h-4 w-14 rounded" style={{ background: `${current.color}33` }} />
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-2">
+                  {[0,1,2].map(i => (
+                    <div key={i} className="flex items-center gap-3 rounded-lg border border-gray-100 p-2.5">
+                      <div className="w-8 h-8 rounded-full" style={{ background: `${current.color}22` }} />
+                      <div className="flex-1"><div className="h-2.5 w-1/3 rounded-full bg-gray-200 mb-1.5" /><div className="h-2 w-1/2 rounded-full bg-gray-100" /></div>
+                      <div className="h-6 w-16 rounded-md" style={{ background: `${current.color}18` }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
           {/* Overlay caption */}
           <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(15,31,75,0.95) 0%, transparent 100%)' }}>
             <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold mb-2" style={{ background: `${current.color}25`, color: current.color }}>
