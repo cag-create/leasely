@@ -73,8 +73,8 @@ function verifyCrmRentToken(token: string): { ct: number } | null {
   }
 }
 import { storagePut } from "./storage";
-import { affiliates, w9Submissions, affiliateReferrals, affiliatePayouts, marketplaceListings, rentalApplications, leaseAgreements } from "../drizzle/schema";
-import { eq, sql, and } from "drizzle-orm";
+import { affiliates, w9Submissions, affiliateReferrals, affiliatePayouts, marketplaceListings, rentalApplications, leaseAgreements, users } from "../drizzle/schema";
+import { eq, sql, and, desc } from "drizzle-orm";
 import { getDb } from "./db";
 import {
   upsertUser, getUserByOpenId,
@@ -4002,7 +4002,22 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
       const db = await getDb();
       if (!db) return [];
-      return db.select().from(affiliates).orderBy(affiliates.createdAt);
+      return db.select({
+        id: affiliates.id, userId: affiliates.userId, referralCode: affiliates.referralCode,
+        status: affiliates.status, totalEarned: affiliates.totalEarned, totalPaid: affiliates.totalPaid,
+        createdAt: affiliates.createdAt, name: users.name, email: users.email,
+      }).from(affiliates).leftJoin(users, eq(affiliates.userId, users.id)).orderBy(desc(affiliates.createdAt));
+    }),
+    getAllReferrals: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) return [];
+      return db.select({
+        id: affiliateReferrals.id, referralCode: affiliateReferrals.referralCode,
+        status: affiliateReferrals.status, earningAmountCents: affiliateReferrals.earningAmountCents,
+        createdAt: affiliateReferrals.createdAt, convertedAt: affiliateReferrals.convertedAt,
+        referredName: users.name, referredEmail: users.email,
+      }).from(affiliateReferrals).leftJoin(users, eq(affiliateReferrals.referredUserId, users.id)).orderBy(desc(affiliateReferrals.createdAt));
     }),
     getAllW9s: protectedProcedure.query(async ({ ctx }) => {
       if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });

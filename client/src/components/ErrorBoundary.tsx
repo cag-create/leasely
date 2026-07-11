@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { AlertTriangle, RotateCcw } from "lucide-react";
-import { Component, ReactNode } from "react";
+import { Component, ErrorInfo, ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -9,16 +9,24 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  componentStack: string | null;
 }
 
 class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, componentStack: null };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    // The component stack names the exact component that threw — the single
+    // most useful thing for diagnosing a minified prod crash with no message.
+    this.setState({ componentStack: info.componentStack ?? null });
+    console.error("[ErrorBoundary]", error, info.componentStack);
   }
 
   render() {
@@ -40,8 +48,13 @@ class ErrorBoundary extends Component<Props, State> {
                 </p>
               )}
               <pre className="text-xs text-muted-foreground whitespace-break-spaces">
-                {this.state.error?.stack || "(no stack trace available — check the browser Console tab for details)"}
+                {this.state.error?.stack || this.state.error?.toString() || "(no error message)"}
               </pre>
+              {this.state.componentStack && (
+                <pre className="text-[11px] text-muted-foreground/80 whitespace-break-spaces mt-2 pt-2 border-t border-border">
+                  {this.state.componentStack.split("\n").slice(0, 6).join("\n")}
+                </pre>
+              )}
             </div>
 
             <button
