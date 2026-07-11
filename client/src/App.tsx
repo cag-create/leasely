@@ -76,6 +76,7 @@ const ImportPortfolio     = lazyWithRetry(() => import("./pages/ImportPortfolio"
 const SignLease           = lazyWithRetry(() => import("./pages/SignLease"));
 const Contractor1099      = lazyWithRetry(() => import("./pages/Contractor1099"));
 const ImportAgents        = lazyWithRetry(() => import("./pages/ImportAgents"));
+const ImportContractors   = lazyWithRetry(() => import("./pages/ImportContractors"));
 const MyListings          = lazyWithRetry(() => import("./pages/MyListings"));
 const AffiliateSignup     = lazyWithRetry(() => import("./pages/AffiliateSignup"));
 const AffiliateDashboard  = lazyWithRetry(() => import("./pages/AffiliateDashboard"));
@@ -177,6 +178,7 @@ function Router() {
           {() => <ProGate featureName="Contractor 1099s"><Contractor1099 /></ProGate>}
         </Route>
         <Route path="/import-agents" component={ImportAgents} />
+        <Route path="/import-contractors" component={ImportContractors} />
         <Route path="/crm">
           {() => <ProGate featureName="Property CRM"><CRM /></ProGate>}
         </Route>

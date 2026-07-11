@@ -4495,6 +4495,68 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       return { created, updated, total: input.rows.length, errors };
     }),
 
+    /**
+     * Bulk-import contractors from the admin's list into the public directory.
+     * Contractors don't need a user account (userId is optional), so each row
+     * just creates an APPROVED contractor profile. Idempotent by email; a
+     * unique slug is generated per new profile. No AI.
+     */
+    importContractors: protectedProcedure.input(z.object({
+      rows: z.array(z.object({
+        businessName: z.string().min(1),
+        ownerName: z.string().optional(),
+        email: z.string().optional(),
+        phone: z.string().optional(),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        zip: z.string().optional(),
+        licenseNumber: z.string().optional(),
+        trades: z.string().optional(),
+        serviceAreas: z.string().optional(),
+      })).min(1).max(500),
+    })).mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const { contractorProfiles } = await import("../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      const toJson = (s?: string) => { const a = (s ?? "").split(/[,;]/).map(x => x.trim()).filter(Boolean); return a.length ? JSON.stringify(a) : null; };
+      const slugify = (s: string) => (s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 100) || "contractor");
+      let created = 0, updated = 0;
+      const errors: { row: number; name: string; message: string }[] = [];
+      for (let i = 0; i < input.rows.length; i++) {
+        const r = input.rows[i];
+        const state = (r.state || "").trim().slice(0, 2).toUpperCase();
+        try {
+          if (state.length !== 2) { errors.push({ row: i + 2, name: r.businessName, message: "Missing/invalid 2-letter state" }); continue; }
+          const data: any = {
+            businessName: r.businessName.trim(), ownerName: r.ownerName?.trim() || null,
+            email: r.email?.trim() || null, phone: r.phone?.trim() || null,
+            city: r.city?.trim() || null, state, zipCode: r.zip?.trim() || null,
+            licenseNumber: r.licenseNumber?.trim() || null,
+            trades: toJson(r.trades), serviceAreas: toJson(r.serviceAreas),
+            status: "approved",
+          };
+          let existing: any = null;
+          if (data.email) {
+            const [row] = await db.select({ id: contractorProfiles.id }).from(contractorProfiles).where(eq(contractorProfiles.email, data.email)).limit(1);
+            existing = row;
+          }
+          if (existing) {
+            await db.update(contractorProfiles).set(data).where(eq(contractorProfiles.id, existing.id));
+            updated++;
+          } else {
+            data.slug = `${slugify(data.businessName)}-${randomBytes(3).toString("hex")}`;
+            await db.insert(contractorProfiles).values(data);
+            created++;
+          }
+        } catch (e: any) {
+          errors.push({ row: i + 2, name: r.businessName, message: e?.message || "Import failed" });
+        }
+      }
+      return { created, updated, total: input.rows.length, errors };
+    }),
+
     deleteUser: protectedProcedure.input(z.object({
       userId: z.number(),
     })).mutation(async ({ ctx, input }) => {

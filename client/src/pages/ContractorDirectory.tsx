@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Search, MapPin, Star, Shield, CheckCircle2, Wrench, Zap,
   Droplets, Wind, Hammer, Paintbrush, TreePine, Bug, Sparkles,
-  ChevronRight, PlusCircle, Phone, Clock, Award
+  ChevronRight, PlusCircle, Phone, Clock, Award, Upload
 } from "lucide-react";
 
 const US_STATES = [
@@ -55,6 +55,8 @@ export default function ContractorDirectory() {
   const [search, setSearch] = useState("");
   const [selectedState, setSelectedState] = useState<string>("all");
   const [selectedTrade, setSelectedTrade] = useState<string>("all");
+  const { data: me } = trpc.auth.me.useQuery(undefined, { retry: false });
+  const isAdmin = (me as any)?.role === "admin";
 
   const { data: contractors = [], isLoading } = trpc.contractors.list.useQuery({
     state: selectedState !== "all" ? selectedState : undefined,
@@ -112,6 +114,13 @@ export default function ContractorDirectory() {
                 List Your Business
               </Button>
             </Link>
+            {isAdmin && (
+              <Link href="/import-contractors">
+                <Button variant="outline" className="h-12 px-5 font-bold rounded-xl whitespace-nowrap bg-white/10 border-white/30 text-white hover:bg-white/20">
+                  <Upload className="h-4 w-4 mr-2" /> Import list
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
