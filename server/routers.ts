@@ -953,7 +953,13 @@ export const appRouter = router({
         const tier = sub?.tier ?? "free";
         const existingCount = await countUserListings(ctx.user.id);
 
-        if (input.listPublicly && tier === "free" && existingCount >= 1) {
+        // Approved Creme Agents get UNLIMITED free public listings — they fill
+        // the marketplace with inventory (Zillow-style growth), so we don't cap
+        // them behind Pro. Everyone else on the free tier: 1 public listing.
+        const agentProfile = await getCremeAgentByUserId(ctx.user.id);
+        const isApprovedAgent = agentProfile?.status === "approved";
+
+        if (input.listPublicly && tier === "free" && existingCount >= 1 && !isApprovedAgent) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "UPGRADE_REQUIRED",
