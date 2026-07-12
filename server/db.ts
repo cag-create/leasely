@@ -202,6 +202,29 @@ export async function setStripeConnectAccount(
     .where(eq(userSubscriptions.userId, userId));
 }
 
+/** Store the member's CBP partner code (dedicated UPDATE — onDuplicateKeyUpdate
+ * in upsertUserSubscription doesn't touch this column). */
+export async function setCbpPartnerCode(userId: number, code: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(userSubscriptions).set({ cbpPartnerCode: code }).where(eq(userSubscriptions.userId, userId));
+}
+
+/** Mark the member's CBP partner code as delivered/acked by CBP. */
+export async function markCbpPartnerCodeSynced(userId: number, when: Date): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(userSubscriptions).set({ cbpPartnerCodeSyncedAt: when }).where(eq(userSubscriptions.userId, userId));
+}
+
+/** Uniqueness guard for generated partner codes. */
+export async function getSubscriptionByCbpPartnerCode(code: string): Promise<UserSubscription | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const [row] = await db.select().from(userSubscriptions).where(eq(userSubscriptions.cbpPartnerCode, code)).limit(1);
+  return row;
+}
+
 export async function updatePortalBranding(
   userId: number,
   data: { brandName?: string; brandLogoUrl?: string; brandColor?: string; portalSubdomain?: string; customDomain?: string; brandBrief?: string }

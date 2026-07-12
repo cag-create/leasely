@@ -63,6 +63,12 @@ export const userSubscriptions = mysqlTable("user_subscriptions", {
   stripeConnectStatus: mysqlEnum("stripeConnectStatus", ["not_connected", "pending", "active"]).default("not_connected"),
   // Vendor dispatch preferences
   roundRobinEnabled: tinyint("roundRobinEnabled").default(0), // 1 = rotate vendors, 0 = send to all
+  // CBP partner discount code — one-time-use KEYCOVE-XXXXXXXX emitted to CBP's
+  // /api/partner-codes so the member can redeem their free website+domain at
+  // certifybusinesspro.com/website-logo-intake. syncedAt is set once CBP 2xx-acks
+  // the POST (null = not yet delivered to CBP, keep retrying).
+  cbpPartnerCode: varchar("cbpPartnerCode", { length: 24 }),
+  cbpPartnerCodeSyncedAt: timestamp("cbpPartnerCodeSyncedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

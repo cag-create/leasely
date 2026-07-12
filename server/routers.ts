@@ -809,6 +809,20 @@ export const appRouter = router({
     }),
 
     /**
+     * The member's CBP partner discount code for their free website + domain.
+     * Idempotently generates + stores the code and (re)delivers it to CBP's
+     * /api/partner-codes until acked — so existing Pro members are backfilled
+     * the first time they open the portal, and new ones are covered by the
+     * provisioning webhook. Paid-only.
+     */
+    getCbpPartnerCode: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (!sub || sub.tier !== "paid") throw new TRPCError({ code: "FORBIDDEN" });
+      const { ensureCbpPartnerCode } = await import("./_core/cbpPartnerCodes");
+      return ensureCbpPartnerCode(ctx.user.id, (ctx.user as any).email ?? null);
+    }),
+
+    /**
      * Mark the current user's Pro code as redeemed. Called when the user
      * returns from CBP's Stripe checkout with ?cbpRedeemed=1 so the portal
      * setup wizard can auto-advance to "Go Live" without manual click.

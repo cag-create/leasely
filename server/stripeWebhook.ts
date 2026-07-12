@@ -179,6 +179,17 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     console.warn("[Webhook] Could not generate pro code:", err);
   }
 
+  // Emit the CBP partner discount code (KEYCOVE-XXXXXXXX) and register it with
+  // CBP so the member can redeem their free website+domain at the intake page.
+  // Non-fatal: the portal also backfills this lazily on load.
+  try {
+    const { ensureCbpPartnerCode } = await import("./_core/cbpPartnerCodes");
+    const res = await ensureCbpPartnerCode(userId);
+    console.log(`[Webhook] CBP partner code for user ${userId}: ${res.code ?? "n/a"} (synced=${res.synced})`);
+  } catch (err) {
+    console.warn("[Webhook] Could not emit CBP partner code:", err);
+  }
+
   // Send welcome email with code
   try {
     const user = await getUserById(userId);

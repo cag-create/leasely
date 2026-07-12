@@ -76,6 +76,7 @@ export default function PortalSetup() {
   });
 
   const { data: proCode } = trpc.proCode.getMine.useQuery();
+  const { data: partnerCode } = trpc.proCode.getCbpPartnerCode.useQuery();
   const { data: existingBrief } = trpc.marketplace.getBrandBrief.useQuery();
 
   // Returning from CBP's Stripe checkout — auto-mark redeemed and advance
@@ -584,17 +585,47 @@ export default function PortalSetup() {
               )}
             </div>
 
-            {/* Code */}
+            {/* CBP Website + Domain partner code — primary claim path */}
+            <div className="rounded-xl border-2 border-amber-500/40 bg-amber-500/5 p-5 space-y-4">
+              <div className="text-center">
+                <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-2">Your CBP Website + Domain code</p>
+                {partnerCode?.code ? (
+                  <div className="flex items-center justify-center gap-3">
+                    <span className="text-2xl font-mono font-black text-white tracking-widest">{partnerCode.code}</span>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(partnerCode.code!); toast.success("Code copied!"); }}
+                      className="p-2 rounded-lg bg-white/10 hover:bg-white/15 transition-colors text-white/60 hover:text-white"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <Loader2 className="h-5 w-5 animate-spin text-white/40 mx-auto" />
+                )}
+                <p className="text-xs text-white/40 mt-2">One-time use · redeem your free website + domain at Certify Business Pro</p>
+              </div>
+              <a
+                href={partnerCode?.intakeUrl ?? "#"}
+                target="_blank"
+                rel="noopener"
+                className={`flex items-center justify-center gap-2 w-full h-12 rounded-lg font-bold text-base transition-colors ${partnerCode?.code ? "bg-amber-500 hover:bg-amber-400 text-black" : "bg-white/10 text-white/40 pointer-events-none"}`}
+              >
+                Claim Your Site <ExternalLink className="h-4 w-4" />
+              </a>
+              <p className="text-xs text-white/30 text-center">Opens the Certify Business Pro intake with your code pre-filled — complete the brief and they build your site.</p>
+            </div>
+
+            {/* Brand-brief reference code (used by the CBP team to pull your brief) */}
             {proCode ? (
-              <div className="rounded-xl border-2 border-[#4F46E5]/40 bg-[#4F46E5]/5 p-5 text-center">
-                <p className="text-xs font-semibold text-[#4F46E5] uppercase tracking-wider mb-2">Your One-Time Redemption Code</p>
+              <div className="rounded-xl border border-[#4F46E5]/30 bg-[#4F46E5]/5 p-4 text-center">
+                <p className="text-[11px] font-semibold text-[#4F46E5] uppercase tracking-wider mb-1.5">Brand-brief reference (CBP team)</p>
                 <div className="flex items-center justify-center gap-3">
-                  <span className="text-2xl font-mono font-black text-white tracking-widest">{proCode.code}</span>
+                  <span className="text-lg font-mono font-bold text-white/90 tracking-widest">{proCode.code}</span>
                   <button
                     onClick={handleCopyCode}
-                    className="p-2 rounded-lg bg-white/10 hover:bg-white/15 transition-colors text-white/60 hover:text-white"
+                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/15 transition-colors text-white/60 hover:text-white"
                   >
-                    <Copy className="h-4 w-4" />
+                    <Copy className="h-3.5 w-3.5" />
                   </button>
                 </div>
                 {proCode.status === "redeemed" && (
@@ -607,26 +638,22 @@ export default function PortalSetup() {
               </div>
             )}
 
-            <Button
-              onClick={handleOpenCBP}
-              disabled={proCode?.status === "redeemed" || issueCoupon.isPending}
-              className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold h-12 text-base"
-            >
-              {issueCoupon.isPending ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Preparing your code…</>
-              ) : (
-                <>Redeem at Certify Business Pro <ExternalLink className="ml-2 h-4 w-4" /></>
-              )}
-            </Button>
-            <p className="text-xs text-white/30 text-center">Opens Stripe checkout · website-bundle perk auto-applied (100% off via your Keycove Pro setup)</p>
-
-            <Button
-              variant="ghost"
-              className="w-full text-white/50 hover:text-white"
-              onClick={() => setStep(3)}
-            >
-              Skip for now — I'll claim it later
-            </Button>
+            <div className="flex items-center gap-3 pt-1">
+              <button
+                onClick={handleOpenCBP}
+                disabled={proCode?.status === "redeemed" || issueCoupon.isPending}
+                className="text-xs text-white/40 hover:text-white/70 underline underline-offset-2 disabled:opacity-40"
+              >
+                {issueCoupon.isPending ? "Preparing…" : "Prefer Stripe checkout instead?"}
+              </button>
+              <span className="text-white/15">·</span>
+              <button
+                className="text-xs text-white/40 hover:text-white/70 underline underline-offset-2"
+                onClick={() => setStep(3)}
+              >
+                Skip for now — I'll claim it later
+              </button>
+            </div>
           </div>
         )}
 
