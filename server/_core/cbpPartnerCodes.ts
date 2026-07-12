@@ -41,7 +41,9 @@ type CbpPostResult = { ok: boolean; status: number; body: string; skipped?: bool
 
 /** POST a code to CBP. Retries on 5xx / network errors (idempotent on CBP). */
 async function postPartnerCodeToCbp(code: string, email: string): Promise<CbpPostResult> {
-  const secret = process.env.CBP_PARTNER_CODES_SECRET;
+  // Accept either name — Railway has it set as PARTNER_CODES_SECRET; keep the
+  // CBP_-prefixed alias working too so a future rename can't silently break sync.
+  const secret = process.env.CBP_PARTNER_CODES_SECRET ?? process.env.PARTNER_CODES_SECRET;
   if (!secret) return { ok: false, status: 0, body: "CBP_PARTNER_CODES_SECRET unset", skipped: true };
   const payload = JSON.stringify({ code, email, discountPercent: 100, partnerName: "Keycove" });
   let last: CbpPostResult = { ok: false, status: 0, body: "no attempt" };
