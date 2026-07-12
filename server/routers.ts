@@ -230,39 +230,93 @@ function isStripeAccountInaccessible(err: any): boolean {
   );
 }
 
+const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
+
+// The active CBP website-bundle Payment Link slug — used to find the live $299
+// price so we can PROVE a coupon actually zeroes it before handing out a code.
+// Keep in sync with CBP_WEBSITE_BUILDER_URL in client/src/pages/PortalSetup.tsx
+// and CBP_BUNDLE_SLUG in server/_core/automationSweep.ts.
+export const CBP_WEBSITE_BUNDLE_SLUG = "00w9AM5Zrb7FfKM0Cn9ws0g";
+
 // Cached after first lookup — Stripe IDs don't change, no need to re-query.
 let _cbpWebsiteBundleCouponId: string | null = null;
+let _cbpBundlePriceId: string | null = null;
+
+async function getCbpBundlePriceId(cbp: Stripe): Promise<string | null> {
+  if (_cbpBundlePriceId) return _cbpBundlePriceId;
+  for await (const link of cbp.paymentLinks.list({ active: true, limit: 100 })) {
+    if (!link.url?.includes(CBP_WEBSITE_BUNDLE_SLUG)) continue;
+    const items = await cbp.paymentLinks.listLineItems(link.id, { limit: 1 });
+    const price = items.data[0]?.price;
+    const priceId = typeof price === "string" ? price : price?.id;
+    if (priceId) { _cbpBundlePriceId = priceId; return priceId; }
+  }
+  return null;
+}
+
+// Definitive coupon validity test: does this coupon actually take the bundle to
+// $0 at checkout? A "poisoned" coupon (Stripe keeps a hidden stale product
+// restriction after the bundle product is replaced) reports itself valid but
+// silently applies to nothing — the ONLY reliable way to catch that is to open
+// a throwaway Checkout Session and read amount_total. The session is expired
+// immediately and never charges.
+export async function cbpCouponZeroesBundle(cbp: Stripe, couponId: string): Promise<boolean> {
+  try {
+    const priceId = await getCbpBundlePriceId(cbp);
+    if (!priceId) return false;
+    const cs = await cbp.checkout.sessions.create({
+      mode: "payment",
+      line_items: [{ price: priceId, quantity: 1 }],
+      discounts: [{ coupon: couponId }],
+      success_url: `${APP_URL}/portal-setup?ok=1`,
+    });
+    const zero = cs.amount_total === 0;
+    try { await cbp.checkout.sessions.expire(cs.id); } catch { /* best-effort cleanup */ }
+    return zero;
+  } catch {
+    return false;
+  }
+}
 
 async function getOrCreateCbpWebsiteBundleCoupon(cbp: Stripe): Promise<string | null> {
   if (_cbpWebsiteBundleCouponId) return _cbpWebsiteBundleCouponId;
-  // Coupons API has no .search — page through and filter by metadata so we don't
-  // re-create the same 100%-off coupon every cold start.
+  // Reuse a tagged 100%-off coupon ONLY if it still zeroes the bundle. This is
+  // the self-healing guard: if a coupon is ever "poisoned" (Stripe keeps a
+  // hidden stale product restriction after the bundle product is replaced, so
+  // it silently applies to nothing), we detect it, untag it, and mint a fresh
+  // working one — a Pro user always gets a usable code.
   //
-  // We intentionally do NOT scope the coupon to a product. Stripe was not
-  // reliably persisting `applies_to` here, and worse: when the underlying
-  // bundle product was once deleted/replaced, the stale product restriction
-  // silently "poisoned" the coupon — the API reported it unrestricted while
-  // Stripe still rejected every order ("this coupon cannot be redeemed because
-  // it does not apply to anything in this order"). An unrestricted coupon paired
-  // with a per-user, single-use, 30-day promo code (see issueCbpWebsiteCoupon)
-  // is safe and, unlike product scoping, actually works.
+  // We intentionally do NOT product-scope the coupon: Stripe didn't reliably
+  // persist applies_to here, and product-scoping is exactly what caused the
+  // poisoning. An unrestricted coupon + per-user single-use 30-day promo code
+  // (issueCbpWebsiteCoupon) is safe and actually works.
   for await (const c of cbp.coupons.list({ limit: 100 })) {
-    if (c.metadata?.leaselyCbpWebsiteBundle === "true" && c.valid) {
+    if (c.metadata?.leaselyCbpWebsiteBundle !== "true" || !c.valid) continue;
+    if (await cbpCouponZeroesBundle(cbp, c.id)) {
       _cbpWebsiteBundleCouponId = c.id;
       return c.id;
     }
+    // Poisoned/broken — untag so we never rescan or reuse it.
+    try {
+      await cbp.coupons.update(c.id, { metadata: { leaselyCbpWebsiteBundle: "", poisoned: "auto-detected" } });
+    } catch { /* best-effort */ }
   }
+  // None usable — mint a fresh unrestricted 100%-off coupon and verify it works
+  // before adopting it. If even a fresh coupon can't zero the bundle, something
+  // deeper is wrong (dead link / missing price); untag it and fail loudly.
   const coupon = await cbp.coupons.create({
     percent_off: 100,
     duration: "once",
     name: "Keycove Pro — bundled website",
     metadata: { leaselyCbpWebsiteBundle: "true" },
   });
+  if (!(await cbpCouponZeroesBundle(cbp, coupon.id))) {
+    try { await cbp.coupons.update(coupon.id, { metadata: { leaselyCbpWebsiteBundle: "" } }); } catch { /* best-effort */ }
+    return null;
+  }
   _cbpWebsiteBundleCouponId = coupon.id;
   return coupon.id;
 }
-
-const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
 
 const complexesRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
@@ -779,7 +833,7 @@ export const appRouter = router({
       }
       const couponId = await getOrCreateCbpWebsiteBundleCoupon(cbp);
       if (!couponId) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "CBP website bundle product not found" });
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Couldn't create a working website coupon — the CBP bundle link/price may be unavailable." });
       }
       // Idempotency via deterministic code: the userId-derived code lets us
       // look it up directly without a search index, so re-clicking Redeem

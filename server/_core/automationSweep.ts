@@ -131,6 +131,38 @@ export async function runAutomationSweep(): Promise<{ checks: SweepCheck[]; ok: 
       if (!found.allow_promotion_codes) throw new Error("promo codes DISABLED — Pro members would be charged full price");
       return found.url;
     }),
+    run("CBP", "website coupon zeroes the $299 bundle", async () => {
+      // The definitive guard against the "poisoned coupon" failure: a coupon can
+      // report itself valid yet silently apply to nothing (Stripe keeps a hidden
+      // stale product restriction), so the free-website checkout never reaches
+      // $0 and every Pro member is charged full price. The only reliable test is
+      // to actually apply it in a throwaway Checkout Session and read the total.
+      const cbp = getCbpStripe();
+      if (!cbp) throw new Error("no CBP key");
+      let priceId: string | null = null;
+      for await (const link of cbp.paymentLinks.list({ active: true, limit: 100 })) {
+        if (!link.url?.includes(CBP_BUNDLE_SLUG)) continue;
+        const price = (await cbp.paymentLinks.listLineItems(link.id, { limit: 1 })).data[0]?.price as any;
+        priceId = typeof price === "string" ? price : price?.id;
+        break;
+      }
+      if (!priceId) throw new Error("bundle price not found on link");
+      let couponId: string | null = null;
+      for await (const c of cbp.coupons.list({ limit: 100 })) {
+        if (c.metadata?.leaselyCbpWebsiteBundle === "true" && c.valid) { couponId = c.id; break; }
+      }
+      if (!couponId) throw new Error("no tagged website-bundle coupon exists");
+      const cs = await cbp.checkout.sessions.create({
+        mode: "payment",
+        line_items: [{ price: priceId, quantity: 1 }],
+        discounts: [{ coupon: couponId }],
+        success_url: APP_URL + "/portal-setup?ok=1",
+      });
+      const total = cs.amount_total;
+      try { await cbp.checkout.sessions.expire(cs.id); } catch { /* best-effort */ }
+      if (total !== 0) throw new Error(`coupon ${couponId} does NOT zero the bundle (amount_total=${total}) — Pro free-website checkout is BROKEN`);
+      return `coupon ${couponId} zeroes $${((cs.amount_subtotal ?? 0) / 100).toFixed(0)} bundle`;
+    }),
     run("CBP", "CBP→Keycove webhook + secrets", async () => {
       const cbp = getCbpStripe();
       if (!cbp) throw new Error("no CBP key");
