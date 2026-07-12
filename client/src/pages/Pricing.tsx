@@ -124,7 +124,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What's actually recurring vs. one-time?",
-    a: "Keycove: $75 one-time setup + $29/mo recurring (cancel anytime). The CBP brand kit ($299 value — free with Pro) is one-time; only the domain + hosting renewal at $37/yr is recurring after year 1, and you can transfer your domain to your own registrar to avoid it. Optional CBP add-ons like EIN filing (~$79 one-time — or apply free yourself at irs.gov), LLC formation, and trademark filing are billed directly by CBP at their listed prices — Keycove takes no markup and no kickback on any of it."
+    a: "Keycove: $75 one-time setup + $29/mo recurring (cancel anytime). The CBP brand kit ($299 value — free with Pro) is one-time; only the domain + hosting renewal at $37/yr is recurring after year 1, and you can transfer your domain to your own registrar to avoid it. Optional CBP add-ons like LLC formation and trademark filing are billed directly by CBP at their listed prices — Keycove takes no markup and no kickback on any of it."
   },
 ];
 

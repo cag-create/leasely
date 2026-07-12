@@ -230,38 +230,22 @@ function isStripeAccountInaccessible(err: any): boolean {
   );
 }
 
-// Public Payment Link slug for the CBP website bundle. Used to auto-discover
-// the underlying product so the coupon can be restricted to it.
-const CBP_WEBSITE_BUNDLE_SLUG = "00w9AM5Zrb7FfKM0Cn9ws0g";
-
 // Cached after first lookup — Stripe IDs don't change, no need to re-query.
-let _cbpWebsiteBundleProductId: string | null = null;
 let _cbpWebsiteBundleCouponId: string | null = null;
-
-async function getCbpWebsiteBundleProductId(cbp: Stripe): Promise<string | null> {
-  if (_cbpWebsiteBundleProductId) return _cbpWebsiteBundleProductId;
-  // Page through Payment Links to find the one matching our slug.
-  for await (const link of cbp.paymentLinks.list({ active: true, limit: 100 })) {
-    if (link.url?.includes(CBP_WEBSITE_BUNDLE_SLUG)) {
-      const items = await cbp.paymentLinks.listLineItems(link.id, { limit: 1 });
-      const productId = typeof items.data[0]?.price?.product === "string"
-        ? items.data[0].price.product
-        : items.data[0]?.price?.product?.id;
-      if (productId) {
-        _cbpWebsiteBundleProductId = productId;
-        return productId;
-      }
-    }
-  }
-  return null;
-}
 
 async function getOrCreateCbpWebsiteBundleCoupon(cbp: Stripe): Promise<string | null> {
   if (_cbpWebsiteBundleCouponId) return _cbpWebsiteBundleCouponId;
-  const productId = await getCbpWebsiteBundleProductId(cbp);
-  if (!productId) return null;
-  // Coupons API has no .search — page through and filter by metadata so we
-  // don't re-create the same 100%-off coupon every cold start.
+  // Coupons API has no .search — page through and filter by metadata so we don't
+  // re-create the same 100%-off coupon every cold start.
+  //
+  // We intentionally do NOT scope the coupon to a product. Stripe was not
+  // reliably persisting `applies_to` here, and worse: when the underlying
+  // bundle product was once deleted/replaced, the stale product restriction
+  // silently "poisoned" the coupon — the API reported it unrestricted while
+  // Stripe still rejected every order ("this coupon cannot be redeemed because
+  // it does not apply to anything in this order"). An unrestricted coupon paired
+  // with a per-user, single-use, 30-day promo code (see issueCbpWebsiteCoupon)
+  // is safe and, unlike product scoping, actually works.
   for await (const c of cbp.coupons.list({ limit: 100 })) {
     if (c.metadata?.leaselyCbpWebsiteBundle === "true" && c.valid) {
       _cbpWebsiteBundleCouponId = c.id;
@@ -271,7 +255,6 @@ async function getOrCreateCbpWebsiteBundleCoupon(cbp: Stripe): Promise<string | 
   const coupon = await cbp.coupons.create({
     percent_off: 100,
     duration: "once",
-    applies_to: { products: [productId] },
     name: "Keycove Pro — bundled website",
     metadata: { leaselyCbpWebsiteBundle: "true" },
   });

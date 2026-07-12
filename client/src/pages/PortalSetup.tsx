@@ -573,12 +573,6 @@ export default function PortalSetup() {
               <div>
                 <p className="text-xs font-bold text-sky-400 mb-1.5">Optional add-ons via CBP (you pay them directly)</p>
                 <ul className="text-sm text-white/70 space-y-1 pl-4 list-disc marker:text-sky-400/50">
-                  <li>
-                    <span className="font-semibold text-white">EIN filing — ~$79 one-time.</span>{" "}
-                    <span className="text-white/50">Or apply directly with the IRS yourself for free at </span>
-                    <a href="https://www.irs.gov/businesses/small-businesses-self-employed/apply-for-an-employer-identification-number-ein-online" target="_blank" rel="noopener" className="text-sky-300 underline hover:text-sky-200">irs.gov</a>
-                    <span className="text-white/50"> (takes ~10 minutes).</span>
-                  </li>
                   <li>Business formation (LLC, S-corp), trademark filing, additional logos/branding — pricing at <a href="https://certifybusinesspro.com" target="_blank" rel="noopener" className="text-sky-300 underline hover:text-sky-200">certifybusinesspro.com</a></li>
                 </ul>
               </div>
