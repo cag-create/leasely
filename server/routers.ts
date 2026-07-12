@@ -800,22 +800,52 @@ export const appRouter = router({
       }
       // Idempotency via deterministic code: the userId-derived code lets us
       // look it up directly without a search index, so re-clicking Redeem
-      // never mints a duplicate.
-      const code = `LEASELY-USER${ctx.user.id}`;
-      const existing = await cbp.promotionCodes.list({ code, limit: 1 });
-      if (existing.data[0]) {
-        return { code: existing.data[0].code };
+      // never mints a duplicate. BUT only reuse a code that's still USABLE —
+      // reusing an expired / fully-redeemed / archived code would prefill it
+      // into CBP checkout where Stripe rejects it as "code is invalid",
+      // permanently trapping any user whose 30-day code lapsed unredeemed.
+      const baseCode = `LEASELY-USER${ctx.user.id}`;
+      const nowSec = Math.floor(Date.now() / 1000);
+      const isLive = (p: any) =>
+        p.active &&
+        (p.max_redemptions == null || p.times_redeemed < p.max_redemptions) &&
+        (!p.expires_at || p.expires_at > nowSec);
+      const existing = await cbp.promotionCodes.list({ code: baseCode, limit: 100 });
+      const live = existing.data.find(isLive);
+      if (live) {
+        return { code: live.code };
       }
-      const promo = await cbp.promotionCodes.create({
+      // The free website is one per Pro onboarding. If a prior code was already
+      // redeemed, don't silently mint another (that would hand out unlimited
+      // free $299 sites); tell them it's claimed. Only an expired/unredeemed
+      // code gets re-issued below.
+      const alreadyRedeemed = existing.data.some(p => (p.times_redeemed ?? 0) > 0);
+      if (alreadyRedeemed) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "You've already claimed your free website. If you need another, contact support.",
+        });
+      }
+      // Mint a fresh one. Stripe only requires the human code to be unique
+      // among ACTIVE codes, so reusing baseCode after the old one is archived
+      // is fine; if a same-string active code somehow lingers, fall back to a
+      // unique suffix so we never hard-fail here.
+      const mint = async (code: string) => cbp.promotionCodes.create({
         coupon: couponId,
         code,
         max_redemptions: 1,
-        expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30, // 30 days
+        expires_at: nowSec + 60 * 60 * 24 * 30, // 30 days
         metadata: {
           leaselyUserId: String(ctx.user.id),
           leaselyEmail: (ctx.user as any).email ?? "",
         },
       } as any);
+      let promo;
+      try {
+        promo = await mint(baseCode);
+      } catch {
+        promo = await mint(`${baseCode}-${randomBytes(2).toString("hex").toUpperCase()}`);
+      }
       return { code: promo.code };
     }),
   }),
