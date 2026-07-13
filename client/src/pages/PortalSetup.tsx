@@ -12,8 +12,6 @@ import {
   Palette, FileText, Award,
 } from "lucide-react";
 
-// Stripe Payment Link for CBP's website-builder package (custom website + logo + 1-yr domain + hosting).
-const CBP_WEBSITE_BUILDER_URL = "https://buy.stripe.com/00w9AM5Zrb7FfKM0Cn9ws0g";
 // CBP-hosted $37/yr domain + hosting renewal (year 2 onward). Lives on CBP's Stripe —
 // CBP owns the domain/hosting, so renewals are billed by them, not Keycove.
 const CBP_DOMAIN_RENEWAL_URL = "https://buy.stripe.com/6oU28k9bDb7F9mofxh9ws08";
@@ -159,28 +157,6 @@ export default function PortalSetup() {
     }
   }
 
-  const issueCoupon = trpc.proCode.issueCbpWebsiteCoupon.useMutation();
-
-  async function handleOpenCBP() {
-    // Mint (or fetch existing) per-user 100%-off promo code restricted to
-    // CBP's website-bundle product. Idempotent server-side, so re-clicking
-    // returns the same code. The $299 list price drops to $0 at checkout —
-    // the website is already paid for by Keycove's $75 setup fee.
-    let promoCode: string | null = null;
-    try {
-      const result = await issueCoupon.mutateAsync();
-      promoCode = result.code;
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not issue redemption code");
-      return;
-    }
-    const params = new URLSearchParams({
-      prefilled_email: (user as any)?.email ?? "",
-      prefilled_promo_code: promoCode ?? "",
-      client_reference_id: proCode?.code ?? "",
-    });
-    window.open(`${CBP_WEBSITE_BUILDER_URL}?${params.toString()}`, "_blank");
-  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4 py-12">
@@ -638,15 +614,7 @@ export default function PortalSetup() {
               </div>
             )}
 
-            <div className="flex items-center gap-3 pt-1">
-              <button
-                onClick={handleOpenCBP}
-                disabled={proCode?.status === "redeemed" || issueCoupon.isPending}
-                className="text-xs text-white/40 hover:text-white/70 underline underline-offset-2 disabled:opacity-40"
-              >
-                {issueCoupon.isPending ? "Preparing…" : "Prefer Stripe checkout instead?"}
-              </button>
-              <span className="text-white/15">·</span>
+            <div className="flex items-center justify-center pt-1">
               <button
                 className="text-xs text-white/40 hover:text-white/70 underline underline-offset-2"
                 onClick={() => setStep(3)}

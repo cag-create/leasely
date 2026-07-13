@@ -131,37 +131,25 @@ export async function runAutomationSweep(): Promise<{ checks: SweepCheck[]; ok: 
       if (!found.allow_promotion_codes) throw new Error("promo codes DISABLED — Pro members would be charged full price");
       return found.url;
     }),
-    run("CBP", "website coupon zeroes the $299 bundle", async () => {
-      // The definitive guard against the "poisoned coupon" failure: a coupon can
-      // report itself valid yet silently apply to nothing (Stripe keeps a hidden
-      // stale product restriction), so the free-website checkout never reaches
-      // $0 and every Pro member is charged full price. The only reliable test is
-      // to actually apply it in a throwaway Checkout Session and read the total.
-      const cbp = getCbpStripe();
-      if (!cbp) throw new Error("no CBP key");
-      let priceId: string | null = null;
-      for await (const link of cbp.paymentLinks.list({ active: true, limit: 100 })) {
-        if (!link.url?.includes(CBP_BUNDLE_SLUG)) continue;
-        const price = (await cbp.paymentLinks.listLineItems(link.id, { limit: 1 })).data[0]?.price as any;
-        priceId = typeof price === "string" ? price : price?.id;
-        break;
-      }
-      if (!priceId) throw new Error("bundle price not found on link");
-      let couponId: string | null = null;
-      for await (const c of cbp.coupons.list({ limit: 100 })) {
-        if (c.metadata?.leaselyCbpWebsiteBundle === "true" && c.valid) { couponId = c.id; break; }
-      }
-      if (!couponId) throw new Error("no tagged website-bundle coupon exists");
-      const cs = await cbp.checkout.sessions.create({
-        mode: "payment",
-        line_items: [{ price: priceId, quantity: 1 }],
-        discounts: [{ coupon: couponId }],
-        success_url: APP_URL + "/portal-setup?ok=1",
+    run("CBP", "partner-code endpoint reachable + authenticated", async () => {
+      // Pro members get their free website via CBP partner discount codes
+      // (KEYCOVE-XXXXXXXX → /api/partner-codes). This is the guard that the
+      // integration is live: an idempotent liveness POST of a fixed health-check
+      // code. First run returns 201, thereafter 200 alreadyExists; a 401 means
+      // the shared secret drifted between Keycove and CBP; any other non-2xx
+      // means the endpoint is down — all of which break code delivery.
+      const secret = process.env.PARTNER_CODES_SECRET ?? process.env.CBP_PARTNER_CODES_SECRET;
+      if (!secret) throw new Error("PARTNER_CODES_SECRET unset — Pro members can't receive CBP discount codes");
+      const res = await fetch("https://certifybusinesspro.com/api/partner-codes", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-partner-secret": secret },
+        body: JSON.stringify({ code: "KEYCOVE-HEALTHCHECK", email: "healthcheck@keycove.net", discountPercent: 100, partnerName: "Keycove" }),
       });
-      const total = cs.amount_total;
-      try { await cbp.checkout.sessions.expire(cs.id); } catch { /* best-effort */ }
-      if (total !== 0) throw new Error(`coupon ${couponId} does NOT zero the bundle (amount_total=${total}) — Pro free-website checkout is BROKEN`);
-      return `coupon ${couponId} zeroes $${((cs.amount_subtotal ?? 0) / 100).toFixed(0)} bundle`;
+      if (res.status < 200 || res.status >= 300) {
+        const body = (await res.text().catch(() => "")).slice(0, 200);
+        throw new Error(`CBP partner-codes POST ${res.status}${res.status === 401 ? " (secret mismatch)" : ""}: ${body}`);
+      }
+      return `partner-code endpoint ok (HTTP ${res.status})`;
     }),
     run("CBP", "CBP→Keycove webhook + secrets", async () => {
       const cbp = getCbpStripe();
