@@ -14,8 +14,9 @@
  *   Work orders   → work_orders + contractor directory queryable
  *   Pro checkout  → Stripe Connect platform valid (catches stale/wrong-key
  *                   accounts), price IDs (above)
- *   CBP signup    → CBP key valid, bundle link ACTIVE with promo codes ON,
- *                   CBP→Keycove webhook enabled, CBP secrets set
+ *   CBP website   → partner-code endpoint reachable + secret authenticates
+ *                   (KEYCOVE-XXXXXXXX free-website codes), CBP_API_SECRET set
+ *                   (brand-brief validate/redeem)
  *   Site          → public pages return 200
  *   Notifications → Brevo email key present
  *
@@ -34,10 +35,6 @@ import { sendEmail } from "./email";
 
 const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
 const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
-
-// Keep in sync with CBP_WEBSITE_BUNDLE_SLUG in server/routers.ts — the active
-// CBP "Website + Domain Creation" payment link the Build-my-website flow opens.
-const CBP_BUNDLE_SLUG = "00w9AM5Zrb7FfKM0Cn9ws0g";
 
 function stripeFor(key: string | undefined): Stripe | null {
   return key ? new Stripe(key, { apiVersion: "2025-01-27.acacia" as any }) : null;
@@ -119,18 +116,7 @@ export async function runAutomationSweep(): Promise<{ checks: SweepCheck[]; ok: 
       return `connect ok (${list.data.length} sample acct)`;
     }),
 
-    // ── CBP website + logo bundle signup ─────────────────────────────────
-    run("CBP", "bundle link active + promo enabled", async () => {
-      const cbp = getCbpStripe();
-      if (!cbp) throw new Error("CBP_STRIPE_SECRET_KEY missing");
-      let found: Stripe.PaymentLink | null = null;
-      for await (const link of cbp.paymentLinks.list({ active: true, limit: 100 })) {
-        if (link.url?.includes(CBP_BUNDLE_SLUG)) { found = link; break; }
-      }
-      if (!found) throw new Error(`no ACTIVE CBP link matching slug ${CBP_BUNDLE_SLUG}`);
-      if (!found.allow_promotion_codes) throw new Error("promo codes DISABLED — Pro members would be charged full price");
-      return found.url;
-    }),
+    // ── CBP website + logo (partner-code flow) ───────────────────────────
     run("CBP", "partner-code endpoint reachable + authenticated", async () => {
       // Pro members get their free website via CBP partner discount codes
       // (KEYCOVE-XXXXXXXX → /api/partner-codes). This is the guard that the
@@ -151,18 +137,14 @@ export async function runAutomationSweep(): Promise<{ checks: SweepCheck[]; ok: 
       }
       return `partner-code endpoint ok (HTTP ${res.status})`;
     }),
-    run("CBP", "CBP→Keycove webhook + secrets", async () => {
-      const cbp = getCbpStripe();
-      if (!cbp) throw new Error("no CBP key");
-      const eps = await cbp.webhookEndpoints.list({ limit: 30 });
-      const ep = eps.data.find(e => e.url.includes("/api/cbp/stripe/webhook"));
-      if (!ep) throw new Error("no CBP→Keycove webhook endpoint");
-      if (ep.status !== "enabled") throw new Error(`webhook status=${ep.status}`);
-      const wantHost = new URL(APP_URL).host;
-      if (new URL(ep.url).host !== wantHost) throw new Error(`CBP webhook host ${new URL(ep.url).host} ≠ app host ${wantHost} — CBP events won't be delivered`);
-      if (!process.env.CBP_STRIPE_WEBHOOK_SECRET) throw new Error("CBP_STRIPE_WEBHOOK_SECRET unset");
-      if (!process.env.CBP_API_SECRET) throw new Error("CBP_API_SECRET unset");
-      return ep.url;
+    run("CBP", "brand-brief API secret set", async () => {
+      // CBP's team pulls each Pro member's brand brief from Keycove via
+      // /api/pro-codes/validate + /redeem (the internal LEASELY-XXXX reference
+      // code), secured by CBP_API_SECRET. Still live even after the Stripe
+      // coupon flow was retired. (The old CBP Stripe webhook + its
+      // CBP_STRIPE_WEBHOOK_SECRET went away with that flow — no longer checked.)
+      if (!process.env.CBP_API_SECRET) throw new Error("CBP_API_SECRET unset — CBP can't validate/redeem brand-brief codes");
+      return "CBP_API_SECRET present";
     }),
 
     // ── Public site liveness ─────────────────────────────────────────────
