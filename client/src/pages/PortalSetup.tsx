@@ -556,7 +556,7 @@ export default function PortalSetup() {
 
               {(user as any)?.role !== "admin" && (
                 <p className="text-xs text-white/40 pt-1 border-t border-white/5">
-                  Keycove charges <span className="text-white/60 font-semibold">$25 one-time setup + $25/mo</span>. Everything else above is between you and CBP — no markups, no kickbacks.
+                  Keycove charges <span className="text-white/60 font-semibold">$25/mo</span>. Everything else above is between you and CBP — no markups, no kickbacks.
                 </p>
               )}
             </div>

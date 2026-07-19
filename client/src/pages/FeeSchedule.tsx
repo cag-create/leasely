@@ -77,10 +77,10 @@ export default function FeeSchedule() {
               proHighlight
             />
             <Row
-              label="One-time setup fee"
-              desc="Includes your branded website, custom logo placement, and personalized keycove.net subdomain URL."
+              label="Free website, logo & domain"
+              desc="Your first month includes a branded website, custom logo, and personalized keycove.net URL — built free by our partner CBP."
               free={<No />}
-              pro={<span className="text-[#C8860A]">$25 one-time</span>}
+              pro={<span className="text-[#C8860A]">Included</span>}
               proHighlight
             />
             <Row
@@ -231,7 +231,7 @@ export default function FeeSchedule() {
           <Section title="Affiliate Program">
             <Row
               label="Referral commission"
-              desc="Earn a $50 one-time bonus for every landlord who signs up using your affiliate code and pays their first full month plus setup fee."
+              desc="Earn a $50 one-time bonus for every landlord who signs up using your affiliate code and pays their first full month."
               free="Open to all"
               pro="Open to all"
             />
@@ -279,7 +279,7 @@ export default function FeeSchedule() {
           <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
             <a href={getLoginUrl()}>
               <Button className="bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold gap-2 px-8">
-                <Sparkles className="h-4 w-4" /> Start Pro — $25 setup + $25/mo
+                <Sparkles className="h-4 w-4" /> Start Pro — $25/mo
               </Button>
             </a>
             <Link href="/pricing">
@@ -288,7 +288,7 @@ export default function FeeSchedule() {
               </Button>
             </Link>
           </div>
-          <p className="text-white/30 text-xs">$25 one-time setup (website, logo & URL) · $25/mo thereafter · Cancel anytime · No contracts</p>
+          <p className="text-white/30 text-xs">$25/mo — first month includes a free website, logo & keycove.net URL · Cancel anytime · No contracts</p>
         </div>
 
       </div>

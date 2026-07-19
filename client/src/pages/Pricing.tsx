@@ -116,7 +116,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "I manage many properties. Is there a per-unit charge?",
-    a: "No. Pro is $25 one-time setup + $25/month flat — no per-property or per-unit fees, ever. List 1 property or 100. Add a property manager. Hand off entire portfolios. It's all the same $25/month."
+    a: "No. Pro is $25/month flat — no per-property or per-unit fees, ever. List 1 property or 100. Add a property manager. Hand off entire portfolios. It's all the same $25/month."
   },
   {
     q: "Do you take a cut of vendor invoices or charge per work order?",
@@ -124,7 +124,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What's actually recurring vs. one-time?",
-    a: "Keycove: $25 one-time setup + $25/mo recurring (cancel anytime). The CBP brand kit ($299 value — free with Pro) is one-time; only the domain + hosting renewal at $37/yr is recurring after year 1, and you can transfer your domain to your own registrar to avoid it. Optional CBP add-ons like LLC formation and trademark filing are billed directly by CBP at their listed prices — Keycove takes no markup and no kickback on any of it."
+    a: "Keycove: $25/mo recurring (cancel anytime). The CBP brand kit ($299 value — free with Pro) is one-time; only the domain + hosting renewal at $37/yr is recurring after year 1, and you can transfer your domain to your own registrar to avoid it. Optional CBP add-ons like LLC formation and trademark filing are billed directly by CBP at their listed prices — Keycove takes no markup and no kickback on any of it."
   },
 ];
 
@@ -259,7 +259,7 @@ export default function Pricing() {
                 <span className="text-white/50 text-sm">/ month</span>
               </div>
               <div className="flex items-center gap-1.5 mt-1">
-                <span className="text-white/70 text-sm font-semibold">+ $25 one-time setup fee</span>
+                <span className="text-white/70 text-sm font-semibold">first month includes a free website, logo & domain</span>
               </div>
               <p className="text-emerald-300/90 text-sm font-semibold mt-2">Everything unlocks today — your first $25/mo starts in 30 days.</p>
               <p className="text-white/60 text-sm mt-1">Everything you need to run a professional rental business.</p>
@@ -281,7 +281,7 @@ export default function Pricing() {
                     style={{ accentColor: ACCENT }}
                   />
                   <span className="text-xs text-white/65 leading-relaxed">
-                    I agree: <strong className="text-white">$25 setup is non-refundable once design begins</strong> (work starts immediately, delivered in 24–48 hours). $25/mo cancellable anytime, no pro-rated refunds. I keep my website &amp; logo regardless. <Link href="/terms" className="underline hover:text-white" target="_blank">Terms</Link> ·{" "}
+                    I agree: <strong className="text-white">first month covers website production and is non-refundable once design begins</strong> (work starts immediately, delivered in 24–48 hours). $25/mo cancellable anytime, no pro-rated refunds. I keep my website &amp; logo regardless. <Link href="/terms" className="underline hover:text-white" target="_blank">Terms</Link> ·{" "}
                     <Link href="/privacy" className="underline hover:text-white" target="_blank">Privacy</Link>.
                   </span>
                 </label>
@@ -294,7 +294,7 @@ export default function Pricing() {
                   {checkoutMutation.isPending ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> Opening checkout...</>
                   ) : (
-                    <><Sparkles className="h-4 w-4" /> Get Pro — $25 setup + $25/mo</>
+                    <><Sparkles className="h-4 w-4" /> Get Pro — $25/mo</>
                   )}
                 </Button>
               </>
@@ -307,7 +307,7 @@ export default function Pricing() {
                 </div>
               ))}
             </div>
-            <p className="text-white/40 text-xs text-center mt-6">$25 one-time setup (website, logo & URL) · $25/mo thereafter · Cancel anytime</p>
+            <p className="text-white/40 text-xs text-center mt-6">$25/mo — first month includes a free website, logo & keycove.net URL · Cancel anytime</p>
           </div>
 
         </div>
@@ -496,7 +496,7 @@ export default function Pricing() {
             )}
           </div>
           <p className="text-white/40 text-sm mt-6">
-            Free tier · No credit card required · Pro: $25 setup + $25/mo · Cancel anytime
+            Free tier · No credit card required · Pro: $25/mo · Cancel anytime
           </p>
           <p className="text-white/30 text-xs mt-2">
             <Link href="/fees" className="underline hover:text-white/60 transition-colors">View full fee schedule & terms →</Link>
@@ -509,7 +509,7 @@ export default function Pricing() {
         <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 rounded-2xl bg-gradient-to-r from-[#4F46E5]/8 to-[#4F46E5]/8 border border-[#4F46E5]/15 px-8 py-6">
           <div className="text-center md:text-left">
             <p className="text-foreground font-bold text-base">Refer landlords. Earn $50 one-time per signup.</p>
-            <p className="text-muted-foreground text-sm mt-1">No cap, no expiry. Earn a $50 one-time bonus for every landlord who signs up using your affiliate code and pays their first full month plus setup fee.</p>
+            <p className="text-muted-foreground text-sm mt-1">No cap, no expiry. Earn a $50 one-time bonus for every landlord who signs up using your affiliate code and pays their first full month.</p>
           </div>
           <Link href="/affiliate/signup">
             <Button className="bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold gap-2 whitespace-nowrap shrink-0">

@@ -171,7 +171,7 @@ export default function AffiliateSignup() {
                   icon: DollarSign,
                   step: "3",
                   title: "Get paid $50",
-                  desc: "When a referred landlord signs up and pays their first full month plus the setup fee, a $50 one-time bonus goes into your account.",
+                  desc: "When a referred landlord signs up and pays their first full month, a $50 one-time bonus goes into your account.",
                 },
               ].map(({ icon: Icon, step, title, desc }) => (
                 <Card key={step} className="bg-white/5 border-white/10 text-white">

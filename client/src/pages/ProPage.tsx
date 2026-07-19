@@ -470,7 +470,7 @@ export default function ProPage() {
             {/* Free package badge — the hook */}
             <div className="inline-flex items-center gap-2.5 bg-amber-500/15 border border-amber-500/30 rounded-full px-5 py-2.5 mb-8">
               <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-              <span className="text-amber-300 text-sm font-bold">Setup includes a $299 website + logo + domain — free with Pro</span>
+              <span className="text-amber-300 text-sm font-bold">Your first month includes a $299 website + logo + domain — free with Pro</span>
             </div>
 
             <h1 className="text-5xl lg:text-7xl font-black text-white mb-5" style={{ fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.03em' }}>
@@ -478,7 +478,7 @@ export default function ProPage() {
             </h1>
 
             <p className="text-xl text-white/60 mb-4 max-w-2xl mx-auto leading-relaxed">
-              A one-time <strong className="text-white">$25 setup</strong> gets your whole rental operation live — listings, applications, leases, rent collection & accounting.
+              <strong className="text-white">$25/mo</strong> gets your whole rental operation live — listings, applications, leases, rent collection & accounting.
               It even includes a <strong className="text-white">free professional website, custom logo, and Year 1 domain & hosting</strong> built by Certify Business Pro. Then just $25/month.
             </p>
 
@@ -572,7 +572,7 @@ export default function ProPage() {
                 </div>
                 <a href={isAuthenticated ? "/pricing" : `${getLoginUrl()}?next=/pricing`}>
                   <Button className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold">
-                    Claim Mine — $25 Setup
+                    Claim Mine — $25/mo
                   </Button>
                 </a>
               </div>
@@ -604,7 +604,7 @@ export default function ProPage() {
             </div>
             <div className="mt-8 rounded-2xl bg-gray-50 border border-gray-100 p-6 inline-block w-full">
               <p className="text-gray-700 font-semibold">
-                Pro costs <strong>$25 setup + $25/mo</strong>.
+                Pro costs <strong>$25/mo</strong>.
                 One avoided vacancy or bad tenant returns <strong className="text-green-600">52× to 140×</strong> your investment.
               </p>
               <p className="text-gray-400 text-xs mt-1">Plus you get a $299 free website. It's not even close.</p>
@@ -626,7 +626,7 @@ export default function ProPage() {
               <h3 className="text-xl font-black text-gray-900 mb-1">No Contracts. Cancel Anytime.</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
                 Your $25/mo Pro subscription is cancellable anytime — no questions, no pro-rated refunds.
-                Setup fee is non-refundable once design work begins (work starts immediately after payment).
+                Your first month covers website production and is non-refundable once design work begins (work starts immediately after payment).
                 You keep your website, logo, and domain regardless of subscription status.
               </p>
             </div>
@@ -873,8 +873,8 @@ export default function ProPage() {
       <section className="section-padding" style={{ background: "linear-gradient(180deg, #F8FAFB 0%, #EEF2F7 100%)" }}>
         <div className="container">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-black text-gray-900" style={{ fontFamily: 'Outfit, sans-serif' }}>$25 Setup + $25.00/Month</h2>
-            <p className="text-gray-500 mt-2 text-lg">One-time setup fee (website, logo & URL), then $25/month. No contracts. Cancel anytime.</p>
+            <h2 className="text-4xl font-black text-gray-900" style={{ fontFamily: 'Outfit, sans-serif' }}>$25.00/Month</h2>
+            <p className="text-gray-500 mt-2 text-lg">First month includes a free website, logo & keycove.net URL. $25/month, no contracts, cancel anytime.</p>
           </div>
           <div className="max-w-lg mx-auto rounded-3xl overflow-hidden shadow-2xl" style={{ background: BRAND }}>
             <div className="p-8">
@@ -885,7 +885,7 @@ export default function ProPage() {
                     <span className="text-5xl font-black text-white" style={{ fontFamily:'Outfit,sans-serif' }}>$25.00</span>
                     <span className="text-white/40">/month</span>
                   </div>
-                  <div className="text-sm font-semibold mt-1" style={{ color: '#4F46E5' }}>+ $25 one-time setup fee</div>
+                  <div className="text-sm font-semibold mt-1" style={{ color: '#4F46E5' }}>first month includes a free website, logo & domain</div>
                 </div>
                 <Badge className="bg-teal-500 text-[#3A2410] font-bold border-0">Most Popular</Badge>
               </div>
@@ -911,12 +911,12 @@ export default function ProPage() {
               </div>
               <a href={isAuthenticated ? "/pricing" : `${getLoginUrl()}?next=/pricing`} className="block">
                 <Button size="lg" className="w-full btn-teal font-black text-base py-4 gap-2">
-                  <Sparkles className="w-5 h-5" /> Start Pro — $25 setup + $25/mo
+                  <Sparkles className="w-5 h-5" /> Start Pro — $25/mo
                 </Button>
               </a>
-              <p className="text-center text-white/30 text-sm mt-4">$25 one-time setup (website, logo & URL) · then $25/mo · Cancel anytime</p>
+              <p className="text-center text-white/30 text-sm mt-4">$25/mo — first month includes a free website, logo & keycove.net URL · Cancel anytime</p>
               <p className="text-center text-white/25 text-xs mt-2 leading-relaxed">
-                Setup fee non-refundable once design begins (work starts immediately, delivered in 24–48 hours).
+                First month covers website production; non-refundable once design begins (work starts immediately, delivered in 24–48 hours).
                 Subscription cancellable anytime. <Link href="/terms" className="underline hover:text-white/50">Terms</Link>.
               </p>
             </div>

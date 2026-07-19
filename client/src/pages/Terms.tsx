@@ -16,15 +16,15 @@ export default function Terms() {
         <p>You are responsible for maintaining the confidentiality of your account credentials and for all activity under your account. Notify us immediately of any unauthorized access at <a href="mailto:support@keycove.net" className="text-[#4F46E5] hover:underline">support@keycove.net</a>. Sharing accounts is prohibited.</p>
       </LegalSection>
 
-      <LegalSection title="3. Subscription, Setup Fee, and Payments">
-        <p><strong className="text-white">Pro plan:</strong> $25.00 per month, recurring, plus a one-time $25.00 setup fee charged at signup. Subscriptions renew automatically each month until cancelled. You may cancel anytime; cancellations take effect at the end of the current billing cycle. Setup fees are non-refundable.</p>
+      <LegalSection title="3. Subscription and Payments">
+        <p><strong className="text-white">Pro plan:</strong> $25.00 per month, recurring, charged at signup and monthly thereafter. Your first month includes production of your branded website, logo, and domain and is non-refundable once design work begins. Subscriptions renew automatically each month until cancelled. You may cancel anytime; cancellations take effect at the end of the current billing cycle.</p>
         <p><strong className="text-white">Free plan:</strong> Limited features available without subscription.</p>
         <p><strong className="text-white">Payments:</strong> All payments are processed by Stripe. By providing payment information, you authorize us and Stripe to charge the applicable fees and taxes.</p>
         <p><strong className="text-white">Refunds:</strong> We do not provide refunds for partial months or unused features unless required by law.</p>
       </LegalSection>
 
       <LegalSection title="4. Affiliate Program">
-        <p>Approved affiliates earn a one-time $50.00 bonus per landlord who signs up using their unique affiliate code and pays their first full month plus the setup fee. Bonuses are not recurring. Payouts require a valid W-9 on file. Earnings of $2,000 or more per calendar year may be reported on IRS Form 1099-NEC. Keycove may suspend or terminate affiliate accounts for fraud, self-referral, spam, or violation of these Terms.</p>
+        <p>Approved affiliates earn a one-time $50.00 bonus per landlord who signs up using their unique affiliate code and pays their first full month. Bonuses are not recurring. Payouts require a valid W-9 on file. Earnings of $2,000 or more per calendar year may be reported on IRS Form 1099-NEC. Keycove may suspend or terminate affiliate accounts for fraud, self-referral, spam, or violation of these Terms.</p>
       </LegalSection>
 
       <LegalSection title="5. Listings, Applications, and Leases">

@@ -14,7 +14,7 @@ import {
 } from "./_core/email";
 import Stripe from "stripe";
 import { createHmac, timingSafeEqual, randomBytes } from "crypto";
-import { LEASELY_PRO, LEASELY_PRO_SETUP } from "./products";
+import { LEASELY_PRO } from "./products";
 import QRCode from "qrcode";
 import { generateObject } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
@@ -1213,25 +1213,19 @@ export const appRouter = router({
       const stripe = getStripe();
       if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured. Please add STRIPE_SECRET_KEY in Settings → Payment." });
       const origin = (ctx.req as any).headers?.origin ?? APP_URL;
-      // $25 one-time setup fee line item
-      const setupLineItem = LEASELY_PRO_SETUP.priceId
-        ? { price: LEASELY_PRO_SETUP.priceId, quantity: 1 }
-        : { price_data: { currency: "usd", product_data: { name: LEASELY_PRO_SETUP.name, description: LEASELY_PRO_SETUP.description }, unit_amount: LEASELY_PRO_SETUP.setupPrice }, quantity: 1 };
-      // $25/month recurring subscription line item
+      // Flat $25/mo — no separate setup fee, no trial. The first $25 charges at
+      // signup and covers month one (which includes the free website, logo &
+      // domain built by CBP); $25/mo recurring thereafter.
       const subscriptionLineItem = LEASELY_PRO.priceId
         ? { price: LEASELY_PRO.priceId, quantity: 1 }
         : { price_data: { currency: "usd", product_data: { name: LEASELY_PRO.name, description: LEASELY_PRO.description }, unit_amount: LEASELY_PRO.monthlyPrice, recurring: { interval: "month" as const } }, quantity: 1 };
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
-        line_items: [setupLineItem, subscriptionLineItem],
+        line_items: [subscriptionLineItem],
         customer_email: ctx.user.email ?? undefined,
         client_reference_id: ctx.user.id.toString(),
         metadata: { user_id: ctx.user.id.toString(), customer_email: ctx.user.email ?? "", customer_name: ctx.user.name ?? "", referral_code: input?.referralCode ?? "" },
         allow_promotion_codes: true,
-        // Day one the member pays only the $25 setup (which covers their first
-        // month). The $25/mo recurring is deferred 30 days via a trial, so the
-        // first $25 charge lands next month, then monthly after that.
-        subscription_data: { trial_period_days: 30 },
         success_url: `${origin}/portal-setup?session_id={CHECKOUT_SESSION_ID}&pro_welcome=1`,
         cancel_url: `${origin}/pro`,
       });

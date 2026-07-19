@@ -96,7 +96,7 @@ const proFeatures = [
 const howItWorks = [
   { step: "01", title: "Sign Up Free", desc: "Create your account in seconds. No credit card required. Your first listing is always free.", icon: HomeIcon },
   { step: "02", title: "List Your Property", desc: "Add your property with photos, pricing, and amenities. It goes live on the marketplace instantly.", icon: Globe },
-  { step: "03", title: "Upgrade to Pro", desc: "Pay a $25 setup fee + $25/month and your branded portal is built automatically — no waiting, no calls.", icon: Sparkles },
+  { step: "03", title: "Upgrade to Pro", desc: "Pay $25/month — your first month includes a free branded website, logo & URL, built automatically. No waiting, no calls.", icon: Sparkles },
   { step: "04", title: "Manage Everything", desc: "Applications, rent payments, work orders, accounting — all in one place from day one.", icon: BarChart3 },
 ];
 
@@ -358,7 +358,7 @@ export default function Home() {
       <section className="bg-[#0A1628] border-y border-white/8 py-12">
         <div className="container">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
-            <AnimatedStat value={29} prefix="$" suffix="/mo" label="Pro Portal — Flat Rate" sublabel="$25 one-time setup" />
+            <AnimatedStat value={25} prefix="$" suffix="/mo" label="Pro Portal — Flat Rate" sublabel="Free website included" />
             <AnimatedStat value={0} suffix="%" label="ACH Fees for Pro" sublabel="vs. industry 0.8%" />
             <div className="text-center reveal-on-scroll">
               <div className="text-4xl md:text-5xl font-black text-white mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>
@@ -509,7 +509,7 @@ export default function Home() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 rounded-3xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 px-8 py-7">
             <div className="text-center md:text-left">
               <p className="text-gray-900 font-black text-xl">Refer landlords. Earn $50 per signup.</p>
-              <p className="text-gray-500 text-sm mt-1 max-w-2xl">Earn a $50 one-time bonus for every landlord who signs up with your code and pays their first month + setup fee. No cap, no expiry.</p>
+              <p className="text-gray-500 text-sm mt-1 max-w-2xl">Earn a $50 one-time bonus for every landlord who signs up with your code and pays their first month. No cap, no expiry.</p>
             </div>
             <Link href="/affiliate/signup" className="shrink-0">
               <Button className="bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold gap-2 whitespace-nowrap h-11 px-6 shadow-sm">
@@ -807,7 +807,7 @@ export default function Home() {
                   <span className="text-5xl font-black text-white">$25</span>
                   <span className="text-white/50 text-sm">/ month</span>
                 </div>
-                <p className="text-white/60 text-sm font-semibold mt-1">+ $25 one-time setup fee</p>
+                <p className="text-white/60 text-sm font-semibold mt-1">first month includes a free website, logo & domain</p>
                 <p className="text-white/40 text-xs mt-1">Unlimited listings · No per-unit fees · Cancel anytime</p>
               </div>
               <div className="space-y-2.5 mb-8">
@@ -833,10 +833,10 @@ export default function Home() {
               </div>
               <Link href="/pricing">
                 <Button size="lg" className="w-full font-bold gap-2" style={{ background: "#4F46E5", color: "#3A2410" }}>
-                  <Sparkles className="h-4 w-4" /> Get Pro — $25 setup + $25/mo
+                  <Sparkles className="h-4 w-4" /> Get Pro — $25/mo
                 </Button>
               </Link>
-              <p className="text-white/30 text-xs text-center mt-3">$25 one-time setup · $25/mo thereafter · Cancel anytime</p>
+              <p className="text-white/30 text-xs text-center mt-3">$25/mo — first month includes a free website · Cancel anytime</p>
             </div>
           </div>
 

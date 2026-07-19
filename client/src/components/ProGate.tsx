@@ -89,7 +89,7 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
                 {featureName === "this feature"
                   ? "This feature is available exclusively to Keycove Pro subscribers."
                   : `${featureName} is available exclusively to Keycove Pro subscribers.`}{" "}
-                Unlock your full property management portal for $25 one-time setup + $25/month.
+                Unlock your full property management portal for $25/month.
               </p>
             </div>
 
@@ -121,7 +121,7 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
                 className="mt-0.5 w-4 h-4 rounded border-border accent-indigo-600 cursor-pointer flex-shrink-0"
               />
               <span className="text-xs text-muted-foreground leading-relaxed">
-                I understand: the <strong className="text-foreground">$25 setup fee is non-refundable once design work begins</strong> (work starts immediately after payment, with delivery in 24–48 hours). The $25/mo Pro subscription is cancellable anytime — no contracts, no pro-rated refunds. I keep my website, logo, and domain regardless of subscription status. I agree to Keycove's{" "}
+                I understand: the <strong className="text-foreground">first month covers website production and is non-refundable once design work begins</strong> (work starts immediately after payment, with delivery in 24–48 hours). The $25/mo subscription is cancellable anytime — no contracts, no pro-rated refunds. I keep my website, logo, and domain regardless of subscription status. I agree to Keycove's{" "}
                 <Link href="/terms" className="text-indigo-600 hover:underline" target="_blank">Terms of Service</Link>{" "}and{" "}
                 <Link href="/privacy" className="text-indigo-600 hover:underline" target="_blank">Privacy Policy</Link>.
               </span>
@@ -148,7 +148,7 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
                   </>
                 ) : (
                   <>
-                    Upgrade to Pro — $25 setup + $25/mo
+                    Upgrade to Pro — $25/mo
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}
@@ -159,7 +159,7 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
             </div>
 
             <p className="text-xs text-muted-foreground">
-$25 one-time setup (website, logo & URL) · then $25/mo · Cancel anytime.
+$25/mo — first month includes a free website, logo & keycove.net URL · Cancel anytime.
             </p>
           </div>
         </div>
