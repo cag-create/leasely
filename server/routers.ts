@@ -1217,7 +1217,7 @@ export const appRouter = router({
       const setupLineItem = LEASELY_PRO_SETUP.priceId
         ? { price: LEASELY_PRO_SETUP.priceId, quantity: 1 }
         : { price_data: { currency: "usd", product_data: { name: LEASELY_PRO_SETUP.name, description: LEASELY_PRO_SETUP.description }, unit_amount: LEASELY_PRO_SETUP.setupPrice }, quantity: 1 };
-      // $29/month recurring subscription line item
+      // $25/month recurring subscription line item
       const subscriptionLineItem = LEASELY_PRO.priceId
         ? { price: LEASELY_PRO.priceId, quantity: 1 }
         : { price_data: { currency: "usd", product_data: { name: LEASELY_PRO.name, description: LEASELY_PRO.description }, unit_amount: LEASELY_PRO.monthlyPrice, recurring: { interval: "month" as const } }, quantity: 1 };
@@ -1229,8 +1229,8 @@ export const appRouter = router({
         metadata: { user_id: ctx.user.id.toString(), customer_email: ctx.user.email ?? "", customer_name: ctx.user.name ?? "", referral_code: input?.referralCode ?? "" },
         allow_promotion_codes: true,
         // Day one the member pays only the $25 setup (which covers their first
-        // month). The $29/mo recurring is deferred 30 days via a trial, so the
-        // first $29 charge lands next month, then monthly after that.
+        // month). The $25/mo recurring is deferred 30 days via a trial, so the
+        // first $25 charge lands next month, then monthly after that.
         subscription_data: { trial_period_days: 30 },
         success_url: `${origin}/portal-setup?session_id={CHECKOUT_SESSION_ID}&pro_welcome=1`,
         cancel_url: `${origin}/pro`,
@@ -4307,7 +4307,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       const [totalUsers, paidUsers, totalApplications, m] = await Promise.all([
         getUserCount(), getPaidUserCount(), getApplicationCount(), getBusinessMetrics(),
       ]);
-      const mrrCents = paidUsers * 2900; // $29/mo per Pro subscriber
+      const mrrCents = paidUsers * 2900; // $25/mo per Pro subscriber
       return {
         totalUsers, paidUsers, totalApplications,
         mrrCents, arrCents: mrrCents * 12,

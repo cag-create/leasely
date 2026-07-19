@@ -28,7 +28,7 @@ const STEPS: Step[] = [
     n: 1,
     icon: Rocket,
     title: "Get set up on Pro",
-    body: "A one-time $25 setup + $29/month turns Keycove into your full landlord operating system — and includes a free professional website, custom logo, and Year 1 domain built by Certify Business Pro.",
+    body: "A one-time $25 setup + $25/month turns Keycove into your full landlord operating system — and includes a free professional website, custom logo, and Year 1 domain built by Certify Business Pro.",
     points: [
       "Unlimited listings on the marketplace",
       "Branded tenant portal at yourname.keycove.net",

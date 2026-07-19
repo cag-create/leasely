@@ -138,7 +138,7 @@ export default function Onboarding() {
                 Free to start
               </span>
               <span className="inline-block px-3 py-1 rounded-full text-xs font-bold" style={{ background: `${BRAND}15`, color: BRAND }}>
-                Pro from $29/mo
+                Pro from $25/mo
               </span>
             </div>
           </button>
@@ -160,7 +160,7 @@ export default function Onboarding() {
         <p className="text-center text-xs text-gray-400 mt-2">
           By continuing you agree to our{" "}
           <a href="/fees" className="underline hover:text-gray-600 transition-colors">fee schedule & platform terms</a>.
-          Pro: $25 one-time setup + $29/mo · Cancel anytime.
+          Pro: $25 one-time setup + $25/mo · Cancel anytime.
         </p>
       </div>
     </div>
