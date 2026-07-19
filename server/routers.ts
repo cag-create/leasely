@@ -201,7 +201,7 @@ function getStripe() {
 
 // CBP's Stripe account (separate from Keycove's). Used to mint the per-user
 // 100%-off promotion code that redeems CBP's website-bundle Payment Link as
-// the bundled perk paid for by Keycove's $75 setup fee.
+// the bundled perk paid for by Keycove's $25 setup fee.
 function getCbpStripe() {
   const key = process.env.CBP_STRIPE_SECRET_KEY;
   if (!key) return null;
@@ -1213,7 +1213,7 @@ export const appRouter = router({
       const stripe = getStripe();
       if (!stripe) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe not configured. Please add STRIPE_SECRET_KEY in Settings → Payment." });
       const origin = (ctx.req as any).headers?.origin ?? APP_URL;
-      // $75 one-time setup fee line item
+      // $25 one-time setup fee line item
       const setupLineItem = LEASELY_PRO_SETUP.priceId
         ? { price: LEASELY_PRO_SETUP.priceId, quantity: 1 }
         : { price_data: { currency: "usd", product_data: { name: LEASELY_PRO_SETUP.name, description: LEASELY_PRO_SETUP.description }, unit_amount: LEASELY_PRO_SETUP.setupPrice }, quantity: 1 };
@@ -1228,7 +1228,7 @@ export const appRouter = router({
         client_reference_id: ctx.user.id.toString(),
         metadata: { user_id: ctx.user.id.toString(), customer_email: ctx.user.email ?? "", customer_name: ctx.user.name ?? "", referral_code: input?.referralCode ?? "" },
         allow_promotion_codes: true,
-        // Day one the member pays only the $75 setup (which covers their first
+        // Day one the member pays only the $25 setup (which covers their first
         // month). The $29/mo recurring is deferred 30 days via a trial, so the
         // first $29 charge lands next month, then monthly after that.
         subscription_data: { trial_period_days: 30 },

@@ -33,7 +33,7 @@ export default function ProGuide() {
       id: "welcome",
       title: "What Pro gets you",
       icon: Sparkles,
-      intro: "Your $75 setup + $29/month unlocks everything below.",
+      intro: "Your $25 setup + $29/month unlocks everything below.",
       body: (
         <ul className="grid sm:grid-cols-2 gap-2 text-sm">
           {[
@@ -69,7 +69,7 @@ export default function ProGuide() {
         <ol className="space-y-3">
           {[
             { path: "/onboarding", label: "Complete onboarding", desc: "Stripe Connect onboarding takes ~5 min and unlocks payouts." },
-            { path: "/pro-setup", label: "Pay the $75 setup fee", desc: "Your portal subdomain is provisioned automatically within ~30 seconds." },
+            { path: "/pro-setup", label: "Pay the $25 setup fee", desc: "Your portal subdomain is provisioned automatically within ~30 seconds." },
             { path: "/portal-setup", label: "Brand your portal", desc: "Upload your logo + brand color. Defaults to Keycove teal if you skip." },
             { path: "/list-property", label: "Add your first property", desc: "Market Intelligence widget suggests a rent range on step 3 from zip + bedroom count." },
             { path: "/my-listings", label: "Confirm it's live", desc: "Share the public URL with prospects. Edit / unlist anytime." },

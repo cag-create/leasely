@@ -80,7 +80,7 @@ export default function FeeSchedule() {
               label="One-time setup fee"
               desc="Includes your branded website, custom logo placement, and personalized keycove.net subdomain URL."
               free={<No />}
-              pro={<span className="text-[#C8860A]">$75 one-time</span>}
+              pro={<span className="text-[#C8860A]">$25 one-time</span>}
               proHighlight
             />
             <Row
@@ -279,7 +279,7 @@ export default function FeeSchedule() {
           <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
             <a href={getLoginUrl()}>
               <Button className="bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold gap-2 px-8">
-                <Sparkles className="h-4 w-4" /> Start Pro — $75 setup + $29/mo
+                <Sparkles className="h-4 w-4" /> Start Pro — $25 setup + $29/mo
               </Button>
             </a>
             <Link href="/pricing">
@@ -288,7 +288,7 @@ export default function FeeSchedule() {
               </Button>
             </Link>
           </div>
-          <p className="text-white/30 text-xs">$75 one-time setup (website, logo & URL) · $29/mo thereafter · Cancel anytime · No contracts</p>
+          <p className="text-white/30 text-xs">$25 one-time setup (website, logo & URL) · $29/mo thereafter · Cancel anytime · No contracts</p>
         </div>
 
       </div>

@@ -474,11 +474,11 @@ export default function ProPage() {
             </div>
 
             <h1 className="text-5xl lg:text-7xl font-black text-white mb-5" style={{ fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.03em' }}>
-              Get fully set up on Keycove.<br /><span className="text-gradient">Just $75.</span>
+              Get fully set up on Keycove.<br /><span className="text-gradient">Just $25.</span>
             </h1>
 
             <p className="text-xl text-white/60 mb-4 max-w-2xl mx-auto leading-relaxed">
-              A one-time <strong className="text-white">$75 setup</strong> gets your whole rental operation live — listings, applications, leases, rent collection & accounting.
+              A one-time <strong className="text-white">$25 setup</strong> gets your whole rental operation live — listings, applications, leases, rent collection & accounting.
               It even includes a <strong className="text-white">free professional website, custom logo, and Year 1 domain & hosting</strong> built by Certify Business Pro. Then just $29/month.
             </p>
 
@@ -491,7 +491,7 @@ export default function ProPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
               <a href={isAuthenticated ? "/pricing" : `${getLoginUrl()}?next=/pricing`}>
                 <Button size="lg" className="btn-teal font-black px-10 py-4 text-base gap-2">
-                  <Sparkles className="w-5 h-5" /> Get fully set up — $75 + $29/mo
+                  <Sparkles className="w-5 h-5" /> Get fully set up — $25 + $29/mo
                 </Button>
               </a>
               <Button
@@ -572,7 +572,7 @@ export default function ProPage() {
                 </div>
                 <a href={isAuthenticated ? "/pricing" : `${getLoginUrl()}?next=/pricing`}>
                   <Button className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold">
-                    Claim Mine — $75 Setup
+                    Claim Mine — $25 Setup
                   </Button>
                 </a>
               </div>
@@ -604,7 +604,7 @@ export default function ProPage() {
             </div>
             <div className="mt-8 rounded-2xl bg-gray-50 border border-gray-100 p-6 inline-block w-full">
               <p className="text-gray-700 font-semibold">
-                Pro costs <strong>$75 setup + $29/mo</strong>.
+                Pro costs <strong>$25 setup + $29/mo</strong>.
                 One avoided vacancy or bad tenant returns <strong className="text-green-600">52× to 140×</strong> your investment.
               </p>
               <p className="text-gray-400 text-xs mt-1">Plus you get a $299 free website. It's not even close.</p>
@@ -873,7 +873,7 @@ export default function ProPage() {
       <section className="section-padding" style={{ background: "linear-gradient(180deg, #F8FAFB 0%, #EEF2F7 100%)" }}>
         <div className="container">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-black text-gray-900" style={{ fontFamily: 'Outfit, sans-serif' }}>$75 Setup + $29.00/Month</h2>
+            <h2 className="text-4xl font-black text-gray-900" style={{ fontFamily: 'Outfit, sans-serif' }}>$25 Setup + $29.00/Month</h2>
             <p className="text-gray-500 mt-2 text-lg">One-time setup fee (website, logo & URL), then $29/month. No contracts. Cancel anytime.</p>
           </div>
           <div className="max-w-lg mx-auto rounded-3xl overflow-hidden shadow-2xl" style={{ background: BRAND }}>
@@ -885,7 +885,7 @@ export default function ProPage() {
                     <span className="text-5xl font-black text-white" style={{ fontFamily:'Outfit,sans-serif' }}>$29.00</span>
                     <span className="text-white/40">/month</span>
                   </div>
-                  <div className="text-sm font-semibold mt-1" style={{ color: '#4F46E5' }}>+ $75 one-time setup fee</div>
+                  <div className="text-sm font-semibold mt-1" style={{ color: '#4F46E5' }}>+ $25 one-time setup fee</div>
                 </div>
                 <Badge className="bg-teal-500 text-[#3A2410] font-bold border-0">Most Popular</Badge>
               </div>
@@ -911,10 +911,10 @@ export default function ProPage() {
               </div>
               <a href={isAuthenticated ? "/pricing" : `${getLoginUrl()}?next=/pricing`} className="block">
                 <Button size="lg" className="w-full btn-teal font-black text-base py-4 gap-2">
-                  <Sparkles className="w-5 h-5" /> Start Pro — $75 setup + $29/mo
+                  <Sparkles className="w-5 h-5" /> Start Pro — $25 setup + $29/mo
                 </Button>
               </a>
-              <p className="text-center text-white/30 text-sm mt-4">$75 one-time setup (website, logo & URL) · then $29/mo · Cancel anytime</p>
+              <p className="text-center text-white/30 text-sm mt-4">$25 one-time setup (website, logo & URL) · then $29/mo · Cancel anytime</p>
               <p className="text-center text-white/25 text-xs mt-2 leading-relaxed">
                 Setup fee non-refundable once design begins (work starts immediately, delivered in 24–48 hours).
                 Subscription cancellable anytime. <Link href="/terms" className="underline hover:text-white/50">Terms</Link>.

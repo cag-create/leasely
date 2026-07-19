@@ -17,7 +17,7 @@ export default function Terms() {
       </LegalSection>
 
       <LegalSection title="3. Subscription, Setup Fee, and Payments">
-        <p><strong className="text-white">Pro plan:</strong> $29.00 per month, recurring, plus a one-time $75.00 setup fee charged at signup. Subscriptions renew automatically each month until cancelled. You may cancel anytime; cancellations take effect at the end of the current billing cycle. Setup fees are non-refundable.</p>
+        <p><strong className="text-white">Pro plan:</strong> $29.00 per month, recurring, plus a one-time $25.00 setup fee charged at signup. Subscriptions renew automatically each month until cancelled. You may cancel anytime; cancellations take effect at the end of the current billing cycle. Setup fees are non-refundable.</p>
         <p><strong className="text-white">Free plan:</strong> Limited features available without subscription.</p>
         <p><strong className="text-white">Payments:</strong> All payments are processed by Stripe. By providing payment information, you authorize us and Stripe to charge the applicable fees and taxes.</p>
         <p><strong className="text-white">Refunds:</strong> We do not provide refunds for partial months or unused features unless required by law.</p>

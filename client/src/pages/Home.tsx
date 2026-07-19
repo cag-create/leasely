@@ -96,7 +96,7 @@ const proFeatures = [
 const howItWorks = [
   { step: "01", title: "Sign Up Free", desc: "Create your account in seconds. No credit card required. Your first listing is always free.", icon: HomeIcon },
   { step: "02", title: "List Your Property", desc: "Add your property with photos, pricing, and amenities. It goes live on the marketplace instantly.", icon: Globe },
-  { step: "03", title: "Upgrade to Pro", desc: "Pay a $75 setup fee + $29/month and your branded portal is built automatically — no waiting, no calls.", icon: Sparkles },
+  { step: "03", title: "Upgrade to Pro", desc: "Pay a $25 setup fee + $29/month and your branded portal is built automatically — no waiting, no calls.", icon: Sparkles },
   { step: "04", title: "Manage Everything", desc: "Applications, rent payments, work orders, accounting — all in one place from day one.", icon: BarChart3 },
 ];
 
@@ -358,7 +358,7 @@ export default function Home() {
       <section className="bg-[#0A1628] border-y border-white/8 py-12">
         <div className="container">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
-            <AnimatedStat value={25} prefix="$" suffix="/mo" label="Pro Portal — Flat Rate" sublabel="$75 one-time setup" />
+            <AnimatedStat value={29} prefix="$" suffix="/mo" label="Pro Portal — Flat Rate" sublabel="$25 one-time setup" />
             <AnimatedStat value={0} suffix="%" label="ACH Fees for Pro" sublabel="vs. industry 0.8%" />
             <div className="text-center reveal-on-scroll">
               <div className="text-4xl md:text-5xl font-black text-white mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>
@@ -807,7 +807,7 @@ export default function Home() {
                   <span className="text-5xl font-black text-white">$29</span>
                   <span className="text-white/50 text-sm">/ month</span>
                 </div>
-                <p className="text-white/60 text-sm font-semibold mt-1">+ $75 one-time setup fee</p>
+                <p className="text-white/60 text-sm font-semibold mt-1">+ $25 one-time setup fee</p>
                 <p className="text-white/40 text-xs mt-1">Unlimited listings · No per-unit fees · Cancel anytime</p>
               </div>
               <div className="space-y-2.5 mb-8">
@@ -833,10 +833,10 @@ export default function Home() {
               </div>
               <Link href="/pricing">
                 <Button size="lg" className="w-full font-bold gap-2" style={{ background: "#4F46E5", color: "#3A2410" }}>
-                  <Sparkles className="h-4 w-4" /> Get Pro — $75 setup + $29/mo
+                  <Sparkles className="h-4 w-4" /> Get Pro — $25 setup + $29/mo
                 </Button>
               </Link>
-              <p className="text-white/30 text-xs text-center mt-3">$75 one-time setup · $29/mo thereafter · Cancel anytime</p>
+              <p className="text-white/30 text-xs text-center mt-3">$25 one-time setup · $29/mo thereafter · Cancel anytime</p>
             </div>
           </div>
 
