@@ -1225,7 +1225,6 @@ export const appRouter = router({
         customer_email: ctx.user.email ?? undefined,
         client_reference_id: ctx.user.id.toString(),
         metadata: { user_id: ctx.user.id.toString(), customer_email: ctx.user.email ?? "", customer_name: ctx.user.name ?? "", referral_code: input?.referralCode ?? "" },
-        allow_promotion_codes: true,
         success_url: `${origin}/portal-setup?session_id={CHECKOUT_SESSION_ID}&pro_welcome=1`,
         cancel_url: `${origin}/pro`,
       });
