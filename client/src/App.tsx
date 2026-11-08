@@ -128,6 +128,7 @@ function Router() {
       <Switch>
         {/* Auth */}
         <Route path="/login" component={LoginPage} />
+        <Route path="/signup" component={LoginPage} />
         <Route path="/forgot-password" component={ForgotPassword} />
         <Route path="/reset-password" component={ResetPassword} />
         <Route path="/verify-email" component={VerifyEmail} />

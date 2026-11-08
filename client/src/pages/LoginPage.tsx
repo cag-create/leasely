@@ -9,7 +9,12 @@ import { LOGO_WHITE_URL } from "@/lib/brand";
 
 export default function LoginPage() {
   const [, navigate] = useLocation();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  // /signup and /login?mode=register open straight on "Create account".
+  const [mode, setMode] = useState<"login" | "register">(() => {
+    if (typeof window === "undefined") return "login";
+    const q = new URLSearchParams(window.location.search).get("mode");
+    return window.location.pathname === "/signup" || q === "register" || q === "signup" ? "register" : "login";
+  });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");

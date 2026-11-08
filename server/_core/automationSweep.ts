@@ -14,8 +14,6 @@
  *   Work orders   → work_orders + contractor directory queryable
  *   Pro checkout  → Stripe Connect platform valid (catches stale/wrong-key
  *                   accounts), price IDs (above)
- *   CBP website   → partner-code endpoint reachable + secret authenticates
- *                   (KEYCOVE-XXXXXXXX free-website codes), CBP_API_SECRET set
  *                   (brand-brief validate/redeem)
  *   Site          → public pages return 200
  *   Notifications → Brevo email key present
@@ -116,36 +114,8 @@ export async function runAutomationSweep(): Promise<{ checks: SweepCheck[]; ok: 
       return `connect ok (${list.data.length} sample acct)`;
     }),
 
-    // ── CBP website + logo (partner-code flow) ───────────────────────────
-    run("CBP", "partner-code endpoint reachable + authenticated", async () => {
-      // Pro members get their free website via CBP partner discount codes
-      // (KEYCOVE-XXXXXXXX → /api/partner-codes). This is the guard that the
-      // integration is live: an idempotent liveness POST of a fixed health-check
-      // code. First run returns 201, thereafter 200 alreadyExists; a 401 means
-      // the shared secret drifted between Keycove and CBP; any other non-2xx
-      // means the endpoint is down — all of which break code delivery.
-      const secret = process.env.PARTNER_CODES_SECRET ?? process.env.CBP_PARTNER_CODES_SECRET;
-      if (!secret) throw new Error("PARTNER_CODES_SECRET unset — Pro members can't receive CBP discount codes");
-      const res = await fetch("https://certifybusinesspro.com/api/partner-codes", {
-        method: "POST",
-        headers: { "content-type": "application/json", "x-partner-secret": secret },
-        body: JSON.stringify({ code: "KEYCOVE-HEALTHCHECK", email: "healthcheck@keycove.net", discountPercent: 100, partnerName: "Keycove" }),
-      });
-      if (res.status < 200 || res.status >= 300) {
-        const body = (await res.text().catch(() => "")).slice(0, 200);
-        throw new Error(`CBP partner-codes POST ${res.status}${res.status === 401 ? " (secret mismatch)" : ""}: ${body}`);
-      }
-      return `partner-code endpoint ok (HTTP ${res.status})`;
-    }),
-    run("CBP", "brand-brief API secret set", async () => {
-      // CBP's team pulls each Pro member's brand brief from Keycove via
-      // /api/pro-codes/validate + /redeem (the internal LEASELY-XXXX reference
-      // code), secured by CBP_API_SECRET. Still live even after the Stripe
-      // coupon flow was retired. (The old CBP Stripe webhook + its
-      // CBP_STRIPE_WEBHOOK_SECRET went away with that flow — no longer checked.)
-      if (!process.env.CBP_API_SECRET) throw new Error("CBP_API_SECRET unset — CBP can't validate/redeem brand-brief codes");
-      return "CBP_API_SECRET present";
-    }),
+    // CBP partner-code checks removed 2026-11: certifybusinesspro.com went
+    // offline and Pro websites are now built in-house from the brand brief.
 
     // ── Public site liveness ─────────────────────────────────────────────
     run("Site", "public pages 200", async () => {
@@ -184,7 +154,7 @@ async function emailFailures(failures: SweepCheck[]): Promise<void> {
     subject: `⚠️ Keycove automation sweep: ${failures.length} check(s) failing`,
     html: `<div style="font-family:sans-serif;max-width:640px;margin:0 auto;padding:24px">
       <h2 style="color:#b91c1c">${failures.length} automation check(s) failing</h2>
-      <p>The 6-hourly Keycove automation sweep found problems that will break part of the tenant→lease→deposit→work-order→Pro→CBP flow. Details:</p>
+      <p>The 6-hourly Keycove automation sweep found problems that will break part of the tenant→lease→deposit→work-order→Pro flow. Details:</p>
       <table style="width:100%;border-collapse:collapse;font-size:14px;border:1px solid #eee;border-radius:8px">
         <tr style="background:#f9fafb"><th style="text-align:left;padding:8px 12px">Stage</th><th style="text-align:left;padding:8px 12px">Check</th><th style="text-align:left;padding:8px 12px">Problem</th></tr>
         ${rows}

@@ -96,7 +96,7 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
             {/* Feature highlights */}
             <div className="grid grid-cols-2 gap-3 text-left">
               {[
-                "Free $299 website + logo",
+                "Your own website included",
                 "Branded tenant portal",
                 "Unlimited listings",
                 "AI fraud screening",
@@ -121,7 +121,7 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
                 className="mt-0.5 w-4 h-4 rounded border-border accent-indigo-600 cursor-pointer flex-shrink-0"
               />
               <span className="text-xs text-muted-foreground leading-relaxed">
-                I understand: the <strong className="text-foreground">first month covers website production and is non-refundable once design work begins</strong> (work starts immediately after payment, with delivery in 24–48 hours). The $25/mo subscription is cancellable anytime — no contracts, no pro-rated refunds. I keep my website, logo, and domain regardless of subscription status. I agree to Keycove's{" "}
+                I understand: <strong className="text-foreground">$25 is charged today, then monthly until you cancel</strong>. Cancel anytime — no contracts, no refunds for partial months. I agree to Keycove's{" "}
                 <Link href="/terms" className="text-indigo-600 hover:underline" target="_blank">Terms of Service</Link>{" "}and{" "}
                 <Link href="/privacy" className="text-indigo-600 hover:underline" target="_blank">Privacy Policy</Link>.
               </span>
@@ -159,7 +159,7 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
             </div>
 
             <p className="text-xs text-muted-foreground">
-$25/mo — first month includes a free website, logo & keycove.net URL · Cancel anytime.
+$25/mo — website included · Cancel anytime.
             </p>
           </div>
         </div>

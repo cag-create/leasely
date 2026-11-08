@@ -68,15 +68,15 @@ const supportMenuItems = [
 /**
  * Adaptive "next best action" card for the sidebar. Shows the single most
  * valuable step for where the user is: Free → upgrade; Pro without a connected
- * bank → connect to get paid; Pro who hasn't claimed their free website →
- * claim it; otherwise → refer & earn. Never empty, so the space stays useful.
+ * bank → connect to get paid; Pro who hasn't sent their website brief →
+ * set up website; otherwise → refer & earn. Never empty, so the space stays useful.
  */
 function SidebarNextStep({ isPro }: { isPro: boolean }) {
   const [, navigate] = useLocation();
   const { data: connect } = trpc.marketplace.getStripeConnectStatus.useQuery(undefined, {
     enabled: isPro, staleTime: 5 * 60 * 1000, refetchOnWindowFocus: false,
   });
-  const { data: proCode } = trpc.proCode.getMine.useQuery(undefined, {
+  const { data: brandBrief, isSuccess: briefLoaded } = trpc.marketplace.getBrandBrief.useQuery(undefined, {
     enabled: isPro, staleTime: 5 * 60 * 1000, refetchOnWindowFocus: false,
   });
 
@@ -85,8 +85,8 @@ function SidebarNextStep({ isPro }: { isPro: boolean }) {
     step = { title: "Unlock Pro Portal", desc: "Applications, payouts, AI screening & more", cta: "Upgrade — $25/mo", href: "/pricing", icon: Sparkles, color: "#4F46E5" };
   } else if (connect && connect.status !== "active") {
     step = { title: "Get paid", desc: "Connect your bank to collect rent", cta: "Connect bank", href: "/payouts", icon: Landmark, color: "#059669" };
-  } else if (proCode && (proCode as any).status !== "redeemed") {
-    step = { title: "Claim your free website", desc: "$299 site + logo, built for you", cta: "Claim now", href: "/portal-setup", icon: Sparkles, color: "#D97706" };
+  } else if (briefLoaded && !brandBrief) {
+    step = { title: "Set up your website", desc: "Included with Pro — 2-minute brief", cta: "Start", href: "/portal-setup", icon: Sparkles, color: "#D97706" };
   } else {
     step = { title: "Refer & earn $50", desc: "Per landlord who signs up", cta: "Get your link", href: "/affiliate/signup", icon: TrendingUp, color: "#4F46E5" };
   }

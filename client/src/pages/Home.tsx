@@ -96,7 +96,7 @@ const proFeatures = [
 const howItWorks = [
   { step: "01", title: "Sign Up Free", desc: "Create your account in seconds. No credit card required. Your first listing is always free.", icon: HomeIcon },
   { step: "02", title: "List Your Property", desc: "Add your property with photos, pricing, and amenities. It goes live on the marketplace instantly.", icon: Globe },
-  { step: "03", title: "Upgrade to Pro", desc: "Pay $25/month — your first month includes a free branded website, logo & URL, built automatically. No waiting, no calls.", icon: Sparkles },
+  { step: "03", title: "Upgrade to Pro", desc: "Pay $25/month — your own branded website is included. No setup fee, no calls.", icon: Sparkles },
   { step: "04", title: "Manage Everything", desc: "Applications, rent payments, work orders, accounting — all in one place from day one.", icon: BarChart3 },
 ];
 
@@ -258,7 +258,7 @@ export default function Home() {
                   "Property CRM + lease tracking",
                   "Background checks (ApplyConnect, TransUnion-backed)",
                   "QR codes for sign riders",
-                  "$299 branded website (free)",
+                  "Your own website (included)",
                   "First listing free, $25/mo",
                 ].map(item => (
                   <span key={item} className="flex items-center gap-1.5">
@@ -807,7 +807,7 @@ export default function Home() {
                   <span className="text-5xl font-black text-white">$25</span>
                   <span className="text-white/50 text-sm">/ month</span>
                 </div>
-                <p className="text-white/60 text-sm font-semibold mt-1">first month includes a free website, logo & domain</p>
+                <p className="text-white/60 text-sm font-semibold mt-1">your own website included</p>
                 <p className="text-white/40 text-xs mt-1">Unlimited listings · No per-unit fees · Cancel anytime</p>
               </div>
               <div className="space-y-2.5 mb-8">
@@ -836,7 +836,7 @@ export default function Home() {
                   <Sparkles className="h-4 w-4" /> Get Pro — $25/mo
                 </Button>
               </Link>
-              <p className="text-white/30 text-xs text-center mt-3">$25/mo — first month includes a free website · Cancel anytime</p>
+              <p className="text-white/30 text-xs text-center mt-3">$25/mo — website included · Cancel anytime</p>
             </div>
           </div>
 

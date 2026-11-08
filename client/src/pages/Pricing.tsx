@@ -124,7 +124,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What's actually recurring vs. one-time?",
-    a: "Keycove: $25/mo recurring (cancel anytime). The CBP brand kit ($299 value — free with Pro) is one-time; only the domain + hosting renewal at $37/yr is recurring after year 1, and you can transfer your domain to your own registrar to avoid it. Optional CBP add-ons like LLC formation and trademark filing are billed directly by CBP at their listed prices — Keycove takes no markup and no kickback on any of it."
+    a: "Just one thing: Keycove Pro at $25/mo, charged at signup and then monthly (cancel anytime). Your website, hosting and keycove.net/portal address are included — no setup fee and no separate renewal. If you use your own custom domain, you keep paying your registrar for it as usual."
   },
 ];
 
@@ -259,9 +259,9 @@ export default function Pricing() {
                 <span className="text-white/50 text-sm">/ month</span>
               </div>
               <div className="flex items-center gap-1.5 mt-1">
-                <span className="text-white/70 text-sm font-semibold">first month includes a free website, logo & domain</span>
+                <span className="text-white/70 text-sm font-semibold">your own website included</span>
               </div>
-              <p className="text-emerald-300/90 text-sm font-semibold mt-2">Everything unlocks today — your first $25/mo starts in 30 days.</p>
+              <p className="text-emerald-300/90 text-sm font-semibold mt-2">Everything unlocks today — $25 now, then $25 each month.</p>
               <p className="text-white/60 text-sm mt-1">Everything you need to run a professional rental business.</p>
             </div>
             {!isAuthenticated ? (
@@ -281,7 +281,7 @@ export default function Pricing() {
                     style={{ accentColor: ACCENT }}
                   />
                   <span className="text-xs text-white/65 leading-relaxed">
-                    I agree: <strong className="text-white">first month covers website production and is non-refundable once design begins</strong> (work starts immediately, delivered in 24–48 hours). $25/mo cancellable anytime, no pro-rated refunds. I keep my website &amp; logo regardless. <Link href="/terms" className="underline hover:text-white" target="_blank">Terms</Link> ·{" "}
+                    I agree: <strong className="text-white">$25 is charged today, then monthly until you cancel</strong>. Cancel anytime; no refunds for partial months. <Link href="/terms" className="underline hover:text-white" target="_blank">Terms</Link> ·{" "}
                     <Link href="/privacy" className="underline hover:text-white" target="_blank">Privacy</Link>.
                   </span>
                 </label>
@@ -307,7 +307,7 @@ export default function Pricing() {
                 </div>
               ))}
             </div>
-            <p className="text-white/40 text-xs text-center mt-6">$25/mo — first month includes a free website, logo & keycove.net URL · Cancel anytime</p>
+            <p className="text-white/40 text-xs text-center mt-6">$25/mo — website included · Cancel anytime</p>
           </div>
 
         </div>

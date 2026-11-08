@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
-  CheckCircle2, FileText, Home, DollarSign, Calendar, Shield, Loader2
+  CheckCircle2, FileText, Home, DollarSign, Calendar, Shield, Loader2, ExternalLink, AlertTriangle
 } from "lucide-react";
 import { LOGO_URL } from "@/lib/brand";
 
@@ -62,14 +62,32 @@ export default function TenantSignLease() {
   const [signatureName, setSignatureName] = useState("");
   const [signed, setSigned] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const docFrameRef = useRef<HTMLIFrameElement>(null);
+
+  const leaseQuery = trpc.leases.getForSigning.useMutation({
+    onError: (e) => toast.error(e.message),
+  });
+  const lease = leaseQuery.data;
 
   const signMutation = trpc.leases.sign.useMutation({
     onSuccess: () => {
       setSigned(true);
       toast.success("Signed! Your landlord will countersign next, then we'll email you next steps.");
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => {
+      toast.error(e.message);
+      // The lease changed under us — reload the latest version to review.
+      if (e.data?.code === "CONFLICT" && leaseId) leaseQuery.mutate({ leaseId, tenantEmail: email.trim() });
+    },
   });
+
+  // Size the (script-free, sandboxed) lease frame to its content so the
+  // whole lease scrolls inside one box instead of a frame-within-a-frame.
+  const fitDocFrame = () => {
+    const f = docFrameRef.current;
+    const body = f?.contentDocument?.body;
+    if (f && body) f.style.height = `${body.scrollHeight + 32}px`;
+  };
 
   if (!leaseId) {
     return (
@@ -124,11 +142,13 @@ export default function TenantSignLease() {
     );
   }
 
+  const leaseTermLabel = (t: string | null) => (t ? t.replace(/_/g, " ") : "—");
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-100 shadow-sm">
-        <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
+        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center gap-3">
           <img src={LOGO_URL} alt="Keycove" className="h-7 w-auto" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
           <span className="font-black text-lg" style={{ color: BRAND }}>Keycove</span>
           <span className="text-gray-300">|</span>
@@ -136,98 +156,164 @@ export default function TenantSignLease() {
         </div>
       </header>
 
-      <div className="max-w-lg mx-auto px-4 py-8">
+      <div className={`${lease?.document ? "max-w-3xl" : "max-w-lg"} mx-auto px-4 py-8`}>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-gray-100" style={{ background: `linear-gradient(135deg, ${BRAND}, #0d3a2a)` }}>
             <div className="flex items-center gap-3 mb-1">
               <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
                 <FileText className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-xl font-black text-white">Sign Your Lease</h1>
+              <h1 className="text-xl font-black text-white">{lease ? "Review & Sign Your Lease" : "Sign Your Lease"}</h1>
             </div>
-            <p className="text-white/70 text-sm">Please verify your email address to sign this lease agreement.</p>
+            <p className="text-white/70 text-sm">
+              {lease ? lease.propertyAddress : "Enter the email address on your lease to open it."}
+            </p>
           </div>
 
           <div className="p-6 space-y-5">
-            {/* Flow explainer */}
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-              <p className="text-xs font-bold text-emerald-900 mb-1.5">How signing works</p>
-              <ol className="text-xs text-emerald-800 leading-relaxed space-y-1">
-                <li><strong>1.</strong> You sign first (right now).</li>
-                <li><strong>2.</strong> Your landlord countersigns.</li>
-                <li><strong>3.</strong> You pay your security deposit + first month's rent (if not already paid) via a secure link we email you.</li>
-                <li><strong>4.</strong> Lease goes active and you receive move-in access instructions.</li>
-              </ol>
-              <p className="text-[11px] text-emerald-900/80 mt-2">Your signature is conditional until the landlord countersigns and any required move-in payment clears.</p>
-            </div>
+            {/* Step 1 — verify email and load the lease */}
+            {!lease && (
+              <>
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                  <p className="text-xs font-bold text-emerald-900 mb-1.5">How signing works</p>
+                  <ol className="text-xs text-emerald-800 leading-relaxed space-y-1">
+                    <li><strong>1.</strong> Open and read your full lease.</li>
+                    <li><strong>2.</strong> Sign it with your typed name.</li>
+                    <li><strong>3.</strong> Your landlord countersigns, then we email you a secure link for your security deposit + first month's rent (if not already paid).</li>
+                    <li><strong>4.</strong> Lease goes active and you receive move-in access instructions.</li>
+                  </ol>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-700 mb-1.5">Your Email Address *</Label>
+                  <Input
+                    type="email"
+                    placeholder="Enter the email on your lease"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter" && email.trim() && leaseId) leaseQuery.mutate({ leaseId, tenantEmail: email.trim() }); }}
+                    className="rounded-xl"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Must match the email your landlord has on file.</p>
+                </div>
+                <Button
+                  className="w-full font-bold gap-2 py-3 text-white"
+                  style={{ background: ACCENT }}
+                  disabled={!email.trim() || leaseQuery.isPending}
+                  onClick={() => leaseQuery.mutate({ leaseId, tenantEmail: email.trim() })}
+                >
+                  {leaseQuery.isPending ? <><Loader2 className="w-4 h-4 animate-spin" /> Opening...</> : <><FileText className="w-4 h-4" /> Open My Lease</>}
+                </Button>
+              </>
+            )}
 
-            {/* Legal disclosure */}
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <p className="text-xs text-blue-800 leading-relaxed">
-                <strong>Electronic Signature Notice:</strong> By signing below, you agree that your electronic signature is legally binding and has the same force and effect as a handwritten signature. This lease becomes effective only after your landlord countersigns and any required security deposit / first month's rent has cleared. This lease is compliant with your state's landlord-tenant law.
-              </p>
-            </div>
+            {/* Not signable right now */}
+            {lease && lease.status !== "sent" && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900">
+                {lease.status === "draft"
+                  ? "Your landlord hasn't sent this lease for signing yet. We'll email you as soon as it's ready."
+                  : "This lease has already been signed. Check your email or your tenant portal for next steps."}
+              </div>
+            )}
+            {lease && lease.status === "sent" && !lease.document && (
+              <div className="flex gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
+                <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600" />
+                <span>Your landlord hasn't attached the lease document yet, so there's nothing to sign. We've kept your place — you'll get an email when it's ready.</span>
+              </div>
+            )}
 
-            <div>
-              <Label className="text-sm font-semibold text-gray-700 mb-1.5">Your Email Address *</Label>
-              <Input
-                type="email"
-                placeholder="Enter the email on your lease"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="rounded-xl"
-              />
-              <p className="text-xs text-gray-400 mt-1">Must match the email your landlord has on file.</p>
-            </div>
+            {/* Step 2 — read the lease, then sign */}
+            {lease && lease.status === "sent" && lease.document && (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                  <div className="rounded-xl bg-gray-50 p-3"><div className="flex items-center gap-1 text-xs text-gray-500"><DollarSign className="w-3 h-3" />Monthly rent</div><div className="font-bold text-gray-900">{formatCents(lease.monthlyRent)}</div></div>
+                  <div className="rounded-xl bg-gray-50 p-3"><div className="flex items-center gap-1 text-xs text-gray-500"><Shield className="w-3 h-3" />Deposit</div><div className="font-bold text-gray-900">{formatCents(lease.securityDeposit)}</div></div>
+                  <div className="rounded-xl bg-gray-50 p-3"><div className="flex items-center gap-1 text-xs text-gray-500"><Calendar className="w-3 h-3" />Starts</div><div className="font-bold text-gray-900">{lease.leaseStartDate || "—"}</div></div>
+                  <div className="rounded-xl bg-gray-50 p-3"><div className="flex items-center gap-1 text-xs text-gray-500"><Home className="w-3 h-3" />Term</div><div className="font-bold text-gray-900 capitalize">{leaseTermLabel(lease.leaseTerm)}</div></div>
+                </div>
 
-            <div>
-              <Label className="text-sm font-semibold text-gray-700 mb-1.5">Type Your Full Legal Name as Your Signature *</Label>
-              <Input
-                type="text"
-                placeholder="e.g. Jane Q. Doe"
-                value={signatureName}
-                onChange={e => setSignatureName(e.target.value)}
-                className="rounded-xl font-serif italic text-lg"
-                autoComplete="off"
-              />
-              <p className="text-xs text-gray-400 mt-1">This typed name is your legally binding electronic signature and will appear on the executed lease.</p>
-            </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Your lease — please read it in full</p>
+                  {lease.document.html ? (
+                    <div className="max-h-[60vh] overflow-y-auto rounded-xl border border-gray-200 bg-white">
+                      {/* sandbox without allow-scripts: lease HTML can never run code */}
+                      <iframe
+                        ref={docFrameRef}
+                        title="Lease agreement"
+                        sandbox="allow-same-origin"
+                        srcDoc={`<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Georgia,serif;font-size:14px;line-height:1.6;color:#111;padding:16px 20px;margin:0}h1,h2,h3{font-family:system-ui,sans-serif}</style></head><body>${lease.document.html}</body></html>`}
+                        onLoad={fitDocFrame}
+                        className="w-full block"
+                        style={{ height: 600, border: 0 }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <iframe
+                        title="Lease agreement"
+                        src={lease.document.fileUrl ?? undefined}
+                        className="w-full rounded-xl border border-gray-200"
+                        style={{ height: "60vh" }}
+                      />
+                      <a href={lease.document.fileUrl ?? "#"} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: ACCENT }}>
+                        Open {lease.document.filename ?? "the lease"} in a new tab <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  )}
+                </div>
 
-            {/* Signature acknowledgment */}
-            <div className="space-y-3">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={confirmed}
-                  onChange={e => setConfirmed(e.target.checked)}
-                  className="mt-1 w-4 h-4 rounded border-gray-300"
-                />
-                <span className="text-sm text-gray-700">
-                  I have read and agree to the terms of this lease agreement. I understand this is a legally binding electronic signature.
-                </span>
-              </label>
-            </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <p className="text-xs text-blue-800 leading-relaxed">
+                    <strong>Electronic Signature Notice:</strong> By signing below, you agree that your electronic signature is legally binding and has the same force and effect as a handwritten signature. This lease becomes effective only after your landlord countersigns and any required security deposit / first month's rent has cleared.
+                  </p>
+                </div>
 
-            <div className="flex gap-3 pt-2">
-              <Button
-                className="flex-1 font-bold gap-2 py-3"
-                style={{ background: ACCENT, color: "#3A2410" }}
-                disabled={!email.trim() || signatureName.trim().length < 2 || !confirmed || signMutation.isPending}
-                onClick={() => {
-                  if (!leaseId) return;
-                  signMutation.mutate({
-                    leaseId,
-                    tenantEmail: email.trim(),
-                    signatureName: signatureName.trim(),
-                  });
-                }}
-              >
-                {signMutation.isPending
-                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing...</>
-                  : <><CheckCircle2 className="w-4 h-4" /> Sign Lease Agreement</>
-                }
-              </Button>
-            </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-700 mb-1.5">Type Your Full Legal Name as Your Signature *</Label>
+                  <Input
+                    type="text"
+                    placeholder="e.g. Jane Q. Doe"
+                    value={signatureName}
+                    onChange={e => setSignatureName(e.target.value)}
+                    className="rounded-xl font-serif italic text-lg"
+                    autoComplete="off"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">This typed name is your legally binding electronic signature and will appear on the executed lease.</p>
+                </div>
+
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={confirmed}
+                    onChange={e => setConfirmed(e.target.checked)}
+                    className="mt-1 w-4 h-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm text-gray-700">
+                    I have read the lease above and agree to its terms. I understand this is a legally binding electronic signature.
+                  </span>
+                </label>
+
+                <Button
+                  className="w-full font-bold gap-2 py-3 text-white"
+                  style={{ background: ACCENT }}
+                  disabled={signatureName.trim().length < 2 || !confirmed || signMutation.isPending}
+                  onClick={() => {
+                    if (!leaseId || !lease.document) return;
+                    signMutation.mutate({
+                      leaseId,
+                      tenantEmail: email.trim(),
+                      signatureName: signatureName.trim(),
+                      leaseDocumentId: lease.document.id,
+                      documentFingerprint: lease.document.fingerprint,
+                    });
+                  }}
+                >
+                  {signMutation.isPending
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing...</>
+                    : <><CheckCircle2 className="w-4 h-4" /> Sign Lease Agreement</>
+                  }
+                </Button>
+              </>
+            )}
 
             <div className="flex items-center gap-2 text-xs text-gray-400">
               <Shield className="w-3.5 h-3.5" />

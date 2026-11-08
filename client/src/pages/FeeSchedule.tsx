@@ -78,7 +78,7 @@ export default function FeeSchedule() {
             />
             <Row
               label="Free website, logo & domain"
-              desc="Your first month includes a branded website, custom logo, and personalized keycove.net URL — built free by our partner CBP."
+              desc="Includes your own branded website and personalized keycove.net URL — no setup fee."
               free={<No />}
               pro={<span className="text-[#C8860A]">Included</span>}
               proHighlight
@@ -288,7 +288,7 @@ export default function FeeSchedule() {
               </Button>
             </Link>
           </div>
-          <p className="text-white/30 text-xs">$25/mo — first month includes a free website, logo & keycove.net URL · Cancel anytime · No contracts</p>
+          <p className="text-white/30 text-xs">$25/mo — website included · Cancel anytime · No contracts</p>
         </div>
 
       </div>

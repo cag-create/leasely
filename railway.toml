@@ -3,9 +3,10 @@ builder = "nixpacks"
 buildCommand = "pnpm install && pnpm build"
 
 [deploy]
-# db:push syncs Drizzle schema → MySQL (adds missing columns like customDomain)
-# then starts the Express server
-startCommand = "pnpm db:push && pnpm start"
+# `pnpm start` syncs the Drizzle schema (drizzle-kit push) when DATABASE_URL is
+# set, then starts the server. The sync lives in package.json, not here, because
+# Railway stops reading railway.toml on 2026-12-01 and falls back to `pnpm start`.
+startCommand = "pnpm start"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 60
 restartPolicyType = "on_failure"

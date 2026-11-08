@@ -179,45 +179,23 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     console.warn("[Webhook] Could not generate pro code:", err);
   }
 
-  // Emit the CBP partner discount code (KEYCOVE-XXXXXXXX) and register it with
-  // CBP so the member can redeem their free website+domain at the intake page.
-  // Non-fatal: the portal also backfills this lazily on load.
-  try {
-    const { ensureCbpPartnerCode } = await import("./_core/cbpPartnerCodes");
-    const res = await ensureCbpPartnerCode(userId);
-    console.log(`[Webhook] CBP partner code for user ${userId}: ${res.code ?? "n/a"} (synced=${res.synced})`);
-  } catch (err) {
-    console.warn("[Webhook] Could not emit CBP partner code:", err);
-  }
-
   // Send welcome email with code
   try {
     const user = await getUserById(userId);
     const APP_URL = process.env.APP_URL ?? process.env.VITE_APP_URL ?? "https://keycove.net";
     if (user?.email) {
-      const CBP_URL = `https://certifybusinesspro.com`;
-      const codeHtml = proCode
-        ? `
-          <div style="background:#fffaf0;border:2px solid #F5A623;border-radius:12px;padding:24px;text-align:center;margin:24px 0">
-            <p style="margin:0 0 8px;font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Your Brand Kit Code (One-Time Use)</p>
-            <p style="margin:0;font-size:28px;font-weight:900;font-family:monospace;letter-spacing:.1em;color:#3A2410">${proCode}</p>
-          </div>
-          <p style="color:#374151">Redeem this code at <a href="${CBP_URL}" style="color:#E8951A;font-weight:600">certifybusinesspro.com</a> to claim your free brand kit. <strong>Delivery: 24–48 hours.</strong> You'll receive:</p>
-          <ul style="color:#374151;line-height:1.9;margin:8px 0 16px">
-            <li>1 custom logo + 3 rounds of revisions + final logo files</li>
-            <li>Professional website — delivered in 24 hours</li>
-            <li>Year 1 domain &amp; hosting included</li>
-            <li>DNS + SSL + uptime monitoring</li>
-          </ul>
-          <p style="color:#6b7280;font-size:13px">A <strong>$299 value</strong> ($37/yr domain renewal after year 1), yours at no extra charge as a Keycove Pro member.</p>`
-        : "";
+      // Website is included with Pro and built in-house from the brand brief
+      // the member fills in at /portal-setup (CBP partner flow retired 2026-11).
+      const codeHtml = `
+          <div style="background:#f5f7ff;border:2px solid #4F46E5;border-radius:12px;padding:20px;margin:24px 0">
+            <p style="margin:0 0 6px;font-weight:800;color:#0F1F4B">Your website is included with Pro</p>
+            <p style="margin:0;color:#374151">Open <a href="${APP_URL}/portal-setup" style="color:#4F46E5;font-weight:600">Portal Setup</a>, pick your portal name and fill in the 2-minute brand brief. We'll use it to build your website and email you when it's live.</p>
+          </div>`;
 
-      // Primary welcome email — includes the brand kit code and the explicit
-      // 24–48 hour delivery promise so the member knows exactly what's
-      // arriving and when.
+      // Primary welcome email.
       await sendEmail({
         to: user.email,
-        subject: "Your Certify Business Pro brand kit code 🎨",
+        subject: "Welcome to Keycove Pro — let's set up your website",
         html: `
           <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#111827">
             <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:32px;text-align:center;margin-bottom:24px">

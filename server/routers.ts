@@ -13,7 +13,7 @@ import {
   newInquiryEmail,
 } from "./_core/email";
 import Stripe from "stripe";
-import { createHmac, timingSafeEqual, randomBytes } from "crypto";
+import { createHmac, createHash, timingSafeEqual, randomBytes } from "crypto";
 import { LEASELY_PRO } from "./products";
 import QRCode from "qrcode";
 import { generateObject } from "ai";
@@ -663,8 +663,26 @@ const istayRouter = router({
 
 
 import { leasesRouter, adminLeaseTemplatesRouter } from "./leases/router";
-import { createLeaseDocument, getLatestTemplateVersionForState, logLeaseAudit, getTemplateVersionById, listLeaseDocumentsByAgreement, updateLeaseDocument } from "./leases/db-helpers";
+import { createLeaseDocument, createLeaseSignature, getLatestTemplateVersionForState, logLeaseAudit, getTemplateVersionById, listLeaseDocumentsByAgreement, updateLeaseDocument } from "./leases/db-helpers";
 import { renderTemplate } from "./leases/render";
+
+/**
+ * The lease document a tenant actually signs: the newest non-void
+ * lease_documents row for the agreement that has content (rendered template
+ * HTML or an uploaded file). null = nothing to show, so nothing may be signed.
+ */
+async function getSignableLeaseDocument(leaseAgreementId: number) {
+  const docs = await listLeaseDocumentsByAgreement(leaseAgreementId);
+  return docs.find(d => d.status !== "void" && (!!d.renderedHtml?.trim() || !!d.uploadedFileUrl)) ?? null;
+}
+
+/** Stable fingerprint of the exact lease content shown to the tenant. */
+function leaseDocumentFingerprint(doc: { renderedHtml: string | null; uploadedFileUrl: string | null }) {
+  return createHash("sha256").update(doc.renderedHtml ?? doc.uploadedFileUrl ?? "").digest("hex");
+}
+
+const NO_LEASE_DOCUMENT_MESSAGE =
+  "Attach the lease document first: create it from a state template or upload your own lease, then send it.";
 
 export const appRouter = router({
   system: systemRouter,
@@ -1294,6 +1312,26 @@ export const appRouter = router({
         }
         const briefJSON = JSON.stringify({ ...input, submittedAt: new Date().toISOString() });
         await updatePortalBranding(ctx.user.id, { brandBrief: briefJSON } as any);
+        // Websites are built in-house now, so every brief is a work item for
+        // the Keycove team. Email the admin; never block the save on it.
+        const adminEmail = process.env.ADMIN_EMAIL ?? process.env.OWNER_EMAIL ?? process.env.FROM_EMAIL?.match(/<([^>]+)>/)?.[1];
+        if (adminEmail) {
+          const esc = (v: unknown) => String(v ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
+          const rows = Object.entries({
+            Member: `${ctx.user.name ?? ""} <${ctx.user.email ?? ""}> (user #${ctx.user.id})`,
+            Portal: sub.portalSubdomain ? `keycove.net/portal/${sub.portalSubdomain}` : "(not set)",
+            "Custom domain": sub.customDomain ?? "",
+            Tagline: input.tagline, Industry: input.industry, "Logo style": input.logoStyle,
+            Palette: input.palette?.join(", "),
+            "Domain ideas": [input.domainPrimary, input.domainBackup1, input.domainBackup2].filter(Boolean).join(", "),
+            Notes: input.notes,
+          }).filter(([, v]) => v).map(([k, v]) => `<tr><td style="padding:4px 12px 4px 0;color:#6b7280">${k}</td><td style="padding:4px 0">${esc(v)}</td></tr>`).join("");
+          sendEmail({
+            to: adminEmail,
+            subject: `Website brief submitted — ${ctx.user.name ?? ctx.user.email ?? `user #${ctx.user.id}`}`,
+            html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px"><h2 style="color:#1B2B5E">New Pro website brief</h2><table>${rows}</table></div>`,
+          }).catch(() => {});
+        }
         return { success: true };
       }),
 
@@ -3884,6 +3922,29 @@ export const appRouter = router({
           // Auto-send the lease to the tenant immediately on approval — no manual "Send" step.
           const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
           const landlord = await getUserByOpenId(ctx.user.openId);
+
+          // No state template rendered (only some states have one) → there is
+          // no lease text for the tenant to read, so don't send a sign link.
+          // Keep the agreement in draft and ask the landlord to attach a lease.
+          if (!leaseDocumentId) {
+            if (landlord?.email) {
+              sendEmail({
+                to: landlord.email,
+                subject: `Action needed: attach a lease for ${app.applicantName ?? "your applicant"} (${finalAddress})`,
+                html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+                  <h2 style="color:#1B2B5E">Application approved — attach your lease to send it</h2>
+                  <p>You approved <strong>${app.applicantName ?? "the applicant"}</strong> for <strong>${finalAddress}</strong>.</p>
+                  <p style="background:#fff7ed;border-left:4px solid #f59e0b;padding:12px 14px;border-radius:6px">
+                    Keycove doesn't have a built-in lease template for <strong>${state}</strong> yet, so nothing was sent to the tenant.
+                    Open Leases, upload your own lease (or create one), and send it — the tenant will read it in full before signing.
+                  </p>
+                  <p style="margin-top:16px"><a href="${APP_URL}/leases" style="background:#1B2B5E;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold">Open Leases →</a></p>
+                </div>`,
+              }).catch(() => {});
+            }
+            return { success: true, draftLeaseId: null, leaseAgreementId: leaseId };
+          }
+
           await updateLeaseAgreement(leaseId, ctx.user.id, { status: "sent", sentAt: new Date() } as any);
           sendEmail({
             to: app.applicantEmail,
@@ -4095,16 +4156,20 @@ Target monthly rent: $${targetRent.toFixed(2)}
 APPLICATION
 ${JSON.stringify(applicantPayload, null, 2)}`;
 
-      if (!ENV.anthropicApiKey) {
+      // Provider: Claude when ANTHROPIC_API_KEY is set, otherwise the OpenAI
+      // key that powers the rest of the app's AI features. Production only has
+      // OPENAI_API_KEY today, so screening runs on OpenAI there.
+      const openaiKey = process.env.OPENAI_API_KEY ?? "";
+      if (!ENV.anthropicApiKey && !openaiKey) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
-          message: "AI screening is not configured on this server. Ask your admin to set ANTHROPIC_API_KEY in the environment.",
+          message: "AI screening is not configured on this server. Set OPENAI_API_KEY (or ANTHROPIC_API_KEY) in the environment.",
         });
       }
-      const anthropic = createAnthropic({ apiKey: ENV.anthropicApiKey });
-      // claude-sonnet-4-6 handles the nested schema reliably and is fast
-      // enough that the 80s timeout is rarely needed.
-      const MODEL = "claude-sonnet-4-6";
+      const MODEL = ENV.anthropicApiKey ? "claude-sonnet-4-6" : "gpt-4o";
+      const screeningModel = ENV.anthropicApiKey
+        ? createAnthropic({ apiKey: ENV.anthropicApiKey })(MODEL)
+        : createOpenAI({ apiKey: openaiKey })(MODEL);
       const startedAt = Date.now();
       console.log("[runAiScreening] starting", {
         appId: input.id,
@@ -4117,7 +4182,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
           setTimeout(() => reject(new Error(`HARD_TIMEOUT after ${HARD_TIMEOUT_MS}ms`)), HARD_TIMEOUT_MS);
         });
         const generation = generateObject({
-          model: anthropic(MODEL),
+          model: screeningModel,
           schema: ScreeningSchema,
           system: systemPrompt,
           prompt: userPrompt,
@@ -4135,7 +4200,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         console.error("[runAiScreening] failed after", Date.now() - startedAt, "ms");
         // Surface raw error to server logs so we can see what's actually failing
         // (timeouts, schema-validation retries, upstream 4xx/5xx, etc.).
-        console.error("[runAiScreening] OpenAI call failed:", {
+        console.error("[runAiScreening] LLM call failed:", {
           name: e?.name,
           message: e?.message,
           cause: e?.cause,
@@ -5483,6 +5548,9 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
 
       const lease = await getLeaseById(input.leaseId);
       if (!lease || lease.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
+      if (!(await getSignableLeaseDocument(lease.id))) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: NO_LEASE_DOCUMENT_MESSAGE });
+      }
 
       await updateLeaseAgreement(input.leaseId, ctx.user.id, { status: "sent", sentAt: new Date() });
 
@@ -5579,10 +5647,46 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
      * Status moves to `tenant_signed` → `awaiting_payment`. Tenant must pay
      * first month's rent + security deposit before the landlord countersigns.
      */
+    getForSigning: publicProcedure.input(z.object({
+      leaseId: z.number(),
+      tenantEmail: z.string().trim().email(),
+    })).mutation(async ({ input }) => {
+      // Mutation (not query) so the tenant's email never lands in a GET URL.
+      const lease = await getLeaseById(input.leaseId);
+      if (!lease || lease.tenantEmail.toLowerCase() !== input.tenantEmail.toLowerCase()) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "That email doesn't match this lease. Use the email your landlord has on file." });
+      }
+      const doc = await getSignableLeaseDocument(lease.id);
+      return {
+        status: lease.status,
+        tenantName: lease.tenantName,
+        propertyAddress: lease.propertyAddress,
+        state: lease.state,
+        monthlyRent: lease.monthlyRent,
+        securityDeposit: lease.securityDeposit ?? 0,
+        leaseStartDate: lease.leaseStartDate,
+        leaseEndDate: lease.leaseEndDate ?? null,
+        leaseTerm: lease.leaseTerm ?? null,
+        document: doc
+          ? {
+              id: doc.id,
+              html: doc.renderedHtml?.trim() ? doc.renderedHtml : null,
+              fileUrl: doc.renderedHtml?.trim() ? null : doc.uploadedFileUrl,
+              filename: doc.uploadedFilename ?? null,
+              fingerprint: leaseDocumentFingerprint(doc),
+            }
+          : null,
+      };
+    }),
+
     sign: publicProcedure.input(z.object({
       leaseId: z.number(),
       tenantEmail: z.string().email(),
       signatureName: z.string().trim().min(2, "Type your full legal name to sign.").max(120),
+      // The document the tenant was shown. Signing fails if the landlord has
+      // replaced it since, so a signature always maps to text the tenant saw.
+      leaseDocumentId: z.number().int().positive(),
+      documentFingerprint: z.string().length(64),
     })).mutation(async ({ ctx, input }) => {
       const lease = await getLeaseById(input.leaseId);
       if (!lease || lease.tenantEmail.toLowerCase() !== input.tenantEmail.toLowerCase()) {
@@ -5590,6 +5694,13 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
       }
       if (lease.status !== "sent") {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Lease is not in a signable state." });
+      }
+      const signedDoc = await getSignableLeaseDocument(lease.id);
+      if (!signedDoc) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Your landlord hasn't attached the lease document yet. We'll email you when it's ready to sign." });
+      }
+      if (signedDoc.id !== input.leaseDocumentId || leaseDocumentFingerprint(signedDoc) !== input.documentFingerprint) {
+        throw new TRPCError({ code: "CONFLICT", message: "This lease was updated since you opened it. Please reload and review the latest version before signing." });
       }
 
       const now = new Date();
@@ -5606,6 +5717,30 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         tenantSignatureName: input.signatureName.trim(),
         tenantSignatureIp: signerIp ?? undefined,
       } as any);
+
+      // Evidence trail: which document (and exact content hash) was signed.
+      try {
+        const ua = (ctx as any)?.req?.headers?.["user-agent"];
+        await createLeaseSignature({
+          leaseDocumentId: signedDoc.id,
+          party: "tenant",
+          signerName: input.signatureName.trim(),
+          signerEmail: lease.tenantEmail,
+          typedName: input.signatureName.trim(),
+          ipAddress: signerIp ?? undefined,
+          userAgent: typeof ua === "string" ? ua : undefined,
+        });
+        await updateLeaseDocument(signedDoc.id, { status: "partially_signed" });
+        await logLeaseAudit({
+          leaseDocumentId: signedDoc.id,
+          leaseAgreementId: lease.id,
+          event: "tenant_signed",
+          details: JSON.stringify({ sha256: leaseDocumentFingerprint(signedDoc), signatureName: input.signatureName.trim() }),
+          ipAddress: signerIp ?? undefined,
+        });
+      } catch (err) {
+        console.warn("[leases.sign] signature evidence write failed:", err);
+      }
 
       const APP_URL = process.env.VITE_APP_URL ?? "https://keycove.net";
 

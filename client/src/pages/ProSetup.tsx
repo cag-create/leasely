@@ -127,10 +127,10 @@ export default function ProSetup() {
             }}
           >
             <p className="text-[#818CF8] text-xs font-bold uppercase tracking-widest mb-1.5">
-              Brand kit in production
+              Your website is next
             </p>
             <p className="text-white/75 text-sm leading-relaxed">
-              Your custom logo from <a href="https://certifybusinesspro.com" target="_blank" rel="noopener" className="underline hover:text-white">Certify Business Pro</a> is in production — <strong className="text-white">1 custom logo with 3 rounds of revisions, arriving within 24–48 hours</strong>. We'll email you the redemption code shortly. In the meantime your portal uses a clean monogram.
+              Your portal is live now. Fill in the 2-minute brand brief in <a href="/portal-setup" className="underline hover:text-white">Portal Setup</a> and <strong className="text-white">we'll build your website from it</strong> and email you when it's ready. Until you upload a logo, your portal uses a clean monogram.
             </p>
           </div>
 
@@ -271,7 +271,7 @@ export default function ProSetup() {
                 </div>
               </div>
               <p className="text-white/35 text-[11px] mt-3 italic">
-                Preview only — your CBP-designed logo replaces this within 24–48 hours.
+                Preview only — upload your own logo any time in Portal Setup.
               </p>
             </div>
           </div>

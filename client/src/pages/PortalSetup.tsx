@@ -12,9 +12,6 @@ import {
   Palette, FileText, Award,
 } from "lucide-react";
 
-// CBP-hosted $37/yr domain + hosting renewal (year 2 onward). Lives on CBP's Stripe —
-// CBP owns the domain/hosting, so renewals are billed by them, not Keycove.
-const CBP_DOMAIN_RENEWAL_URL = "https://buy.stripe.com/6oU28k9bDb7F9mofxh9ws08";
 const STEPS = ["Brand Setup", "Brand Brief", "Claim Free Package", "Go Live"];
 
 const LOGO_STYLES = [
@@ -67,14 +64,13 @@ export default function PortalSetup() {
 
   const saveBrief = trpc.marketplace.saveBrandBrief.useMutation({
     onSuccess: () => {
-      toast.success("Brief sent to the design team!");
+      toast.success("Brief received — we'll email you when your website is ready.");
       setStep(2);
     },
     onError: (e) => toast.error(e.message),
   });
 
   const { data: proCode } = trpc.proCode.getMine.useQuery();
-  const { data: partnerCode } = trpc.proCode.getCbpPartnerCode.useQuery();
   const { data: existingBrief } = trpc.marketplace.getBrandBrief.useQuery();
 
   // Returning from CBP's Stripe checkout — auto-mark redeemed and advance
@@ -247,7 +243,7 @@ export default function PortalSetup() {
                     <Link2 className="h-4 w-4 shrink-0" />
                     <div className="text-left">
                       <div>Custom domain</div>
-                      <div className={`text-xs ${domainMode === "custom" ? "text-amber-400/70" : "text-white/30"}`}>yourbrand.com · BYOD or via CBP</div>
+                      <div className={`text-xs ${domainMode === "custom" ? "text-amber-400/70" : "text-white/30"}`}>yourbrand.com · your own domain</div>
                     </div>
                   </button>
                 </div>
@@ -280,7 +276,7 @@ export default function PortalSetup() {
                     <div className="mt-2 rounded-lg bg-amber-500/5 border border-amber-500/20 p-3 text-xs text-amber-300/80 space-y-1">
                       <p className="font-semibold text-amber-300">DNS setup instructions</p>
                       <p>Point a <strong>CNAME</strong> record for your domain to <span className="font-mono">portal.keycove.net</span></p>
-                      <p className="text-amber-300/60">Domain included free in your CBP package · $37/yr renewal · or use your own registrar</p>
+                      <p className="text-amber-300/60">Keep your domain at any registrar — we host the site, you renew the domain with your registrar as usual</p>
                     </div>
                   </>
                 )}
@@ -318,7 +314,7 @@ export default function PortalSetup() {
           </div>
         )}
 
-        {/* Step 1: Brand Brief — captured by Keycove, used by CBP design team */}
+        {/* Step 1: Brand Brief — Keycove builds the member's website from this */}
         {step === 1 && (
           <div className="bg-[#111] border border-white/10 rounded-2xl p-8 space-y-6">
             <div className="flex items-center gap-3 mb-2">
@@ -326,18 +322,11 @@ export default function PortalSetup() {
                 <Palette className="h-5 w-5 text-purple-400" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Tell the design team what you want</h2>
-                <p className="text-sm text-white/50">2 minutes — so they can build your perfect website + logo</p>
+                <h2 className="text-lg font-bold text-white">Tell us about your brand</h2>
+                <p className="text-sm text-white/50">2 minutes — we build your website from this</p>
               </div>
             </div>
 
-            {/* CBP partnership badge */}
-            <div className="flex items-center gap-2 rounded-xl bg-amber-500/5 border border-amber-500/20 px-4 py-2.5">
-              <Award className="h-4 w-4 text-amber-400 shrink-0" />
-              <p className="text-xs text-amber-300/90">
-                <span className="font-semibold">Brand Kit by Certify Business Pro</span> — partnered with Keycove to deliver your free Pro design package
-              </p>
-            </div>
 
             <div className="space-y-4">
               {/* Tagline */}
@@ -413,8 +402,8 @@ export default function PortalSetup() {
 
               {/* Domain Names */}
               <div>
-                <Label className="text-white/70 text-sm mb-1.5 block">Desired domain name + 2 backups</Label>
-                <p className="text-xs text-white/40 mb-2">CBP will register your top available choice (1-year free)</p>
+                <Label className="text-white/70 text-sm mb-1.5 block">Domain names you like (optional)</Label>
+                <p className="text-xs text-white/40 mb-2">Your first choice + 2 backups — useful if you plan to buy a custom domain</p>
                 <div className="space-y-2">
                   <Input
                     value={domainPrimary}
@@ -480,7 +469,7 @@ export default function PortalSetup() {
           </div>
         )}
 
-        {/* Step 2: Claim Free Package */}
+        {/* Step 2: Website request confirmation */}
         {step === 2 && (
           <div className="bg-[#111] border border-white/10 rounded-2xl p-8 space-y-6">
             <div className="flex items-center gap-3 mb-2">
@@ -488,139 +477,43 @@ export default function PortalSetup() {
                 <Sparkles className="h-5 w-5 text-amber-400" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Claim your free $299 package</h2>
-                <p className="text-sm text-white/50">Website · Logo · 1-Year Domain — included with Pro</p>
+                <h2 className="text-lg font-bold text-white">Your website is on its way</h2>
+                <p className="text-sm text-white/50">Included with Pro — we have your brand brief</p>
               </div>
             </div>
 
-            {/* CBP partnership badge */}
-            <div className="flex items-center gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 px-4 py-2.5">
-              <Award className="h-4 w-4 text-amber-400 shrink-0" />
-              <p className="text-xs text-amber-300/90">
-                <span className="font-semibold">Brand Kit by Certify Business Pro</span> — your trusted design partner
-              </p>
-            </div>
-
-            {/* What's included */}
             <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
-              <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-3">What's included in your free package</p>
+              <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-3">What happens next</p>
               {[
-                "Professional website — delivered in 24 hours",
-                "1 custom logo + 3 rounds of revisions + final files",
-                "Year 1 domain & hosting included",
-                "DNS + SSL + uptime monitoring",
-                "Mobile-responsive, SEO-optimized design",
-                "Contact form integration + social media links",
+                "We build your website from your brand brief",
+                "We email you when it's live",
+                domainMode === "custom" && customDomain
+                  ? `It goes live on ${customDomain} once your CNAME points to portal.keycove.net`
+                  : `It lives at keycove.net/portal/${cleanSubdomain || "yourname"} — free, no renewals`,
+                "Your listings, applications and rent payments show on it automatically",
               ].map((f, i) => (
                 <div key={i} className="flex items-start gap-2 mb-1.5">
                   <CheckCircle2 className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
                   <span className="text-sm text-white/80">{f}</span>
                 </div>
               ))}
-              <p className="text-xs text-amber-400/70 mt-3">Valued at $299 + $37/yr domain renewal · yours free as a Pro member</p>
+              <p className="text-xs text-white/40 mt-3">Want to change something? Go back and update your brief any time.</p>
             </div>
 
-            {/* Cost breakdown — one-time vs. recurring vs. optional add-ons */}
-            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5 space-y-4">
-              <p className="text-xs font-semibold text-white/70 uppercase tracking-wider">Cost breakdown — what's free, what renews, what's optional</p>
-
-              <div>
-                <p className="text-xs font-bold text-emerald-400 mb-1.5">Included free (one-time)</p>
-                <ul className="text-sm text-white/70 space-y-1 pl-4 list-disc marker:text-emerald-400/50">
-                  <li>Professional website (delivered in 24 hours)</li>
-                  <li>1 custom logo + 3 rounds of revisions + final files</li>
-                  <li>Year 1 domain & hosting included</li>
-                  <li>DNS + SSL + uptime monitoring</li>
-                </ul>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold text-amber-400 mb-1.5">Recurring (year 2 onward)</p>
-                <ul className="text-sm text-white/70 space-y-1 pl-4 list-disc marker:text-amber-400/50">
-                  {domainMode === "leasely" ? (
-                    <li>Your <span className="text-white font-semibold">keycove.net/portal/{cleanSubdomain || "yourname"}</span> branded portal — <span className="text-white font-semibold">free forever</span>. No renewals.</li>
-                  ) : customDomain ? (
-                    <li>Domain renewal — <span className="text-white font-semibold">paid to your own registrar</span> (you brought <span className="text-white/80 font-mono text-xs">{customDomain}</span>). Hosting via CBP — <a href={CBP_DOMAIN_RENEWAL_URL} target="_blank" rel="noopener" className="text-amber-300 underline hover:text-amber-200 font-semibold">$37/yr</a>.</li>
-                  ) : (
-                    <li>Domain + hosting renewal — <a href={CBP_DOMAIN_RENEWAL_URL} target="_blank" rel="noopener" className="text-amber-300 underline hover:text-amber-200 font-semibold">$37/yr</a> via CBP <span className="text-white/40">(or bring / transfer your own domain to your own registrar — no CBP renewal)</span></li>
-                  )}
-                </ul>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold text-sky-400 mb-1.5">Optional add-ons via CBP (you pay them directly)</p>
-                <ul className="text-sm text-white/70 space-y-1 pl-4 list-disc marker:text-sky-400/50">
-                  <li>Business formation (LLC, S-corp), trademark filing, additional logos/branding — pricing at <a href="https://certifybusinesspro.com" target="_blank" rel="noopener" className="text-sky-300 underline hover:text-sky-200">certifybusinesspro.com</a></li>
-                </ul>
-              </div>
-
-              {(user as any)?.role !== "admin" && (
-                <p className="text-xs text-white/40 pt-1 border-t border-white/5">
-                  Keycove charges <span className="text-white/60 font-semibold">$25/mo</span>. Everything else above is between you and CBP — no markups, no kickbacks.
-                </p>
-              )}
-            </div>
-
-            {/* CBP Website + Domain partner code — primary claim path */}
-            <div className="rounded-xl border-2 border-amber-500/40 bg-amber-500/5 p-5 space-y-4">
-              <div className="text-center">
-                <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-2">Your CBP Website + Domain code</p>
-                {partnerCode?.code ? (
-                  <div className="flex items-center justify-center gap-3">
-                    <span className="text-2xl font-mono font-black text-white tracking-widest">{partnerCode.code}</span>
-                    <button
-                      onClick={() => { navigator.clipboard.writeText(partnerCode.code!); toast.success("Code copied!"); }}
-                      className="p-2 rounded-lg bg-white/10 hover:bg-white/15 transition-colors text-white/60 hover:text-white"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <Loader2 className="h-5 w-5 animate-spin text-white/40 mx-auto" />
-                )}
-                <p className="text-xs text-white/40 mt-2">One-time use · redeem your free website + domain at Certify Business Pro</p>
-              </div>
-              <a
-                href={partnerCode?.intakeUrl ?? "#"}
-                target="_blank"
-                rel="noopener"
-                className={`flex items-center justify-center gap-2 w-full h-12 rounded-lg font-bold text-base transition-colors ${partnerCode?.code ? "bg-amber-500 hover:bg-amber-400 text-black" : "bg-white/10 text-white/40 pointer-events-none"}`}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="border-white/10 text-white/70 hover:text-white hover:bg-white/5"
+                onClick={() => setStep(1)}
               >
-                Claim Your Site <ExternalLink className="h-4 w-4" />
-              </a>
-              <p className="text-xs text-white/30 text-center">Opens the Certify Business Pro intake with your code pre-filled — complete the brief and they build your site.</p>
-            </div>
-
-            {/* Brand-brief reference code (used by the CBP team to pull your brief) */}
-            {proCode ? (
-              <div className="rounded-xl border border-[#4F46E5]/30 bg-[#4F46E5]/5 p-4 text-center">
-                <p className="text-[11px] font-semibold text-[#4F46E5] uppercase tracking-wider mb-1.5">Brand-brief reference (CBP team)</p>
-                <div className="flex items-center justify-center gap-3">
-                  <span className="text-lg font-mono font-bold text-white/90 tracking-widest">{proCode.code}</span>
-                  <button
-                    onClick={handleCopyCode}
-                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/15 transition-colors text-white/60 hover:text-white"
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-                {proCode.status === "redeemed" && (
-                  <p className="text-xs text-white/40 mt-2">This code has already been redeemed.</p>
-                )}
-              </div>
-            ) : (
-              <div className="rounded-xl bg-white/5 p-5 text-center">
-                <Loader2 className="h-5 w-5 animate-spin text-white/40 mx-auto" />
-              </div>
-            )}
-
-            <div className="flex items-center justify-center pt-1">
-              <button
-                className="text-xs text-white/40 hover:text-white/70 underline underline-offset-2"
+                Edit brief
+              </Button>
+              <Button
                 onClick={() => setStep(3)}
+                className="flex-1 bg-[#4F46E5] hover:bg-[#4F46E5]/90 text-white font-bold h-11"
               >
-                Skip for now — I'll claim it later
-              </button>
+                Continue <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
             </div>
           </div>
         )}
@@ -646,7 +539,7 @@ export default function PortalSetup() {
                 { label: "Add your first listing", done: false, href: "/list-property" },
                 { label: "Connect Stripe for rent payouts", done: false, href: "/dashboard" },
                 { label: "Invite your first tenant", done: false, href: "/dashboard" },
-                { label: "Claim free website + logo (CBP)", done: proCode?.status === "redeemed", href: undefined },
+                { label: "Send your website brief", done: !!existingBrief, href: undefined },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${item.done ? "bg-[#4F46E5]/20" : "bg-white/10"}`}>

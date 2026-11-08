@@ -41,7 +41,7 @@ function GrantProCard() {
         <h3 className="font-semibold text-foreground text-sm">Grant Pro manually</h3>
       </div>
       <p className="text-xs text-muted-foreground mb-3">
-        Flip a user to Pro by their account email. Use for assisted sales or a raw-link payment that didn't auto-match. Also mints their CBP brand-kit code.
+        Flip a user to Pro by their account email. Use for assisted sales or a raw-link payment that didn't auto-match.
       </p>
       <div className="flex items-center gap-2">
         <Input
