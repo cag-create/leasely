@@ -665,6 +665,7 @@ const istayRouter = router({
 import { leasesRouter, adminLeaseTemplatesRouter } from "./leases/router";
 import { hoaRouter } from "./hoa/router";
 import { moveInRouter } from "./moveIn/router";
+import { hoaBoardsRouter } from "./hoaBoards/router";
 import { createLeaseDocument, createLeaseSignature, getLatestTemplateVersionForState, logLeaseAudit, getTemplateVersionById, listLeaseDocumentsByAgreement, updateLeaseDocument } from "./leases/db-helpers";
 import { renderTemplate } from "./leases/render";
 
@@ -695,6 +696,7 @@ export const appRouter = router({
   hoa: hoaRouter,
   // "Move to Keycove" unified importer.
   moveIn: moveInRouter,
+  hoaBoards: hoaBoardsRouter, // Keycove HOA: board dues collection (separate subscription)
   adminLeaseTemplates: adminLeaseTemplatesRouter,
 
   auth: router({

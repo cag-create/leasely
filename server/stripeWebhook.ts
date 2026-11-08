@@ -74,6 +74,9 @@ export function registerStripeWebhook(app: Express) {
       console.log(`[Webhook] Event: ${event.type} | ID: ${event.id}`);
 
       try {
+        // Keycove HOA events first (their checkouts must never reach the Pro provisioning fallback).
+        const { handleHoaBoardEvent } = await import("./hoaBoards/webhook");
+        if (await handleHoaBoardEvent(event)) return res.json({ received: true });
         switch (event.type) {
           case "checkout.session.completed": {
             const session = event.data.object as Stripe.Checkout.Session;

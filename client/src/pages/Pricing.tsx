@@ -10,8 +10,9 @@ import { toast } from "sonner";
 import {
   CheckCircle2, XCircle, Sparkles, Building2, Shield, FileText,
   Users, Globe, Banknote, Wrench, BarChart3, Headphones, QrCode,
-  ChevronDown, ChevronUp, ArrowRight, Zap, Loader2
+  ChevronDown, ChevronUp, ArrowRight, Zap, Loader2, Home, Landmark
 } from "lucide-react";
+import { HOA_TIERS, HOA_TRIAL_DAYS, HOA_CARD_FEE_TEXT, HOA_ROUTES, formatUsd } from "@/lib/hoaPricing";
 
 const BRAND = "#1F1A12";
 const ACCENT = "#4F46E5";
@@ -160,6 +161,7 @@ export default function Pricing() {
   const { isAuthenticated } = useAuth();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [hoaYearly, setHoaYearly] = useState(false);
 
   const handleCheckout = () => {
     if (!termsAccepted) {
@@ -434,7 +436,115 @@ export default function Pricing() {
         </div>
       </section>
 
+      {/* Keycove HOA — separate subscription for HOA boards */}
+      <section id="hoa" className="py-16 px-4 bg-gray-50 border-t border-gray-100 scroll-mt-20">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-8">
+            <Badge className="mb-3 font-bold text-xs px-3 py-1 border-0" style={{ background: `${ACCENT}15`, color: ACCENT }}>
+              <Landmark className="h-3 w-3 mr-1" /> Separate subscription
+            </Badge>
+            <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-2">Keycove HOA — for HOA boards</h2>
+            <p className="text-gray-500 text-sm max-w-2xl mx-auto">
+              Collect dues from homeowners straight into your HOA&apos;s bank account. Every plan includes every feature — you only pick the number of homes.
+            </p>
+          </div>
 
+          {/* Monthly / yearly toggle */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex items-center rounded-full bg-white border border-gray-200 p-1 shadow-sm" role="group" aria-label="Billing period">
+              <button
+                type="button"
+                onClick={() => setHoaYearly(false)}
+                aria-pressed={!hoaYearly}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${!hoaYearly ? "text-white" : "text-gray-500 hover:text-gray-700"}`}
+                style={!hoaYearly ? { background: BRAND } : {}}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => setHoaYearly(true)}
+                aria-pressed={hoaYearly}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${hoaYearly ? "text-white" : "text-gray-500 hover:text-gray-700"}`}
+                style={hoaYearly ? { background: BRAND } : {}}
+              >
+                Yearly <span className={`ml-1 text-xs font-bold ${hoaYearly ? "text-emerald-300" : "text-emerald-600"}`}>15% off</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {HOA_TIERS.map(tier => (
+              <div key={tier.id} className="rounded-2xl border-2 border-gray-100 bg-white p-6 flex flex-col">
+                <div className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-3">
+                  <Home className="h-4 w-4" style={{ color: ACCENT }} /> {tier.name}
+                </div>
+                {hoaYearly ? (
+                  <>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-black text-gray-900">{formatUsd(tier.yearly)}</span>
+                      <span className="text-gray-400 text-sm">/ year</span>
+                    </div>
+                    <p className="text-xs text-emerald-600 font-semibold mt-1">About {formatUsd(tier.yearlyPerMonth)}/mo · 15% off monthly</p>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-black text-gray-900">{formatUsd(tier.monthly)}</span>
+                      <span className="text-gray-400 text-sm">/ month</span>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">or {formatUsd(tier.yearly)}/yr billed yearly</p>
+                  </>
+                )}
+                <div className="mt-5 space-y-2 text-sm text-gray-600 flex-1">
+                  <div className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" /> Every feature included</div>
+                  <div className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" /> Free ACH for homeowners</div>
+                  <div className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" /> {HOA_TRIAL_DAYS}-day free trial</div>
+                </div>
+                <Link href={HOA_ROUTES.board}>
+                  <Button className="w-full font-bold mt-6 bg-[#4F46E5] hover:bg-[#4338CA] text-white">
+                    Start free trial
+                  </Button>
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4 mt-8">
+            <div className="rounded-2xl bg-white border border-gray-100 p-5 flex gap-3">
+              <Sparkles className="h-5 w-5 shrink-0 mt-0.5" style={{ color: ACCENT }} />
+              <div className="text-sm text-gray-600 leading-relaxed">
+                <span className="font-bold text-gray-900 block mb-0.5">{HOA_TRIAL_DAYS}-day free trial, no card required</span>
+                Set up your HOA, connect the bank and import homeowners before you pay anything. Every feature is on during the trial.
+              </div>
+            </div>
+            <div className="rounded-2xl bg-white border border-gray-100 p-5 flex gap-3">
+              <Banknote className="h-5 w-5 shrink-0 mt-0.5 text-emerald-600" />
+              <div className="text-sm text-gray-600 leading-relaxed">
+                <span className="font-bold text-gray-900 block mb-0.5">Homeowners pay by bank (ACH) for free</span>
+                No per-payment fee for ACH. Card payments are optional: the card processing cost ({HOA_CARD_FEE_TEXT}, Stripe&apos;s rate) is passed to the homeowner at cost, with no markup. Your board can turn card payments off.
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
+            <Link href={HOA_ROUTES.board}>
+              <Button size="lg" className="font-bold px-8 gap-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white">
+                Start 30-day free trial <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href={HOA_ROUTES.landing}>
+              <Button size="lg" variant="outline" className="font-bold px-8">
+                How Keycove HOA works
+              </Button>
+            </Link>
+          </div>
+          <p className="text-center text-xs text-gray-400 mt-4">
+            Money goes from homeowners straight to your HOA&apos;s own bank account through Stripe Connect — Keycove never holds HOA funds.
+            Keycove HOA is billed separately from Keycove Pro.
+          </p>
+        </div>
+      </section>
 
       {/* FAQ */}
       <section className="py-16 px-4">

@@ -373,6 +373,10 @@ async function startServer() {
     import("../hoa/reminders")
       .then(m => m.startHoaReminderScheduler())
       .catch(err => console.warn("[hoaReminders] scheduler init failed:", err));
+    // Keycove HOA: board-side assessments, late fees, autopay, reminders.
+    import("../hoaBoards/scheduler")
+      .then(m => m.startHoaBoardScheduler())
+      .catch(err => console.warn("[hoaBoards] scheduler init failed:", err));
     import("./listingDrip")
       .then(m => m.startListingDripScheduler())
       .catch(err => console.warn("[listingDrip] scheduler init failed:", err));

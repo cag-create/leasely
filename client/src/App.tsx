@@ -40,6 +40,12 @@ function lazyWithRetry(factory: () => Promise<{ default: any }>) {
 
 // ── Lazy loads (route-level code splitting) ───────────────────────────────────
 const Home                = lazyWithRetry(() => import("./pages/Home"));
+// Keycove HOA (board dues collection)
+const HoaBoardsLanding    = lazyWithRetry(() => import("./pages/HoaBoardsLanding"));
+const HoaBoard            = lazyWithRetry(() => import("./pages/HoaBoard"));
+const HoaPortal           = lazyWithRetry(() => import("./pages/HoaPortal"));
+const HoaBoardGuide       = lazyWithRetry(() => import("./pages/HoaBoardGuide"));
+const AdminHoa            = lazyWithRetry(() => import("./pages/AdminHoa"));
 const Marketplace         = lazyWithRetry(() => import("./pages/Marketplace"));
 const MapViewPage         = lazyWithRetry(() => import("./pages/MapView"));
 const ListProperty        = lazyWithRetry(() => import("./pages/ListProperty"));
@@ -260,6 +266,12 @@ function Router() {
         <Route path="/broker-dashboard" component={BrokerDashboard} />
 
         {/* Public marketing */}
+        {/* Keycove HOA */}
+        <Route path="/hoa-boards" component={HoaBoardsLanding} />
+        <Route path="/hoa-board" component={HoaBoard} />
+        <Route path="/hoa-portal" component={HoaPortal} />
+        <Route path="/hoa-board-guide" component={HoaBoardGuide} />
+        <Route path="/admin/hoa" component={AdminHoa} />
         <Route path="/compare" component={Compare} />
         <Route path="/support" component={Support} />
         <Route path="/pricing" component={Pricing} />

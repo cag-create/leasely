@@ -1721,3 +1721,173 @@ export const hoaSpecialAssessments = mysqlTable("hoa_special_assessments", {
 });
 export type HoaSpecialAssessment = typeof hoaSpecialAssessments.$inferSelect;
 
+
+// ─── Keycove HOA: board-side dues collection (separate subscription) ────────
+// An HOA board signs up, connects the HOA's bank (Stripe Connect Express),
+// imports its homeowner roster and bills dues. Homeowners pay through
+// /hoa-portal; money goes straight to the HOA's connected account
+// (destination charges). Rules per state live in shared/hoaBoards.ts.
+export const hoaAssociations = mysqlTable("hoa_associations", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerUserId: int("ownerUserId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  legalName: varchar("legalName", { length: 200 }),
+  communityType: mysqlEnum("communityType", ["planned", "condo"]).notNull().default("planned"),
+  state: varchar("state", { length: 2 }).notNull().default("NC"),
+  address: varchar("address", { length: 300 }),
+  city: varchar("city", { length: 120 }),
+  zip: varchar("zip", { length: 10 }),
+  contactEmail: varchar("contactEmail", { length: 320 }),
+  contactPhone: varchar("contactPhone", { length: 40 }),
+  // Dues defaults
+  assessmentCents: int("assessmentCents").notNull().default(0),
+  assessmentFrequency: mysqlEnum("assessmentFrequency", ["monthly", "quarterly", "annual"]).notNull().default("monthly"),
+  firstDueDate: varchar("firstDueDate", { length: 10 }), // schedule anchor, YYYY-MM-DD
+  billingEnabled: tinyint("billingEnabled").notNull().default(0),
+  billingStartedOn: varchar("billingStartedOn", { length: 10 }), // never bill due dates before this
+  billAheadDays: int("billAheadDays").notNull().default(15),
+  graceDays: int("graceDays").notNull().default(15),
+  lateFeeEnabled: tinyint("lateFeeEnabled").notNull().default(0),
+  lateFeeMode: mysqlEnum("lateFeeMode", ["state_max", "flat", "percent"]).notNull().default("state_max"),
+  lateFeeFlatCents: int("lateFeeFlatCents").notNull().default(2000),
+  lateFeePercent: int("lateFeePercent").notNull().default(10),
+  reminderDaysBefore: int("reminderDaysBefore").notNull().default(7),
+  acceptCards: tinyint("acceptCards").notNull().default(1),
+  payoffFeeCents: int("payoffFeeCents").notNull().default(0),
+  payoffExpediteFeeCents: int("payoffExpediteFeeCents").notNull().default(0),
+  rulesText: text("rulesText"),
+  // Keycove HOA plan
+  planTier: mysqlEnum("planTier", ["t50", "t150", "t500", "unlimited"]).notNull().default("t50"),
+  billingInterval: mysqlEnum("billingInterval", ["month", "year"]).notNull().default("month"),
+  planStatus: mysqlEnum("planStatus", ["trialing", "active", "past_due", "cancelled", "expired"]).notNull().default("trialing"),
+  trialEndsAt: timestamp("trialEndsAt"),
+  currentPeriodEnd: timestamp("currentPeriodEnd"),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  // HOA bank account (Stripe Connect Express)
+  stripeConnectAccountId: varchar("stripeConnectAccountId", { length: 255 }),
+  connectStatus: mysqlEnum("connectStatus", ["not_connected", "pending", "active"]).notNull().default("not_connected"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type HoaAssociation = typeof hoaAssociations.$inferSelect;
+
+export const hoaHomes = mysqlTable("hoa_homes", {
+  id: int("id").autoincrement().primaryKey(),
+  associationId: int("associationId").notNull(),
+  homeKey: varchar("homeKey", { length: 120 }).notNull(),
+  lot: varchar("lot", { length: 40 }),
+  unit: varchar("unit", { length: 40 }),
+  address: varchar("address", { length: 300 }),
+  ownerName: varchar("ownerName", { length: 200 }).notNull(),
+  email: varchar("email", { length: 320 }),
+  phone: varchar("phone", { length: 40 }),
+  mailingAddress: varchar("mailingAddress", { length: 400 }),
+  assessmentCents: int("assessmentCents"), // null = association default
+  active: tinyint("active").notNull().default(1),
+  billingStartsOn: varchar("billingStartsOn", { length: 10 }), // YYYY-MM-DD the home joined billing
+  autopayEnabled: tinyint("autopayEnabled").notNull().default(0),
+  autopayMethod: mysqlEnum("autopayMethod", ["ach", "card"]),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  stripePaymentMethodId: varchar("stripePaymentMethodId", { length: 255 }),
+  paymentMethodLabel: varchar("paymentMethodLabel", { length: 80 }),
+  inviteSentAt: timestamp("inviteSentAt"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  homeUnique: uniqueIndex("hoa_homes_assoc_key_unique").on(t.associationId, t.homeKey),
+}));
+export type HoaHome = typeof hoaHomes.$inferSelect;
+
+export const hoaCharges = mysqlTable("hoa_charges", {
+  id: int("id").autoincrement().primaryKey(),
+  associationId: int("associationId").notNull(),
+  homeId: int("homeId").notNull(),
+  kind: mysqlEnum("kind", ["assessment", "special", "late_fee", "payoff_fee", "fine", "other"]).notNull(),
+  description: varchar("description", { length: 300 }).notNull(),
+  // Idempotency key per home: a-<due>, special-<id>, late-<chargeId>-<month>, manual-<rand>
+  periodKey: varchar("periodKey", { length: 80 }).notNull(),
+  amountCents: int("amountCents").notNull(),
+  paidCents: int("paidCents").notNull().default(0),
+  dueDate: varchar("dueDate", { length: 10 }).notNull(),
+  status: mysqlEnum("status", ["open", "paid", "void"]).notNull().default("open"),
+  paidAt: timestamp("paidAt"),
+  parentChargeId: int("parentChargeId"),
+  specialAssessmentId: int("specialAssessmentId"),
+  reminderStage: int("reminderStage").notNull().default(0), // 1 = before due, 2 = due, 3 = overdue
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  periodUnique: uniqueIndex("hoa_charges_home_period_unique").on(t.homeId, t.periodKey),
+}));
+export type HoaCharge = typeof hoaCharges.$inferSelect;
+
+export const hoaPayments = mysqlTable("hoa_payments", {
+  id: int("id").autoincrement().primaryKey(),
+  associationId: int("associationId").notNull(),
+  homeId: int("homeId").notNull(),
+  amountCents: int("amountCents").notNull(), // applied to HOA charges
+  feeCents: int("feeCents").notNull().default(0), // card processing fee paid by the homeowner
+  totalCents: int("totalCents").notNull(),
+  method: mysqlEnum("method", ["ach", "card", "check", "cash", "other"]).notNull(),
+  source: mysqlEnum("source", ["portal", "autopay", "manual"]).notNull(),
+  status: mysqlEnum("status", ["pending", "processing", "succeeded", "failed", "canceled", "refunded"]).notNull().default("pending"),
+  applicationFeeCents: int("applicationFeeCents").notNull().default(0),
+  achFeeBearer: varchar("achFeeBearer", { length: 12 }),
+  allocations: text("allocations").notNull(), // JSON [{ chargeId, cents }]
+  stripeCheckoutSessionId: varchar("stripeCheckoutSessionId", { length: 255 }),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
+  reference: varchar("reference", { length: 120 }), // check number etc.
+  failureReason: varchar("failureReason", { length: 300 }),
+  recordedByUserId: int("recordedByUserId"),
+  paidAt: timestamp("paidAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  piUnique: uniqueIndex("hoa_payments_pi_unique").on(t.stripePaymentIntentId),
+}));
+export type HoaPayment = typeof hoaPayments.$inferSelect;
+
+export const hoaBoardSpecialAssessments = mysqlTable("hoa_board_special_assessments", {
+  id: int("id").autoincrement().primaryKey(),
+  associationId: int("associationId").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  amountCents: int("amountCents").notNull(), // per home
+  dueDate: varchar("dueDate", { length: 10 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const hoaAnnouncements = mysqlTable("hoa_announcements", {
+  id: int("id").autoincrement().primaryKey(),
+  associationId: int("associationId").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  body: text("body").notNull(),
+  emailedCount: int("emailedCount").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const hoaDocuments = mysqlTable("hoa_documents", {
+  id: int("id").autoincrement().primaryKey(),
+  associationId: int("associationId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  category: varchar("category", { length: 40 }).notNull().default("other"),
+  url: varchar("url", { length: 500 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+/** One-time sign-in codes for the homeowner portal (by email; covers homes in any HOA). */
+export const hoaHomeownerLogins = mysqlTable("hoa_homeowner_logins", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  codeHash: varchar("codeHash", { length: 64 }),
+  expiresAt: timestamp("expiresAt"),
+  attempts: int("attempts").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+/** Platform-wide settings editable by Keycove admins (e.g. hoa_ach_fee_bearer). */
+export const platformSettings = mysqlTable("platform_settings", {
+  settingKey: varchar("settingKey", { length: 80 }).primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
