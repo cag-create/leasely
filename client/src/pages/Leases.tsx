@@ -636,7 +636,7 @@ export default function Leases() {
             <p className="text-gray-500 mt-1">Built-in NC & TN leases or upload your own — create, send, and track e-signatures</p>
           </div>
           <div className="flex gap-2">
-            <Link href="/import-tenants">
+            <Link href="/move-to-keycove">
               <Button variant="outline" className="gap-2">
                 <Upload className="w-4 h-4" /> Import Tenants
               </Button>

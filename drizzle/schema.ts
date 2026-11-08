@@ -385,7 +385,7 @@ export const accountingEntries = mysqlTable("accounting_entries", {
     // Expense
     "mortgage_interest", "property_tax", "insurance", "repairs", "management_fee",
     "utilities", "advertising", "professional_fees", "travel", "supplies",
-    "depreciation", "other_expense"
+    "depreciation", "other_expense", "hoa_dues"
   ]).notNull(),
 
   amount: int("amount").notNull(), // in cents
@@ -1672,3 +1672,52 @@ export const notifications = mysqlTable("notifications", {
 });
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
+
+// ─── HOA dues tracking (landlord side) ──────────────────────────────────────
+// One HOA record per CRM property the landlord owns inside an HOA. Keycove
+// tracks and reminds; the landlord pays the HOA through the HOA's own portal.
+export const propertyHoas = mysqlTable("property_hoas", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  crmPropertyId: int("crmPropertyId").notNull(),
+  hoaName: varchar("hoaName", { length: 200 }).notNull(),
+  managementCompany: varchar("managementCompany", { length: 200 }),
+  contactName: varchar("contactName", { length: 200 }),
+  contactEmail: varchar("contactEmail", { length: 320 }),
+  contactPhone: varchar("contactPhone", { length: 40 }),
+  portalUrl: text("portalUrl"),
+  // Never the full HOA account number — last 4 digits at most.
+  accountLast4: varchar("accountLast4", { length: 4 }),
+  duesAmount: int("duesAmount").notNull().default(0), // cents
+  frequency: mysqlEnum("frequency", ["monthly", "quarterly", "semiannual", "annual"]).notNull().default("monthly"),
+  nextDueDate: varchar("nextDueDate", { length: 10 }), // YYYY-MM-DD
+  autopay: tinyint("autopay").notNull().default(0),
+  // Tenant reimburses the HOA dues (informational; shown in reminders).
+  passThroughToTenant: tinyint("passThroughToTenant").notNull().default(0),
+  reminderDaysBefore: int("reminderDaysBefore").notNull().default(7),
+  lastReminderForDueDate: varchar("lastReminderForDueDate", { length: 10 }),
+  rulesText: text("rulesText"),
+  documents: text("documents"), // JSON [{ name, url, uploadedAt }]
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  propertyUnique: uniqueIndex("property_hoas_property_unique").on(t.crmPropertyId),
+}));
+export type PropertyHoa = typeof propertyHoas.$inferSelect;
+export type InsertPropertyHoa = typeof propertyHoas.$inferInsert;
+
+export const hoaSpecialAssessments = mysqlTable("hoa_special_assessments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  propertyHoaId: int("propertyHoaId").notNull(),
+  description: varchar("description", { length: 300 }).notNull(),
+  amount: int("amount").notNull(), // cents
+  dueDate: varchar("dueDate", { length: 10 }).notNull(),
+  paidAt: varchar("paidAt", { length: 10 }),
+  accountingEntryId: int("accountingEntryId"),
+  reminderSent: tinyint("reminderSent").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type HoaSpecialAssessment = typeof hoaSpecialAssessments.$inferSelect;
+

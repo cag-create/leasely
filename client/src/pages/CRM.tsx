@@ -368,7 +368,7 @@ export default function CRM() {
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-gray-800">Properties</h2>
               <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" className="gap-1" onClick={() => navigate("/import-portfolio")} title="Bulk-import your buildings, renters & existing leases from AppFolio, Buildium, RentRedi, Yardi or a spreadsheet">
+              <Button size="sm" variant="outline" className="gap-1" onClick={() => navigate("/move-to-keycove")} title="Bulk-import your buildings, renters & existing leases from AppFolio, Buildium, RentRedi, Yardi or a spreadsheet">
                 <Upload className="w-3.5 h-3.5" /> Import
               </Button>
               <Dialog open={addPropertyOpen} onOpenChange={(open) => {

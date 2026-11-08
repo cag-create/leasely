@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Route, Switch } from "wouter";
+import { Redirect, Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ProGate } from "./components/ProGate";
@@ -71,8 +71,7 @@ const Welcome             = lazyWithRetry(() => import("./pages/Welcome"));
 const PortalSetup         = lazyWithRetry(() => import("./pages/PortalSetup"));
 const EditListing         = lazyWithRetry(() => import("./pages/EditListing"));
 const ImportListings      = lazyWithRetry(() => import("./pages/ImportListings"));
-const ImportTenants       = lazyWithRetry(() => import("./pages/ImportTenants"));
-const ImportPortfolio     = lazyWithRetry(() => import("./pages/ImportPortfolio"));
+const MoveToKeycove       = lazyWithRetry(() => import("./pages/MoveToKeycove"));
 const SignLease           = lazyWithRetry(() => import("./pages/SignLease"));
 const Contractor1099      = lazyWithRetry(() => import("./pages/Contractor1099"));
 const ImportAgents        = lazyWithRetry(() => import("./pages/ImportAgents"));
@@ -94,6 +93,7 @@ const BrokerDashboard     = lazyWithRetry(() => import("./pages/BrokerDashboard"
 const FeeSchedule         = lazyWithRetry(() => import("./pages/FeeSchedule"));
 const Leases              = lazyWithRetry(() => import("./pages/Leases"));
 const Payouts             = lazyWithRetry(() => import("./pages/Payouts"));
+const HoaDues             = lazyWithRetry(() => import("./pages/HoaDues"));
 const VendorRespond       = lazyWithRetry(() => import("./pages/VendorRespond"));
 const TenantSignLease     = lazyWithRetry(() => import("./pages/TenantSignLease"));
 const Privacy             = lazyWithRetry(() => import("./pages/Privacy"));
@@ -141,8 +141,12 @@ function Router() {
         <Route path="/portal-setup" component={PortalSetup} />
         <Route path="/edit-listing/:id" component={EditListing} />
         <Route path="/import-listings" component={ImportListings} />
-        <Route path="/import-tenants" component={ImportTenants} />
-        <Route path="/import-portfolio" component={ImportPortfolio} />
+        {/* The old portfolio + tenant importers are replaced by one wizard. */}
+        <Route path="/move-to-keycove">
+          {() => <ProGate featureName="Move to Keycove import"><MoveToKeycove /></ProGate>}
+        </Route>
+        <Route path="/import-tenants">{() => <Redirect to="/move-to-keycove" />}</Route>
+        <Route path="/import-portfolio">{() => <Redirect to="/move-to-keycove" />}</Route>
         <Route path="/sign/:token" component={SignLease} />
         <Route path="/marketplace" component={Marketplace} />
         <Route path="/marketplace/map" component={MapViewPage} />
@@ -182,6 +186,9 @@ function Router() {
         <Route path="/import-contractors" component={ImportContractors} />
         <Route path="/crm">
           {() => <ProGate featureName="Property CRM"><CRM /></ProGate>}
+        </Route>
+        <Route path="/hoa">
+          {() => <ProGate featureName="HOA Dues"><HoaDues /></ProGate>}
         </Route>
         <Route path="/payouts">
           {() => <ProGate featureName="Payouts &amp; Banking"><Payouts /></ProGate>}

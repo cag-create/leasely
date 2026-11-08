@@ -663,6 +663,8 @@ const istayRouter = router({
 
 
 import { leasesRouter, adminLeaseTemplatesRouter } from "./leases/router";
+import { hoaRouter } from "./hoa/router";
+import { moveInRouter } from "./moveIn/router";
 import { createLeaseDocument, createLeaseSignature, getLatestTemplateVersionForState, logLeaseAudit, getTemplateVersionById, listLeaseDocumentsByAgreement, updateLeaseDocument } from "./leases/db-helpers";
 import { renderTemplate } from "./leases/render";
 
@@ -689,6 +691,10 @@ export const appRouter = router({
   // Lease document + template system (Phase 2). Distinct from the existing
   // `leases` router below, which handles the lease_agreements status row.
   leaseDocs: leasesRouter,
+  // Landlord-side HOA dues tracking (Pro).
+  hoa: hoaRouter,
+  // "Move to Keycove" unified importer.
+  moveIn: moveInRouter,
   adminLeaseTemplates: adminLeaseTemplatesRouter,
 
   auth: router({

@@ -1,3 +1,4 @@
+import Papa from "papaparse";
 import { useState, useCallback, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -43,30 +44,13 @@ function downloadTemplate() {
 
 // ── CSV Parser ────────────────────────────────────────────────────────────────
 function parseCSV(text: string): Record<string, string>[] {
-  const lines = text.trim().split("\n").filter(Boolean);
-  if (lines.length < 2) return [];
-
-  const parseRow = (line: string): string[] => {
-    const result: string[] = [];
-    let current = "";
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') { inQuotes = !inQuotes; continue; }
-      if (ch === "," && !inQuotes) { result.push(current.trim()); current = ""; continue; }
-      current += ch;
-    }
-    result.push(current.trim());
-    return result;
-  };
-
-  const headers = parseRow(lines[0]).map(h => h.toLowerCase().replace(/\s+/g, "_"));
-  return lines.slice(1).map(line => {
-    const vals = parseRow(line);
-    const obj: Record<string, string> = {};
-    headers.forEach((h, i) => { obj[h] = vals[i] ?? ""; });
-    return obj;
+  // papaparse handles quoted commas, escaped quotes and newlines inside cells.
+  const res = Papa.parse<Record<string, string>>(text, {
+    header: true,
+    skipEmptyLines: "greedy",
+    transformHeader: h => h.trim().toLowerCase().replace(/\s+/g, "_"),
   });
+  return res.data;
 }
 
 function csvRowToListing(row: Record<string, string>) {

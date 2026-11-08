@@ -110,3 +110,6 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+
+# Local dev uploads (production uses /data/uploads)
+uploads/

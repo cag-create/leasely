@@ -25,7 +25,7 @@ import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { trpc } from "@/lib/trpc";
 import {
-  LayoutDashboard, LogOut, PanelLeft, Home, Building2,
+  LayoutDashboard, LogOut, PanelLeft, Home, Building2, Building,
   Briefcase, Calculator, UserCircle, HeadphonesIcon, Heart,
   FileText, Sparkles, Shield, ChevronDown, Wrench, BookOpen, Award, Landmark, Rocket, Users, TrendingUp
 } from "lucide-react";
@@ -47,6 +47,7 @@ const proMenuItems = [
   { icon: Briefcase, label: "Work Orders", path: "/work-orders", group: "pro" },
   { icon: FileText, label: "Lease Agreements", path: "/leases", group: "pro" },
   { icon: Calculator, label: "Accounting", path: "/accounting", group: "pro" },
+  { icon: Building, label: "HOA Dues", path: "/hoa", group: "pro" },
   { icon: Landmark, label: "Payouts", path: "/payouts", group: "pro" },
   { icon: FileText, label: "Contractor 1099s", path: "/contractor-1099", group: "pro" },
   { icon: UserCircle, label: "Tenants / CRM", path: "/crm", group: "pro" },
@@ -92,7 +93,7 @@ function SidebarNextStep({ isPro }: { isPro: boolean }) {
   }
 
   return (
-    <div className="mx-3 mt-3 mb-1 p-3 rounded-xl border" style={{ borderColor: `${step.color}26`, background: `${step.color}0f` }}>
+    <div className="mx-3 mt-3 mb-1 p-3 rounded-xl border shrink-0" style={{ borderColor: `${step.color}26`, background: `${step.color}0f` }}>
       <div className="flex items-center gap-1.5 mb-0.5">
         <step.icon className="h-3.5 w-3.5" style={{ color: step.color }} />
         <p className="text-xs font-semibold text-foreground">{step.title}</p>
@@ -271,13 +272,13 @@ function DashboardLayoutContent({
           <SidebarContent className="gap-0 py-3">
 
             {/* Core navigation */}
-            <SidebarMenu className="px-2 gap-0.5">
+            <SidebarMenu className="px-2 gap-0.5 shrink-0">
               {coreMenuItems.map(item => <NavItem key={item.path} item={item} />)}
             </SidebarMenu>
 
             {/* Pro tools section */}
             {!isCollapsed && (
-              <div className="px-4 pt-4 pb-1">
+              <div className="px-4 pt-4 pb-1 shrink-0">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
                   {isPro ? "Pro Tools" : "Pro Tools"}
                 </p>
@@ -285,7 +286,7 @@ function DashboardLayoutContent({
             )}
             {isCollapsed && <div className="h-3" />}
 
-            <SidebarMenu className="px-2 gap-0.5">
+            <SidebarMenu className="px-2 gap-0.5 shrink-0">
               {proMenuItems.map(item => {
                 if (!isPro) {
                   // Show locked items for free users
@@ -313,13 +314,13 @@ function DashboardLayoutContent({
             {isAdmin && (
               <>
                 {!isCollapsed && (
-                  <div className="px-4 pt-4 pb-1">
+                  <div className="px-4 pt-4 pb-1 shrink-0">
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-500/70">
                       Admin
                     </p>
                   </div>
                 )}
-                <SidebarMenu className="px-2 gap-0.5">
+                <SidebarMenu className="px-2 gap-0.5 shrink-0">
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       isActive={location === "/admin"}
@@ -337,20 +338,20 @@ function DashboardLayoutContent({
 
             {/* Directory section */}
             {!isCollapsed && (
-              <div className="px-4 pt-4 pb-1">
+              <div className="px-4 pt-4 pb-1 shrink-0">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
                   Directory
                 </p>
               </div>
             )}
             {isCollapsed && <div className="h-3" />}
-            <SidebarMenu className="px-2 gap-0.5">
+            <SidebarMenu className="px-2 gap-0.5 shrink-0">
               {directoryMenuItems.map(item => <NavItem key={item.path} item={item} />)}
             </SidebarMenu>
 
             {/* Support — sits right under Directory (no big gap) */}
-            <div className="mt-1">
-              <SidebarMenu className="px-2 gap-0.5">
+            <div className="mt-1 shrink-0">
+              <SidebarMenu className="px-2 gap-0.5 shrink-0">
                 {supportMenuItems.map(item => <NavItem key={item.path} item={item} />)}
               </SidebarMenu>
             </div>

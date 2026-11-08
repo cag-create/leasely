@@ -37,6 +37,7 @@ const EXPENSE_CATEGORIES = [
   { value: "travel", label: "Travel" },
   { value: "supplies", label: "Supplies" },
   { value: "depreciation", label: "Depreciation" },
+  { value: "hoa_dues", label: "HOA Dues" },
   { value: "other_expense", label: "Other Expense" },
 ];
 

@@ -369,6 +369,10 @@ async function startServer() {
     import("./rentReminders")
       .then(m => m.startRentReminderScheduler())
       .catch(err => console.warn("[rentReminders] scheduler init failed:", err));
+    // Daily HOA dues + special-assessment reminders to landlords.
+    import("../hoa/reminders")
+      .then(m => m.startHoaReminderScheduler())
+      .catch(err => console.warn("[hoaReminders] scheduler init failed:", err));
     import("./listingDrip")
       .then(m => m.startListingDripScheduler())
       .catch(err => console.warn("[listingDrip] scheduler init failed:", err));
