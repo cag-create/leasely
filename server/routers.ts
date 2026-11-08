@@ -4057,31 +4057,28 @@ export const appRouter = router({
       });
 
       // Compact applicant payload for the model — keep just what's screening-relevant.
+      // Fair Housing: the model only sees fraud-relevant facts. Name, date of
+      // birth, occupants, pets/assistance animals, vehicle, emergency contact
+      // and free-text fields are never sent — they can reveal or proxy for
+      // protected classes (national origin, age, familial status, disability,
+      // source of income, etc.). Identity consistency uses a derived flag.
+      const nameTokens = String(app.applicantName ?? "").toLowerCase().split(/[^a-z]+/).filter(t => t.length >= 3);
+      const emailLocal = String(app.applicantEmail ?? "").toLowerCase().split("@")[0] ?? "";
       const applicantPayload = {
-        applicantName: app.applicantName,
-        applicantEmail: app.applicantEmail,
+        emailContainsApplicantName: nameTokens.some(t => emailLocal.includes(t)),
+        emailDomain: String(app.applicantEmail ?? "").split("@")[1] ?? null,
         applicantPhone: app.applicantPhone,
-        applicantDob: app.applicantDob,
         currentAddress: app.currentAddress,
         currentLandlordName: app.currentLandlordName,
         currentLandlordPhone: app.currentLandlordPhone,
         currentRent: app.currentRent,
-        reasonForLeaving: app.reasonForLeaving,
         employerName: app.employerName,
         employerPhone: app.employerPhone,
         occupation: app.occupation,
         monthlyIncome: app.monthlyIncome,
         moveInDate: app.moveInDate,
-        state: app.state,
-        hasPets: app.hasPets,
-        petDescription: app.petDescription,
-        vehicleInfo: app.vehicleInfo,
-        emergencyContactName: app.emergencyContactName,
-        emergencyContactPhone: app.emergencyContactPhone,
-        additionalOccupants: app.additionalOccupants,
         backgroundCheckConsent: app.backgroundCheckConsent,
         creditCheckConsent: app.creditCheckConsent,
-        notes: app.notes,
       };
 
       const systemPrompt = `You are a senior rental application fraud analyst with 20 years of experience working for institutional property management companies across the United States. You have reviewed over 50,000 rental applications and have an encyclopedic knowledge of fraud patterns, synthetic identity schemes, and application manipulation tactics.
@@ -4106,12 +4103,11 @@ INCOME FRAUD:
 
 IDENTITY FRAUD:
 - Email address contains random strings, numbers, or does not match the applicant name
-- Name and date of birth combination is inconsistent with stated history
 - Multiple applications from same IP or same phone number (if detectable)
 - Social Security Number format issues (if provided)
 
 ADDRESS FRAUD:
-- Current address is a hotel, motel, shelter, or commercial address
+- Current address is a commercial address, PMB or virtual office
 - Previous address history has unexplained gaps
 - Addresses are in states or cities that conflict with stated employment
 - P.O. Box listed as residential address
@@ -4126,10 +4122,6 @@ TIMELINE INCONSISTENCIES:
 - Employment history has unexplained gaps of more than 6 months
 - Application dates, move-in dates, or employment dates are in the future or the distant past
 
-CO-LIVING SPECIFIC (if applicable):
-- Applicant does not acknowledge the shared living arrangement
-- Number of occupants exceeds what is appropriate for a co-living room
-- Applicant lists co-living address as a permanent residence for mail/legal purposes
 
 POSITIVE INDICATORS TO ACKNOWLEDGE:
 - Income clearly exceeds 3x rent
@@ -4147,7 +4139,13 @@ SCORING (overallScore is a RISK score from 0–100; HIGHER = HIGHER RISK):
 
 The score MUST be internally consistent with your recommendation. If you recommend "decline", the score must be >= 60. If you recommend "approve", the score must be <= 40.
 
-Always be specific. Quote the exact data that triggered each concern. Do not make vague statements like "income seems low" — instead say "Stated income of $2,800/month is below the 3x rent threshold of $3,600/month for a $1,200/month unit." Return a complete JSON response every time without exception.`;
+Always be specific. Quote the exact data that triggered each concern. Do not make vague statements like "income seems low" — instead say "Stated income of $2,800/month is below the 3x rent threshold of $3,600/month for a $1,200/month unit." Return a complete JSON response every time without exception.
+
+FAIR HOUSING — NON-NEGOTIABLE:
+- You only assess fraud and verifiability: income/employer consistency, document or data tampering, identity and reference mismatches.
+- Never consider or infer race, color, religion, national origin, sex, sexual orientation, gender identity, familial status, disability, age, marital status, military status, or source of income.
+- Housing vouchers, Section 8, Social Security, disability benefits, child support, alimony and other lawful income count as income. Never treat them as negative or as "vague".
+- Every risk factor must cite the specific application data that triggered it. The landlord makes the final decision.`;
 
       const userPrompt = `PROPERTY
 ${propertyAddress}
