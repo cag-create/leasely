@@ -22,9 +22,9 @@ const FEATURES = [
     category: "Tenant Screening & Applications",
     items: [
       { label: "Online Rental Applications", values: [true, true, true, true, false, true] },
-      { label: "AI Fraud Detection — Included Free", values: [true, false, false, false, false, false] },
+      { label: "AI Fraud Screening Included in Plan", values: [true, "—", "—", "—", "—", "—"] },
       { label: "Background & Credit Checks", values: [true, true, true, true, false, false] },
-      { label: "State-Specific Application Templates", values: [true, false, false, false, false, false] },
+      { label: "Built-in State Lease Templates (NC & TN today)", values: [true, "—", "—", "—", false, false] },
       { label: "Digital Signature Capture", values: [true, true, true, true, false, false] },
     ],
   },
@@ -61,11 +61,9 @@ const FEATURES = [
     category: "Pricing & Value",
     items: [
       { label: "Free Tier Available", values: [true, false, true, true, true, true] },
-      { label: "Pro Price / month", values: ["$25/mo flat", "$55–$375+/mo", "$9/unit/mo", "$8.25+/mo", "Listing fees", "Listing fees"] },
-      { label: "Per-Unit Fees", values: ["None ✓", "Yes (scales)", "Yes", "Yes", "Varies", "Varies"] },
-      { label: "Per-Transaction Fees on Work Orders", values: ["None ✓", "Yes", "Yes", "Varies", "N/A", "N/A"] },
-      { label: "Markup on Vendor Invoices", values: ["None ✓", "Yes", "Yes", "Varies", "N/A", "N/A"] },
-      { label: "AI Screening Included (no add-on)", values: [true, false, false, false, false, false] },
+      { label: "Paid Plan Price / month", values: ["$25/mo flat", "$65–$420/mo", "$9/unit/mo", "$12.42–$16.48/mo", "Listing fees", "Listing fees"] },
+      { label: "Per-Unit Pricing", values: ["None ✓", "Tiered by units", "Yes", "No", "Varies", "Varies"] },
+      { label: "Keycove fee on your work orders", values: ["None ✓", "—", "—", "—", "N/A", "N/A"] },
     ],
   },
 ];
@@ -160,8 +158,8 @@ export default function Compare() {
           {/* Footer note */}
           <div className="px-6 py-4 bg-muted/20 border-t border-border">
             <p className="text-xs text-muted-foreground">
-              * Buildium starts at $55/mo (Essential, up to 20 units) and scales to $375+/mo. Avail charges $9/unit/mo on their paid plan. TurboTenant is $8.25+/mo per property. Zillow &amp; Apartments.com charge listing/lead fees. None include AI fraud screening as a built-in feature.
-              <strong className="text-foreground"> Keycove Pro is $25/mo flat — unlimited listings, AI screening included, no per-unit fees, no per-transaction fees, no vendor invoice markups. We don't nickel-and-dime.</strong>
+              * Competitor pricing from their published plans as of Nov 2026: Buildium from $65/mo (Essential), $202/mo (Growth), $420/mo (Premium). Avail has a free plan; Unlimited Plus is $9/unit/mo. TurboTenant has a free plan; paid plans are $12.42–$16.48/mo. AppFolio is quote-only (roughly $1.49/unit with a 50-unit / ~$298/mo minimum). Zillow &amp; Apartments.com charge listing/lead fees. &ldquo;—&rdquo; means we couldn&apos;t confirm it from public information; competitors change features and prices often, so check their sites.
+              <strong className="text-foreground"> Keycove Pro is $25/mo flat — unlimited listings, AI fraud screening included, no per-unit pricing, no cut of your work orders.</strong>
             </p>
           </div>
         </div>
@@ -170,7 +168,7 @@ export default function Compare() {
         <div className="mt-10 rounded-2xl bg-[#1B2B5E] text-white p-8 text-center space-y-4">
           <h2 className="text-2xl font-black">Ready to switch to Keycove?</h2>
           <p className="text-blue-100">
-            Unlimited listings + AI screening + instant payouts — all for $25/mo flat. No per-unit fees. No per-transaction fees. No vendor invoice markups. We don't nickel-and-dime.
+            Unlimited listings + AI screening + instant payouts — all for $25/mo flat. No per-unit pricing and no cut of your work orders.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/pricing">

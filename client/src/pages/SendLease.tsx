@@ -57,7 +57,7 @@ export default function SendLease() {
               </div>
               <h2 className="text-xl font-semibold mb-2">Use a Keycove template</h2>
               <p className="text-sm text-muted-foreground mb-6">
-                State-specific lease with the required disclosures, deposit caps, and notice periods built in. Choose
+                State-specific lease (North Carolina and Tennessee today) with the required disclosures, deposit caps, and notice periods built in. Other states: upload your own lease. Choose
                 Standard Residential or Co-Living.
               </p>
               <ul className="text-sm space-y-1.5 text-muted-foreground mb-6">

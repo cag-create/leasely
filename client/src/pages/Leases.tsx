@@ -633,7 +633,7 @@ export default function Leases() {
               <FileText className="w-8 h-8 text-[#1B2B5E]" />
               Lease Agreements
             </h1>
-            <p className="text-gray-500 mt-1">State-specific leases — create, send, and track e-signatures</p>
+            <p className="text-gray-500 mt-1">Built-in NC & TN leases or upload your own — create, send, and track e-signatures</p>
           </div>
           <div className="flex gap-2">
             <Link href="/import-tenants">

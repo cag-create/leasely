@@ -90,7 +90,7 @@ export default function ContractorDirectory() {
             <span style={{ color: ACCENT }}>Contractors Near You</span>
           </h1>
           <p className="text-lg text-white/70 max-w-2xl mx-auto mb-8">
-            Browse verified, background-checked contractors and handymen across all 50 states.
+            Browse approved contractors and handymen across all 50 states.
             From plumbing to painting — find the right pro for any job.
           </p>
 

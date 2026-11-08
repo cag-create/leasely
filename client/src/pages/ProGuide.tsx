@@ -41,7 +41,7 @@ export default function ProGuide() {
             ["Unlimited listings", "First one is free even without Pro"],
             ["Stripe instant payouts", "Next business day, automatic"],
             ["AI applicant screening", "Risk score + flagged anomalies"],
-            ["State-specific leases", "E-sign + first-month + deposit collection"],
+            ["State leases (NC & TN) or your own", "E-sign + first-month + deposit collection"],
             ["Bulk migration import", "Move a whole portfolio + leases in one upload"],
             ["Apartments & co-living", "Rent by the unit (4B) or by the room (Room 1)"],
             ["Work-order dispatch", "Vendor SMS + AI scope summary"],

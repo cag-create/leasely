@@ -100,31 +100,20 @@ const howItWorks = [
   { step: "04", title: "Manage Everything", desc: "Applications, rent payments, work orders, accounting — all in one place from day one.", icon: BarChart3 },
 ];
 
-// Realistic landlord-persona testimonial placeholders. These are NOT real
-// quotes — they're written to read naturally for a brand-new product. Every
-// claim references a feature that's actually shipped today: AI screening
-// flags (employer realism, virtual-office address, income vs. rent ratio),
-// $25 flat pricing, branded portal subdomain, tenant rent collection via
-// Stripe Connect, work orders, per-property P&L in Accounting. Swap to
-// real ones the moment beta users send them in.
-const TESTIMONIALS = [
+// What Keycove fixes for a small landlord. No customer quotes here until real,
+// attributable reviews exist (FTC 16 CFR 465 bans fabricated testimonials).
+const PAIN_POINTS = [
   {
-    quote: "I run six rentals across two states. Before Keycove I was juggling Avail, a separate background-check site, and a Google Sheet for payments. Now the application, screening, lease, and rent collection all sit in one tab. The AI screening flagged a 'consulting firm' employer at a UPS Store address the same day I forwarded the application — I never would've checked the address myself.",
-    name: "Marcus T.",
-    role: "Landlord · 6 units",
-    location: "Charlotte, NC",
+    title: "One tab instead of five",
+    body: "Applications, screening, the lease, e-signature and rent collection live in one place, instead of a listing site, a background-check site, a lease template and a spreadsheet.",
   },
   {
-    quote: "I'm a small-portfolio landlord — three doors. The flat $25/month is the whole pitch for me. AppFolio quoted me a $400/mo minimum and Buildium wanted per-unit fees on top. Keycove doesn't care if I have 3 units or 30.",
-    name: "Priya R.",
-    role: "Self-managing landlord",
-    location: "Austin, TX",
+    title: "Fraud flags you'd miss",
+    body: "AI screening reads every application and calls out what deserves a second look, like an employer listed at a virtual-office address or income that doesn't fit the job. You make the decision.",
   },
   {
-    quote: "I manage a 12-unit building for my dad. The branded portal under our own subdomain made us look like a real management company overnight. Tenants pay rent through it, work orders come in through it, and I can pull a P&L any time he asks.",
-    name: "Devin O.",
-    role: "Property manager · 12 units",
-    location: "Cleveland, OH",
+    title: "Flat $25, whether you have 3 units or 30",
+    body: "No per-unit pricing and no cut of your work orders. Your tenants pay rent online, maintenance requests come in through your portal, and your P&L is always one click away.",
   },
 ];
 
@@ -185,22 +174,23 @@ export default function Home() {
               </div>
 
               <p className="text-lg md:text-xl text-white/65 leading-relaxed max-w-lg">
-                List, screen, sign, collect, and dispatch — every step of the lease lifecycle on a single screen. <span className="text-white font-semibold">$25/month flat.</span> No per-unit fees. No per-transaction fees. No vendor invoice markups. <span className="text-[#4F46E5] font-semibold">We don't nickel-and-dime.</span>
+                List, screen, sign, collect, and dispatch — every step of the lease lifecycle on a single screen. <span className="text-white font-semibold">$25/month flat.</span> No per-unit fees. No cut of your work orders. <span className="text-[#4F46E5] font-semibold">We don't nickel-and-dime.</span>
               </p>
 
               {/* Competitive strip */}
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-white/40">
                 <span className="text-white/60 font-semibold">vs.</span>
                 {[
-                  { name: "AppFolio", price: "$1.40/unit + $400/mo min" },
-                  { name: "Buildium", price: "$58/mo + $1.25/unit" },
-                  { name: "Avail", price: "$5/unit/mo (Premium)" },
+                  { name: "AppFolio", price: "~$1.49/unit, ~$298/mo min" },
+                  { name: "Buildium", price: "from $65/mo" },
+                  { name: "Avail", price: "$9/unit/mo (Unlimited Plus)" },
                 ].map(c => (
                   <span key={c.name} className="inline-flex items-center gap-1">
                     <span className="text-white/70 font-medium">{c.name}</span>
                     <span className="text-white/35">{c.price}</span>
                   </span>
                 ))}
+                <span className="text-white/25">(published pricing as of Nov 2026)</span>
               </div>
 
               {/* Search — find rentals by city / address */}
@@ -365,7 +355,7 @@ export default function Home() {
                 <span className="text-gradient">All&nbsp;50</span>
               </div>
               <div className="text-sm font-semibold text-white/80">States Supported</div>
-              <div className="text-xs text-white/40 mt-0.5">State-specific leases & disclosures</div>
+              <div className="text-xs text-white/40 mt-0.5">Built-in leases for NC &amp; TN · bring your own lease anywhere</div>
             </div>
             <AnimatedStat value={0} prefix="$" label="First Listing" sublabel="Always free" />
           </div>
@@ -561,52 +551,35 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          TESTIMONIALS — beta landlord personas (clearly framed)
+          WHY KEYCOVE — no testimonials until we have real ones
           ═══════════════════════════════════════════════════════ */}
       <section className="py-20 bg-secondary/20 border-y border-border">
         <div className="container max-w-6xl mx-auto px-4">
           <div className="text-center mb-12 reveal-on-scroll opacity-0">
             <Badge className="mb-4 text-xs font-semibold px-3 py-1 bg-[#4F46E5]/10 text-[#4338CA] border-0">
-              From Our Beta Landlords
+              Built by a landlord
             </Badge>
             <h2 className="text-3xl md:text-4xl font-black text-foreground mb-3">
-              Built with the landlords<br />
+              Built for the landlords<br />
               <span className="text-gradient">actually doing the work.</span>
             </h2>
             <p className="text-muted-foreground text-base max-w-xl mx-auto">
-              Every feature in Keycove traces back to a real pain point a small-portfolio landlord told us about.
+              Keycove started as the tool our founder needed to run his own rentals.
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t, i) => (
+            {PAIN_POINTS.map((t, i) => (
               <div
-                key={t.name}
+                key={t.title}
                 className="reveal-on-scroll opacity-0 rounded-2xl border border-border bg-card p-6 hover:border-[#4F46E5]/40 hover:shadow-lg transition-all duration-300"
                 style={{ animationDelay: `${i * 120}ms` }}
               >
-                <div className="flex gap-1 mb-4" aria-label="5 star testimonial">
-                  {Array.from({ length: 5 }).map((_, idx) => (
-                    <svg key={idx} className="h-4 w-4 fill-[#4F46E5] text-[#4F46E5]" viewBox="0 0 20 20"><path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9 4.8 17.6l1-5.8L1.5 7.7l5.9-.9z"/></svg>
-                  ))}
-                </div>
-                <p className="text-sm text-foreground/85 leading-relaxed mb-5">&ldquo;{t.quote}&rdquo;</p>
-                <div className="flex items-center gap-3 pt-4 border-t border-border">
-                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#4F46E5] to-[#4338CA] flex items-center justify-center text-[#3A2410] font-black text-sm">
-                    {t.name.split(" ").map(n => n[0]).join("")}
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-foreground">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role} · {t.location}</p>
-                  </div>
-                </div>
+                <p className="text-base font-bold text-foreground mb-2">{t.title}</p>
+                <p className="text-sm text-foreground/80 leading-relaxed">{t.body}</p>
               </div>
             ))}
           </div>
-
-          <p className="text-center text-[11px] text-muted-foreground/70 mt-8 italic max-w-2xl mx-auto">
-            Quotes are composite testimonials from our private beta cohort, lightly edited for clarity. Identifying details have been changed.
-          </p>
         </div>
       </section>
 
