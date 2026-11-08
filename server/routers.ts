@@ -665,6 +665,7 @@ const istayRouter = router({
 import { leasesRouter, adminLeaseTemplatesRouter } from "./leases/router";
 import { hoaRouter } from "./hoa/router";
 import { moveInRouter } from "./moveIn/router";
+import { hasUnresolvedPlaceholders, UNRESOLVED_LEASE_MESSAGE } from "./leases/render";
 import { createLeaseDocument, createLeaseSignature, getLatestTemplateVersionForState, logLeaseAudit, getTemplateVersionById, listLeaseDocumentsByAgreement, updateLeaseDocument } from "./leases/db-helpers";
 import { renderTemplate } from "./leases/render";
 
@@ -3843,6 +3844,7 @@ export const appRouter = router({
           // no generic fallback was seeded, we still return the leaseAgreement
           // id and surface a "draft manually" UX path on the client.
           let leaseDocumentId: number | undefined;
+          let draftUnresolved: string[] = [];
           try {
             const templateForState = await getLatestTemplateVersionForState(state);
             if (!templateForState) {
@@ -3881,6 +3883,7 @@ export const appRouter = router({
                 state,
               };
               const rendered = renderTemplate(templateForState.bodyHtml, variables as any, citations);
+              draftUnresolved = rendered.unresolved;
               leaseDocumentId = await createLeaseDocument({
                 landlordUserId: ctx.user.id,
                 leaseAgreementId: leaseId,
@@ -3949,6 +3952,28 @@ export const appRouter = router({
               }).catch(() => {});
             }
             return { success: true, draftLeaseId: null, leaseAgreementId: leaseId };
+          }
+
+          // The lease rendered but still has required fields the approval form
+          // doesn't collect (e.g. late fee, utilities). Never send a tenant a
+          // lease with blanks in it — ask the landlord to finish and send it.
+          if (draftUnresolved.length > 0) {
+            if (landlord?.email) {
+              const fieldList = draftUnresolved.map(f => f.replace(/_/g, " ")).join(", ");
+              sendEmail({
+                to: landlord.email,
+                subject: `Finish and send the lease for ${app.applicantName ?? "your applicant"} (${finalAddress})`,
+                html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+                  <h2 style="color:#1B2B5E">Application approved — your ${state} lease is drafted</h2>
+                  <p>You approved <strong>${app.applicantName ?? "the applicant"}</strong> for <strong>${finalAddress}</strong>. Keycove drafted the lease from the ${state} template.</p>
+                  <p style="background:#fff7ed;border-left:4px solid #f59e0b;padding:12px 14px;border-radius:6px">
+                    A few terms still need your input before the tenant can sign: <strong>${fieldList}</strong>. Open the draft, fill them in (and check the early termination fee and notice period), then send it.
+                  </p>
+                  <p style="margin-top:16px"><a href="${APP_URL}/leases/draft/${leaseDocumentId}" style="background:#1B2B5E;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold">Finish the lease →</a></p>
+                </div>`,
+              }).catch(() => {});
+            }
+            return { success: true, draftLeaseId: leaseDocumentId, leaseAgreementId: leaseId };
           }
 
           await updateLeaseAgreement(leaseId, ctx.user.id, { status: "sent", sentAt: new Date() } as any);
@@ -5552,8 +5577,12 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
 
       const lease = await getLeaseById(input.leaseId);
       if (!lease || lease.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
-      if (!(await getSignableLeaseDocument(lease.id))) {
+      const signable = await getSignableLeaseDocument(lease.id);
+      if (!signable) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: NO_LEASE_DOCUMENT_MESSAGE });
+      }
+      if (hasUnresolvedPlaceholders(signable.renderedHtml)) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: UNRESOLVED_LEASE_MESSAGE });
       }
 
       await updateLeaseAgreement(input.leaseId, ctx.user.id, { status: "sent", sentAt: new Date() });

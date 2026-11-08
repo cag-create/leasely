@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Upload, ShieldCheck, ChevronRight } from "lucide-react";
+import { approvedStatesShort, approvedStatesPhrase } from "@shared/leaseStateApprovals";
 
 export default function SendLease() {
   const [, navigate] = useLocation();
@@ -57,12 +58,12 @@ export default function SendLease() {
               </div>
               <h2 className="text-xl font-semibold mb-2">Use a Keycove template</h2>
               <p className="text-sm text-muted-foreground mb-6">
-                State-specific lease (North Carolina and Tennessee today) with the required disclosures, deposit caps, and notice periods built in. Other states: upload your own lease. Choose
+                State-specific lease ({approvedStatesPhrase()} today) with the required disclosures, deposit caps, and notice periods built in. Other states: upload your own lease. Choose
                 Standard Residential or Co-Living.
               </p>
               <ul className="text-sm space-y-1.5 text-muted-foreground mb-6">
-                <li>• North Carolina &amp; Tennessee available</li>
-                <li>• Other states fall back to a generic multi-state template</li>
+                <li>• Available for {approvedStatesPhrase()}</li>
+                <li>• Built-in lease-break option with military and domestic-violence protections</li>
                 <li>• Edit clauses and add custom terms</li>
               </ul>
               <div className="flex items-center text-xs text-muted-foreground mb-3">

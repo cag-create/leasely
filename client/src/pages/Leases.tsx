@@ -15,6 +15,7 @@ import {
   FileText, Plus, CheckCircle2, Clock, Send, AlertTriangle,
   Home, DollarSign, Calendar, Key, ChevronRight, Users, Pencil, Trash2, Upload
 } from "lucide-react";
+import { approvedStatesShort, approvedStatesPhrase } from "@shared/leaseStateApprovals";
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
@@ -633,7 +634,7 @@ export default function Leases() {
               <FileText className="w-8 h-8 text-[#1B2B5E]" />
               Lease Agreements
             </h1>
-            <p className="text-gray-500 mt-1">Built-in NC & TN leases or upload your own — create, send, and track e-signatures</p>
+            <p className="text-gray-500 mt-1">Built-in {approvedStatesShort()} leases or upload your own — create, send, and track e-signatures</p>
           </div>
           <div className="flex gap-2">
             <Link href="/move-to-keycove">

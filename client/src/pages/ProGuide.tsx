@@ -6,6 +6,7 @@ import {
   AlertTriangle, ShieldOff, CheckCircle2, ChevronRight, Sparkles,
   ArrowRight, Search, DoorOpen, Upload, FileSignature, Link2,
 } from "lucide-react";
+import { approvedStatesShort, approvedStatesPhrase } from "@shared/leaseStateApprovals";
 
 const ACCENT = "#4F46E5";
 
@@ -41,7 +42,7 @@ export default function ProGuide() {
             ["Unlimited listings", "First one is free even without Pro"],
             ["Stripe instant payouts", "Next business day, automatic"],
             ["AI applicant screening", "Risk score + flagged anomalies"],
-            ["State leases (NC & TN) or your own", "E-sign + first-month + deposit collection"],
+            [`State leases (${approvedStatesShort()}) or your own`, "E-sign + first-month + deposit collection"],
             ["Move to Keycove import", "Units, tenants, leases & HOAs in one pass — CSV, Excel or Google Sheets"],
             ["HOA dues tracking", "Reminders, statement AI, logged to Accounting"],
             ["Apartments & co-living", "Rent by the unit (4B) or by the room (Room 1)"],

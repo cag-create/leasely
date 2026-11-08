@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { LOGO_URL } from "@/lib/brand";
 import Navbar from "@/components/Navbar";
+import { approvedStatesShort, approvedStatesPhrase } from "@shared/leaseStateApprovals";
 
 // Scroll reveal — adds `.animate-fade-in-up` when the section enters the viewport.
 // Used by `reveal-on-scroll` wrappers so blocks slide+fade up on entry.
@@ -355,7 +356,7 @@ export default function Home() {
                 <span className="text-gradient">All&nbsp;50</span>
               </div>
               <div className="text-sm font-semibold text-white/80">States Supported</div>
-              <div className="text-xs text-white/40 mt-0.5">Built-in leases for NC &amp; TN · bring your own lease anywhere</div>
+              <div className="text-xs text-white/40 mt-0.5">Built-in leases for {approvedStatesShort()} · bring your own lease anywhere</div>
             </div>
             <AnimatedStat value={0} prefix="$" label="First Listing" sublabel="Always free" />
           </div>

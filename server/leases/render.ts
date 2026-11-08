@@ -8,6 +8,8 @@
 // instead of shipping a lease with `{{tenant_name}}` still in the text).
 
 import { escapeHtml, money, formatDate } from "./utils";
+import { computeLeaseValues } from "./states/compute";
+import { getStateProfile } from "./states";
 
 export interface RenderVariables {
   landlord_name?: string;
@@ -52,7 +54,7 @@ const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
  */
 function formatValue(key: string, value: unknown): string {
   if (value === undefined || value === null || value === "") return "";
-  if (key === "monthly_rent" || key === "security_deposit" || key === "late_fee" || key === "pet_fee") {
+  if (key === "monthly_rent" || key === "security_deposit" || key === "late_fee" || key === "pet_fee" || key === "early_termination_fee") {
     const n = typeof value === "number" ? value : Number(value);
     if (!Number.isNaN(n)) return money(n);
   }
@@ -63,15 +65,28 @@ function formatValue(key: string, value: unknown): string {
   return escapeHtml(String(value));
 }
 
+/** True when rendered lease HTML still contains a required field the landlord hasn't filled. */
+export function hasUnresolvedPlaceholders(html: string | null | undefined): boolean {
+  return !!html && html.includes('class="lease-unresolved"');
+}
+
+export const UNRESOLVED_LEASE_MESSAGE =
+  "This lease still has required fields to fill in (shown in red). Open the lease, fill them in, then send it.";
+
 export function renderTemplate(bodyHtml: string, vars: RenderVariables, citations: string[] = []): RenderResult {
   const unresolved = new Set<string>();
   const warnings: string[] = [];
 
+  // Computed defaults (early termination fee/notice, ordinal due day, end
+  // date from term) and state-cap clamping + warnings.
+  const profile = getStateProfile(typeof vars.state === "string" ? vars.state : undefined);
+  const computed = computeLeaseValues(vars as Record<string, unknown>, profile);
+  warnings.push(...computed.warnings);
+  const effectiveVars: RenderVariables = { ...computed.vars };
   // Derive a combined landlord display string so legacy templates that only
   // reference {{landlord_name}} still show the company / DBA when both are
   // provided. Keeps the two fields editable independently in the UI while
   // requiring no template body changes.
-  const effectiveVars: RenderVariables = { ...vars };
   const llName = typeof effectiveVars.landlord_name === "string" ? effectiveVars.landlord_name.trim() : "";
   const llCompany = typeof effectiveVars.landlord_company === "string" ? effectiveVars.landlord_company.trim() : "";
   if (llName && llCompany) {
@@ -87,18 +102,6 @@ export function renderTemplate(bodyHtml: string, vars: RenderVariables, citation
     unresolved.add(name);
     return `<span class="lease-unresolved" data-var="${escapeHtml(name)}">[${escapeHtml(name)} — required]</span>`;
   });
-
-  // Soft compliance warnings — state-specific guardrails that don't block
-  // rendering but surface to the landlord on the preview screen.
-  if (typeof vars.state === "string" && vars.state.toUpperCase() === "NC") {
-    const rent = Number(vars.monthly_rent);
-    const dep = Number(vars.security_deposit);
-    if (!Number.isNaN(rent) && !Number.isNaN(dep) && dep > rent * 1.5 && vars.lease_end_date) {
-      warnings.push(
-        `North Carolina caps the security deposit at 1.5 months' rent (max $${(rent * 1.5).toFixed(2)}) for terms longer than month-to-month under N.C. Gen. Stat. § 42-50. The amount entered ($${dep.toFixed(2)}) exceeds the statutory cap and is unenforceable to the extent of the excess; the tenant is entitled to recover the excess plus reasonable attorney's fees under § 42-52.`,
-      );
-    }
-  }
 
   return {
     html,

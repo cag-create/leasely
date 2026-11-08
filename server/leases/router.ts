@@ -21,7 +21,9 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
-import { renderTemplate } from "./render";
+import { renderTemplate, hasUnresolvedPlaceholders, UNRESOLVED_LEASE_MESSAGE } from "./render";
+import { approvedStateCodes, isStateApproved, getStateProfile } from "./states";
+import { DEFAULT_EARLY_TERMINATION_MONTHS, DEFAULT_EARLY_TERMINATION_NOTICE_DAYS } from "./states/compute";
 import {
   listLeaseTemplates, getLeaseTemplate, getTemplateVersion, listTemplateVersions,
   createTemplateVersion, createLeaseDocument, getLeaseDocument, updateLeaseDocument,
@@ -60,22 +62,37 @@ const VARS_SCHEMA = z.object({
 
 export const leasesRouter = router({
   listTemplates: protectedProcedure.query(async () => {
-    return listLeaseTemplates();
+    // Landlords only see templates for approved states.
+    const rows = await listLeaseTemplates();
+    return rows.filter(t => isStateApproved(t.state));
+  }),
+
+  /**
+   * States with an approved built-in lease (public: also drives marketing
+   * copy). Includes the wizard's early termination defaults.
+   */
+  approvedStates: publicProcedure.query(() => {
+    return {
+      states: approvedStateCodes().map(code => ({ code, name: getStateProfile(code)?.name ?? code })),
+      earlyTerminationDefaults: {
+        months: DEFAULT_EARLY_TERMINATION_MONTHS,
+        noticeDays: DEFAULT_EARLY_TERMINATION_NOTICE_DAYS,
+      },
+    };
   }),
 
   getTemplate: protectedProcedure
     .input(z.object({ state: STATE_CODE, category: CATEGORY }))
     .query(async ({ input }) => {
-      const tpl = await getLeaseTemplate(input.state, input.category);
-      if (!tpl) {
-        // Fall back to the multi-state generic.
-        const generic = await getLeaseTemplate("ALL", "generic");
-        if (!generic) return null;
-        const ver = generic.activeVersionId ? await getTemplateVersion(generic.activeVersionId) : undefined;
-        return { template: generic, version: ver, fellBackToGeneric: true };
+      // No generic fallback: a state without an approved template returns
+      // notApproved so the wizard can send the landlord to upload their own.
+      if (!isStateApproved(input.state)) {
+        return { template: null, version: null, fellBackToGeneric: false, notApproved: true };
       }
+      const tpl = await getLeaseTemplate(input.state, input.category);
+      if (!tpl) return { template: null, version: null, fellBackToGeneric: false, notApproved: true };
       const ver = tpl.activeVersionId ? await getTemplateVersion(tpl.activeVersionId) : undefined;
-      return { template: tpl, version: ver, fellBackToGeneric: false };
+      return { template: tpl, version: ver, fellBackToGeneric: false, notApproved: false };
     }),
 
   preview: protectedProcedure
@@ -101,9 +118,13 @@ export const leasesRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const ver = await getTemplateVersion(input.templateVersionId);
-      if (!ver) throw new TRPCError({ code: "NOT_FOUND" });
+      if (!ver || ver.templateId !== input.templateId) throw new TRPCError({ code: "NOT_FOUND" });
+      const tplRow = (await listLeaseTemplates()).find(t => t.id === input.templateId);
+      if (!tplRow || !isStateApproved(tplRow.state)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Keycove doesn't offer a built-in lease for this state yet. Upload your own lease instead." });
+      }
       const citations: string[] = ver.citations ? JSON.parse(ver.citations) : [];
-      const rendered = renderTemplate(ver.bodyHtml, input.variables as any, citations);
+      const rendered = renderTemplate(ver.bodyHtml, { ...(input.variables as any), state: tplRow.state }, citations);
       const id = await createLeaseDocument({
         landlordUserId: ctx.user.id,
         leaseAgreementId: input.leaseAgreementId,
@@ -254,6 +275,9 @@ export const leasesRouter = router({
       if (!doc || doc.landlordUserId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
       if (!doc.legalDisclaimerAcknowledgedAt) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Legal disclaimer must be acknowledged before sending" });
+      }
+      if (hasUnresolvedPlaceholders(doc.renderedHtml)) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: UNRESOLVED_LEASE_MESSAGE });
       }
       await updateLeaseDocument(input.id, { status: "sent" });
 

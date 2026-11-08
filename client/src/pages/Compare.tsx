@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { CheckCircle2, XCircle, Minus, ArrowRight, Zap } from "lucide-react";
+import { approvedStatesShort, approvedStatesPhrase } from "@shared/leaseStateApprovals";
 
 const COMPETITORS = ["Keycove", "Buildium", "Avail", "TurboTenant", "Zillow Rental", "Apartments.com"];
 
@@ -24,7 +25,7 @@ const FEATURES = [
       { label: "Online Rental Applications", values: [true, true, true, true, false, true] },
       { label: "AI Fraud Screening Included in Plan", values: [true, "—", "—", "—", "—", "—"] },
       { label: "Background & Credit Checks", values: ["Coming soon", true, true, true, false, false] },
-      { label: "Built-in State Lease Templates (NC & TN today)", values: [true, "—", "—", "—", false, false] },
+      { label: `Built-in State Lease Templates (${approvedStatesShort()} today)`, values: [true, "—", "—", "—", false, false] },
       { label: "Digital Signature Capture", values: [true, true, true, true, false, false] },
     ],
   },

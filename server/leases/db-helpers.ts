@@ -13,6 +13,7 @@ import {
   type InsertLeaseDocument, type InsertLeaseSignature, type InsertLeaseAuditLog,
 } from "../../drizzle/schema";
 import { SEED_TEMPLATES } from "./seed-templates";
+import { isStateApproved } from "./states";
 
 // ─── Templates ──────────────────────────────────────────────────────────────
 
@@ -117,9 +118,9 @@ export async function listTemplateVersions(templateId: number): Promise<LeaseTem
  * Used by the application-approval flow to auto-render a draft lease document
  * the moment the landlord approves an applicant. Returns the version row with
  * the parent templateId attached so the caller can persist both ids on the
- * lease_documents row. Falls back to the "ALL" generic template when no
- * state-specific template exists. Returns undefined only if even the generic
- * template hasn't been seeded.
+ * lease_documents row. Returns undefined when the state's template is not
+ * approved (shared/leaseStateApprovals.ts) — there is deliberately NO generic
+ * fallback, so the caller asks the landlord to attach their own lease.
  */
 export async function getLatestTemplateVersionForState(
   state: string,
@@ -127,10 +128,11 @@ export async function getLatestTemplateVersionForState(
 ): Promise<(LeaseTemplateVersion & { templateId: number }) | undefined> {
   const db = await getDb();
   if (!db) return undefined;
-  const tryStates = [state, "ALL"];
-  for (const s of tryStates) {
+  const code = (state ?? "").trim().toUpperCase();
+  if (!isStateApproved(code)) return undefined;
+  for (const s of [code]) {
     const tpl = await db.select().from(leaseTemplates)
-      .where(and(eq(leaseTemplates.state, s), eq(leaseTemplates.category, s === "ALL" ? "generic" : category), eq(leaseTemplates.isActive, 1)))
+      .where(and(eq(leaseTemplates.state, s), eq(leaseTemplates.category, category), eq(leaseTemplates.isActive, 1)))
       .limit(1);
     if (!tpl[0]) continue;
     // Prefer the activeVersionId pointer; fall back to highest version number.

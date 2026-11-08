@@ -16,9 +16,12 @@ export function money(n: number): string {
 
 export function formatDate(iso?: string): string {
   if (!iso) return "—";
-  const d = new Date(iso);
+  // Date-only strings ("2027-01-01") are calendar dates, not instants: format
+  // them in UTC so the server's timezone can't shift them a day earlier.
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(iso.trim());
+  const d = new Date(dateOnly ? `${iso.trim()}T00:00:00Z` : iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", ...(dateOnly ? { timeZone: "UTC" } : {}) });
 }
 
 export function fullAddress(input: LeaseRenderInput): string {

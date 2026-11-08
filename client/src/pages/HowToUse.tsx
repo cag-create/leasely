@@ -5,6 +5,7 @@ import {
   Wrench, UserCircle, Headphones, ArrowRight, CheckCircle2, Sparkles,
   Search, Award, Upload, Building,
 } from "lucide-react";
+import { approvedStatesShort, approvedStatesPhrase } from "@shared/leaseStateApprovals";
 
 const ACCENT = "#4F46E5";
 
@@ -100,7 +101,7 @@ const STEPS: Step[] = [
     n: 7,
     icon: FileText,
     title: "Send a lease & e-sign",
-    body: "Generate a state lease (built in for NC and TN; upload your own elsewhere), send it for e-signature, and collect the first month's rent plus deposit at signing — all in one flow.",
+    body: `Generate a state lease (built in for ${approvedStatesShort()}; upload your own elsewhere), send it for e-signature, and collect the first month's rent plus deposit at signing — all in one flow.`,
     points: [
       "State-aware lease templates",
       "Tenant e-signs online",

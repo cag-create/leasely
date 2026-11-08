@@ -10,6 +10,8 @@
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
+    "lease:approve": "tsx scripts/approve-lease-states.ts",
+    "lease:packets": "tsx scripts/lease-review-packets.ts",
     "db:push": "drizzle-kit push --force"
   },
   "dependencies": {

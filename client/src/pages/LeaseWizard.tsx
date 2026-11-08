@@ -14,11 +14,8 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Loader2, AlertCircle, ChevronRight, CheckCircle2 } from "lucide-react";
 
-const US_STATES = [
-  "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD",
-  "MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC",
-  "SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC",
-];
+// Only states with an owner-approved template are offered
+// (server: leaseDocs.approvedStates). Everyone else uploads their own lease.
 
 type Category = "standard_residential" | "coliving_room_rental";
 
@@ -37,6 +34,8 @@ interface FormVars {
   lease_end_date: string;
   rent_due_day: string;
   late_fee: string;
+  early_termination_fee: string;
+  early_termination_notice_days: string;
   utilities: string;
   pets_allowed: string;
   parking: string;
@@ -60,6 +59,8 @@ const emptyVars: FormVars = {
   lease_end_date: "",
   rent_due_day: "1",
   late_fee: "",
+  early_termination_fee: "",
+  early_termination_notice_days: "30",
   utilities: "Tenant pays electricity, gas, internet; landlord pays water and trash.",
   pets_allowed: "No",
   parking: "",
@@ -111,6 +112,15 @@ export default function LeaseWizard() {
     return () => clearTimeout(handle);
   }, [state, category, vars, customClauses]);
 
+  const approvedQuery = (trpc as any).leaseDocs.approvedStates.useQuery();
+  const approvedStates: Array<{ code: string; name: string }> = approvedQuery.data?.states ?? [];
+  useEffect(() => {
+    // Snap to an approved state if the saved/default state isn't offered.
+    if (approvedStates.length > 0 && !approvedStates.some(s => s.code === state)) {
+      setState(approvedStates[0].code);
+    }
+  }, [approvedStates.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const templateQuery = (trpc as any).leaseDocs.getTemplate.useQuery(
     { state, category },
     { enabled: step === "fill" },
@@ -136,7 +146,7 @@ export default function LeaseWizard() {
     setVars(v => ({ ...v, state }));
   }, [state]);
 
-  const fellBackToGeneric = templateQuery.data?.fellBackToGeneric;
+  const notApproved = templateQuery.data?.notApproved;
   const version = templateQuery.data?.version;
   const templateInfo = templateQuery.data?.template;
 
@@ -162,6 +172,8 @@ export default function LeaseWizard() {
         security_deposit: vars.security_deposit ? Number(vars.security_deposit) : undefined,
         rent_due_day: vars.rent_due_day ? Number(vars.rent_due_day) : undefined,
         late_fee: vars.late_fee ? Number(vars.late_fee) : undefined,
+        early_termination_fee: vars.early_termination_fee ? Number(vars.early_termination_fee) : undefined,
+        early_termination_notice_days: vars.early_termination_notice_days ? Number(vars.early_termination_notice_days) : undefined,
       },
       customClauses: customClauses.length > 0 ? customClauses : undefined,
     });
@@ -172,11 +184,16 @@ export default function LeaseWizard() {
     const rent = Number(vars.monthly_rent);
     const dep = Number(vars.security_deposit);
     if (!Number.isFinite(rent) || !Number.isFinite(dep) || rent <= 0) return null;
-    if (dep > rent * 1.5) {
-      return `Heads up: North Carolina caps security deposits at 1.5 months' rent ($${(rent * 1.5).toFixed(2)}) for term leases. N.C. Gen. Stat. § 42-51.`;
+    if (dep > rent * 2) {
+      return `Heads up: North Carolina caps security deposits at 2 months' rent ($${(rent * 2).toFixed(2)}) for leases longer than month-to-month (1.5 months for month-to-month). N.C. Gen. Stat. § 42-51(b).`;
     }
     return null;
   }, [state, vars.monthly_rent, vars.security_deposit]);
+
+  const defaultEtFee = useMemo(() => {
+    const rent = Number(vars.monthly_rent);
+    return Number.isFinite(rent) && rent > 0 ? (rent * 2).toFixed(2) : "";
+  }, [vars.monthly_rent]);
 
   if (step === "choose") {
     return (
@@ -196,13 +213,14 @@ export default function LeaseWizard() {
               <div>
                 <Label>State the property is in</Label>
                 <Select value={state} onValueChange={setState}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={approvedQuery.isLoading ? "Loading…" : "Choose a state"} /></SelectTrigger>
                   <SelectContent>
-                    {US_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    {approvedStates.map(s => <SelectItem key={s.code} value={s.code}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Specialized templates: NC, TN. Other states use a multi-state generic — review with a local attorney.
+                  Built-in state leases are available for the states listed. Property in another state?{" "}
+                  <a href="/leases/send/upload" className="underline font-medium">Upload your own lease</a> and the tenant will read and sign it in Keycove.
                 </p>
               </div>
 
@@ -257,13 +275,15 @@ export default function LeaseWizard() {
           </div>
         )}
 
-        {fellBackToGeneric && (
+        {notApproved && (
           <Card className="mb-4 border-amber-400">
             <CardContent className="p-4 flex gap-3">
               <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
               <div className="text-sm">
-                <p className="font-medium">No state-specific template for {state} yet.</p>
-                <p className="text-muted-foreground">We&apos;re using the multi-state generic. State-required disclosures may be missing. A local attorney should review before relying on this document.</p>
+                <p className="font-medium">Keycove doesn&apos;t offer a built-in lease for {state} yet.</p>
+                <p className="text-muted-foreground">
+                  <a href="/leases/send/upload" className="underline font-medium">Upload your own lease</a> instead. The tenant will read it in full and sign it in Keycove.
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -309,6 +329,31 @@ export default function LeaseWizard() {
                   <span>{ncDepositCapWarning}</span>
                 </div>
               )}
+            </section>
+
+            <section>
+              <h2 className="font-semibold mb-1">Early termination (lease break)</h2>
+              <p className="text-xs text-muted-foreground mb-3">
+                The lease lets the tenant end early by giving this much notice and paying this fee (a liquidated-damages option).
+                If they leave without using it, they stay responsible for rent until the unit is re-rented. Terminations protected
+                by military and domestic-violence laws never pay this fee.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Field
+                  label="Early termination fee ($)"
+                  type="number"
+                  value={vars.early_termination_fee}
+                  onChange={v => setVars({ ...vars, early_termination_fee: v })}
+                  placeholder={defaultEtFee ? `${defaultEtFee} (2 months' rent)` : "Default: 2 months' rent"}
+                />
+                <Field
+                  label="Notice required (days)"
+                  type="number"
+                  value={vars.early_termination_notice_days}
+                  onChange={v => setVars({ ...vars, early_termination_notice_days: v })}
+                  placeholder="30"
+                />
+              </div>
             </section>
 
             <section>
@@ -387,7 +432,7 @@ export default function LeaseWizard() {
 
             <div className="pt-2 flex items-center justify-between">
               <Button variant="ghost" onClick={() => setStep("choose")}>← Back</Button>
-              <Button onClick={submit} disabled={draftMut.isPending || !version?.id}>
+              <Button onClick={submit} disabled={draftMut.isPending || !version?.id || notApproved}>
                 {draftMut.isPending ? <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Creating draft…</> : <>Preview lease <ChevronRight className="h-4 w-4 ml-1" /></>}
               </Button>
             </div>
