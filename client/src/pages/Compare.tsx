@@ -23,7 +23,7 @@ const FEATURES = [
     items: [
       { label: "Online Rental Applications", values: [true, true, true, true, false, true] },
       { label: "AI Fraud Screening Included in Plan", values: [true, "—", "—", "—", "—", "—"] },
-      { label: "Background & Credit Checks", values: [true, true, true, true, false, false] },
+      { label: "Background & Credit Checks", values: ["Coming soon", true, true, true, false, false] },
       { label: "Built-in State Lease Templates (NC & TN today)", values: [true, "—", "—", "—", false, false] },
       { label: "Digital Signature Capture", values: [true, true, true, true, false, false] },
     ],
@@ -45,6 +45,8 @@ const FEATURES = [
       { label: "Accounting & Ledger", values: [true, true, true, true, false, false] },
       { label: "IRS Schedule E / Tax-Ready Export", values: [true, true, true, false, false, false] },
       { label: "Property CRM (Units, Tenants, Leases)", values: [true, true, true, true, false, false] },
+      { label: "HOA Dues Tracking for Landlords", values: [true, "—", "—", "—", false, false] },
+      { label: "Guided Import (CSV, Excel, Google Sheets)", values: [true, "—", "—", "—", false, false] },
     ],
   },
   {

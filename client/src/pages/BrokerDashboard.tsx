@@ -380,10 +380,12 @@ function SopTab() {
     { id: "sop-lead-handling", title: "Lead Handling Protocol", desc: "How to respond to and qualify inbound leads within the first hour." },
     { id: "sop-showing-prep", title: "Showing Preparation Checklist", desc: "Pre-showing steps to maximize first impressions and conversion." },
     { id: "sop-application-review", title: "Application Review Standards", desc: "Screening criteria, fair housing compliance, and documentation." },
-    { id: "sop-lease-signing", title: "Lease Signing & Move-In Funds Flow", desc: "Tenant signs first → tenant pays deposit + first month → landlord countersigns. Lease is conditional until paid + countersigned." },
+    { id: "sop-lease-signing", title: "Lease Signing & Move-In Funds Flow", desc: "Tenant reads the full lease and e-signs → landlord countersigns → tenant pays deposit + first month → keys. Lease is conditional until countersigned and paid." },
     { id: "sop-move-in", title: "Move-In / Move-Out Process", desc: "Walkthrough documentation, key handling, and inspection forms — released only after lease is fully executed." },
     { id: "sop-maintenance", title: "Maintenance Request Workflow", desc: "How to triage, assign, and close out work orders efficiently." },
     { id: "sop-renewal", title: "Lease Renewal Process", desc: "Timeline, renewal pricing guidance, and tenant communication scripts." },
+    { id: "sop-move-to-keycove", title: "Helping a Landlord Move to Keycove", desc: "Client exports a rent roll from their old software (or a spreadsheet / Google Sheet), runs Move to Keycove, confirms column matches, fixes highlighted rows, imports. Vacant units OK; re-runs don't duplicate. Never ask for their old login." },
+    { id: "sop-hoa-units", title: "Listing Units Inside an HOA", desc: "Get the HOA's rental rules (lease minimums, rental caps, move-in fees, pets, parking) from the landlord's HOA Dues page before marketing; share tenant-facing rules with applicants; dues are the owner's cost unless the lease passes them through." },
   ];
 
   const readIds = new Set(myReads ?? []);

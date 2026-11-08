@@ -10,7 +10,7 @@ from this same content.
 
 ## What a Pro membership gives you
 
-- A branded tenant portal at `yourname.leasely.net` (e.g. `oakstreet.leasely.net`)
+- A branded tenant portal at `keycove.net/portal/yourname` (e.g. `keycove.net/portal/oakstreet`) plus a website built from your brand brief
 - Unlimited listings + applications
 - Stripe Connect instant payouts
 - AI-assisted applicant screening
@@ -22,7 +22,7 @@ from this same content.
 - Tenant CRM
 - "Keycove Market Intelligence" — automated rent comps for any U.S. zip
 
-Setup is **$75 once + $29/month**. First listing is always free, even without Pro.
+Pro is **$25/month flat**, charged at signup and then monthly — no setup fee, website included. First listing is always free, even without Pro.
 
 ---
 
@@ -32,11 +32,12 @@ Setup is **$75 once + $29/month**. First listing is always free, even without Pr
    ~5 min and unlocks payouts. **Use your business legal name** (e.g. "Redrock
    Property Group LLC"), not your personal name — this is what prints on leases
    as the landlord-of-record.
-2. **`/pro-setup`** — pay the $75 setup fee via the Stripe payment link. After
-   payment Stripe redirects you to **`/welcome`**, which confirms activation,
-   provisions your subdomain, and links to the next steps. Subdomain is live
-   within ~30 seconds.
-3. **`/portal-setup`** — upload your logo + brand color. Skip this and your portal
+2. **Get Pro** (`/pricing` → Start Pro) — $25 today, then $25/month. After
+   payment Stripe redirects you to **`/portal-setup?pro_welcome=1`**. Your
+   portal is live within ~30 seconds.
+3. **`/portal-setup`** — pick your portal name, upload your logo + brand color,
+   and fill in the 2-minute brand brief; Keycove builds your website from it
+   and emails you when it's live. Skip this and your portal
    defaults to "Keycove navy" + a placeholder logo. (The header now shows the
    logo mark only — no "Keycove" wordmark.)
 4. **`/list-property`** — add your first property. The Market Intelligence widget
@@ -103,46 +104,69 @@ Setup is **$75 once + $29/month**. First listing is always free, even without Pr
   (sq ft, balcony, in-unit laundry) live on the unit.
 - **Co-living** — one property rented by the room. Set the property type to
   Co-living and renters come in as Room 1, Room 2… Each room bills, tracks, and
-  late-fees on its own. Fastest way to load an occupied building is the bulk
-  import below.
+  late-fees on its own. Fastest way to load an occupied building is Move to
+  Keycove below.
 
-## Migrate off your old software (bulk import)
+## Move to Keycove (import from your old software)
 
-The "switch off your current platform" path. Bring buildings, renters, and
-their **existing leases** live in one upload — no AI, no re-keying.
+One wizard for properties, units, tenants (optional), leases and HOA details.
+Vacant units are fine; re-running a file updates instead of duplicating.
 
-**Where:** `/import-portfolio` (also the **Import** button next to *Add
-Property* in the CRM).
+**Where:** `/move-to-keycove` (also the **Import** button next to *Add
+Property* in the CRM, and on the Leases page). The old `/import-portfolio`
+and `/import-tenants` links redirect here.
 
-**SOP — 4 steps:**
-1. **Pick the property type** — apartment, co-living, single-family, condo,
-   townhouse or multi-family. This decides whether renters come in as *units*
-   (4B, 12A) or *rooms* (Room 1, Room 2).
-2. **Drop the CSV** (or paste rows). One row per occupied unit. Export a
-   resident / rent-roll CSV from your current software; columns auto-map to
-   AppFolio, Buildium, RentRedi, Yardi, Rent Manager, and plain spreadsheets.
-   "Download template" if you're building the file by hand.
-3. **Review** — rows group by building. Check the rent-roll total and
-   unit/room labels; fix any row flagged red (missing rent, name, or lease
-   start). Bad rows are skipped, never block the good ones. Handles 1–200+
-   units per file.
-4. **Import** — "Your portal is live." Each renter lands with its own rent
-   schedule, auto late fees, accounting ledger, and tenant portal login. Invite
-   them to pay online from the CRM.
+**SOP — 5 steps:**
+1. **Pick your old software** — AppFolio, Buildium, RentRedi, Avail, Rentec
+   Direct, Zillow Rental Manager, or a spreadsheet. The wizard shows its
+   export steps:
+   - AppFolio: Reports → Rent Roll (or Unit Directory for vacant units) → Export.
+   - Buildium: Reports → Rent Roll (includes vacant units) → Export.
+   - RentRedi: Tenants → export icon → CSV.
+   - Avail: Tenants → ⋯ → Export tenants list.
+   - Rentec Direct: Tenants → Export → CSV, plus Properties → Export for vacant units.
+   - Zillow Rental Manager: My Properties → select → Actions → Export CSV.
+2. **Upload** — CSV, Excel `.xlsx`, or a Google Sheets link shared as
+   "Anyone with the link can view". "Download template" if building by hand.
+3. **Match columns** — known headers map automatically; AI suggests the rest
+   from column names and value types only (no tenant data is sent). Confirm
+   with the dropdowns. The mapping is saved per source for next time.
+4. **Review** — rows needing fixes are highlighted; edit them inline. Bad rows
+   are skipped, never block the good ones.
+5. **Import** — units, tenants, leases and HOAs are created/updated in one pass.
+   "Set up online rent collection" gives tenants with an email + state a portal
+   login and rent schedule. Files over 500 rows are sent in batches.
 
-**CSV columns** (map by header, order doesn't matter):
-`building, unit, type, address, city, state, zip, tenant_first_name,
-tenant_last_name, tenant_email, tenant_phone, monthly_rent, security_deposit,
-lease_start, lease_end, late_fee, grace_days`
+**Columns understood:** `building, address, unit, city, state, zip, type,
+tenant name (or first/last), tenant_email, tenant_phone, monthly_rent,
+security_deposit, lease_start, lease_end, late_fee, grace_days, hoa_name,
+hoa_dues, hoa_frequency, hoa_due_date`
 
-- Leave `lease_end` blank → month-to-month.
-- Omit `late_fee` → defaults to $50 after a 5-day grace, editable per lease.
-- Add a `type` column to override the property-type picker per row (mixed files).
+- Only `address` is required. Blank tenant columns → vacant unit.
+- Units match on normalized address + unit ("812 Maple Avenue Apt 4B" = "812 Maple Ave #4b").
+- Blank `lease_end` → month-to-month.
+- Never ask a landlord for their old software's password; they export the file.
 
-**Just importing marketplace listings** (vacant units to advertise, not
-occupied ones)? Use `/import-listings` instead — same header-mapping. Pre-built
-mappings for Zillow Rental Manager, AppFolio, Buildium, Rentec Direct,
-Apartments.com; anything else maps by header name, not position.
+**Just importing marketplace listings** (vacant units to advertise)? Use
+`/import-listings`.
+
+## HOA dues
+
+**Where:** `/hoa` (sidebar → HOA Dues). Included in Pro. Keycove tracks and
+reminds; the landlord pays on the HOA's own portal.
+
+**SOP:**
+1. **Add HOA** for a CRM property. Optional: upload an HOA statement (PDF or
+   photo) — AI fills in the HOA name, management company, amount, due date,
+   frequency, portal link and contact. Check every field before saving.
+2. Set dues, frequency (monthly / quarterly / every 6 months / yearly), next
+   due date and reminder lead time (default 7 days).
+3. Account number: only the last 4 digits are stored.
+4. Flag **autopay** and/or **tenant reimburses** if they apply.
+5. Add a rules summary and upload CC&Rs / rules PDFs.
+6. **Mark paid** → logs an `HOA Dues` expense in Accounting and rolls the due
+   date forward. **Special assessments** get their own due date, reminder and
+   Accounting entry.
 
 ## Get a tenant → signed → paying
 

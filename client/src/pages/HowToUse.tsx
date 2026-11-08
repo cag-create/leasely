@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import {
   Rocket, Landmark, Home, Palette, FileText, DollarSign,
   Wrench, UserCircle, Headphones, ArrowRight, CheckCircle2, Sparkles,
-  Search, Award,
+  Search, Award, Upload, Building,
 } from "lucide-react";
 
 const ACCENT = "#4F46E5";
@@ -62,6 +62,18 @@ const STEPS: Step[] = [
   },
   {
     n: 4,
+    icon: Upload,
+    title: "Moving from other software? Import everything",
+    body: "Move to Keycove brings your units, tenants, leases and HOA details over in one pass — from AppFolio, Buildium, RentRedi, Avail, Rentec Direct, Zillow, or any spreadsheet.",
+    points: [
+      "Upload a CSV or Excel file, or paste a Google Sheets link",
+      "Columns match automatically; AI suggests the odd ones and you confirm",
+      "Vacant units are fine, and re-running the file never creates duplicates",
+    ],
+    cta: { label: "Open Move to Keycove", href: "/move-to-keycove" },
+  },
+  {
+    n: 5,
     icon: Palette,
     title: "Brand your portal & website",
     body: "Your Pro plan includes a professional website. Customize your tenant portal's name, colors, and logo so everything your renters see is yours.",
@@ -73,7 +85,7 @@ const STEPS: Step[] = [
     cta: { label: "Set up your portal", href: "/portal-setup" },
   },
   {
-    n: 5,
+    n: 6,
     icon: FileText,
     title: "Take applications & screen",
     body: "Share your listing's public application link. Applicants apply online and Keycove's AI screening gives you a risk score with any flagged anomalies so you can decide with confidence.",
@@ -85,7 +97,7 @@ const STEPS: Step[] = [
     cta: { label: "View applications", href: "/applications" },
   },
   {
-    n: 6,
+    n: 7,
     icon: FileText,
     title: "Send a lease & e-sign",
     body: "Generate a state lease (built in for NC and TN; upload your own elsewhere), send it for e-signature, and collect the first month's rent plus deposit at signing — all in one flow.",
@@ -97,7 +109,7 @@ const STEPS: Step[] = [
     cta: { label: "Lease agreements", href: "/leases" },
   },
   {
-    n: 7,
+    n: 8,
     icon: DollarSign,
     title: "Collect rent automatically",
     body: "Once a tenant is on autopay, rent is charged every month and deposited to your bank. Behind on a tenant? Record an offline payment or adjust a single month's charge.",
@@ -109,16 +121,28 @@ const STEPS: Step[] = [
     cta: { label: "Open your dashboard", href: "/dashboard" },
   },
   {
-    n: 8,
+    n: 9,
     icon: Wrench,
     title: "Handle maintenance",
     body: "Tenants submit work orders; you dispatch to your favorite contractors and escalate automatically if one declines. Browse the contractor directory to build your bench.",
     points: [
       "Tenant-submitted work orders",
       "Auto-escalation on decline",
-      "Find vetted contractors near you",
+      "Find approved contractors near you",
     ],
     cta: { label: "Work orders", href: "/work-orders" },
+  },
+  {
+    n: 10,
+    icon: Building,
+    title: "Track HOA dues",
+    body: "Own a unit inside an HOA? Add the HOA once and Keycove reminds you before dues are due and logs each payment to Accounting. You still pay on the HOA's own portal.",
+    points: [
+      "Upload an HOA statement and AI fills in the amount, due date and contact",
+      "Reminder emails before every due date and special assessment",
+      "“Mark paid” logs an HOA Dues expense and moves the due date forward",
+    ],
+    cta: { label: "Open HOA Dues", href: "/hoa" },
   },
 ];
 

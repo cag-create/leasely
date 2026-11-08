@@ -55,9 +55,11 @@ and the flow needs fixing.
 
 ## 5a. Pro signup flow — what to check when activation looks broken
 
-The Stripe payment link redirects to **`leasely.net/welcome`** after the $75
-setup payment. That page reads the `?session_id=...` query param, calls
-`pro.activateFromStripeSession`, and provisions the subdomain. If a member
+Pro checkout (`createProCheckout`, $25/mo, no setup fee) redirects to
+**`keycove.net/portal-setup?pro_welcome=1`**; Pro is provisioned by the
+`checkout.session.completed` webhook. The older `/welcome` page reads the
+`?session_id=...` query param, calls `pro.activateFromStripeSession`, and
+provisions the subdomain. If a member
 reports "I paid but nothing happened":
 
 1. Confirm the Stripe payment succeeded in the Stripe dashboard.

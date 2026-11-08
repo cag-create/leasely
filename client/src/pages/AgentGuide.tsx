@@ -273,6 +273,33 @@ export default function AgentGuide() {
       ),
     },
     {
+      id: "landlord-clients",
+      title: "Landlord clients: moving to Keycove & HOA properties",
+      icon: Briefcase,
+      body: (
+        <div className="space-y-3 text-sm">
+          <div className="p-3 rounded-xl border border-border/50 bg-card/40">
+            <div className="text-xs font-semibold mb-2">A landlord you work with wants to switch software</div>
+            <ol className="space-y-1.5 text-xs text-muted-foreground list-decimal pl-4">
+              <li>They start Pro ($25/mo flat, website included).</li>
+              <li>They export a rent roll from their old tool (AppFolio, Buildium, RentRedi, Avail, Rentec Direct, Zillow) or use a spreadsheet / Google Sheet.</li>
+              <li>They open <b>Move to Keycove</b>, upload it, confirm the column matches, fix any highlighted rows, and import. Vacant units are fine; re-running the file never duplicates.</li>
+              <li>Their units then appear in the CRM, ready for you to list the vacant ones.</li>
+            </ol>
+            <p className="text-xs text-muted-foreground mt-2">Never ask a client for their old software's password — they export the file themselves.</p>
+          </div>
+          <div className="p-3 rounded-xl border border-border/50 bg-card/40">
+            <div className="text-xs font-semibold mb-2">Listing a unit inside an HOA</div>
+            <ul className="space-y-1.5 text-xs text-muted-foreground">
+              <li>• Ask the landlord for the HOA's rental rules (minimum lease term, rental caps, move-in fees, parking, pets) before you market the unit — Pro landlords keep these on the <b>HOA Dues</b> page.</li>
+              <li>• Put HOA rules that affect tenants in the listing and share them with applicants before they apply.</li>
+              <li>• HOA dues are the owner's cost unless the lease says the tenant reimburses them — don't quote them as rent.</li>
+            </ul>
+          </div>
+        </div>
+      ),
+    },
+    {
       id: "escalate",
       title: "When to escalate to Keycove",
       icon: AlertTriangle,
@@ -281,7 +308,7 @@ export default function AgentGuide() {
           {[
             "Suspected fraud / identity issue on a lead",
             "Earnest-money escrow dispute",
-            "Client asks to migrate from another platform (we help with data export)",
+            "Client's import from another platform fails after following the Move to Keycove steps",
             "Anything that looks like a Fair Housing violation",
             "Tenant complaint about a Pro member you closed with",
           ].map(t => (

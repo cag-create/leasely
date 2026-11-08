@@ -51,7 +51,7 @@ const FAQ_CATEGORIES = [
     questions: [
       { q: "What does AI tenant screening include?", a: "Pro subscribers get AI-powered analysis of rental applications, automated fraud detection on submitted documents, and risk scoring to help identify qualified tenants. This is a Pro-only feature." },
       { q: "How does fraud detection work?", a: "Our AI analyzes submitted documents (pay stubs, bank statements, IDs) for signs of tampering or fabrication. It flags suspicious applications so you can investigate before approving a tenant." },
-      { q: "Are background checks available?", a: "Background check integration is available for Pro subscribers. This includes credit history, criminal background, and eviction history checks." },
+      { q: "Are background checks available?", a: "Not yet. Our ApplyConnect background-check integration (credit, criminal and eviction history) is coming soon for Pro subscribers. AI fraud screening of applications is available today." },
     ]
   },
   {
