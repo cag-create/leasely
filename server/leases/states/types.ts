@@ -42,6 +42,17 @@ export interface StateDisclosure {
   cite: string;
   /** When it applies, e.g. "Only for properties in a FEMA special flood hazard area" (rendered as a lead-in). */
   condition?: string;
+  /**
+   * "top_large": statute requires the notice at the top of the first page in a
+   * larger font (e.g. Nev. Rev. Stat. § 118A.200(4): at least twice as large as
+   * any other font). Rendered above the title at 32px with every other heading
+   * in that lease capped at 16px.
+   * "top": statute requires it on the first page (e.g. an Illinois or
+   * Minnesota page-1 summary). Rendered above the title at normal size.
+   */
+  placement?: "top_large" | "top";
+  /** Statute requires bold and/or underlined type (e.g. Tex. Prop. Code § 92.056(g)). Rendered bold + underlined. */
+  emphasis?: "bold_underline";
 }
 
 export interface StateLawProfile {

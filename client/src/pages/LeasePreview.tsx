@@ -14,12 +14,17 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { openLeasePrintView } from "@/lib/leasePrint";
 import { Loader2, AlertTriangle, FileText, Send, ShieldAlert, Pencil, ChevronDown, ChevronUp } from "lucide-react";
 
 const FIELD_LABELS: Record<string, string> = {
   landlord_name: "Landlord Name on Lease",
   landlord_company: "Company / DBA",
   landlord_address: "Landlord / Company Address",
+  landlord_phone: "Landlord / Manager Phone",
+  deposit_institution: "Bank Holding the Deposit (name and address)",
+  early_termination_fee: "Early Termination Fee ($)",
+  early_termination_notice_days: "Early Termination Notice (days)",
   monthly_rent: "Monthly Rent ($)",
   security_deposit: "Security Deposit ($)",
   occupants: "Authorized Occupants",
@@ -35,6 +40,10 @@ const FIELD_HINTS: Record<string, string> = {
   landlord_name: "e.g. Jane Smith",
   landlord_company: "e.g. Redrock Property Group LLC (optional)",
   landlord_address: "e.g. 123 Main St, Memphis, TN 38115",
+  landlord_phone: "e.g. (910) 555-0123",
+  deposit_institution: "e.g. First Citizens Bank, 239 Fayetteville St, Raleigh NC",
+  early_termination_fee: "e.g. 3000 (default: 2 months' rent)",
+  early_termination_notice_days: "e.g. 30",
   monthly_rent: "e.g. 1600",
   security_deposit: "e.g. 1600",
   occupants: "e.g. 2 adults",
@@ -162,28 +171,9 @@ export default function LeasePreview() {
       window.open(doc.uploadedFileUrl, "_blank", "noopener");
       return;
     }
-    // Open a print-to-PDF view in a new tab. The user's browser print dialog
-    // can then "Save as PDF" — works on all major desktop browsers without a
-    // server-side headless Chrome dependency.
-    const html = doc.renderedHtml ?? "";
-    const win = window.open("", "_blank");
-    if (!win) {
+    if (!openLeasePrintView(doc.renderedHtml ?? "", `Lease #${doc.id}`)) {
       toast.error("Pop-up blocked. Allow pop-ups for this site to download.");
-      return;
     }
-    win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Lease #${doc.id}</title>
-<style>
-  body { font-family: -apple-system, system-ui, sans-serif; max-width: 8.5in; margin: 0.75in auto; line-height: 1.55; color: #111; }
-  h1 { font-size: 1.5rem; margin: 1rem 0 0.75rem; }
-  h2 { font-size: 1.1rem; margin: 1.25rem 0 0.5rem; }
-  section { margin: 0.75rem 0; }
-  p { margin: 0.5rem 0; }
-  .lease-unresolved { background:#fee; color:#b00020; padding:0 4px; border-radius:3px; font-weight:600; }
-  .legal-disclaimer { font-size: 0.85rem; color: #666; margin-top: 1.5rem; border-top: 1px solid #ddd; padding-top: 1rem; }
-  @media print { @page { margin: 0.75in; } }
-</style>
-</head><body>${html}<script>window.onload=()=>setTimeout(()=>window.print(),250)</script></body></html>`);
-    win.document.close();
   };
 
   const handleSend = async () => {

@@ -1,0 +1,209 @@
+import type { StateLawProfile } from "../types";
+
+const DCCODE = (s: string) => `https://code.dccouncil.gov/us/dc/council/code/sections/${s}`;
+const DCMR = (s: string) => `https://dcregs.dc.gov/Common/DCMR/SectionList.aspx?SectionNumber=14-${s}`;
+
+export const DC: StateLawProfile = {
+  code: "DC",
+  name: "District of Columbia",
+  framework:
+    "Rental Housing Act of 1985, D.C. Code §§ 42-3501.01 et seq.; D.C. Code Title 42, Chapter 32; and the D.C. Housing Regulations, 14 DCMR Chapters 3 and 4",
+
+  deposit: {
+    maxMonths: 1,
+    capRule:
+      "The security deposit, including any other payment made as security for Tenant's obligations, may not exceed the amount of the first full month's rent and may be charged only once.",
+    capCite: "14 DCMR § 308.2; D.C. Code § 42-3502.17(a)",
+    returnDays: 45,
+    returnRule:
+      "Within 45 days after the tenancy ends, Landlord shall either return the security deposit, with the interest owed, without Tenant having to ask, or notify Tenant in writing, delivered personally or by certified mail to Tenant's last known address, of Landlord's intention to withhold and apply the deposit to expenses properly incurred under the deposit terms. If Landlord gives that notice, Landlord shall, within 30 days after the notice, refund the balance with interest and give Tenant an itemized statement of the repairs and other uses of the money and the cost of each. Within 45 days after the tenancy ends, Landlord shall also notify Tenant in writing, personally, by email, or by certified mail to Tenant's forwarding address, of any unpaid amounts claimed (unpaid rent, damage beyond ordinary wear and tear, or charges for removing items Tenant left behind), with photographs or other supporting documentation and a statement of Tenant's right to dispute the amounts and Landlord's contact information. Tenant has 30 days to dispute, and Landlord shall respond in writing within 10 days after receiving Tenant's information. At move-out Landlord will ask Tenant for a forwarding mailing or email address. Landlord will not withhold any amount for ordinary wear and tear, including professional cleaning made necessary only by ordinary wear and tear.",
+    returnCite: "14 DCMR §§ 309.1–309.3, 301.4; D.C. Code § 42-3502.17(c), (e)",
+    holdingRule:
+      "Landlord shall deposit the security deposit in an interest-bearing escrow account, held in trust in a District of Columbia financial institution insured by a federal or state agency, used only to hold security deposits. The terms and conditions under which the deposit is paid are stated in this Lease. Interest accrues from the date of payment at not less than the statement savings rate of that institution on each January 1 and July 1, and is paid to Tenant at the end of any tenancy of 12 months or more. At the end of the tenancy Landlord will list for Tenant the interest rate for each six-month period of the tenancy.",
+    holdingCite: "14 DCMR §§ 308.3, 308.6, 308.7, 311.1–311.2",
+    interestRequired: true,
+    moveInInspection: "",
+  },
+
+  lateFee: {
+    graceDays: 5,
+    capType: "percent",
+    capPercent: 5,
+    capRule:
+      "The maximum late fee is 5% of the full amount of monthly rent due, and it may be charged only if the full rent has not been paid within 5 days after the due date. Landlord will not charge interest on a late fee, deduct a late fee from a later rent payment, charge more than one late fee for the same late payment, evict Tenant for not paying a late fee, or charge a late fee on any portion of rent a rent subsidy provider is responsible for paying. Landlord may invoice an unpaid late fee, payable within 30 days, and may deduct an unpaid lawful late fee from the security deposit at the end of the tenancy.",
+    cite: "D.C. Code § 42-3505.31",
+  },
+
+  notice: {
+    monthToMonthDays: 30,
+    monthToMonthRule:
+      "Tenant may end a month-to-month tenancy by giving Landlord at least 30 days' written notice, which takes effect on the first day of the first month at least 30 days after the date of the notice. Landlord may not require more than 30 days' notice from Tenant unless Landlord also must give at least 30 days more notice than that of any rent increase. Landlord may not end Tenant's tenancy, even when the lease term expires, as long as Tenant keeps paying the rent, except for a reason allowed by the District's eviction law and after serving the written notice that law requires.",
+    monthToMonthCite: "D.C. Code §§ 42-3202(b), 42-3505.54, 42-3505.01(a)",
+    nonpaymentDays: 30,
+    nonpaymentRule:
+      "Landlord may not file an eviction case for nonpayment of rent unless Tenant owes at least $600. Before filing, Landlord must serve Tenant, by certified mail or tracked delivery with return receipt and by hand delivery or posting on the front door, a written notice stating the total rent owed, attaching a ledger of rent charges and payments for the period of delinquency, and containing the language required by law. The notice must be served at least 10 days before filing, and because the required notice language tells Tenant that Landlord may file if the balance is not paid in full within 30 days of the notice, Landlord will not file until at least 30 days after serving it. A late fee is never a basis for eviction.",
+    nonpaymentCite: "D.C. Code §§ 42-3505.01(a), (a-1), 16-1501(b)",
+    entryHours: 48,
+    entryRule:
+      "Except in an emergency to protect the premises or the safety of tenants or others, Landlord may enter the Property only for a reasonable purpose (keeping the property safe from damage, inspecting, making necessary or agreed repairs or improvements, supplying necessary or agreed services, showing the Property to prospective or actual purchasers, mortgagees, tenants, workers, or contractors, or work ordered by a government agency), at a reasonable time (between 9:00 a.m. and 5:00 p.m., not on a Sunday or federal holiday, unless Tenant agrees to another time), and after giving Tenant written notice at least 48 hours in advance, unless Tenant agrees in writing to a shorter period. Notice may be given by email or text message, but if Tenant does not acknowledge it in writing, Landlord will also give paper notice. If Tenant reports a housing code violation, Tenant will give Landlord access within 48 hours after Landlord's written request.",
+    entryCite: "D.C. Code § 42-3505.51",
+  },
+
+  earlyTermination: {
+    military: null,
+    domesticViolence: {
+      label: "Victims of intrafamily offenses",
+      cite: "D.C. Code §§ 42-3505.07, 16-1001(8)",
+      eligible:
+        "Tenant may be released from this Lease if Tenant, or a minor child for whom Tenant is the parent or guardian, is a victim of an intrafamily offense, meaning a criminal offense committed by a current or former intimate partner (spouse, domestic partner, co-parent, or dating or sexual partner), a family member, or a household member.",
+      notice:
+        "Tenant gives Landlord written notice of termination under this right, together with the required documentation, within 90 days after the act or event cited in the court petition or reported to the qualified third party. The release takes effect on the earlier of 14 days after Landlord receives the notice and documentation, or the start of a new tenancy for the Property.",
+      documentation:
+        "Tenant provides either a copy of a civil protection order issued under D.C. Code § 16-1005 on a petition filed by or on behalf of Tenant, or documentation signed by a qualified third party acting in an official capacity (a law enforcement officer, a sworn D.C. Housing Authority Office of Public Safety officer, a health professional, or a domestic violence counselor) showing that Tenant reported the intrafamily offense.",
+      liability:
+        "Notwithstanding any penalty in this Lease, including the early termination fee, Tenant is liable only for rent prorated to the earlier of the date Landlord rents the Property to a new tenant or 14 days after the request for release. Tenant remains liable for rent and other sums that were already delinquent before the termination, and the security deposit is handled under the usual deposit rules.",
+    },
+    other: [],
+    feeCap: null,
+    mitigation: {
+      basis: "statute",
+      cite: "D.C. Code § 42-3505.52",
+      rule:
+        "If Tenant moves out before the end of the term, or in bad faith refuses to take possession, any actual damages Landlord may recover are subject to Landlord's duty to mitigate those damages.",
+    },
+  },
+
+  disclosures: [
+    {
+      id: "housing_code_copy",
+      title: "D.C. Housing Regulations",
+      text:
+        "At the start of the tenancy Landlord will give Tenant a copy of Chapter 3 of Title 14 of the D.C. Municipal Regulations (landlord and tenant provisions) and of 14 DCMR § 101 (Civil Enforcement Policy) and § 106 (Notification of Tenants Concerning Violations). Any lease provision contrary to those provisions is void. This Lease includes an implied warranty that Landlord will maintain the Property in compliance with the Housing Regulations.",
+      cite: "14 DCMR §§ 300.1, 301.1, 304.1",
+    },
+    {
+      id: "max_occupants",
+      title: "Maximum Occupancy",
+      text:
+        "Landlord will advise Tenant in writing, at or before signing, of the maximum number of occupants permitted in the Property under the D.C. Housing Regulations.",
+      cite: "14 DCMR § 400.2",
+    },
+    {
+      id: "deposit_terms",
+      title: "Security Deposit Terms",
+      text:
+        "The security deposit is paid as security for Tenant's performance of this Lease and may be applied only to unpaid rent, damage beyond ordinary wear and tear, and charges for removing items Tenant leaves behind, as described in the Security Deposit section. It is held in an interest-bearing escrow account. Landlord posts each year, in the building lobby and rental office (where applicable), where deposits are held and the prevailing interest rate for each six-month period.",
+      cite: "14 DCMR §§ 308.6, 308.7; D.C. Code § 42-3502.17",
+    },
+    {
+      id: "application_disclosure_form",
+      title: "Rental Housing Disclosure Form and Tenant Bill of Rights",
+      text:
+        "Landlord provided Tenant, at the time of application, the disclosure form published by the Rent Administrator with its supporting documents, including the applicable rent, the rent-controlled or exempt status of the housing and its registration and business license, pending petitions, rent surcharges, housing code violation reports from the last 12 months, the amount of any nonrefundable application fee, the security deposit amount, interest rate, and return method, any condominium or cooperative conversion status, ownership information, known indoor mold contamination in the last three years, and the Tenant Bill of Rights published by the Office of the Tenant Advocate.",
+      cite: "D.C. Code § 42-3502.22(b)",
+    },
+    {
+      id: "signed_copy_and_receipts",
+      title: "Copy of Lease and Receipts",
+      text:
+        "Landlord will give Tenant an exact, legible, completed copy of this Lease and any application Tenant signed, at signing or within seven days after. Landlord will give Tenant a written receipt for every payment of rent, security, or other money not made by personal check, stating the amount, date, purpose, and any remaining charges due.",
+      cite: "14 DCMR §§ 303.1, 306",
+    },
+    {
+      id: "no_habitability_fees",
+      title: "No Fees for Required Maintenance",
+      text:
+        "Landlord will not charge Tenant, before move-in, during the tenancy, or after move-out, a fee for services Landlord is required to provide to keep the Property in compliance with the implied warranty of habitability.",
+      cite: "14 DCMR § 301.3",
+    },
+  ],
+
+  fairHousing: {
+    stateClasses: [
+      "age",
+      "marital status",
+      "personal appearance",
+      "sexual orientation",
+      "gender identity or expression",
+      "family responsibilities",
+      "matriculation",
+      "political affiliation",
+      "source of income",
+      "sealed eviction record",
+      "status as a victim of an intrafamily offense",
+      "place of residence or business",
+      "homeless status",
+    ],
+    cite: "D.C. Code § 2-1402.21",
+  },
+
+  eviction: {
+    rule:
+      "Landlord may recover possession only for a reason allowed by D.C. Code § 42-3505.01, after serving the written notice that section requires, through an action for possession in the Superior Court of the District of Columbia, and only by a court-ordered eviction carried out under the court's writ. Landlord will not lock Tenant out, shut off utilities, or remove Tenant's belongings without a court order. Landlord must hold a valid rental housing registration or claim of exemption and a current rental housing business license to file for possession.",
+    cite: "D.C. Code §§ 42-3505.01, 16-1501",
+  },
+
+  habitability: {
+    rule:
+      "Landlord shall maintain the Property in compliance with the D.C. Housing Regulations, which are an implied warranty in this Lease. Landlord shall provide and maintain the facilities, utilities, and services those regulations require in safe and good working condition, keep the Property clean, safe, sanitary, in repair, and free from rodents and vermin, and maintain any cooking, food storage, or refrigeration facilities Landlord furnishes. A lease of a unit that is unsafe or unsanitary due to Housing Regulation violations at the start of the tenancy that Landlord knew or should have known of, or that becomes so and is not corrected in the time allowed, is void.",
+    cite: "14 DCMR §§ 301.1, 302, 400.3–400.6",
+  },
+
+  sources: [
+    { cite: "D.C. Code § 42-3502.17", url: DCCODE("42-3502.17") },
+    { cite: "D.C. Code § 42-3502.22", url: DCCODE("42-3502.22") },
+    { cite: "D.C. Code § 42-3502.01 (incl. expiration notes)", url: DCCODE("42-3502.01") },
+    { cite: "D.C. Code § 42-3505.01", url: DCCODE("42-3505.01") },
+    { cite: "D.C. Code § 42-3505.02", url: DCCODE("42-3505.02") },
+    { cite: "D.C. Code § 42-3505.07", url: DCCODE("42-3505.07") },
+    { cite: "D.C. Code § 42-3505.08", url: DCCODE("42-3505.08") },
+    { cite: "D.C. Code § 42-3505.09", url: DCCODE("42-3505.09") },
+    { cite: "D.C. Code § 42-3505.10", url: DCCODE("42-3505.10") },
+    { cite: "D.C. Code § 42-3505.31", url: DCCODE("42-3505.31") },
+    { cite: "D.C. Code § 42-3505.51", url: DCCODE("42-3505.51") },
+    { cite: "D.C. Code § 42-3505.52", url: DCCODE("42-3505.52") },
+    { cite: "D.C. Code § 42-3505.53", url: DCCODE("42-3505.53") },
+    { cite: "D.C. Code § 42-3505.54", url: DCCODE("42-3505.54") },
+    { cite: "D.C. Code § 42-3505.55", url: DCCODE("42-3505.55") },
+    { cite: "D.C. Code § 42-3202", url: DCCODE("42-3202") },
+    { cite: "D.C. Code § 42-3203", url: DCCODE("42-3203") },
+    { cite: "D.C. Code § 16-1001", url: DCCODE("16-1001") },
+    { cite: "D.C. Code § 16-1501", url: DCCODE("16-1501") },
+    { cite: "D.C. Code § 2-1402.21", url: DCCODE("2-1402.21") },
+    { cite: "D.C. Code Title 49 (Military), chapter listings searched; no lease provision found", url: "https://code.dccouncil.gov/us/dc/council/code/titles/49" },
+    { cite: "14 DCMR § 300", url: DCMR("300") },
+    { cite: "14 DCMR § 301", url: DCMR("301") },
+    { cite: "14 DCMR § 302", url: DCMR("302") },
+    { cite: "14 DCMR § 303", url: DCMR("303") },
+    { cite: "14 DCMR § 304", url: DCMR("304") },
+    { cite: "14 DCMR § 305", url: DCMR("305") },
+    { cite: "14 DCMR § 306", url: DCMR("306") },
+    { cite: "14 DCMR § 307", url: DCMR("307") },
+    { cite: "14 DCMR § 308", url: DCMR("308") },
+    { cite: "14 DCMR § 309", url: DCMR("309") },
+    { cite: "14 DCMR § 310", url: DCMR("310") },
+    { cite: "14 DCMR § 311", url: DCMR("311") },
+    { cite: "14 DCMR § 400", url: DCMR("400") },
+  ],
+
+  reviewNotes: [
+    "Nonpayment notice inconsistency: D.C. Code § 42-3505.01(a-1)(1) (as amended through D.C. Law 26-80, Dec. 31, 2025, and D.C. Law 26-108, Apr. 16, 2026) requires the notice 'at least 10 days before filing,' but the verbatim language the same subsection requires the notice to contain says the landlord may file if the balance is not paid 'within 30 days of this notice.' I set nonpaymentDays = 30 and wrote the lease so the landlord waits 30 days, to avoid a notice that misstates the timeline. Attorney should confirm whether 10 days is now the operative period and whether the required notice language has been or will be conformed.",
+    "DC has no landlord 'month-to-month termination' right: under § 42-3505.01(a) a tenant who keeps paying rent cannot be evicted even after the lease expires except for the enumerated causes (30-day cure notice for violations; 90-day notices for owner occupancy/sale; 120/180-day notices for renovation, demolition, discontinuance, etc.). monthToMonthDays = 30 reflects TENANT notice (§§ 42-3202(b), 42-3505.54). The builder's generic month-to-month and 'Term' wording should not imply the landlord can end the tenancy at term end.",
+    "Deposit return: two overlapping regimes. 14 DCMR § 309 (return within 45 days, or notice of intent to withhold within 45 days and itemized refund within 30 days after that notice) and D.C. Code § 42-3502.17(e) (45-day written notice of unpaid amounts with photos/documentation, 30-day tenant dispute window, 10-day landlord response; added by D.C. Law 21-210 and further amended by D.C. Law 26-156, Aug. 14, 2026). Both are reflected. The amendment by D.C. Law 25-308 to § 42-3502.17 is listed as 'not implemented' pending funding. returnDays = 45 is the outside date for the first action; the itemized refund can come up to 30 days after the notice of intent.",
+    "Deposit interest: 14 DCMR § 311 requires interest at not less than the institution's statement savings rate, paid at the end of tenancies of 12 months or more; the landlord may keep up to 30% of interest above the statement savings rate. Exit inspection rules (14 DCMR § 310): if the landlord inspects, it must be within 3 business days before or after termination with 10 days' written notice to the tenant — not encoded in returnRule; consider adding. No statutory move-in inspection.",
+    "14 DCMR § 308.8: deposit rules do not apply to federally subsidized units or units leased by federal/DC agencies.",
+    "Late fees (§ 42-3505.31): the lease itself must state the maximum late fee, so the builder must ensure {{late_fee}} plus the capRule sentence appear in the lease. 5-day grace is statutory ('within 5 days ... after the day the rent payment is due').",
+    "Military: no D.C. Code provision giving servicemembers or D.C. National Guard members lease-termination rights was found (searched Title 49 chapter listings and Title 42 sections). military = null; only federal SCRA applies.",
+    "DV: § 42-3505.07 covers only 'intrafamily offenses' (crimes by an intimate partner, family member, or household member per § 16-1001(8)); sexual assault or stalking by a stranger or acquaintance without that relationship is NOT covered by the termination right. The 90-day window to request release runs from the reported act. Lock-change rights (§ 42-3505.08: within 5 business days on written request; landlord pays then tenant reimburses within 45 days) are not encoded. Status as a victim of an intrafamily offense is a protected class (§ 2-1402.21), and (c-1) of § 42-3505.01 gives an eviction defense.",
+    "No other D.C. statutory early termination rights (senior, disability, job loss, death) were found in the sections read. other = [].",
+    "Self-help: I did not locate a D.C. Code section expressly prohibiting self-help eviction; DC case law (commonly cited as Mendes v. Johnson, 389 A.2d 781 (D.C. 1978)) prohibits it, and § 42-3505.01(a) bars any eviction without the required notice. Not verified from a primary case text.",
+    "§ 42-3505.53: a provision requiring more than 30 days' notice of intent to vacate at the end of the initial term is void unless the lease states it expires with the initial term and that tenant may thereafter vacate on 30 days' notice. Generator should not impose a >30-day end-of-term notice requirement on DC tenants.",
+    "Rental Housing Act expiration: § 907 of D.C. Law 6-10 provides that subchapters other than III and V terminate on a sunset date that the Council has repeatedly extended; confirm the current sunset (it governs rent stabilization and the § 42-3502.17 / § 42-3502.22 provisions).",
+    "Application stage (not lease): § 42-3505.10 tenant screening notice requirements and application fee cap ($50, CPI-adjustable since 2024); § 42-3502.22(b) disclosure form must be given AT APPLICATION. Keycove's application flow needs these for DC listings. Fair Criminal Record Screening Act also limits criminal history inquiries (not read).",
+    "Rent control: DC rent stabilization (Rental Housing Act, Subchapter II; exemptions in § 42-3502.05, not read here) covers much of the older multifamily stock, with exemptions some small landlords may claim by filing with the Rent Administrator — verify coverage per property. Registration/exemption and a basic business license are prerequisites to filing for possession (§ 16-1501(c)). Tenant Opportunity to Purchase Act (D.C. Code ch. 34) applies to sales. Not encoded.",
+    "Weather/holiday eviction bans (§ 42-3505.01(k)) and record sealing (§ 42-3505.09) are noted only.",
+  ],
+
+  confidence: "medium",
+  researchedOn: "2026-11-08",
+};

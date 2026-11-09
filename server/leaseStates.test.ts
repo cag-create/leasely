@@ -10,7 +10,7 @@ import { LEASE_STATE_APPROVALS, STATE_NAMES, APPROVED_LEASE_STATE_CODES } from "
 import type { StateLawProfile } from "./leases/states/types";
 
 const FULL_VARS = {
-  landlord_name: "L", landlord_address: "1 Main", tenant_name: "T", tenant_email: "t@example.com",
+  landlord_name: "L", landlord_address: "1 Main", landlord_phone: "555-0100", deposit_institution: "First Bank, 1 Bank St", tenant_name: "T", tenant_email: "t@example.com",
   property_address: "2 Elm", unit_or_room_label: "Room A", occupants: "Tenant only",
   lease_start_date: "2027-01-01", lease_term: "12_months", monthly_rent: 1000, rent_due_day: 1,
   payment_methods: "ACH", late_fee: 10, security_deposit: 500, utilities: "Water",
@@ -109,7 +109,9 @@ describe.each(profiles.map(p => [p.code, p] as [string, StateLawProfile]))("%s p
       expect(t).toContain(money(computeLeaseValues({ ...FULL_VARS }, p).vars.early_termination_fee as number));
       expect(t).toContain("at least 30 days before that date");
       expect(t).toContain("Liquidated damages, not a penalty");
-      expect(t).not.toMatch(/\bpenalty of\b/i);
+      // The lease-break fee must never be called a penalty. Statutory phrases
+      // ("under penalty of perjury", "a civil penalty of") are fine.
+      expect(t).not.toMatch(/(?<!civil )\bpenalty of\b(?! perjury)/i);
       expect(t).toContain("If Tenant leaves early without using this option");
       expect(t).toContain(p.earlyTermination.mitigation.rule);
       expect(t).toContain("50 U.S.C. § 3955");

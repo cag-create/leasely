@@ -12,11 +12,12 @@ export type LeaseKind = "residential" | "coliving";
 
 /** Placeholders the builder emits. Disclosure/extra-clause text may only use these. */
 export const KNOWN_PLACEHOLDERS = [
-  "landlord_name", "landlord_address", "landlord_email", "tenant_name", "tenant_email",
+  "landlord_name", "landlord_address", "landlord_email", "landlord_phone", "tenant_name", "tenant_email",
   "property_address", "unit_or_room_label", "occupants", "state",
   "lease_start_date", "lease_end_date", "monthly_rent", "rent_due_day", "payment_methods",
   "late_fee", "security_deposit", "utilities", "pets_allowed", "parking",
   "early_termination_fee", "early_termination_notice_days", "co_living_rules",
+  "deposit_institution",
 ] as const;
 
 const FEDERAL_CLASSES = ["race", "color", "religion", "sex", "national origin", "familial status", "disability"];
@@ -97,10 +98,22 @@ export function buildLeaseBody(profile: StateLawProfile, kind: LeaseKind): strin
   const L = isCo ? "Agreement" : "Lease";
   const unit = isCo ? "the Room" : "the Property";
   let n = 0;
-  const h = (title: string) => `<h2>${++n}. ${title}</h2>`;
+  const h = (title: string) => `<h2${hs}>${++n}. ${title}</h2>`;
 
-  const disclosures = profile.disclosures.map(dis =>
-    `<li><strong>${e(dis.title)}.</strong> ${dis.condition ? `<em>${e(dis.condition)}:</em> ` : ""}${e(dis.text)}${cite(dis.cite)}</li>`,
+  const emph = (dis: { emphasis?: string }, html: string) =>
+    dis.emphasis === "bold_underline" ? `<strong><u>${html}</u></strong>` : html;
+  const topNotices = profile.disclosures.filter(dis => dis.placement === "top_large");
+  const pageOneNotices = profile.disclosures.filter(dis => dis.placement === "top");
+  // Cap heading sizes so a top_large notice is at least twice any other font.
+  const hs = topNotices.length ? ' style="font-size:16px"' : "";
+  const topNoticeHtml = topNotices.map(dis =>
+    `<div class="lease-top-notice" style="font-size:32px;line-height:1.25;font-weight:700;border:2px solid #000;padding:12px;margin-bottom:16px">${dis.condition ? `<span style="font-size:16px;font-weight:400;display:block;margin-bottom:6px">${e(dis.condition)} (${e(dis.cite)})</span>` : ""}${emph(dis, e(dis.text))}</div>`,
+  ).join("\n  ") + pageOneNotices.map(dis =>
+    `<section class="lease-page-one-notice" style="border:1px solid #333;padding:10px 12px;margin-bottom:14px"><p><strong>${e(dis.title)}</strong>${cite(dis.cite)}</p><p>${dis.condition ? `<em>${e(dis.condition)}:</em> ` : ""}${emph(dis, e(dis.text))}</p></section>`,
+  ).join("\n  ");
+
+  const disclosures = profile.disclosures.filter(dis => !dis.placement).map(dis =>
+    `<li><strong>${e(dis.title)}.</strong> ${dis.condition ? `<em>${e(dis.condition)}:</em> ` : ""}${emph(dis, e(dis.text))}${cite(dis.cite)}</li>`,
   ).join("\n      ");
 
   const extra = () => (profile.additionalClauses ?? []).map(c =>
@@ -109,11 +122,11 @@ export function buildLeaseBody(profile: StateLawProfile, kind: LeaseKind): strin
 
   const header = () => isCo
     ? `<header>
-    <h1>${e(profile.name)} Co-Living / Room Rental Agreement</h1>
+    <h1${hs}>${e(profile.name)} Co-Living / Room Rental Agreement</h1>
     <p class="lease-subtitle">Room rental in a shared residence. ${e(profile.name)} landlord-tenant law, including its eviction procedure, applies in full.</p>
   </header>`
     : `<header>
-    <h1>${e(profile.name)} Residential Lease Agreement</h1>
+    <h1${hs}>${e(profile.name)} Residential Lease Agreement</h1>
     <p class="lease-subtitle">Governed by ${e(profile.framework)}</p>
   </header>`;
 
@@ -136,7 +149,8 @@ export function buildLeaseBody(profile: StateLawProfile, kind: LeaseKind): strin
 
   return `
 <article class="lease-document" data-state="${e(profile.code)}" data-tenancy="${isCo ? "coliving_room_rental" : "residential"}">
-  ${header()}
+  ${topNoticeHtml ? `${topNoticeHtml}
+  ` : ""}${header()}
 
   <section>${h("Parties")}
     <p><strong>Landlord:</strong> {{landlord_name}} ({{landlord_address}})</p>
@@ -192,7 +206,7 @@ export function buildLeaseBody(profile: StateLawProfile, kind: LeaseKind): strin
 
   ${buildEarlyTerminationSection(profile, ++n, kind)}
 
-  ${profile.disclosures.length ? `<section>${h(`${e(profile.name)} Disclosures`)}
+  ${profile.disclosures.some(dd => !dd.placement) ? `<section>${h(`${e(profile.name)} Disclosures`)}
     <ul>
       ${disclosures}
     </ul>

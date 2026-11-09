@@ -22,6 +22,7 @@ type Category = "standard_residential" | "coliving_room_rental";
 interface FormVars {
   landlord_name: string;
   landlord_address: string;
+  landlord_phone: string;
   tenant_name: string;
   tenant_email: string;
   property_address: string;
@@ -47,6 +48,7 @@ interface FormVars {
 const emptyVars: FormVars = {
   landlord_name: "",
   landlord_address: "",
+  landlord_phone: "",
   tenant_name: "",
   tenant_email: "",
   property_address: "",
@@ -204,6 +206,11 @@ export default function LeaseWizard() {
           <p className="text-muted-foreground mb-3">
             Pick the state and lease type. We&apos;ll preload the right template with the required state-specific clauses.
           </p>
+          <p className="text-xs text-muted-foreground mb-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2">
+            <strong>Not legal advice.</strong> Keycove is not a law firm. Built-in leases are drafted from each state&apos;s
+            statutes, but laws change and cities can add their own rules. Have a licensed attorney in the property&apos;s
+            state review your lease before you send it.
+          </p>
           <div className="h-1.5 bg-muted rounded-full mb-6 overflow-hidden">
             <div className="h-full rounded-full transition-all" style={{ width: "50%", background: "#4F46E5" }} />
           </div>
@@ -296,6 +303,7 @@ export default function LeaseWizard() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <Field label="Landlord name" value={vars.landlord_name} onChange={v => setVars({ ...vars, landlord_name: v })} />
                 <Field label="Landlord mailing address" value={vars.landlord_address} onChange={v => setVars({ ...vars, landlord_address: v })} />
+                <Field label="Landlord / manager phone" value={vars.landlord_phone} onChange={v => setVars({ ...vars, landlord_phone: v })} placeholder="Required on some state leases" />
                 <Field label="Tenant full name" required value={vars.tenant_name} onChange={v => setVars({ ...vars, tenant_name: v })} />
                 <Field label="Tenant email" required type="email" value={vars.tenant_email} onChange={v => setVars({ ...vars, tenant_email: v })} />
               </div>

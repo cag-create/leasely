@@ -871,6 +871,9 @@ function ReceivedApplications({
             </DialogTitle>
             <DialogDescription className="pt-2 text-sm">
               Review and adjust before the draft lease is created. These values pre-fill the lease — you can still edit them on the lease editor before sending.
+              <span className="block mt-2 text-xs rounded-md border border-amber-300 bg-amber-50 text-amber-900 px-2.5 py-1.5">
+                <strong>Not legal advice.</strong> Keycove is not a law firm. Have a licensed attorney in the property&apos;s state review the lease before it is signed.
+              </span>
             </DialogDescription>
           </DialogHeader>
 

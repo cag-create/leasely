@@ -1,0 +1,233 @@
+import type { StateLawProfile } from "../types";
+
+// lis.njleg.state.nj.us (NXT) would not serve section text to scripts, and curl to
+// Justia/FindLaw is blocked; statute text was read from Justia's 2025 New Jersey
+// Revised Statutes in a browser. Regulations are from Cornell LII.
+const JUS = (title: string, sec: string) =>
+  `https://law.justia.com/codes/new-jersey/title-${title}/section-${sec}/`;
+const LII = (sec: string) => `https://www.law.cornell.edu/regulations/new-jersey/N-J-A-C-${sec}`;
+
+export const NJ: StateLawProfile = {
+  code: "NJ",
+  name: "New Jersey",
+  framework:
+    "New Jersey landlord-tenant statutes, including the Anti-Eviction Act (N.J.S.A. 2A:18-61.1 et seq.), the Rent Security Deposit Act (N.J.S.A. 46:8-19 et seq.), the Truth in Renting Act (N.J.S.A. 46:8-43 et seq.), and the Safe Housing Act (N.J.S.A. 46:8-9.4 et seq.)",
+
+  deposit: {
+    maxMonths: 1.5,
+    capRule:
+      "The security deposit may not exceed one and one-half months' rent. Any additional security deposit Landlord collects in a year may not be more than 10% of the current deposit. These deposit rules apply to owner-occupied buildings with no more than two rental units only if Tenant gives Landlord 30 days' written notice invoking them.",
+    capCite: "N.J.S.A. 46:8-21.2, 46:8-26",
+    returnDays: 30,
+    returnRule:
+      "Within 30 days after this Lease ends, Landlord shall return the deposit plus Tenant's share of the interest or earnings, less any charges permitted by this Lease, by personal delivery or registered or certified mail, with an itemized statement of the interest and each deduction sent the same way. No deduction may be made while Tenant remains in possession. If Tenant is displaced by fire, flood, condemnation, or evacuation and the premises are posted or certified as uninhabitable, Landlord shall make the deposit available within five business days; after a termination under the Safe Housing Act, within 15 business days. If a court finds Landlord wrongfully withheld the deposit, Tenant recovers double the amount withheld plus costs and, in the court's discretion, attorney's fees.",
+    returnCite: "N.J.S.A. 46:8-21.1",
+    holdingRule:
+      "The deposit remains Tenant's property, is held in trust, and may not be commingled with Landlord's property. Landlord shall deposit it in an interest-bearing account at a federally insured bank, savings bank, or savings and loan association in New Jersey (landlords with 10 or more units must use an insured money market fund or a variable-rate account as the statute specifies). Within 30 days after receiving the deposit, Landlord shall notify Tenant in writing of the name and address of the institution, the type of account, the current interest rate, and the amount of the deposit, and shall give the same notice within 30 days after moving the deposit, at each annual interest payment, and within 30 days after any transfer of ownership. Interest belongs to Tenant and is paid in cash or credited toward rent each year on the lease anniversary or renewal (or January 31 if Landlord has given notice). If Landlord fails to deposit the money, give notice, or pay interest as required, Tenant may give written notice to apply the deposit plus 7% annual interest toward rent.",
+    holdingCite: "N.J.S.A. 46:8-19",
+    interestRequired: true,
+    moveInInspection: "",
+  },
+
+  lateFee: {
+    graceDays: null,
+    capType: "none",
+    capRule:
+      "If Tenant is a senior citizen receiving Social Security old-age, Railroad Retirement, or another governmental pension in lieu of Social Security, or receives Social Security Disability, Supplemental Security Income, or Work First New Jersey benefits, and rent is due on the first of the month, no late fee may be charged unless rent remains unpaid after five business days (excluding Saturdays, Sundays, and state or federal holidays). Any late fee must be reasonable and must not operate as a penalty.",
+    cite: "N.J.S.A. 2A:42-6.1, 2A:42-6.3",
+  },
+
+  notice: {
+    monthToMonthDays: 30,
+    monthToMonthRule:
+      "Tenant may end a month-to-month tenancy by written notice given at least one month before the end of a monthly rental period. Under New Jersey's Anti-Eviction Act, Landlord may not end a month-to-month tenancy, refuse to renew this Lease, or evict Tenant except for one of the good causes listed in N.J.S.A. 2A:18-61.1, after giving the written notice required by N.J.S.A. 2A:18-61.2; the end of the lease term alone is not good cause. If the Property is in an owner-occupied building with no more than two rental units, or is a transient or seasonal rental, the Anti-Eviction Act does not apply and either party may end a month-to-month tenancy by one month's written notice to quit.",
+    monthToMonthCite: "N.J.S.A. 2A:18-56, 2A:18-61.1, 2A:18-61.2",
+    nonpaymentDays: null,
+    nonpaymentRule:
+      "If Tenant fails to pay rent when due, Landlord may file a summary dispossess complaint in the Superior Court, Law Division, Special Civil Part, Landlord/Tenant Section. New Jersey law does not require a notice to quit before a nonpayment case, but Landlord may not remove Tenant without a court judgment for possession and a warrant of removal.",
+    nonpaymentCite: "N.J.S.A. 2A:18-61.1(a), 2A:18-61.2",
+    entryHours: 24,
+    entryRule:
+      "Tenant shall give Landlord access to the Property, upon reasonable notice, to inspect and to make repairs or alterations needed to comply with the law. Except in an emergency, Landlord will give Tenant at least one day's (24 hours') notice before entering and will enter only at reasonable times. In a safety or structural emergency, Tenant shall give immediate access.",
+    entryCite: "N.J.A.C. 5:10-5.1(c)",
+  },
+
+  earlyTermination: {
+    military: {
+      label: "Military service (New Jersey law)",
+      cite: "N.J.S.A. 38:23C-2(a), 38:23C-14",
+      eligible:
+        "Tenant may terminate this Lease if Tenant (or the person on whose behalf it was signed) entered military service after signing it and the Property has been occupied by Tenant or Tenant's dependents. 'Military service' means active military service of the United States and active duty in the military service of New Jersey under an order of the Governor.",
+      notice:
+        "Tenant may deliver or mail written notice to Landlord or Landlord's agent at any time after military service begins. Because rent is paid monthly, termination takes effect 30 days after the first date on which the next rent payment is due after the notice is delivered or mailed.",
+      documentation: "",
+      liability:
+        "Tenant owes rent prorated to the termination date, and Landlord shall refund rent paid in advance for any later period. After termination, Tenant and any co-signer have no further liability except for damage to the Property, and Landlord may not charge Tenant or any co-signer any penalty or fee for early termination, whether or not Tenant is the only person who signed this Lease. Landlord may ask a court, before the termination date, to modify this relief as justice and equity require.",
+    },
+    domesticViolence: {
+      label: "Victims of domestic violence (New Jersey Safe Housing Act)",
+      cite: "N.J.S.A. 46:8-9.6 to 46:8-9.9, 46:8-9.11",
+      eligible:
+        "Tenant may terminate this Lease if Tenant or Tenant's child faces an imminent threat of serious physical harm from another named person if Tenant remains in the Property, and Tenant acts in good faith and follows the statutory procedure.",
+      notice:
+        "Tenant gives Landlord written notice that Tenant or Tenant's child faces an imminent threat of serious physical harm from a named person if Tenant remains. Termination takes effect on the 30th day after Landlord receives the notice and documentation, unless Landlord and Tenant agree on an earlier date.",
+      documentation:
+        "With the notice Tenant must provide one of the following: a certified copy of a permanent restraining order issued under the New Jersey Prevention of Domestic Violence Act, or by another jurisdiction under its domestic violence laws, protecting Tenant from the person named in the notice; a law enforcement agency record documenting the domestic violence or certifying that Tenant or Tenant's child is a victim; medical documentation of the domestic violence from a health care provider; a certification from a certified Domestic Violence Specialist or the director of a designated domestic violence agency; or other documentation or certification from a licensed social worker that Tenant or Tenant's child is a victim. Landlord shall keep this information confidential and shall not enter it in any shared database.",
+      liability:
+        "Tenant pays rent prorated to the termination date and owes nothing for later periods. Landlord shall make the security deposit and interest, less lawful charges and rent owed, available within 15 business days after the termination. The lease of any co-tenant also terminates; the co-tenants may sign a new lease at Landlord's option or hold over if Landlord allows. These rights cannot be waived.",
+    },
+    other: [
+      {
+        label: "Death of a tenant or spouse",
+        cite: "N.J.S.A. 46:8-9.1",
+        eligible:
+          "If this Lease is for a term of one year or more and the Property is used only as Tenant's home, it may be terminated early if Tenant dies, or, where the Lease was signed jointly by spouses, if either spouse dies. Notice may be given by Tenant, by the executor or administrator of the estate, or by the surviving spouse.",
+        notice:
+          "Termination takes effect on the 40th day after Landlord receives written notice. The Property must be vacated and possession returned to Landlord at least five working days before that 40th day.",
+        documentation: "",
+        liability:
+          "Rent is owed up to the termination date, and nothing after it. The security deposit is returned to the executor, administrator, or surviving spouse as required by N.J.S.A. 46:8-21.1.",
+      },
+      {
+        label: "Disabling illness or accident, age 62+ moving to care or affordable housing, or inaccessible unit",
+        cite: "N.J.S.A. 46:8-9.2",
+        eligible:
+          "If this Lease is for a term of one year or more and the Property is used only as Tenant's home, it may be terminated early if: (a) Tenant or Tenant's spouse suffers a disabling illness or accident and can no longer work; (b) Tenant or Tenant's spouse, one of whom is 62 or older, is accepted into an assisted living facility, nursing home, or continuing care retirement community; (c) Tenant or Tenant's spouse, one of whom is 62 or older, is accepted into housing reserved for low- or moderate-income households and does not already live in such housing; or (d) the Property is not accessible to Tenant or a household member who has a lasting disabling illness or accident, and Landlord was asked to make it accessible at Landlord's expense and was unable or unwilling to do so.",
+        notice:
+          "Tenant, Tenant's spouse, or another legal representative (or, for an inaccessible unit, another adult family member) gives Landlord written notice. Termination takes effect on the 40th day after Landlord receives it, and the Property must be vacated at least five working days before that 40th day.",
+        documentation:
+          "For (a): a treating physician's certification that Tenant or Tenant's spouse cannot continue gainful employment, proof of loss of income, and proof that pensions, insurance, or other benefits are insufficient to pay the rent. For (b): a treating physician's certification of the need for the facility's services and proof of acceptance. For (c): a lease or letter of intent to lease from the housing sponsor. For (d): a licensed physician's certification that the disability is likely not temporary, and a statement that Landlord was asked and was unable or unwilling to make the unit accessible.",
+        liability: "Rent is owed up to the termination date, and nothing after it.",
+      },
+      {
+        label: "Undisclosed flood zone",
+        cite: "N.J.S.A. 46:8-50(e)–(f)",
+        eligible:
+          "If Landlord was required to disclose, and failed to disclose, that the Property is in a FEMA Special Flood Hazard Area or Moderate Risk Flood Hazard Area, and Tenant later learns it is, Tenant may terminate this Lease.",
+        notice:
+          "Tenant gives Landlord written notice of termination. Termination takes effect when Tenant surrenders possession.",
+        documentation: "",
+        liability:
+          "Within 30 days after the termination, Landlord shall refund all rent and other amounts Tenant paid in advance for any period after it.",
+      },
+    ],
+    feeCap: null,
+    mitigation: {
+      basis: "case_law",
+      cite: "Sommer v. Kridel, 74 N.J. 446 (1977)",
+      rule:
+        "If Tenant leaves before this Lease ends, Landlord will make reasonable efforts to re-rent the Property, and rent received from a replacement tenant will be credited against what Tenant owes.",
+    },
+  },
+
+  disclosures: [
+    {
+      id: "truth_in_renting",
+      title: "Truth in Renting statement",
+      text:
+        "Landlord has given Tenant, at or before the time Tenant moves in, a copy of the current Truth in Renting statement of the legal rights and responsibilities of tenants and landlords published by the New Jersey Department of Community Affairs, and keeps a copy posted where it is prominent and accessible to all tenants.",
+      cite: "N.J.S.A. 46:8-44, 46:8-46",
+      condition:
+        "Required unless the building has no more than two dwelling units, is owner-occupied with no more than three dwelling units, or is a hotel, motel, or guest house serving transient or seasonal guests",
+    },
+    {
+      id: "flood_zone",
+      title: "Flood risk notice",
+      text:
+        "Before this Lease was signed, Landlord gave Tenant a separate written Flood Risk rider, in at least 12-point type and individually signed or acknowledged by Tenant, stating whether any part of the Property is in the FEMA Special Flood Hazard Area (100-year floodplain) or Moderate Risk Flood Hazard Area (500-year floodplain), and whether, to Landlord's actual knowledge, the rental premises or any part of the parking areas has ever experienced flood damage, water seepage, or pooled water due to a natural flood event and, if so, how many times. Flood insurance may be available to renters through FEMA's National Flood Insurance Program to cover your personal property and contents in the event of a flood. A standard renter's insurance policy does not typically cover flood damage. You are encouraged to examine your policy to determine whether you are covered.",
+      cite: "N.J.S.A. 46:8-50",
+      condition:
+        "Required unless the premises contain no more than two units, are owner-occupied with no more than three units, or are a seasonal rental of less than 120 days",
+    },
+    {
+      id: "window_guards",
+      title: "Window guard notice",
+      text:
+        "THE OWNER IS REQUIRED BY LAW TO PROVIDE, INSTALL, AND MAINTAIN WINDOW GUARDS IN THE APARTMENT IF A CHILD OR CHILDREN 10 YEARS OF AGE OR YOUNGER LIVE IN THE APARTMENT OR ARE REGULARLY PRESENT THERE FOR A SUBSTANTIAL PERIOD OF TIME, IF THE TENANT GIVES THE OWNER A WRITTEN REQUEST THAT THE WINDOW GUARDS BE INSTALLED. THE OWNER IS ALSO REQUIRED, UPON THE WRITTEN REQUEST OF SUCH A TENANT, TO PROVIDE, INSTALL, AND MAINTAIN WINDOW GUARDS IN THE HALLWAYS TO WHICH PERSONS IN THE TENANT'S UNIT HAVE ACCESS WITHOUT HAVING TO GO OUT OF THE BUILDING, OTHER THAN FIRST-FLOOR HALLWAYS WITH NO WINDOW SILL MORE THAN SIX FEET ABOVE GRADE AND NO OTHER HAZARDOUS CONDITION. For a first-floor unit, window guards are not required in the unit or first-floor hallways unless a window sill is more than six feet above grade or another hazardous condition requires them.",
+      cite: "N.J.A.C. 5:10-27.1(c)",
+      condition:
+        "Only for a unit in a multiple dwelling (three or more units) that is not owner-occupied and not a seasonal rental; Landlord must also tell Tenant of this right orally at signing and have Tenant sign a separate acknowledgment",
+    },
+  ],
+
+  fairHousing: {
+    stateClasses: [
+      "creed",
+      "ancestry",
+      "nationality",
+      "marital status",
+      "civil union status",
+      "domestic partnership status",
+      "pregnancy or breastfeeding",
+      "gender identity or expression",
+      "affectional or sexual orientation",
+      "liability for service in the Armed Forces of the United States",
+      "source of lawful income or lawful rent payment, including rental assistance",
+    ],
+    cite: "N.J.S.A. 10:5-12(g)",
+  },
+
+  eviction: {
+    rule:
+      "Landlord may remove Tenant only through a summary dispossess action in the Superior Court, Law Division, Special Civil Part, Landlord/Tenant Section, and (unless an exemption applies) only for a good cause listed in the Anti-Eviction Act, followed by a judgment for possession and a warrant of removal executed by a court officer. Landlord will not enter or retake the Property without Tenant's consent except through that legal process; a lockout is a disorderly persons offense.",
+    cite: "N.J.S.A. 2A:18-53 et seq., 2A:18-61.1, 2A:18-61.2, 2A:39-1",
+  },
+
+  habitability: {
+    rule:
+      "Landlord shall keep the Property and all common areas in a safe, sanitary, and habitable condition that complies with applicable state and local housing, health, and building codes, including the regulations for multiple dwellings, and shall make all repairs needed to keep it that way, except repairs required because of damage caused by Tenant, Tenant's household, or guests. Landlord will not retaliate against Tenant for requesting repairs or reporting code violations.",
+    cite: "Implied warranty of habitability (New Jersey case law); N.J.A.C. 5:10; N.J.S.A. 2A:42-10.10",
+  },
+
+  sources: [
+    { cite: "N.J.S.A. 46:8-19", url: JUS("46", "46-8-19") },
+    { cite: "N.J.S.A. 46:8-21.1", url: JUS("46", "46-8-21-1") },
+    { cite: "N.J.S.A. 46:8-21.2", url: JUS("46", "46-8-21-2") },
+    { cite: "N.J.S.A. 46:8-21.4", url: JUS("46", "46-8-21-4") },
+    { cite: "N.J.S.A. 46:8-21.5", url: JUS("46", "46-8-21-5") },
+    { cite: "N.J.S.A. 46:8-26", url: JUS("46", "46-8-26") },
+    { cite: "N.J.S.A. 46:8-9.1", url: JUS("46", "46-8-9-1") },
+    { cite: "N.J.S.A. 46:8-9.2", url: JUS("46", "46-8-9-2") },
+    { cite: "N.J.S.A. 46:8-9.3", url: JUS("46", "46-8-9-3") },
+    { cite: "N.J.S.A. 46:8-9.4 to 46:8-9.12 (Safe Housing Act)", url: JUS("46", "46-8-9-6") },
+    { cite: "N.J.S.A. 46:8-27", url: JUS("46", "46-8-27") },
+    { cite: "N.J.S.A. 46:8-28", url: JUS("46", "46-8-28") },
+    { cite: "N.J.S.A. 46:8-44", url: JUS("46", "46-8-44") },
+    { cite: "N.J.S.A. 46:8-45", url: JUS("46", "46-8-45") },
+    { cite: "N.J.S.A. 46:8-46", url: JUS("46", "46-8-46") },
+    { cite: "N.J.S.A. 46:8-47", url: JUS("46", "46-8-47") },
+    { cite: "N.J.S.A. 46:8-50", url: JUS("46", "46-8-50") },
+    { cite: "N.J.S.A. 2A:42-6.1 to 2A:42-6.3", url: JUS("2a", "2a-42-6-1") },
+    { cite: "N.J.S.A. 2A:18-56", url: JUS("2a", "2a-18-56") },
+    { cite: "N.J.S.A. 2A:18-61.1 (introductory paragraph and grounds a.-e.)", url: JUS("2a", "2a-18-61-1") },
+    { cite: "N.J.S.A. 2A:18-61.2", url: JUS("2a", "2a-18-61-2") },
+    { cite: "N.J.S.A. 2A:39-1", url: JUS("2a", "2a-39-1") },
+    { cite: "N.J.S.A. 2A:42-10.10", url: JUS("2a", "2a-42-10-10") },
+    { cite: "N.J.S.A. 38:23C-2", url: JUS("38", "38-23c-2") },
+    { cite: "N.J.S.A. 38:23C-3, 38:23C-4", url: JUS("38", "38-23c-4") },
+    { cite: "N.J.S.A. 38:23C-14", url: JUS("38", "38-23c-14") },
+    { cite: "N.J.S.A. 10:5-12(g)", url: JUS("10", "10-5-12") },
+    { cite: "P.L.2025, c.405 (N.J.S.A. 46:8-18.1, application fee cap)", url: "https://pub.njleg.gov/Bills/2024/PL25/405_.HTM" },
+    { cite: "N.J.A.C. 5:10-5.1", url: LII("5-10-5-1") },
+    { cite: "N.J.A.C. 5:10-27.1", url: LII("5-10-27-1") },
+  ],
+
+  reviewNotes: [
+    "Source access: the official NJ Legislature statute database (lis.njleg.state.nj.us, NXT) would not return section text to scripted requests, and Justia/FindLaw block curl. Statute text was read in full from Justia's '2025 New Jersey Revised Statutes' in a browser and saved to the research scratchpad (NJ_justia_2025_capture.txt). Justia's 2025 edition may not include laws enacted in the 2026 session. Secondary sites claim a 2026 law cut the deposit cap to one month and/or capped pet deposits; I found no official text supporting this, so the 1.5-month cap stands, but please confirm on pub.njleg.gov.",
+    "Anti-Eviction Act: effectively every New Jersey residential lease auto-continues; non-renewal or ending a month-to-month tenancy requires a statutory good cause and the matching notice (N.J.S.A. 2A:18-61.1/-61.2), except owner-occupied buildings with two or fewer rental units and transient/seasonal rentals. Co-living in an owner-occupied two-unit house is exempt; co-living in larger buildings is fully covered. Only grounds a.-e. of 2A:18-61.1 were read in full.",
+    "Late fees: no statewide cap or general grace period. The five-business-day grace period applies only to the senior/benefit recipients listed in N.J.S.A. 2A:42-6.3 (violation is a disorderly persons offense). New Jersey case law limits treating late fees as 'rent' in summary dispossess actions; not encoded.",
+    "Death termination (N.J.S.A. 46:8-9.1) applies only to leases of one year or more and 'shall not apply to any lease the terms whereof shall explicitly provide otherwise' - i.e., the statute is waivable by express lease language. Keycove's lease does NOT opt out; keep it that way. N.J.S.A. 46:8-9.2 (disability/62+) is limited to leases of one year or more as well.",
+    "Safe Housing Act (46:8-9.6) covers domestic violence threats to the tenant or the tenant's child only, and requires a PERMANENT (final) restraining order if that is the document used; it does not expressly cover stalking or sexual assault by non-household members. It also terminates co-tenants' leases (unlike NY/RI). The DV definition cross-reference (N.J.S.A. 2C:25-19) was not read.",
+    "Military (38:23C-14) is broader than the SCRA: it covers New Jersey state active duty on the Governor's order, requires no orders and no minimum duration for real property leases, and bars any early-termination penalty and releases co-signers. It applies only to leases signed BEFORE entering military service. No documentation requirement appears in the statute; documentation left empty.",
+    "Mitigation: Sommer v. Kridel, 74 N.J. 446 (1977) is the leading case imposing a duty to mitigate on residential landlords; I did not read the opinion from a primary source - please verify.",
+    "Habitability cite: New Jersey's warranty of habitability is case law (Marini v. Ireland, 56 N.J. 130 (1970), not read). N.J.A.C. 5:10 (multiple dwelling maintenance code, 3+ units) was read only at §§ 5:10-5.1 and 5:10-27.1. The habitability sentence is a general statement, not a statutory quotation.",
+    "Entry: no statute sets an entry-notice period for single-family or two-family rentals. N.J.A.C. 5:10-5.1(c) requires 'one day' notice for multiple dwellings; we apply 24 hours to all New Jersey leases as a lease term.",
+    "Required documents Keycove must generate or attach (engineering): (1) Truth in Renting statement (DCA publishes annually, English/Spanish) for covered landlords; (2) Flood Risk rider as a SEPARATE, individually signed rider in at least 12-point type delivered BEFORE signing (N.J.S.A. 46:8-50(a)), with the 46:8-50(c) insurance sentence also in the lease itself; (3) window guard notice in prominent boldface in multiple-dwelling leases plus a separate signed acknowledgment of the oral notice (N.J.A.C. 5:10-27.1(c)(1)) - our text tracks the content required by 5:10-27.1(c) but is not the DCA model language in Appendix 27A, which I did not read, and owners must also deliver the notice twice a year (27.1(d)); (4) deposit bank-notice letter within 30 days (46:8-19(c)).",
+    "Not read / not encoded (flag for counsel): Fair Chance in Housing Act (criminal history screening, N.J.S.A. 46:8-52 et seq.); lead-safe certification for pre-1978 rentals at tenant turnover (P.L.2021, c.182); landlord registration statement and any duty to give tenants the registration information (N.J.S.A. 46:8-28 requires filing with the municipality or DCA); N.J.S.A. 46:8-6/-7 (untenantable premises); rent receipts; 2A:18-61.1 grounds f.-r.",
+    "Application fee: P.L.2025, c.405 (approved Jan. 20, 2026, effective the first day of the fourth month after enactment, i.e., May 1, 2026) caps rental application or similar fees at $50 (CPI-adjusted each January), except for units in one- or two-family dwellings.",
+    "Local law: over 100 New Jersey municipalities have rent control or rent leveling ordinances (e.g., Jersey City, Newark, Hoboken) and many require rental registration, certificates of occupancy/inspection at turnover, or local lead inspections. Not encoded.",
+  ],
+
+  confidence: "medium",
+  researchedOn: "2026-11-08",
+};

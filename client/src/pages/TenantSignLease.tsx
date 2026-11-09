@@ -9,6 +9,7 @@ import {
   CheckCircle2, FileText, Home, DollarSign, Calendar, Shield, Loader2, ExternalLink, AlertTriangle
 } from "lucide-react";
 import { LOGO_URL } from "@/lib/brand";
+import { openLeasePrintView } from "@/lib/leasePrint";
 
 const BRAND = "#1B2B5E";
 const ACCENT = "#4F46E5";
@@ -234,6 +235,7 @@ export default function TenantSignLease() {
                 <div>
                   <p className="text-sm font-semibold text-gray-700 mb-2">Your lease — please read it in full</p>
                   {lease.document.html ? (
+                    <div className="space-y-2">
                     <div className="max-h-[60vh] overflow-y-auto rounded-xl border border-gray-200 bg-white">
                       {/* sandbox without allow-scripts: lease HTML can never run code */}
                       <iframe
@@ -245,6 +247,22 @@ export default function TenantSignLease() {
                         className="w-full block"
                         style={{ height: 600, border: 0 }}
                       />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const ok = openLeasePrintView(
+                          lease.document!.html!,
+                          "Lease agreement",
+                          `Document fingerprint: ${lease.document!.fingerprint}`,
+                        );
+                        if (!ok) toast.error("Pop-up blocked. Allow pop-ups for this site to print or save the lease.");
+                      }}
+                      className="inline-flex items-center gap-1.5 text-sm font-semibold"
+                      style={{ color: ACCENT }}
+                    >
+                      <FileText className="w-3.5 h-3.5" /> Print or save as PDF
+                    </button>
                     </div>
                   ) : (
                     <div className="space-y-2">

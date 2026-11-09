@@ -23,6 +23,8 @@ mkdirSync(SAMPLES, { recursive: true });
 export const SAMPLE_VARS = {
   landlord_name: "Sample Landlord LLC",
   landlord_address: "100 Main Street, Suite 2",
+  landlord_phone: "(555) 010-0100",
+  deposit_institution: "Sample Community Bank, 200 Bank Street",
   tenant_name: "Jordan Sample",
   tenant_email: "jordan@example.com",
   property_address: "123 Sample Ave, Apt 4",
