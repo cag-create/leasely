@@ -86,7 +86,8 @@ export interface StateLawProfile {
     /** Statutory grace period in days before any late fee may be charged; null if the statute sets none. */
     graceDays: number | null;
     /** How the cap is computed. "none" = statute sets no numeric cap (fee must still be reasonable). */
-    capType: "none" | "percent" | "flat" | "greater_of" | "lesser_of" | "reasonable";
+    /** "tiered" = a statutory cap that varies by rent and can't be one number (stated in capRule, not auto-clamped). */
+    capType: "none" | "percent" | "flat" | "greater_of" | "lesser_of" | "reasonable" | "tiered";
     /** Percent of monthly rent (e.g. 5 for 5%) when capType uses a percent. */
     capPercent?: number;
     /** Flat dollar amount when capType uses a flat amount. */

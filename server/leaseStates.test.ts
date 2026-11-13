@@ -21,8 +21,7 @@ const profiles = allStateProfiles();
 const textOf = (html: string) => html.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/\s+/g, " ");
 
 describe("state lease coverage", () => {
-  // TEMP (interim NC/TN commit): restored to a hard check once all 51 profiles land.
-  it.skipIf(profiles.length < 51)("has a profile for all 50 states + DC", () => {
+  it("has a profile for all 50 states + DC", () => {
     const missing = Object.keys(STATE_NAMES).filter(c => !getStateProfile(c));
     expect(missing).toEqual([]);
     expect(profiles.length).toBe(51);

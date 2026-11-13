@@ -129,6 +129,7 @@ export const NV: StateLawProfile = {
       text:
         "There are rebuttable presumptions in NRS 205.0813 and 205.0817 that the tenant does not have lawful occupancy of the dwelling unless this agreement (1) is notarized or is signed by an authorized agent of the landlord who at the time of signing holds a permit to engage in property management pursuant to chapter 645 of NRS, and (2) includes the current address and telephone number of the landlord or the landlord's authorized representative. This agreement is valid and enforceable against the landlord and the tenant regardless of whether it is notarized or signed by such a permitted agent, and regardless of whether it includes the current address and telephone number of the landlord or the landlord's authorized representative.",
       cite: "Nev. Rev. Stat. § 118A.200(4), (10)",
+      placement: "top_large",
       condition:
         "Required for a single-family residence (a structure of not more than four units, excluding manufactured homes) when this Lease is not signed by a property manager holding a Nevada chapter 645 permit; must appear at the top of the first page in a font at least twice as large as any other font in the Lease",
     },
@@ -143,8 +144,22 @@ export const NV: StateLawProfile = {
       id: "owner_agent_identity",
       title: "Owner, manager and emergency contact",
       text:
-        "Landlord discloses below the name and address of the persons authorized to manage the premises, of a person within Nevada authorized to accept service of process and receive notices and demands on Landlord's behalf, and of the principal or corporate owner, together with a telephone number at which a responsible person who lives in the county or within 60 miles of the premises may be reached in an emergency. Landlord will keep this information current.",
+        "The person authorized to manage the premises, the person within Nevada authorized to act for Landlord for service of process and for receiving notices and demands, and the principal or corporate owner is {{landlord_name}}, {{landlord_address}}. A responsible person who lives in the county where the premises are located or within 60 miles of the premises may be reached in an emergency at {{landlord_phone}}. Landlord will keep this information current, and this disclosure is enforceable against any successor landlord or manager of the premises.",
       cite: "Nev. Rev. Stat. § 118A.260",
+    },
+    {
+      id: "occupancy_by_children",
+      title: "Occupancy by children",
+      text:
+        "The persons authorized to occupy the dwelling are listed in this Lease and may include children. Landlord does not restrict occupancy by children, except for any limit on the total number of occupants that applies equally to all occupants under applicable health, safety and building codes.",
+      cite: "Nev. Rev. Stat. § 118A.200(3)(c)",
+    },
+    {
+      id: "late_partial_dishonored_charges",
+      title: "Charges for partial payment and dishonored checks",
+      text:
+        "Other than the late fee stated in the Rent section of this Lease, Landlord charges no fee for a partial payment of rent and no fee for the return of a dishonored check.",
+      cite: "Nev. Rev. Stat. § 118A.200(3)(g)",
     },
     {
       id: "nuisance_summary",
@@ -227,8 +242,8 @@ export const NV: StateLawProfile = {
 
   reviewNotes: [
     "No Nevada state military lease-termination statute found. NRS 597.8191–597.8198 lets service members (including National Guard) terminate telecom, internet, video and health club contracts on PCS or 30+ day deployment, but not leases. NRS ch. 412 (Military) and ch. 118A contain no lease-termination or SCRA-extension provision for state active duty. Federal SCRA only.",
-    "NRS 118A.200(4) single-family residence notice (structures of 4 or fewer units) must appear at the TOP OF THE FIRST PAGE in a font at least TWICE as large as any other font in the agreement whenever the lease is not signed by a chapter 645 permitted property manager. The generator must render this specially; placing it in a disclosures section would not comply. The text above tracks the statute nearly verbatim.",
-    "NRS 118A.200(3) requires every written lease to contain provisions on: duration; rent (as a single all-in figure per 118A.200(6), 2025 amendment) and manner/time of payment; occupancy by children or pets; services included; required fees and their purposes; deposits and refund conditions; late, partial-payment and dishonored-check charges; landlord inspection rights; a list of occupants; utility responsibility; a signed inventory/condition record; the NRS 202.470 summary; nuisance/code-violation reporting procedure; and the flag and religious-display rights. Using a nonconforming lease is unlawful and contrary provisions are void (118A.200(9)). Generator must confirm every item is present.",
+    "NRS 118A.200(4) single-family residence notice (structures of 4 or fewer units) must appear at the TOP OF THE FIRST PAGE in a font at least TWICE as large as any other font in the agreement whenever the lease is not signed by a chapter 645 permitted property manager. Now encoded with placement 'top_large', so the builder renders it above the title at 32px with every other heading capped at 16px; attorney/PDF must confirm the rendered PDF keeps the 2x ratio across all fonts (not just headings). The text tracks the statute nearly verbatim.",
+    "NRS 118A.200(3) requires every written lease to contain provisions on: duration; rent (as a single all-in figure per 118A.200(6), 2025 amendment) and manner/time of payment; occupancy by children or pets; services included; required fees and their purposes; deposits and refund conditions; late, partial-payment and dishonored-check charges; landlord inspection rights; a list of occupants; utility responsibility; a signed inventory/condition record; the NRS 202.470 summary; nuisance/code-violation reporting procedure; and the flag and religious-display rights. Using a nonconforming lease is unlawful and contrary provisions are void (118A.200(9)). Audited against the rendered lease: all subjects are present. Subject (c) occupancy by children was previously covered only as to pets, so an 'occupancy_by_children' disclosure was added; subject (g) partial-payment and dishonored-check charges was previously covered only by the late fee, so a 'late_partial_dishonored_charges' disclosure was added stating Landlord charges none for those (safest conforming position). Attorney may substitute actual charges if Landlord intends to impose them.",
     "The reporting-procedure disclosure (118A.200(3)(m)) is drafted generically; attorney should consider whether naming the specific local agency (e.g., Las Vegas/Clark County code enforcement) is needed for compliance.",
     "Nonpayment notice is 7 JUDICIAL days (excludes weekends and court holidays) and has mandatory content under NRS 40.253(3); a weekly tenancy under 45 days may use a 4-day notice. Shutdown protections for federal, state and tribal workers (NRS 40.2512(2), 118A.310(2)) suspend the pay-or-quit remedy.",
     "Landlord's no-cause notice for a periodic tenancy must advise the tenant of the 60+/disability 30-day extension and shutdown-worker extension (NRS 40.251(5)).",

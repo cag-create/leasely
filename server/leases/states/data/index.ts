@@ -1,8 +1,8 @@
-// Registry of every state profile. One import per jurisdiction.
-// AR, IA, LA, MS, MO still pending research (2026-11-08).
+// Registry of every state profile — all 50 states + DC. One import per jurisdiction.
 import type { StateLawProfile } from "../types";
 import { AK } from "./ak";
 import { AL } from "./al";
+import { AR } from "./ar";
 import { AZ } from "./az";
 import { CA } from "./ca";
 import { CO } from "./co";
@@ -12,16 +12,20 @@ import { DE } from "./de";
 import { FL } from "./fl";
 import { GA } from "./ga";
 import { HI } from "./hi";
+import { IA } from "./ia";
 import { ID } from "./id";
 import { IL } from "./il";
 import { IN } from "./in";
 import { KS } from "./ks";
 import { KY } from "./ky";
+import { LA } from "./la";
 import { MA } from "./ma";
 import { MD } from "./md";
 import { ME } from "./me";
 import { MI } from "./mi";
 import { MN } from "./mn";
+import { MO } from "./mo";
+import { MS } from "./ms";
 import { MT } from "./mt";
 import { NC } from "./nc";
 import { ND } from "./nd";
@@ -48,4 +52,4 @@ import { WI } from "./wi";
 import { WV } from "./wv";
 import { WY } from "./wy";
 
-export const ALL_PROFILES: StateLawProfile[] = [AK, AL, AZ, CA, CO, CT, DC, DE, FL, GA, HI, ID, IL, IN, KS, KY, MA, MD, ME, MI, MN, MT, NC, ND, NE, NH, NJ, NM, NV, NY, OH, OK, OR, PA, RI, SC, SD, TN, TX, UT, VA, VT, WA, WI, WV, WY];
+export const ALL_PROFILES: StateLawProfile[] = [AK, AL, AR, AZ, CA, CO, CT, DC, DE, FL, GA, HI, IA, ID, IL, IN, KS, KY, LA, MA, MD, ME, MI, MN, MO, MS, MT, NC, ND, NE, NH, NJ, NM, NV, NY, OH, OK, OR, PA, RI, SC, SD, TN, TX, UT, VA, VT, WA, WI, WV, WY];

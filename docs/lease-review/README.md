@@ -20,6 +20,7 @@ Every lease includes: the lease-break option (default fee 2 months' rent, defaul
 |---|---|---|---|---|---|---|---|---|---|
 | [AK](AK.md) | ⏳ pending | medium | 2 | 14 | none | 30 | state military, 6 other | no | 7 |
 | [AL](AL.md) | ⏳ pending | high | 1 | 60 | none | 30 | state military, 4 other | no | 12 |
+| [AR](AR.md) | ⏳ pending | high | 2 | 60 | none | 30 | state military, 1 other | no | 8 |
 | [AZ](AZ.md) | ⏳ pending | high | 1.5 | 14 | reasonable | 30 | DV, 5 other | no | 11 |
 | [CA](CA.md) | ⏳ pending | medium | 1 | 21 | reasonable | 60 | state military, DV, 3 other | yes | 14 |
 | [CO](CO.md) | ⏳ pending | high | 2 | 30 | greater_of / 7d grace | 21 | DV, 5 other | no | 14 |
@@ -29,16 +30,20 @@ Every lease includes: the lease-break option (default fee 2 months' rent, defaul
 | [FL](FL.md) | ⏳ pending | high | none | 30 | none | 30 | state military, 3 other | yes | 15 |
 | [GA](GA.md) | ⏳ pending | high | 2 | 30 | none | 60 | state military, DV, 1 other | no | 16 |
 | [HI](HI.md) | ⏳ pending | high | 1 | 14 | percent | 45 | state military, DV, 6 other | yes | 9 |
+| [IA](IA.md) | ⏳ pending | high | 2 | 30 | tiered | 30 | state military, 2 other | no | 7 |
 | [ID](ID.md) | ⏳ pending | medium | none | 21 | reasonable | 30 | state military | no | 10 |
 | [IL](IL.md) | ⏳ pending | medium | none | 30 | none | 30 | state military, DV, 3 other | no | 12 |
 | [IN](IN.md) | ⏳ pending | high | none | 45 | none | 30 | state military, DV | no | 8 |
 | [KS](KS.md) | ⏳ pending | high | 1 | 30 | none | 30 | state military, DV, 4 other | no | 10 |
 | [KY](KY.md) | ⏳ pending | medium | none | 30 | none | 30 | state military, DV, 3 other | no | 11 |
+| [LA](LA.md) | ⏳ pending | high | none | 30 | none | 10 | state military, DV, 1 other | no | 8 |
 | [MA](MA.md) | ⏳ pending | medium | 1 | 30 | none / 30d grace | 30 | state military, DV, 1 other | no | 14 |
 | [MD](MD.md) | ⏳ pending | high | 1 | 45 | percent | 60 | state military, DV, 3 other | no | 15 |
 | [ME](ME.md) | ⏳ pending | high | 2 | 30 | percent / 15d grace | 30 | DV, 2 other | yes | 16 |
 | [MI](MI.md) | ⏳ pending | high | 1.5 | 30 | none | 30 | DV, 1 other | no | 13 |
-| [MN](MN.md) | ⏳ pending | medium | none | 21 | percent | 30 | state military, DV, 4 other | no | 12 |
+| [MN](MN.md) | ⏳ pending | medium | none | 21 | percent | 30 | state military, DV, 4 other | no | 13 |
+| [MO](MO.md) | ⏳ pending | high | 2 | 30 | none | 30 | state military, DV | no | 8 |
+| [MS](MS.md) | ⏳ pending | high | none | 45 | none | 30 | 2 other | no | 8 |
 | [MT](MT.md) | ⏳ pending | high | none | 30 | none | 30 | state military, 5 other | yes | 9 |
 | [NC](NC.md) | ✅ approved | high | 2 | 30 | greater_of / 5d grace | 7 | state military, DV, 3 other | no | 7 |
 | [ND](ND.md) | ⏳ pending | high | 1 | 30 | none | 31 | state military, DV, 4 other | no | 10 |

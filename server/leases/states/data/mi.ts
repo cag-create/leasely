@@ -89,6 +89,7 @@ export const MI: StateLawProfile = {
       text:
         "NOTICE: Michigan law establishes rights and obligations for parties to rental agreements. This agreement is required to comply with the Truth in Renting Act. If you have a question about the interpretation or legality of a provision of this agreement, you may want to seek assistance from a lawyer or other qualified person.",
       cite: "MCL 554.634(2)",
+      emphasis: "bold_underline",
     },
     {
       id: "owner_agent_identity",
@@ -103,12 +104,13 @@ export const MI: StateLawProfile = {
       text:
         "You must notify your landlord in writing within 4 days after you move of a forwarding address where you can be reached and where you will receive mail; otherwise your landlord shall be relieved of sending you an itemized list of damages and the penalties adherent to that failure.",
       cite: "MCL 554.603",
+      emphasis: "bold_underline",
     },
     {
       id: "deposit_institution",
       title: "Security Deposit Institution",
       text:
-        "Within 14 days after Tenant takes possession, Landlord will give Tenant the name and address of the regulated financial institution holding the security deposit, or of the surety on Landlord's bond.",
+        "Landlord holds Tenant's security deposit at {{deposit_institution}}. No later than 14 days after Tenant takes possession, Landlord will give Tenant written notice stating Landlord's name and address for communications under the security deposit law and the name and address of this regulated financial institution, or of the surety on Landlord's bond.",
       cite: "MCL 554.603, 554.604",
     },
     {
@@ -117,6 +119,7 @@ export const MI: StateLawProfile = {
       text:
         "You should complete this checklist, noting the condition of the rental property, and return it to the landlord within 7 days after obtaining possession of the rental unit. You are also entitled to request and receive a copy of the last termination inventory checklist which shows what claims were chargeable to the last prior tenants.",
       cite: "MCL 554.608(4)",
+      emphasis: "bold_underline",
     },
     {
       id: "domestic_violence_rights",
@@ -190,8 +193,8 @@ export const MI: StateLawProfile = {
     "No Michigan statute gives servicemembers a residential lease-termination right beyond the federal SCRA. MCL 32.517 (Michigan Military Act) only bars forfeiture of executory contracts and seizure of chattels against members on state active duty for more than 7 days, plus 90-day utility protections; it is not a termination right, so military is null. A 2005 bill (HB 5477) that would have required a Guard/Reserve termination clause does not appear in current MCL 554.601a.",
     "MCL 554.601a is a REQUIRED lease term ('A rental agreement shall provide that...'), not just a statutory right. It is encoded in earlyTermination.other so the lease states it; confirm the builder always renders it for MI.",
     "MCL 554.601b lets the landlord either include the quoted DV sentence in the lease or post/deliver an identical notice. It is included as a disclosure (verbatim) so the lease satisfies the statute on its own.",
-    "MCL 554.603 notice must be in 12-point boldface type at least 4 points larger than the body text, and MCL 554.608(4) notice must be in 12-point boldface at the top of the checklist's first page; MCL 554.634(2) TRA notice must be at least 12-point in a prominent place. The builder must render these disclosures in large bold type; plain-text data cannot enforce font size.",
-    "The deposit notice under MCL 554.603 must name the financial institution or surety. Keycove has no placeholder for the deposit bank; the lease text promises a separate notice within 14 days. Product should capture the bank name so it can appear in the lease itself.",
+    "Font-size requirements, now reflected with emphasis 'bold_underline' on the three affected disclosures: the MCL 554.603 forwarding-address STATEMENT must be in 12-point boldface at least 4 points larger than the body (set on 'forwarding_address'); the MCL 554.608(4) checklist notice must be in 12-point boldface at the top of the checklist's first page (set on 'inventory_checklist'); the MCL 554.634(2) TRA notice must be in a prominent place in type not smaller than 12-point (set on 'truth_in_renting_notice' — the statute requires prominent 12-point, not strictly bold, so bold+underline over-satisfies it). emphasis renders bold+underline only; POINT SIZE (12-pt, and the 4-pt-larger-than-body rule for 554.603) must be confirmed in the generated PDF, since data flags alone cannot enforce it.",
+    "The deposit notice under MCL 554.603 must name the financial institution or surety. The 'deposit_institution' disclosure now uses the {{deposit_institution}} placeholder (bank name + address) so the holding institution appears in the lease itself; the landlord must fill it before sending. The lease still promises the full written 14-day notice (name/address for communications + institution).",
     "Truth in Renting Act 554.633(1)(o), added by 2026 PA 103 (effective Sept. 21, 2026): if the lease allows more than one rent payment method, at least one must carry no extra charge or fee. Make sure Keycove's payment terms always include a fee-free option for MI leases (e.g., ACH without a convenience fee).",
     "Truth in Renting Act also voids clauses that: waive habitability remedies or deposit-act rights, exculpate the landlord, waive jury/notice rights, shift attorney fees beyond statute, accelerate rent without the minimize-damages statement, release the duty to mitigate, or let the landlord change terms mid-lease without consent (except the listed 30-day-notice adjustments). Review the generic lease body for MI conflicts (especially any attorney-fee or acceleration clause).",
     "Mitigation: no Michigan statute creates the duty; it is case law, but the TRA (554.633(1)(i), (k)) presupposes it ('the landlord's obligation to minimize damages'). Leading case not verified from a primary source.",
