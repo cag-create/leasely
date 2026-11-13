@@ -27,7 +27,7 @@ import { trpc } from "@/lib/trpc";
 import {
   LayoutDashboard, LogOut, PanelLeft, Home, Building2, Building,
   Briefcase, Calculator, UserCircle, HeadphonesIcon, Heart,
-  FileText, Sparkles, Shield, ChevronDown, Wrench, BookOpen, Award, Landmark, Rocket, Users, TrendingUp
+  FileText, Sparkles, Shield, ChevronDown, Wrench, BookOpen, Award, Landmark, Rocket, Users, TrendingUp, ShieldCheck
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -49,6 +49,7 @@ const proMenuItems = [
   { icon: Calculator, label: "Accounting", path: "/accounting", group: "pro" },
   { icon: Building, label: "HOA Dues", path: "/hoa", group: "pro" },
   { icon: Landmark, label: "Payouts", path: "/payouts", group: "pro" },
+  { icon: ShieldCheck, label: "Trust Accounting", path: "/trust", group: "pro" },
   { icon: FileText, label: "Contractor 1099s", path: "/contractor-1099", group: "pro" },
   { icon: UserCircle, label: "Tenants / CRM", path: "/crm", group: "pro" },
 ];
@@ -63,6 +64,7 @@ const supportMenuItems = [
   { icon: Rocket, label: "How to use Keycove", path: "/how-to-use", group: "support" },
   { icon: BookOpen, label: "Pro Guide", path: "/pro-guide", group: "support" },
   { icon: Award, label: "Agent Guide", path: "/agent-guide", group: "support" },
+  { icon: ShieldCheck, label: "Property-Manager Guide", path: "/property-manager-guide", group: "support" },
   { icon: HeadphonesIcon, label: "Support", path: "/support", group: "support" },
 ];
 

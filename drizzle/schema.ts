@@ -1721,3 +1721,295 @@ export const hoaSpecialAssessments = mysqlTable("hoa_special_assessments", {
 });
 export type HoaSpecialAssessment = typeof hoaSpecialAssessments.$inferSelect;
 
+
+// ─── Owner / Trust Accounting (property-management brokerages) ───────────────
+// A brokerage (pmUserId) holds other owners' money in a bank trust account.
+// Journal = chronological bank register; ledger entries = per-owner/property,
+// security-deposit, company-funds and earned-fee ledgers. Invariant: the sum of
+// all ledger balances equals the journal balance (internal transfers net to 0).
+// State rules (NC 21 NCAC 58A .0116–.0118, G.S. 42-50) live in server/trust/stateRules.ts.
+
+export const trustAccounts = mysqlTable("trust_accounts", {
+  id: int("id").autoincrement().primaryKey(),
+  pmUserId: int("pmUserId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(), // must contain "Trust Account" or "Escrow Account" (NC .0117(b))
+  kind: mysqlEnum("kind", ["general", "security_deposit", "hoa"]).notNull().default("general"),
+  hoaName: varchar("hoaName", { length: 200 }), // kind=hoa: one association per account (.0118)
+  bankName: varchar("bankName", { length: 200 }).notNull(),
+  bankAddress: text("bankAddress"), // disclosed to tenants under G.S. 42-50
+  accountLast4: varchar("accountLast4", { length: 4 }),
+  routingLast4: varchar("routingLast4", { length: 4 }),
+  stateCode: varchar("stateCode", { length: 2 }).notNull().default("NC"),
+  interestBearing: tinyint("interestBearing").notNull().default(0),
+  interestAuthorizationNote: text("interestAuthorizationNote"), // who gets interest; written authorization on file (.0116(c))
+  interestAuthorizedAt: varchar("interestAuthorizedAt", { length: 10 }),
+  receivesStripePayouts: tinyint("receivesStripePayouts").notNull().default(0), // this account is the PM's Stripe Connect payout bank
+  openingBalanceCents: int("openingBalanceCents").notNull().default(0),
+  openingBalanceDate: varchar("openingBalanceDate", { length: 10 }),
+  status: mysqlEnum("status", ["active", "closed"]).notNull().default("active"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type TrustAccount = typeof trustAccounts.$inferSelect;
+
+export const trustOwners = mysqlTable("trust_owners", {
+  id: int("id").autoincrement().primaryKey(),
+  pmUserId: int("pmUserId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  email: varchar("email", { length: 320 }),
+  phone: varchar("phone", { length: 40 }),
+  mailingAddress: text("mailingAddress"),
+  taxIdLast4: varchar("taxIdLast4", { length: 4 }), // full TIN stays on the W-9, never here
+  taxIdType: mysqlEnum("taxIdType", ["ssn", "ein"]),
+  w9OnFile: tinyint("w9OnFile").notNull().default(0),
+  payoutMethod: mysqlEnum("payoutMethod", ["ach", "check", "other"]).notNull().default("ach"),
+  payoutBankName: varchar("payoutBankName", { length: 200 }),
+  payoutAccountLast4: varchar("payoutAccountLast4", { length: 4 }),
+  portalUserId: int("portalUserId"), // owner portal login (users.id) once the invite is accepted
+  inviteTokenHash: varchar("inviteTokenHash", { length: 64 }),
+  inviteSentAt: timestamp("inviteSentAt"),
+  status: mysqlEnum("status", ["active", "inactive"]).notNull().default("active"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type TrustOwner = typeof trustOwners.$inferSelect;
+
+export const trustManagementAgreements = mysqlTable("trust_management_agreements", {
+  id: int("id").autoincrement().primaryKey(),
+  pmUserId: int("pmUserId").notNull(),
+  trustOwnerId: int("trustOwnerId").notNull(),
+  crmPropertyId: int("crmPropertyId").notNull(),
+  trustAccountId: int("trustAccountId").notNull(),
+  depositTrustAccountId: int("depositTrustAccountId"), // optional separate security-deposit trust account
+  startDate: varchar("startDate", { length: 10 }).notNull(),
+  endDate: varchar("endDate", { length: 10 }),
+  status: mysqlEnum("status", ["active", "terminated"]).notNull().default("active"),
+  // Fees (auto-applied when rent is received)
+  mgmtFeeType: mysqlEnum("mgmtFeeType", ["percent", "flat", "none"]).notNull().default("percent"),
+  mgmtFeeBps: int("mgmtFeeBps").notNull().default(1000), // basis points of rent collected (1000 = 10%)
+  mgmtFeeFlatCents: int("mgmtFeeFlatCents").notNull().default(0),
+  mgmtFeeMinCents: int("mgmtFeeMinCents").notNull().default(0),
+  leasingFeeType: mysqlEnum("leasingFeeType", ["percent_of_first_month", "flat", "none"]).notNull().default("none"),
+  leasingFeeValue: int("leasingFeeValue").notNull().default(0), // bps or cents
+  renewalFeeType: mysqlEnum("renewalFeeType", ["percent_of_first_month", "flat", "none"]).notNull().default("none"),
+  renewalFeeValue: int("renewalFeeValue").notNull().default(0),
+  // Disbursement settings
+  reserveCents: int("reserveCents").notNull().default(0), // kept in the owner ledger for repairs
+  ownerApprovalMode: mysqlEnum("ownerApprovalMode", ["none", "disbursements", "expenses_over_threshold", "both"]).notNull().default("expenses_over_threshold"),
+  expenseApprovalThresholdCents: int("expenseApprovalThresholdCents").notNull().default(50000),
+  disbursementDay: int("disbursementDay").notNull().default(10),
+  securityDepositHolder: mysqlEnum("securityDepositHolder", ["broker_trust", "owner"]).notNull().default("broker_trust"),
+  agreementDocUrl: text("agreementDocUrl"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type TrustManagementAgreement = typeof trustManagementAgreements.$inferSelect;
+
+/** Chronological bank register for one trust account (.0117(c)(5)). */
+export const trustJournalEntries = mysqlTable("trust_journal_entries", {
+  id: int("id").autoincrement().primaryKey(),
+  pmUserId: int("pmUserId").notNull(),
+  trustAccountId: int("trustAccountId").notNull(),
+  entryDate: varchar("entryDate", { length: 10 }).notNull(), // date on the bank register
+  kind: mysqlEnum("kind", ["deposit", "disbursement"]).notNull(),
+  amountCents: int("amountCents").notNull(), // signed: deposits +, disbursements -
+  method: mysqlEnum("method", ["stripe", "ach", "check", "wire", "cash", "transfer", "bank", "other"]).notNull(),
+  reference: varchar("reference", { length: 120 }), // deposit ticket / check no. / ACH trace
+  counterparty: varchar("counterparty", { length: 200 }).notNull(), // remitter (deposits) or payee (disbursements)
+  purpose: varchar("purpose", { length: 300 }).notNull(),
+  receivedDate: varchar("receivedDate", { length: 10 }), // when the broker received the funds (3-banking-day rule)
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
+  stripePayoutId: varchar("stripePayoutId", { length: 255 }),
+  expectedBankDate: varchar("expectedBankDate", { length: 10 }), // Stripe payout arrival date
+  sourceKey: varchar("sourceKey", { length: 191 }), // idempotency: "stripe_invoice:in_…", "payment_record:12"
+  clearedDate: varchar("clearedDate", { length: 10 }), // date it cleared the bank (from reconciliation)
+  clearedReconciliationId: int("clearedReconciliationId"),
+  createdByUserId: int("createdByUserId"),
+  voidOfEntryId: int("voidOfEntryId"), // reversing entry points at the original
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  sourceUnique: uniqueIndex("trust_journal_source_unique").on(t.sourceKey),
+}));
+export type TrustJournalEntry = typeof trustJournalEntries.$inferSelect;
+
+/** Per-ledger lines (.0117(c)(4)). journalEntryId null = internal ledger transfer. */
+export const trustLedgerEntries = mysqlTable("trust_ledger_entries", {
+  id: int("id").autoincrement().primaryKey(),
+  pmUserId: int("pmUserId").notNull(),
+  trustAccountId: int("trustAccountId").notNull(),
+  journalEntryId: int("journalEntryId"),
+  transferGroup: varchar("transferGroup", { length: 40 }),
+  ledgerType: mysqlEnum("ledgerType", ["owner", "security_deposit", "company", "broker_fees"]).notNull(),
+  trustOwnerId: int("trustOwnerId"),
+  crmPropertyId: int("crmPropertyId"),
+  agreementId: int("agreementId"),
+  crmTenantId: int("crmTenantId"),
+  securityDepositId: int("securityDepositId"),
+  entryDate: varchar("entryDate", { length: 10 }).notNull(),
+  type: mysqlEnum("type", [
+    "rent_receipt", "deposit_receipt", "other_receipt", "owner_contribution",
+    "mgmt_fee", "leasing_fee", "renewal_fee", "fee_transfer",
+    "expense", "owner_disbursement", "deposit_refund", "deposit_applied",
+    "company_deposit", "bank_charge", "adjustment",
+  ]).notNull(),
+  amountCents: int("amountCents").notNull(), // signed effect on this ledger's balance
+  runningBalanceCents: int("runningBalanceCents").notNull(),
+  counterparty: varchar("counterparty", { length: 200 }),
+  description: varchar("description", { length: 300 }).notNull(),
+  reference: varchar("reference", { length: 120 }),
+  periodMonth: varchar("periodMonth", { length: 7 }), // YYYY-MM the rent covers
+  createdByUserId: int("createdByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type TrustLedgerEntry = typeof trustLedgerEntries.$inferSelect;
+
+/** Tenant security deposits held in trust (G.S. 42-50/42-52 deadlines). */
+export const trustSecurityDeposits = mysqlTable("trust_security_deposits", {
+  id: int("id").autoincrement().primaryKey(),
+  pmUserId: int("pmUserId").notNull(),
+  agreementId: int("agreementId").notNull(),
+  trustAccountId: int("trustAccountId").notNull(),
+  crmTenantId: int("crmTenantId"),
+  tenantName: varchar("tenantName", { length: 200 }).notNull(),
+  tenantEmail: varchar("tenantEmail", { length: 320 }),
+  leaseStartDate: varchar("leaseStartDate", { length: 10 }),
+  receivedDate: varchar("receivedDate", { length: 10 }).notNull(),
+  bankNoticeSentAt: varchar("bankNoticeSentAt", { length: 10 }),
+  tenancyEndDate: varchar("tenancyEndDate", { length: 10 }),
+  itemizationSentAt: varchar("itemizationSentAt", { length: 10 }),
+  itemizationJson: text("itemizationJson"), // [{ description, amountCents, category }]
+  status: mysqlEnum("status", ["held", "closed"]).notNull().default("held"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type TrustSecurityDeposit = typeof trustSecurityDeposits.$inferSelect;
+
+/** Expenses / disbursements waiting for owner approval. */
+export const trustApprovals = mysqlTable("trust_approvals", {
+  id: int("id").autoincrement().primaryKey(),
+  pmUserId: int("pmUserId").notNull(),
+  agreementId: int("agreementId").notNull(),
+  trustOwnerId: int("trustOwnerId").notNull(),
+  kind: mysqlEnum("kind", ["expense", "disbursement"]).notNull(),
+  amountCents: int("amountCents").notNull(),
+  payee: varchar("payee", { length: 200 }).notNull(),
+  description: varchar("description", { length: 300 }).notNull(),
+  invoiceUrl: text("invoiceUrl"),
+  status: mysqlEnum("status", ["pending", "approved", "declined", "posted", "cancelled"]).notNull().default("pending"),
+  requestedByUserId: int("requestedByUserId"),
+  decidedByUserId: int("decidedByUserId"),
+  decidedAt: timestamp("decidedAt"),
+  decisionNote: varchar("decisionNote", { length: 300 }),
+  journalEntryId: int("journalEntryId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type TrustApproval = typeof trustApprovals.$inferSelect;
+
+/** Monthly three-way reconciliation worksheet (.0117(e)). */
+export const trustReconciliations = mysqlTable("trust_reconciliations", {
+  id: int("id").autoincrement().primaryKey(),
+  pmUserId: int("pmUserId").notNull(),
+  trustAccountId: int("trustAccountId").notNull(),
+  periodMonth: varchar("periodMonth", { length: 7 }).notNull(),
+  cutoffDate: varchar("cutoffDate", { length: 10 }).notNull(),
+  bankEndingBalanceCents: int("bankEndingBalanceCents").notNull().default(0),
+  outstandingChecksCents: int("outstandingChecksCents").notNull().default(0),
+  depositsInTransitCents: int("depositsInTransitCents").notNull().default(0),
+  adjustedBankBalanceCents: int("adjustedBankBalanceCents").notNull().default(0),
+  journalBalanceCents: int("journalBalanceCents").notNull().default(0),
+  trialBalanceCents: int("trialBalanceCents").notNull().default(0),
+  status: mysqlEnum("status", ["draft", "balanced", "out_of_balance", "finalized"]).notNull().default("draft"),
+  worksheetJson: text("worksheetJson"), // trial balance by ledger, outstanding items, unmatched bank lines
+  statementFileName: varchar("statementFileName", { length: 200 }),
+  notes: text("notes"),
+  finalizedAt: timestamp("finalizedAt"),
+  finalizedByUserId: int("finalizedByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  periodUnique: uniqueIndex("trust_recon_account_period_unique").on(t.trustAccountId, t.periodMonth),
+}));
+export type TrustReconciliation = typeof trustReconciliations.$inferSelect;
+
+export const trustBankLines = mysqlTable("trust_bank_lines", {
+  id: int("id").autoincrement().primaryKey(),
+  reconciliationId: int("reconciliationId").notNull(),
+  trustAccountId: int("trustAccountId").notNull(),
+  postedDate: varchar("postedDate", { length: 10 }).notNull(),
+  description: varchar("description", { length: 300 }),
+  reference: varchar("reference", { length: 120 }),
+  amountCents: int("amountCents").notNull(), // signed: credits +, debits -
+  matchedJournalIds: text("matchedJournalIds"), // JSON number[]
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type TrustBankLine = typeof trustBankLines.$inferSelect;
+
+export const trustOwnerStatements = mysqlTable("trust_owner_statements", {
+  id: int("id").autoincrement().primaryKey(),
+  pmUserId: int("pmUserId").notNull(),
+  trustOwnerId: int("trustOwnerId").notNull(),
+  periodMonth: varchar("periodMonth", { length: 7 }).notNull(),
+  dataJson: text("dataJson").notNull(), // frozen statement snapshot
+  emailedAt: timestamp("emailedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  ownerPeriodUnique: uniqueIndex("trust_stmt_owner_period_unique").on(t.trustOwnerId, t.periodMonth),
+}));
+export type TrustOwnerStatement = typeof trustOwnerStatements.$inferSelect;
+
+/** Trust permissions for brokerage staff, layered on property_manager_access. */
+export const trustStaffPermissions = mysqlTable("trust_staff_permissions", {
+  id: int("id").autoincrement().primaryKey(),
+  accessId: int("accessId").notNull(), // property_manager_access.id (owner = brokerage, manager = staff)
+  canViewTrust: tinyint("canViewTrust").notNull().default(1),
+  canRecordReceipts: tinyint("canRecordReceipts").notNull().default(0),
+  canDisburse: tinyint("canDisburse").notNull().default(0),
+  canReconcile: tinyint("canReconcile").notNull().default(0),
+  canManageOwners: tinyint("canManageOwners").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  accessUnique: uniqueIndex("trust_staff_access_unique").on(t.accessId),
+}));
+export type TrustStaffPermission = typeof trustStaffPermissions.$inferSelect;
+
+/**
+ * Fees earned on a receipt but not yet moved out of trust. They reduce what the
+ * owner can be paid immediately; "Pay fees" posts one itemized disbursement to
+ * the brokerage's operating account, so earned broker money never sits in trust.
+ */
+export const trustFeeAccruals = mysqlTable("trust_fee_accruals", {
+  id: int("id").autoincrement().primaryKey(),
+  pmUserId: int("pmUserId").notNull(),
+  trustAccountId: int("trustAccountId").notNull(),
+  agreementId: int("agreementId").notNull(),
+  trustOwnerId: int("trustOwnerId").notNull(),
+  crmPropertyId: int("crmPropertyId").notNull(),
+  type: mysqlEnum("type", ["mgmt_fee", "leasing_fee", "renewal_fee"]).notNull(),
+  periodMonth: varchar("periodMonth", { length: 7 }),
+  amountCents: int("amountCents").notNull(),
+  shortfallCents: int("shortfallCents").notNull().default(0), // part of the fee the owner's balance couldn't cover
+  sourceJournalEntryId: int("sourceJournalEntryId"),
+  status: mysqlEnum("status", ["accrued", "paid", "waived"]).notNull().default("accrued"),
+  paidJournalEntryId: int("paidJournalEntryId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type TrustFeeAccrual = typeof trustFeeAccruals.$inferSelect;
+
+/** Documents a brokerage shares read-only with an owner in the owner portal
+ *  (management agreement, inspection reports, insurance, year-end packets). */
+export const trustOwnerDocuments = mysqlTable("trust_owner_documents", {
+  id: int("id").autoincrement().primaryKey(),
+  pmUserId: int("pmUserId").notNull(),
+  trustOwnerId: int("trustOwnerId").notNull(),
+  crmPropertyId: int("crmPropertyId"),
+  category: mysqlEnum("category", ["management_agreement", "lease", "inspection", "insurance", "tax", "other"]).notNull().default("other"),
+  title: varchar("title", { length: 200 }).notNull(),
+  url: text("url").notNull(),
+  fileName: varchar("fileName", { length: 255 }),
+  uploadedByUserId: int("uploadedByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type TrustOwnerDocument = typeof trustOwnerDocuments.$inferSelect;

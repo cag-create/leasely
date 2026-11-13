@@ -242,7 +242,7 @@ export default function Home() {
                   "AI fraud screening",
                   "Instant bank payouts",
                   "Branded portal + custom domain",
-                  "Tenant payments (0% ACH)",
+                  "Tenant payments (free ACH for tenants)",
                   "Work orders + AI vendor dispatch",
                   "Google contractor finder",
                   "Accounting (IRS Schedule E)",
@@ -350,7 +350,7 @@ export default function Home() {
         <div className="container">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
             <AnimatedStat value={25} prefix="$" suffix="/mo" label="Pro Portal — Flat Rate" sublabel="Free website included" />
-            <AnimatedStat value={0} suffix="%" label="ACH Fees for Pro" sublabel="vs. industry 0.8%" />
+            <AnimatedStat value={0} suffix="%" label="Keycove Fee on Rent (Pro)" sublabel="tenants pay $0 by ACH" />
             <div className="text-center reveal-on-scroll">
               <div className="text-4xl md:text-5xl font-black text-white mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>
                 <span className="text-gradient">All&nbsp;50</span>
@@ -792,7 +792,7 @@ export default function Home() {
                   "AI fraud applicant detection",
                   "Digital rental applications",
                   "Background checks via ApplyConnect — coming soon",
-                  "Tenant payment portal (0% ACH)",
+                  "Tenant payment portal (free ACH for tenants)",
                   "Work orders + AI vendor dispatch",
                   "Accounting ledger & CSV export",
                   "Property CRM + lease agreements",

@@ -37,8 +37,8 @@ const FAQ_CATEGORIES = [
     color: "text-green-600",
     bg: "bg-green-50",
     questions: [
-      { q: "What does the Pro plan cost?", a: "The Pro plan is $25/month, cancel anytime. It includes your own branded website and personalized keycove.net URL. It also includes unlimited listings, your own branded portal, AI tenant screening, fraud detection, rental applications, Stripe Connect payouts, waived ACH fees, and priority customer support." },
-      { q: "Are ACH fees really waived for Pro subscribers?", a: "Yes! Standard ACH processing costs 0.8% (capped at $5 per transaction). Pro subscribers have this fee completely waived — your tenants pay rent for free via bank transfer, and you receive 100% of the rent amount." },
+      { q: "What does the Pro plan cost?", a: "The Pro plan is $25/month, cancel anytime. It includes your own branded website and personalized keycove.net URL. It also includes unlimited listings, your own branded portal, AI tenant screening, fraud detection, rental applications, Stripe Connect payouts, free ACH rent payments for tenants, and priority customer support." },
+      { q: "Who pays the processing fee on rent?", a: "Your tenants pay rent by bank transfer (ACH) at no charge. Stripe's standard processing — 0.8% for ACH, capped at $5, or 2.9% + 30¢ if a tenant pays by card — is deducted from your payout and recorded as an expense in Accounting. Pro adds no Keycove fee on top; the Free plan adds a 1% platform fee." },
       { q: "How do tenant rent payments work?", a: "Pro subscribers connect their bank account via Stripe Connect. Tenants receive a portal login and can pay rent via ACH (free) or card. Funds are deposited directly to your bank account, typically within 1-2 business days." },
       { q: "Can I cancel my Pro subscription?", a: "Yes, you can cancel anytime from your dashboard. Your Pro features remain active until the end of your billing period." },
     ]

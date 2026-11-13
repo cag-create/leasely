@@ -92,7 +92,7 @@ export default function Welcome() {
             number={3}
             icon={CreditCard}
             title="Connect Stripe to collect rent"
-            description="0% ACH fees for Pro. Tenants pay you directly — funds land in your bank, not ours."
+            description="Tenants pay $0 by ACH and funds land in your bank, not ours. Stripe's processing (0.8%, max $5) comes out of your payout."
             cta="Connect Stripe"
             onClick={() => navigate("/dashboard")}
           />

@@ -14,6 +14,7 @@ import {
 import { sendEmail } from "./_core/email";
 import { affiliates, affiliateReferrals, leaseAgreements } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
+import { handleRentCheckoutSession, afterRentInvoicePaid } from "./trust/stripeHooks";
 
 function getStripe(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -86,9 +87,20 @@ export function registerStripeWebhook(app: Express) {
             } else if (leaseId && (leaseKind === "rent" || leaseKind === "deposit")) {
               // Legacy one-time deposit/rent flow (pre-subscription model).
               await handleLeasePaymentCompleted(parseInt(leaseId), leaseKind);
+            } else if (session.metadata?.leaselyPaymentId) {
+              // Tenant rent via the listing pay page or a private CRM pay link.
+              // Never a Pro signup: mark the payment paid (+ trust posting if managed).
+              await handleRentCheckoutSession(stripe, session, event.type);
             } else {
               await handleCheckoutCompleted(session);
             }
+            break;
+          }
+          case "checkout.session.async_payment_succeeded":
+          case "checkout.session.async_payment_failed": {
+            // ACH rent settles days after checkout; post it once the money is real.
+            const session = event.data.object as Stripe.Checkout.Session;
+            if (session.metadata?.leaselyPaymentId) await handleRentCheckoutSession(stripe, session, event.type);
             break;
           }
           case "invoice.paid": {
@@ -210,7 +222,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
             <ul style="color:#374151;line-height:2">
               <li>✅ <strong>Branded tenant portal</strong> — set your subdomain at /portal-setup</li>
               <li>✅ <strong>Unlimited listings</strong> with AI fraud screening on every applicant</li>
-              <li>✅ <strong>Stripe Connect</strong> — collect rent directly, 0% ACH fees</li>
+              <li>✅ <strong>Stripe Connect</strong> — collect rent directly; tenants pay $0 by ACH</li>
               <li>✅ <strong>Work orders, accounting, lease management</strong></li>
               <li>✅ <strong>Rent rate intelligence</strong> — know what to charge in any market</li>
             </ul>
@@ -496,9 +508,10 @@ async function handleLeaseAutopayActivated(leaseId: number, session: Stripe.Chec
  * find the existing row and update it idempotently.
  */
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
-  const subscriptionId = typeof (invoice as any).subscription === "string"
-    ? (invoice as any).subscription
-    : (invoice as any).subscription?.id ?? null;
+  // Pre-2025 API versions put the subscription on invoice.subscription; newer
+  // ones (incl. the clover version this client pins) put it on invoice.parent.
+  const rawSub = (invoice as any).subscription ?? (invoice as any).parent?.subscription_details?.subscription ?? null;
+  const subscriptionId = typeof rawSub === "string" ? rawSub : rawSub?.id ?? null;
   if (!subscriptionId) return; // not a subscription invoice
 
   const lease = await findLeaseBySubscriptionId(subscriptionId);
@@ -544,6 +557,14 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
       });
     }
     console.log(`[Webhook] 💵 Rent paid: lease ${lease.id} period ${periodMonth} ($${amountPaid / 100})`);
+
+    // Managed property: post the receipt to the brokerage's trust books; then
+    // deduct Stripe's processing fee from the receiver's payout.
+    try {
+      await afterRentInvoicePaid(invoice, lease, periodMonth, getStripe());
+    } catch (err) {
+      console.error("[Webhook] trust posting / fee recovery for invoice failed:", err);
+    }
 
     // In-app notification for landlord
     try {

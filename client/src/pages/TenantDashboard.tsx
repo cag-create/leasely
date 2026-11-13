@@ -329,7 +329,7 @@ export default function TenantDashboard() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
-                  { icon: CheckCircle2, title: "ACH Bank Transfer", desc: "Free for you — your landlord's Pro plan covers all ACH processing fees.", color: "text-green-600" },
+                  { icon: CheckCircle2, title: "ACH Bank Transfer", desc: "Free for you — no fee to pay rent by bank transfer.", color: "text-green-600" },
                   { icon: CreditCard, title: "Card Payments", desc: "Pay with any major credit or debit card. Processed securely by Stripe.", color: "text-blue-600" },
                   { icon: Receipt, title: "Automatic Receipts", desc: "Every payment generates a receipt sent to your email automatically.", color: "text-purple-600" },
                 ].map(({ icon: Icon, title, desc, color }) => (

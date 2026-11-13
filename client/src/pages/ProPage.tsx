@@ -218,11 +218,11 @@ const FEATURES = [
     color: "#4F46E5",
     badge: "Instant Payouts",
     title: "Get Paid the Same Day",
-    subtitle: "Waived ACH fees for Pro",
-    desc: "Tenants pay rent through your portal via ACH (free) or card. With instant payouts, funds hit your bank account in seconds — not 3 business days. Pro subscribers pay zero ACH fees.",
+    subtitle: "Free ACH for tenants",
+    desc: "Tenants pay rent through your portal via ACH (free to them) or card. With instant payouts, funds hit your bank account in seconds — not 3 business days. Stripe's processing (0.8%, max $5 for ACH) comes out of your payout; Pro adds no Keycove fee.",
     bullets: [
       "Instant bank transfer (seconds, not days)",
-      "Zero ACH fees for Pro subscribers",
+      "No Keycove fee on rent for Pro subscribers",
       "Tenants pay via ACH or card",
       "Automatic rent reminders to tenants",
       "Full payment history & receipts",
@@ -513,7 +513,7 @@ export default function ProPage() {
             <div className="flex flex-wrap items-center justify-center gap-5 text-white/40 text-sm">
               <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span className="text-white/60 font-medium">Website included</span></div>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>Cancel anytime</span></div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>0% ACH fees</span></div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>$0 ACH fee for tenants</span></div>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-400"/><span>No contracts</span></div>
             </div>
           </div>
@@ -633,7 +633,7 @@ export default function ProPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
               { value: "$0", label: "First Listing Free", sub: "No credit card needed", icon: Building2, color: "#4F46E5" },
-              { value: "0%", label: "ACH Fees for Pro", sub: "Tenants pay at no cost", icon: DollarSign, color: "#4F46E5" },
+              { value: "0%", label: "Keycove fee on rent (Pro)", sub: "Tenants pay $0 by ACH", icon: DollarSign, color: "#4F46E5" },
               { value: "∞", label: "Listings Allowed", sub: "Unlimited on Pro plan", icon: Globe, color: "#6366F1" },
               { value: "$25", label: "Per Month", sub: "Cancel anytime", icon: Star, color: "#10B981" },
             ].map((s, i) => (
@@ -841,7 +841,7 @@ export default function ProPage() {
                 {[...Array(5)].map((_,i) => <Star key={i} className="w-4 h-4 fill-current" style={{ color: "#4F46E5" }} />)}
               </div>
               <p className="text-white/80 text-sm leading-relaxed flex-1" style={{ fontFamily: 'Inter, sans-serif' }}>
-                &ldquo;Instant payouts are a game changer. Rent hits my bank account the same day it&apos;s paid &mdash; no waiting 3 business days, no chasing. And with zero ACH fees on Pro, I&apos;m keeping every dollar my tenants send me. It pays for itself every single month.&rdquo;
+                &ldquo;Instant payouts are a game changer. Rent hits my bank account the same day it&apos;s paid &mdash; no waiting 3 business days, no chasing. It pays for itself every single month.&rdquo;
               </p>
               <div className="mt-5 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0" style={{ background: "linear-gradient(135deg, #1B2B5E, #4F46E5)", color: "white" }}>C</div>
@@ -885,7 +885,7 @@ export default function ProPage() {
                   "Branded portal + subdomain",
                   "AI fraud applicant detection",
                   "Instant bank payouts",
-                  "Waived ACH fees",
+                  "Free ACH for tenants",
                   "Unlimited listings",
                   "Work order AI dispatch",
                   "Accounting & tax export",
