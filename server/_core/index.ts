@@ -10,6 +10,7 @@ import crypto from "crypto";
 import { registerAuthRoutes } from "./auth";
 import { registerChatRoutes } from "./chat";
 import { registerStripeWebhook } from "../stripeWebhook";
+import { registerAppLinkRoutes } from "../push/wellKnown";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -317,6 +318,7 @@ async function startServer() {
       checks.stripeWebhook.ok;
     res.status(allOk ? 200 : 503).json({ status: allOk ? "ok" : "degraded", checks });
   });
+  registerAppLinkRoutes(app); // iOS Universal Links + Android App Links (server/push/wellKnown.ts)
   // tRPC API (general rate limit)
   app.use(
     "/api/trpc",

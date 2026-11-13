@@ -1,0 +1,6 @@
+{
+  "Simulator Target Bundle": "net.keycove.app",
+  "aps": { "alert": { "title": "Work order", "body": "✅ Vendor Responded — Leaky kitchen sink" }, "sound": "default" },
+  "url": "/work-orders",
+  "category": "work_orders"
+}

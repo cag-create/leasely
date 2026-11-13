@@ -11,6 +11,8 @@ import {
   Wrench, Camera, Receipt, Loader2,
 } from "lucide-react";
 import { LOGO_URL } from "@/lib/brand";
+import { isNativeApp } from "@/native/platform";
+import { pickNativePhotos, type PhotoSource } from "@/native/photos";
 
 const BRAND = "#1B2B5E";
 const ACCENT = "#4F46E5";
@@ -19,7 +21,7 @@ const TIME_SLOTS = [
   "7am – 9am", "9am – 12pm", "12pm – 3pm", "3pm – 5pm", "5pm – 7pm",
 ];
 
-function readFileAsBase64(file: File): Promise<string> {
+function readFileAsBase64(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -30,6 +32,29 @@ function readFileAsBase64(file: File): Promise<string> {
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
   });
+}
+
+/** In the Keycove app: native camera / photo library buttons (the file input stays as the web fallback). */
+function NativePhotoButtons({ onPicked, disabled }: { onPicked: (blobs: Blob[]) => void; disabled?: boolean }) {
+  if (!isNativeApp()) return null;
+  async function pick(source: PhotoSource) {
+    try {
+      const blobs = await pickNativePhotos(source, 10);
+      if (blobs.length) onPicked(blobs);
+    } catch (err: any) {
+      toast.error(/denied|permission/i.test(String(err?.message)) ? "Camera access is off. Turn it on in Settings → Keycove." : err?.message ?? "Couldn't open the camera");
+    }
+  }
+  return (
+    <div className="flex gap-2 mb-2">
+      <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={() => pick("camera")} className="rounded-xl">
+        <Camera className="w-4 h-4 mr-1.5" /> Take photo
+      </Button>
+      <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={() => pick("library")} className="rounded-xl">
+        Choose from library
+      </Button>
+    </div>
+  );
 }
 
 function ShellCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
@@ -273,15 +298,16 @@ function InspectPanel({ dispatchId, workOrder, initialQuoteCents, onDone }: {
     onError: (e: any) => toast.error(e.message),
   });
 
-  async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
+  async function uploadBlobs(files: Blob[]) {
     if (files.length === 0) return;
     setUploading(true);
     try {
       const urls: string[] = [];
-      for (const f of files) {
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
         const fileData = await readFileAsBase64(f);
-        const { url } = await uploadMut.mutateAsync({ dispatchId, fileName: f.name, fileType: f.type, fileData, kind: "inspection" });
+        const fileName = f instanceof File ? f.name : `photo-${Date.now()}-${i}.jpg`;
+        const { url } = await uploadMut.mutateAsync({ dispatchId, fileName, fileType: f.type || "image/jpeg", fileData, kind: "inspection" });
         urls.push(url);
       }
       setPhotos(p => [...p, ...urls]);
@@ -289,8 +315,13 @@ function InspectPanel({ dispatchId, workOrder, initialQuoteCents, onDone }: {
       toast.error(err?.message ?? "Upload failed");
     } finally {
       setUploading(false);
-      e.target.value = "";
     }
+  }
+
+  async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    await uploadBlobs(files);
   }
 
   return (
@@ -306,6 +337,7 @@ function InspectPanel({ dispatchId, workOrder, initialQuoteCents, onDone }: {
         <Label className="text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
           <Camera className="w-4 h-4" /> On-site photos *
         </Label>
+        <NativePhotoButtons onPicked={uploadBlobs} disabled={uploading} />
         <Input type="file" accept="image/*" multiple onChange={onPick} disabled={uploading} className="rounded-xl" />
         {uploading && <p className="text-xs text-gray-500 mt-1 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Uploading…</p>}
         {photos.length > 0 && (
@@ -380,15 +412,16 @@ function CompletePanel({ dispatchId, workOrder, initialQuoteCents, onDone }: {
     onError: (e: any) => toast.error(e.message),
   });
 
-  async function onPickPhotos(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
+  async function uploadBlobs(files: Blob[]) {
     if (files.length === 0) return;
     setUploading(true);
     try {
       const urls: string[] = [];
-      for (const f of files) {
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
         const fileData = await readFileAsBase64(f);
-        const { url } = await uploadMut.mutateAsync({ dispatchId, fileName: f.name, fileType: f.type, fileData, kind: "completion" });
+        const fileName = f instanceof File ? f.name : `photo-${Date.now()}-${i}.jpg`;
+        const { url } = await uploadMut.mutateAsync({ dispatchId, fileName, fileType: f.type || "image/jpeg", fileData, kind: "completion" });
         urls.push(url);
       }
       setPhotos(p => [...p, ...urls]);
@@ -396,8 +429,13 @@ function CompletePanel({ dispatchId, workOrder, initialQuoteCents, onDone }: {
       toast.error(err?.message ?? "Upload failed");
     } finally {
       setUploading(false);
-      e.target.value = "";
     }
+  }
+
+  async function onPickPhotos(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    await uploadBlobs(files);
   }
 
   async function onPickInvoice(e: React.ChangeEvent<HTMLInputElement>) {
@@ -429,6 +467,7 @@ function CompletePanel({ dispatchId, workOrder, initialQuoteCents, onDone }: {
         <Label className="text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
           <Camera className="w-4 h-4" /> Completion photos *
         </Label>
+        <NativePhotoButtons onPicked={uploadBlobs} disabled={uploading} />
         <Input type="file" accept="image/*" multiple onChange={onPickPhotos} disabled={uploading} className="rounded-xl" />
         {uploading && <p className="text-xs text-gray-500 mt-1 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Uploading…</p>}
         {photos.length > 0 && (

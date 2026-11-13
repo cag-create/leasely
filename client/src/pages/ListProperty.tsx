@@ -24,6 +24,8 @@ import { PROPERTY_TYPES, BEDROOM_OPTIONS, US_STATES } from "@/lib/marketplace";
 import { prepareImageForUpload } from "@/lib/imageUpload";
 import { Link } from "wouter";
 import RentSuggestionWidget from "@/components/RentSuggestionWidget";
+import { PhotoCapture } from "@/native/PhotoCapture";
+import { isNativeApp } from "@/native/platform";
 
 const BRAND = "#1B2B5E";
 const ACCENT = "#4F46E5";
@@ -280,11 +282,16 @@ export default function ListProperty() {
               <div className="h-16 w-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: `linear-gradient(135deg, ${BRAND}, ${ACCENT})` }}>
                 <Sparkles className="h-8 w-8 text-white" />
               </div>
-              <h2 className="text-2xl font-black text-gray-900 mb-2">Upgrade to List More</h2>
+              <h2 className="text-2xl font-black text-gray-900 mb-2">{isNativeApp() ? "Listing limit reached" : "Upgrade to List More"}</h2>
               <p className="text-gray-500">
-                Your free tier includes 1 listing. Upgrade to Pro for unlimited listings, AI fraud applicant detection, and your branded portal.
+                {isNativeApp()
+                  ? "Free accounts include 1 listing. Unlimited listings are part of Keycove Pro, which your account doesn't include."
+                  : "Your free tier includes 1 listing. Upgrade to Pro for unlimited listings, AI fraud applicant detection, and your branded portal."}
               </p>
             </div>
+            {isNativeApp() ? (
+              <Button variant="outline" className="w-full" onClick={() => setShowUpgradeModal(false)}>OK</Button>
+            ) : (<>
             <div className="bg-gray-50 rounded-2xl p-5 mb-6">
               <div className="flex items-baseline gap-2 mb-3">
                 <span className="text-3xl font-black text-gray-900">$25.00</span>
@@ -308,6 +315,7 @@ export default function ListProperty() {
                 </Button>
               </Link>
             </div>
+            </>)}
           </div>
         </div>
       )}
@@ -580,6 +588,13 @@ export default function ListProperty() {
                       }
                     </label>
                   </div>
+                  {isNativeApp() && (
+                    <PhotoCapture
+                      className="mt-3"
+                      remaining={MAX_PHOTOS - photos.length}
+                      onUploaded={urls => setPhotos(prev => [...prev, ...urls].slice(0, MAX_PHOTOS))}
+                    />
+                  )}
                   {photos.length > 0 && (
                     <div className="grid grid-cols-3 gap-3 mt-4">
                       {photos.map((p, i) => (

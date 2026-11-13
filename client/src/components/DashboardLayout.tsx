@@ -34,6 +34,7 @@ import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { LOGO_URL } from "@/lib/brand";
+import { canSellProHere } from "@/native/platform";
 
 const coreMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", group: "main" },
@@ -82,6 +83,7 @@ function SidebarNextStep({ isPro }: { isPro: boolean }) {
   });
 
   let step: { title: string; desc: string; cta: string; href: string; icon: any; color: string };
+  if (!isPro && !canSellProHere()) return null; // no upgrade prompt inside the phone apps
   if (!isPro) {
     step = { title: "Unlock Pro Portal", desc: "Applications, payouts, AI screening & more", cta: "Upgrade — $25/mo", href: "/pricing", icon: Sparkles, color: "#4F46E5" };
   } else if (connect && connect.status !== "active") {
