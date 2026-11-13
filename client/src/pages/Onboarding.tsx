@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 import { Home, Building2, Search, Heart, Shield, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
+import { canSellProHere } from "@/native/platform";
 
 const BRAND = "#1B2B5E";
 const ACCENT = "#4F46E5";
@@ -137,9 +138,11 @@ export default function Onboarding() {
               <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">
                 Free to start
               </span>
-              <span className="inline-block px-3 py-1 rounded-full text-xs font-bold" style={{ background: `${BRAND}15`, color: BRAND }}>
-                Pro from $25/mo
-              </span>
+              {canSellProHere() && (
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-bold" style={{ background: `${BRAND}15`, color: BRAND }}>
+                  Pro from $25/mo
+                </span>
+              )}
             </div>
           </button>
         </div>
@@ -160,7 +163,7 @@ export default function Onboarding() {
         <p className="text-center text-xs text-gray-400 mt-2">
           By continuing you agree to our{" "}
           <a href="/fees" className="underline hover:text-gray-600 transition-colors">fee schedule & platform terms</a>.
-          Pro: $25/mo · Cancel anytime.
+          {canSellProHere() && " Pro: $25/mo · Cancel anytime."}
         </p>
       </div>
     </div>

@@ -1721,3 +1721,24 @@ export const hoaSpecialAssessments = mysqlTable("hoa_special_assessments", {
 });
 export type HoaSpecialAssessment = typeof hoaSpecialAssessments.$inferSelect;
 
+
+// ─── Mobile push devices (iOS APNs / Android FCM) ────────────────────────────
+// One row per installed app. Linked to a landlord/PM user (cookie session) or a
+// tenant portal account (tenant session token). `email` lets server-side
+// email notifications fan out to the same person's phone.
+export const pushDevices = mysqlTable("push_devices", {
+  id: int("id").autoincrement().primaryKey(),
+  token: varchar("token", { length: 255 }).notNull(),
+  platform: mysqlEnum("platform", ["ios", "android"]).notNull(),
+  userId: int("userId"),
+  tenantAccountId: int("tenantAccountId"),
+  email: varchar("email", { length: 320 }),
+  appVersion: varchar("appVersion", { length: 32 }),
+  enabled: tinyint("enabled").notNull().default(1),
+  lastSeenAt: timestamp("lastSeenAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  tokenUnique: uniqueIndex("push_devices_token_unique").on(t.token),
+}));
+export type PushDevice = typeof pushDevices.$inferSelect;
+export type InsertPushDevice = typeof pushDevices.$inferInsert;

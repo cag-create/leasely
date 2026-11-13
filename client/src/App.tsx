@@ -5,6 +5,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ProGate } from "./components/ProGate";
 import CookieBanner from "./components/CookieBanner";
+import { isNativeApp } from "./native/platform";
 import { lazy, Suspense } from "react";
 
 // ── Eager loads (tiny, always needed) ─────────────────────────────────────────
@@ -112,6 +113,10 @@ const UploadOwnLease      = lazyWithRetry(() => import("./pages/UploadOwnLease")
 const ProGuide            = lazyWithRetry(() => import("./pages/ProGuide"));
 const HowToUse            = lazyWithRetry(() => import("./pages/HowToUse"));
 const AgentGuide          = lazyWithRetry(() => import("./pages/AgentGuide"));
+// iOS / Android app (Capacitor). NativeShell only loads inside the app.
+const MobileHome          = lazyWithRetry(() => import("./pages/MobileHome"));
+const MobileSettings      = lazyWithRetry(() => import("./pages/MobileSettings"));
+const NativeShell         = lazy(() => import("./native/NativeShell"));
 
 // ── Page-level loading fallback ───────────────────────────────────────────────
 function PageLoader() {
@@ -126,6 +131,10 @@ function Router() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Switch>
+        {/* Phone app start + settings */}
+        <Route path="/app" component={MobileHome} />
+        <Route path="/app/settings" component={MobileSettings} />
+
         {/* Auth */}
         <Route path="/login" component={LoginPage} />
         <Route path="/signup" component={LoginPage} />
@@ -315,7 +324,11 @@ function App() {
           ) : (
             <Router />
           )}
-          <CookieBanner />
+          {isNativeApp() ? (
+            <Suspense fallback={null}><NativeShell /></Suspense>
+          ) : (
+            <CookieBanner />
+          )}
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

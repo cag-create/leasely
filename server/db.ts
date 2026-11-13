@@ -1,5 +1,6 @@
 import { and, desc, eq, gte, lte, like, or, sql, asc, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import { mirrorNotificationToPush } from "./push/service";
 import {
   InsertUser, users,
   marketplaceListings, InsertMarketplaceListing, MarketplaceListing,
@@ -2096,6 +2097,7 @@ export async function createNotification(data: Omit<InsertNotification, "id" | "
   const db = await getDb();
   if (!db) return 0;
   const result = await db.insert(notifications).values(data as any);
+  mirrorNotificationToPush(data); // also send to the user's phones (server/push)
   return (result[0] as any).insertId;
 }
 

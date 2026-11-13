@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { LOGO_URL } from "@/lib/brand";
+import { PhotoCapture } from "@/native/PhotoCapture";
 
 const BRAND = "#1B2B5E";
 const ACCENT = "#4F46E5";
@@ -510,12 +511,17 @@ export default function TenantDashboard() {
                 {/* Photo URLs */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Photos <span className="text-gray-400 font-normal">(optional — paste image URLs)</span>
+                    Photos <span className="text-gray-400 font-normal">(optional)</span>
                   </label>
+                  <PhotoCapture
+                    className="mb-2"
+                    remaining={5 - maintenanceForm.photos.length}
+                    onUploaded={urls => setMaintenanceForm(f => ({ ...f, photos: [...f.photos, ...urls].slice(0, 5) }))}
+                  />
                   <div className="flex gap-2 mb-2">
                     <input
                       type="url"
-                      placeholder="https://... (paste a photo link)"
+                      placeholder="…or paste a photo link"
                       value={photoInput}
                       onChange={e => setPhotoInput(e.target.value)}
                       className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -541,7 +547,7 @@ export default function TenantDashboard() {
                           <button
                             type="button"
                             onClick={() => setMaintenanceForm(f => ({ ...f, photos: f.photos.filter((_, j) => j !== i) }))}
-                            className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                           >
                             ×
                           </button>

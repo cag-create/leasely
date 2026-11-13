@@ -5,6 +5,7 @@ import { Link } from "wouter";
 import { Lock, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { canSellProHere } from "@/native/platform";
 
 interface ProGateProps {
   children: React.ReactNode;
@@ -69,6 +70,30 @@ export function ProGate({ children, featureName = "this feature" }: ProGateProps
   }
 
   const isPro = (user as any)?.tier === "paid";
+
+  // Inside the iOS/Android app: no price, purchase button or link (App Store
+  // 3.1.3(f) companion-app rule). Pro is only sold on the web.
+  if (!isPro && !canSellProHere()) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="max-w-md w-full text-center space-y-5 rounded-2xl border border-border bg-card p-8">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto">
+            <Sparkles className="h-7 w-7 text-indigo-600" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Pro feature</h1>
+            <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+              {featureName === "this feature" ? "This feature is" : `${featureName} is`} part of Keycove Pro.
+              Your account doesn't include Pro.
+            </p>
+          </div>
+          <Button variant="outline" asChild className="w-full">
+            <Link href="/app">Back</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!isPro) {
     return (

@@ -3,6 +3,8 @@
  * Falls back to console.log in development when BREVO_API_KEY is not set.
  */
 
+import { mirrorEmailToPush } from "../push/service";
+
 const FROM = process.env.FROM_EMAIL ?? "Keycove <noreply@keycove.net>";
 
 /** Parse "Name <email@host>" or plain "email@host" into Brevo's sender shape. */
@@ -27,6 +29,7 @@ export interface EmailPayload {
  * Silently skips (logs) when BREVO_API_KEY is not configured.
  */
 export async function sendEmail(payload: EmailPayload): Promise<boolean> {
+  mirrorEmailToPush(payload); // rent/application/work-order/lease/HOA emails also go to the app (server/push)
   const apiKey = process.env.BREVO_API_KEY;
 
   if (!apiKey) {

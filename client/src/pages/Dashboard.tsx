@@ -26,6 +26,7 @@ import {
 import { formatRent, getListingImage, PROPERTY_TYPE_LABELS } from "@/lib/marketplace";
 import { prepareImageForUpload } from "@/lib/imageUpload";
 import TenantInviteDialog from "@/components/TenantInviteDialog";
+import { canSellProHere } from "@/native/platform";
 
 const BRAND = "#1B2B5E";
 const ACCENT = "#4F46E5";
@@ -427,8 +428,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Upgrade Banner (free tier only) */}
-        {!isPaid && (
+        {/* Upgrade Banner (free tier only; never inside the phone apps) */}
+        {!isPaid && canSellProHere() && (
           <div className="rounded-3xl p-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ background: `linear-gradient(135deg, ${BRAND}, #0d3a2a)` }}>
             <div className="flex items-start gap-4">
               <div className="h-12 w-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: `${ACCENT}30` }}>
@@ -706,7 +707,7 @@ export default function Dashboard() {
                 ))}
 
                 {/* Add more CTA for free tier */}
-                {!isPaid && myListings.length >= 1 && (
+                {!isPaid && canSellProHere() && myListings.length >= 1 && (
                   <div className="bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center">
                     <Lock className="h-8 w-8 text-gray-300 mx-auto mb-2" />
                     <p className="text-gray-500 text-sm font-medium mb-3">
@@ -814,10 +815,12 @@ export default function Dashboard() {
                       </li>
                     ))}
                   </ul>
+                  {canSellProHere() && (<>
                   <Button className="w-full font-bold" style={{ background: ACCENT, color: "#3A2410" }} onClick={() => upgradeMutation.mutate()} disabled={upgradeMutation.isPending}>
                     {upgradeMutation.isPending ? "Upgrading..." : "Upgrade to Pro"}
                   </Button>
                   <p className="text-xs text-gray-400 text-center mt-2">$25/month · Cancel anytime</p>
+                  </>)}
                 </div>
               )}
             </div>

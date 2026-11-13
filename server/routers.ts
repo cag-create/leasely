@@ -663,6 +663,8 @@ const istayRouter = router({
 
 
 import { leasesRouter, adminLeaseTemplatesRouter } from "./leases/router";
+import { pushRouter } from "./push/router";
+import { notifyNewApplication } from "./push/notify";
 import { hoaRouter } from "./hoa/router";
 import { moveInRouter } from "./moveIn/router";
 import { hasUnresolvedPlaceholders, UNRESOLVED_LEASE_MESSAGE } from "./leases/render";
@@ -697,6 +699,7 @@ export const appRouter = router({
   // "Move to Keycove" unified importer.
   moveIn: moveInRouter,
   adminLeaseTemplates: adminLeaseTemplatesRouter,
+  push: pushRouter, // mobile app push devices (server/push)
 
   auth: router({
     me: publicProcedure.query(async opts => {
@@ -3625,6 +3628,7 @@ export const appRouter = router({
         signedAt: input.signatureDataUrl ? new Date() : undefined,
         status: "submitted",
       });
+      notifyNewApplication({ landlordUserId: input.landlordUserId, applicantName: input.applicantName, applicationId: id });
       return { id, success: true };
     }),
 

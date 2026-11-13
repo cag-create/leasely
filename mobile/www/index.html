@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Keycove — offline</title>
+  <style>
+    :root { color-scheme: dark; }
+    html, body { margin: 0; height: 100%; background: #0F1F4B; color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    main { min-height: 100%; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 32px 24px calc(32px + env(safe-area-inset-bottom));
+      box-sizing: border-box; text-align: center; }
+    img { width: 180px; height: auto; margin-bottom: 28px; }
+    h1 { font-size: 22px; margin: 0 0 10px; font-weight: 650; }
+    p { margin: 0 0 28px; color: #C7D2FE; line-height: 1.5; max-width: 320px; font-size: 15px; }
+    button { appearance: none; border: 0; border-radius: 12px; background: #4F46E5; color: #fff;
+      font-size: 16px; font-weight: 600; padding: 14px 28px; min-width: 200px; }
+    button:active { opacity: .85; }
+    .status { margin-top: 18px; font-size: 13px; color: #A5B4FC; min-height: 18px; }
+  </style>
+</head>
+<body>
+  <main>
+    <img src="logo.png" alt="Keycove" />
+    <h1 id="title">Can't reach Keycove</h1>
+    <p id="msg">Check your Wi-Fi or cellular connection. Your data is safe. We'll reconnect as soon as you're back online.</p>
+    <button id="retry" type="button">Try again</button>
+    <div class="status" id="status"></div>
+  </main>
+  <script>
+    (function () {
+      var HOME = "https://keycove.net/app";
+      var status = document.getElementById("status");
+      function go() {
+        status.textContent = "Reconnecting…";
+        // Probe first so a still-offline tap doesn't flash a blank page.
+        fetch(HOME.replace("/app", "/api/health"), { cache: "no-store", mode: "no-cors" })
+          .then(function () { window.location.replace(HOME); })
+          .catch(function () { status.textContent = "Still offline. We'll retry automatically."; });
+      }
+      if (!navigator.onLine) {
+        document.getElementById("title").textContent = "You're offline";
+      }
+      document.getElementById("retry").addEventListener("click", go);
+      window.addEventListener("online", go);
+      setInterval(function () { if (navigator.onLine) go(); }, 15000);
+    })();
+  </script>
+</body>
+</html>
