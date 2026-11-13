@@ -247,3 +247,11 @@ adds to the dataset.
   your attorney) file with the court.
 - Insurance — we partner with Steadily; quote in your dashboard, bind on their
   side. Same for renters' insurance (Lemonade affiliate).
+
+## Managing rentals for other owners
+
+Brokers who hold owners' rent need trust accounting. Rent for managed properties goes to your Stripe account and trust bank, with owner ledgers, fees, monthly reconciliation and owner statements. See `docs/sops/property-manager.md` and `/property-manager-guide`; the work happens in `/trust`.
+
+## Rent processing fees
+
+Tenants pay $0 to pay rent by ACH. Stripe's processing (ACH 0.8%, max $5; card 2.9% + 30¢) is deducted from your payout and shows as an expense in `/accounting` ("Stripe processing fee"). Pro adds no Keycove fee; Free adds a 1% platform fee.

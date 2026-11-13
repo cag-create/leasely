@@ -119,15 +119,14 @@ export default function FeeSchedule() {
               proHighlight
             />
             <Row
-              label="ACH / bank transfer fee"
-              desc="Standard ACH processing for rent payments."
-              free="0% (Stripe ACH)"
-              pro="0% — included"
-              proHighlight
+              label="ACH / bank transfer processing"
+              desc="Stripe's ACH processing on rent, deducted from your payout. Tenants pay nothing extra."
+              free="0.8%, max $5 (Stripe)"
+              pro="0.8%, max $5 (Stripe)"
             />
             <Row
               label="Card payment processing"
-              desc="Stripe's standard card fee, charged by Stripe — not Keycove."
+              desc="Stripe's standard card fee if a tenant pays by card, deducted from your payout — not a Keycove fee."
               free="2.9% + 30¢ (Stripe)"
               pro="2.9% + 30¢ (Stripe)"
             />
@@ -214,10 +213,10 @@ export default function FeeSchedule() {
               pro="Set by landlord"
             />
             <Row
-              label="Rent payment processing"
-              desc="Tenants pay rent via Stripe secure checkout. Standard Stripe card fee applies."
-              free="2.9% + 30¢ (Stripe)"
-              pro="2.9% + 30¢ (Stripe)"
+              label="Paying rent"
+              desc="Tenants pay rent via Stripe secure checkout. Bank transfer (ACH) is free for tenants; Stripe's processing comes out of the landlord's payout."
+              free="Free by ACH"
+              pro="Free by ACH"
             />
             <Row
               label="Tenant portal access"

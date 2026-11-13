@@ -94,6 +94,8 @@ const FeeSchedule         = lazyWithRetry(() => import("./pages/FeeSchedule"));
 const Leases              = lazyWithRetry(() => import("./pages/Leases"));
 const Payouts             = lazyWithRetry(() => import("./pages/Payouts"));
 const HoaDues             = lazyWithRetry(() => import("./pages/HoaDues"));
+const TrustAccounting     = lazyWithRetry(() => import("./pages/TrustAccounting"));
+const OwnerPortal         = lazyWithRetry(() => import("./pages/OwnerPortal"));
 const VendorRespond       = lazyWithRetry(() => import("./pages/VendorRespond"));
 const TenantSignLease     = lazyWithRetry(() => import("./pages/TenantSignLease"));
 const Privacy             = lazyWithRetry(() => import("./pages/Privacy"));
@@ -112,6 +114,7 @@ const UploadOwnLease      = lazyWithRetry(() => import("./pages/UploadOwnLease")
 const ProGuide            = lazyWithRetry(() => import("./pages/ProGuide"));
 const HowToUse            = lazyWithRetry(() => import("./pages/HowToUse"));
 const AgentGuide          = lazyWithRetry(() => import("./pages/AgentGuide"));
+const PropertyManagerGuide = lazyWithRetry(() => import("./pages/PropertyManagerGuide"));
 
 // ── Page-level loading fallback ───────────────────────────────────────────────
 function PageLoader() {
@@ -190,6 +193,9 @@ function Router() {
         <Route path="/hoa">
           {() => <ProGate featureName="HOA Dues"><HoaDues /></ProGate>}
         </Route>
+        {/* Trust accounting gates itself: brokerage staff without Pro can open their brokerage's books. */}
+        <Route path="/trust" component={TrustAccounting} />
+        <Route path="/owner-portal" component={OwnerPortal} />
         <Route path="/payouts">
           {() => <ProGate featureName="Payouts &amp; Banking"><Payouts /></ProGate>}
         </Route>
@@ -237,6 +243,7 @@ function Router() {
         {/* Creme Agent Network */}
         <Route path="/agents" component={AgentDirectory} />
         <Route path="/agent-guide" component={AgentGuide} />
+        <Route path="/property-manager-guide" component={PropertyManagerGuide} />
         <Route path="/agents/:id" component={AgentProfile} />
 
         {/* In-app Pro guide */}

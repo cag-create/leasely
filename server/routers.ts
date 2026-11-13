@@ -666,6 +666,8 @@ import { leasesRouter, adminLeaseTemplatesRouter } from "./leases/router";
 import { hoaRouter } from "./hoa/router";
 import { moveInRouter } from "./moveIn/router";
 import { hasUnresolvedPlaceholders, UNRESOLVED_LEASE_MESSAGE } from "./leases/render";
+import { trustRouter } from "./trust/router";
+import { resolveRentPayee, trustMetadata } from "./trust/routing";
 import { createLeaseDocument, createLeaseSignature, getLatestTemplateVersionForState, logLeaseAudit, getTemplateVersionById, listLeaseDocumentsByAgreement, updateLeaseDocument } from "./leases/db-helpers";
 import { renderTemplate } from "./leases/render";
 
@@ -696,6 +698,8 @@ export const appRouter = router({
   hoa: hoaRouter,
   // "Move to Keycove" unified importer.
   moveIn: moveInRouter,
+  // Owner/trust accounting for property-management brokerages (+ owner portal).
+  trust: trustRouter,
   adminLeaseTemplates: adminLeaseTemplatesRouter,
 
   auth: router({
@@ -1522,8 +1526,10 @@ export const appRouter = router({
         if (!listing || listing.status !== "active") {
           throw new TRPCError({ code: "NOT_FOUND", message: "Listing not found" });
         }
-        const sub = await getUserSubscription(listing.userId);
-        if (!sub || !sub.stripeConnectAccountId) {
+        // Managed property → the brokerage's Connect account (trust money); else the landlord.
+        const payee = await resolveRentPayee({ landlordUserId: listing.userId, listingId: listing.id });
+        const sub = { stripeConnectAccountId: payee.connectAccountId, tier: payee.tier };
+        if (!sub.stripeConnectAccountId) {
           throw new TRPCError({ code: "FORBIDDEN", message: "Landlord has not set up payments" });
         }
         const stripe = getStripe();
@@ -1547,7 +1553,7 @@ export const appRouter = router({
 
         const paymentIntentData: any = {
           transfer_data: { destination: sub.stripeConnectAccountId },
-          metadata: { leaselyPaymentId: String(paymentId), listingId: String(input.listingId) },
+          metadata: { leaselyPaymentId: String(paymentId), listingId: String(input.listingId), ...trustMetadata(payee) },
         };
         if (platformFeeCents > 0) {
           paymentIntentData.application_fee_amount = platformFeeCents;
@@ -1586,7 +1592,7 @@ export const appRouter = router({
           payment_intent_data: paymentIntentData,
           success_url: `${APP_URL}/pay/${input.listingId}/success?session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: `${APP_URL}/pay/${input.listingId}`,
-          metadata: { leaselyPaymentId: String(paymentId) },
+          metadata: { leaselyPaymentId: String(paymentId), ...trustMetadata(payee) },
         });
 
         await updatePaymentStatus(paymentId, "pending", session.id, undefined);
@@ -1603,8 +1609,8 @@ export const appRouter = router({
         const tenant = await getCrmTenantById(decoded.ct);
         if (!tenant) throw new TRPCError({ code: "NOT_FOUND", message: "This payment link is no longer valid." });
         const property = await getCrmPropertyById(tenant.crmPropertyId, tenant.userId);
-        const sub = await getUserSubscription(tenant.userId);
-        const bankReady = !!sub?.stripeConnectAccountId && sub.stripeConnectStatus === "active";
+        const payee = await resolveRentPayee({ landlordUserId: tenant.userId, crmPropertyId: tenant.crmPropertyId });
+        const bankReady = !!payee.connectAccountId && payee.connectStatus === "active";
         return {
           tenantName: `${tenant.firstName} ${tenant.lastName}`.trim(),
           tenantEmail: tenant.email ?? "",
@@ -1629,8 +1635,10 @@ export const appRouter = router({
         if (!decoded) throw new TRPCError({ code: "NOT_FOUND", message: "Invalid payment link" });
         const tenant = await getCrmTenantById(decoded.ct);
         if (!tenant) throw new TRPCError({ code: "NOT_FOUND", message: "This payment link is no longer valid." });
-        const sub = await getUserSubscription(tenant.userId);
-        if (!sub || !sub.stripeConnectAccountId) {
+        // Managed property → the brokerage's Connect account (trust money); else the landlord.
+        const payee = await resolveRentPayee({ landlordUserId: tenant.userId, crmPropertyId: tenant.crmPropertyId });
+        const sub = { stripeConnectAccountId: payee.connectAccountId, tier: payee.tier };
+        if (!sub.stripeConnectAccountId) {
           throw new TRPCError({ code: "FORBIDDEN", message: "Landlord has not set up payments" });
         }
         const stripe = getStripe();
@@ -1656,7 +1664,7 @@ export const appRouter = router({
 
         const paymentIntentData: any = {
           transfer_data: { destination: sub.stripeConnectAccountId },
-          metadata: { leaselyPaymentId: String(paymentId), crmTenantId: String(tenant.id) },
+          metadata: { leaselyPaymentId: String(paymentId), crmTenantId: String(tenant.id), ...trustMetadata(payee) },
         };
         if (platformFeeCents > 0) {
           paymentIntentData.application_fee_amount = platformFeeCents;
@@ -1689,7 +1697,7 @@ export const appRouter = router({
           payment_intent_data: paymentIntentData,
           success_url: `${APP_URL}/pay/rent/${input.token}/success?session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: `${APP_URL}/pay/rent/${input.token}`,
-          metadata: { leaselyPaymentId: String(paymentId) },
+          metadata: { leaselyPaymentId: String(paymentId), ...trustMetadata(payee) },
         });
 
         await updatePaymentStatus(paymentId, "pending", session.id, undefined);
@@ -6764,8 +6772,10 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
         if (lease.status !== "awaiting_payment" && lease.status !== "tenant_signed") {
           throw new TRPCError({ code: "PRECONDITION_FAILED", message: "This lease is not awaiting payment." });
         }
-        const sub = await getUserSubscription(lease.landlordUserId);
-        if (!sub || !sub.stripeConnectAccountId) {
+        // Managed property → the brokerage's Connect account (trust money); else the landlord.
+        const payee = await resolveRentPayee({ landlordUserId: lease.landlordUserId, listingId: lease.listingId });
+        const sub = { stripeConnectAccountId: payee.connectAccountId, tier: payee.tier };
+        if (!sub.stripeConnectAccountId) {
           throw new TRPCError({ code: "FORBIDDEN", message: "Landlord has not set up payments yet — please contact them." });
         }
         const stripe = getStripe();
@@ -6834,6 +6844,7 @@ ${JSON.stringify(applicantPayload, null, 2)}`;
             metadata: {
               leaselyLeaseId: String(lease.id),
               landlordUserId: String(lease.landlordUserId),
+              ...trustMetadata(payee),
             },
           },
           success_url: `${APP_URL}/lease-pay/${lease.id}/success?email=${encodeURIComponent(lease.tenantEmail)}`,

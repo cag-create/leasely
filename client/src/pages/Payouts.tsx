@@ -192,7 +192,8 @@ export default function Payouts() {
               <ul className="text-sm text-gray-600 space-y-1.5">
                 <li className="flex justify-between gap-4"><span>Instant payout (Pro)</span><span className="font-semibold text-gray-900">$1.00 flat</span></li>
                 <li className="flex justify-between gap-4"><span>Standard payout (1–2 business days)</span><span className="font-semibold text-emerald-700">Free</span></li>
-                <li className="flex justify-between gap-4"><span>Tenant ACH rent payment</span><span className="font-semibold text-emerald-700">Free</span></li>
+                <li className="flex justify-between gap-4"><span>Tenant pays rent by ACH</span><span className="font-semibold text-emerald-700">Free for the tenant</span></li>
+                <li className="flex justify-between gap-4"><span>Stripe processing, deducted from your payout</span><span className="font-semibold text-gray-900">ACH 0.8% (max $5) · card 2.9% + 30¢</span></li>
               </ul>
               <p className="text-[11px] text-gray-400 mt-3">
                 Stripe's own instant-payout fee (~1.5%) applies at the network level and is set by Stripe.

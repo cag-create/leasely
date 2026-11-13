@@ -470,7 +470,7 @@ export default function Dashboard() {
           const pct = Math.round((completed / 3) * 100);
           const steps = [
             { done: hasListing, label: "Add your first property", desc: "List a unit you own — takes 2 minutes.", href: "/list-property", cta: "Add listing" },
-            { done: hasStripe, label: "Connect Stripe", desc: "Get paid directly. 0% ACH for tenants.", href: "#stripe-connect", cta: "Connect Stripe" },
+            { done: hasStripe, label: "Connect Stripe", desc: "Get paid directly. Tenants pay $0 by ACH.", href: "#stripe-connect", cta: "Connect Stripe" },
             { done: hasLease, label: "Send your first lease", desc: "Create and send a lease — your tenant signs + autopays.", href: "/leases", cta: "Create lease" },
           ];
           return (

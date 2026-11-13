@@ -20,6 +20,8 @@ export interface EmailPayload {
   subject: string;
   html: string;
   replyTo?: string;
+  /** Base64 file attachments (e.g. owner statement PDFs). */
+  attachments?: { name: string; contentBase64: string }[];
 }
 
 /**
@@ -45,6 +47,7 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
   };
 
   if (payload.replyTo) body.replyTo = { email: payload.replyTo };
+  if (payload.attachments?.length) body.attachment = payload.attachments.map((a) => ({ name: a.name, content: a.contentBase64 }));
 
   try {
     const res = await fetch("https://api.brevo.com/v3/smtp/email", {

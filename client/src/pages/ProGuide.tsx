@@ -375,6 +375,19 @@ export default function ProGuide() {
       ),
     },
     {
+      id: "property-managers",
+      title: "Managing rentals for other owners",
+      icon: Building2,
+      intro: "Brokers holding owners' rent need trust accounting. It's built in.",
+      body: (
+        <div className="space-y-2 text-sm">
+          <p>Add a management agreement for each property you manage in <Link href="/trust"><span className="underline cursor-pointer">Trust Accounting</span></Link>. Rent for those properties goes to your Stripe account and pays out to your trust bank. Each receipt posts to the owner's ledger, fees apply automatically, payouts can't exceed an owner's balance, and the monthly three-way reconciliation and owner statements follow NC Real Estate Commission rules.</p>
+          <p>Step-by-step: <Link href="/property-manager-guide"><span className="underline cursor-pointer">Property-Manager Guide</span></Link>.</p>
+          <p className="text-xs text-muted-foreground">Processing: tenants pay $0 by ACH; Stripe's fee (ACH 0.8%, max $5; card 2.9% + 30¢) comes out of the payout and is recorded in Accounting (or on the owner's ledger for managed properties).</p>
+        </div>
+      ),
+    },
+    {
       id: "not-covered",
       title: "What Pro doesn't cover",
       icon: AlertTriangle,

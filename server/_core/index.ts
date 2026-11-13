@@ -373,6 +373,10 @@ async function startServer() {
     import("../hoa/reminders")
       .then(m => m.startHoaReminderScheduler())
       .catch(err => console.warn("[hoaReminders] scheduler init failed:", err));
+    // Daily trust-account compliance check for brokerages (NC 21 NCAC 58A).
+    import("../trust/alerts")
+      .then(m => m.startTrustComplianceScheduler())
+      .catch(err => console.warn("[trustCompliance] scheduler init failed:", err));
     import("./listingDrip")
       .then(m => m.startListingDripScheduler())
       .catch(err => console.warn("[listingDrip] scheduler init failed:", err));

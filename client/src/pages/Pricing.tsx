@@ -27,7 +27,7 @@ const FREE_FEATURES = [
   { label: "Digital rental applications", included: false },
   { label: "Background checks via ApplyConnect — coming soon", included: false },
   { label: "Tenant payment portal", included: false },
-  { label: "Waived ACH fees for tenants", included: false },
+  { label: "Tenants pay rent by ACH at no charge", included: false },
   { label: "Work order management + AI dispatch", included: false },
   { label: "Accounting & tax export", included: false },
   { label: "Property CRM", included: false },
@@ -45,7 +45,7 @@ const PRO_FEATURES = [
   { label: "HOA dues tracking — reminders, statement AI, Accounting", included: true },
   { label: "Move to Keycove import — CSV, Excel or Google Sheets", included: true },
   { label: "Tenant payment portal", included: true },
-  { label: "Waived ACH fees — tenants pay rent free", included: true },
+  { label: "Tenants pay rent by ACH free — processing (0.8%, max $5) comes out of your payout", included: true },
   { label: "Instant payouts to your bank (Stripe Connect)", included: true },
   { label: "Work order management + AI vendor dispatch", included: true },
   { label: "Accounting ledger & tax-ready CSV export", included: true },
@@ -55,6 +55,8 @@ const PRO_FEATURES = [
   { label: "Custom brand logo, colors & subdomain", included: true },
   { label: "Public portal page (shareable on Google)", included: true },
   { label: "Property manager delegated access", included: true },
+  { label: "Trust accounting for property managers — owner ledgers, NC trust rules, 3-way reconciliation", included: true },
+  { label: "Owner portal, owner statements (PDF) & 1099-MISC totals", included: true },
   { label: "Granular PM permissions (view/manage/approve)", included: true },
 ];
 
@@ -91,8 +93,12 @@ const FAQ_ITEMS = [
     a: "Yes. Your first property listing on the Keycove marketplace is completely free. No credit card required, no time limit. You get map placement, views & saves stats, and contact form inquiries."
   },
   {
-    q: "What does 'waived ACH fees' mean for my tenants?",
-    a: "Normally, ACH bank transfers carry a processing fee (typically 0.8%, capped at $5). With a Pro subscription, Keycove covers that fee on your behalf — so your tenants pay rent through the portal at absolutely no charge. You receive the full rent amount."
+    q: "Who pays the payment processing fee on rent?",
+    a: "Tenants pay rent by ACH free — they never pay a Keycove or Stripe fee. Stripe's standard processing (0.8% for ACH, max $5; 2.9% + 30¢ if a tenant chooses a card) is deducted from your payout and shows up as an expense in Accounting. Pro adds no Keycove fee on top; the Free plan adds a 1% platform fee."
+  },
+  {
+    q: "I'm a broker managing rentals for other owners. Does Keycove handle trust accounting?",
+    a: "Yes, on Pro. Rent for the properties you manage goes to your Stripe account and pays out to your trust account. Keycove posts every receipt to the owner's ledger, applies your management and leasing fees, blocks payouts above an owner's balance, holds security deposits on their own ledgers, and walks you through the monthly three-way reconciliation NC Real Estate Commission rules require. Owners get a portal with statements and year-end totals."
   },
   {
     q: "What is AI fraud applicant detection?",
@@ -204,7 +210,7 @@ export default function Pricing() {
         <div className="flex items-center justify-center gap-6 text-sm text-white/60">
           <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-400" /> No credit card for free tier</span>
           <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-400" /> Cancel Pro anytime</span>
-          <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-400" /> Waived ACH fees included</span>
+          <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-400" /> Tenants pay $0 by ACH</span>
         </div>
       </section>
 
@@ -334,8 +340,8 @@ export default function Pricing() {
                 icon: Banknote,
                 color: "#DCFCE7",
                 iconColor: "#16A34A",
-                title: "Waived ACH Fees",
-                desc: "Tenants pay rent for free via ACH. No $5 transfer fees means higher on-time payment rates and happier tenants.",
+                title: "Free ACH for Tenants",
+                desc: "Tenants pay rent by bank transfer at no charge, which means higher on-time payment rates. Stripe's processing (0.8%, max $5) comes out of your payout.",
               },
               {
                 icon: Globe,

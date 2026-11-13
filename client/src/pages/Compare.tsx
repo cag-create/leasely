@@ -33,7 +33,7 @@ const FEATURES = [
     category: "Rent Collection & Payments",
     items: [
       { label: "Tenant Payment Portal", values: [true, true, true, true, false, false] },
-      { label: "Waived ACH Fees for Tenants", values: [true, false, false, false, false, false] },
+      { label: "No Fee for Tenants Paying by ACH", values: [true, false, false, false, false, false] },
       { label: "Instant Bank Payouts (Stripe Connect)", values: [true, false, true, false, false, false] },
       { label: "Automated Rent Reminders", values: [true, true, true, true, false, false] },
     ],
@@ -48,6 +48,14 @@ const FEATURES = [
       { label: "Property CRM (Units, Tenants, Leases)", values: [true, true, true, true, false, false] },
       { label: "HOA Dues Tracking for Landlords", values: [true, "—", "—", "—", false, false] },
       { label: "Guided Import (CSV, Excel, Google Sheets)", values: [true, "—", "—", "—", false, false] },
+    ],
+  },
+  {
+    category: "Managing for Other Owners",
+    items: [
+      { label: "Trust Accounting (owner ledgers, 3-way reconciliation)", values: ["Pro, NC rules built in", true, false, false, false, false] },
+      { label: "Owner Portal & Monthly Owner Statements", values: [true, true, false, false, false, false] },
+      { label: "Owner 1099-MISC Totals", values: [true, true, false, false, false, false] },
     ],
   },
   {
